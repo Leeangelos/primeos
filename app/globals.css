@@ -1,0 +1,32 @@
+@import "tailwindcss";
+@config "../tailwind.config.ts";
+
+:root {
+  --bg: 11 15 26;        /* #0B0F1A */
+  --panel: 17 24 39;     /* #111827 */
+  --brand: 249 115 22;   /* #f97316 */
+  --text: 248 250 252;
+  --muted: 148 163 184;
+  --border: 51 65 85;
+}
+
+html, body { height: 100%; }
+
+body {
+  background: rgb(var(--bg));
+  color: rgb(var(--text));
+}
+
+.glass {
+  background: rgba(var(--panel), 0.72);
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
+  border: 1px solid rgba(var(--border), 0.45);
+}
+
+.glow {
+  box-shadow:
+    0 0 0 1px rgba(var(--border), 0.22),
+    0 10px 30px rgba(0,0,0,0.45),
+    0 0 24px rgba(var(--brand), 0.08);
+}
