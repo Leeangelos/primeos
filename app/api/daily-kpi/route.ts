@@ -66,6 +66,7 @@ export async function GET(request: NextRequest) {
 
     return NextResponse.json({ ok: true, entry: entry ?? null });
   } catch (err) {
+    console.error("[daily-kpi GET]", err);
     const message = err instanceof Error ? err.message : "Unknown error";
     return NextResponse.json(
       { ok: false, error: message },
@@ -154,6 +155,7 @@ export async function POST(request: NextRequest) {
 
     return NextResponse.json({ ok: true, entry });
   } catch (err) {
+    console.error("[daily-kpi POST]", err);
     const message = err instanceof Error ? err.message : "Unknown error";
     return NextResponse.json(
       { ok: false, error: message },

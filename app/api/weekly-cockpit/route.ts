@@ -80,35 +80,34 @@ export async function GET(request: NextRequest) {
       });
     }
 
-    const { data: weekRows, error: weekErr } = await supabase
-      .from("daily_kpis")
-      .select("*")
-      .in("store_id", storeIds)
-      .gte("business_date", week_start)
-      .lte("business_date", week_end)
-      .order("business_date", { ascending: true });
-
-    if (weekErr) {
-      return NextResponse.json({ ok: false, error: weekErr.message }, { status: 500 });
-    }
-
-    const { data: prevRows } = await supabase
+    const { data: allRangeRows, error: kpiErr } = await supabase
       .from("daily_kpis")
       .select("*")
       .in("store_id", storeIds)
       .gte("business_date", prev_start)
-      .lte("business_date", prev_end)
+      .lte("business_date", week_end)
       .order("business_date", { ascending: true });
 
+    if (kpiErr) {
+      return NextResponse.json({ ok: false, error: kpiErr.message }, { status: 500 });
+    }
+
+    const weekRows = (allRangeRows ?? []).filter(
+      (r) => r.business_date >= week_start && r.business_date <= week_end
+    );
+    const prevRows = (allRangeRows ?? []).filter(
+      (r) => r.business_date >= prev_start && r.business_date <= prev_end
+    );
+
     const byStore = new Map<number, DailyKpiRow[]>();
-    for (const r of weekRows ?? []) {
+    for (const r of weekRows) {
       const row = r as DailyKpiRow;
       const id = row.store_id;
       if (!byStore.has(id)) byStore.set(id, []);
       byStore.get(id)!.push(row);
     }
     const prevByStore = new Map<number, DailyKpiRow[]>();
-    for (const r of prevRows ?? []) {
+    for (const r of prevRows) {
       const row = r as DailyKpiRow;
       const id = row.store_id;
       if (!prevByStore.has(id)) prevByStore.set(id, []);
@@ -423,6 +422,7 @@ export async function GET(request: NextRequest) {
       comparison,
     });
   } catch (err) {
+    console.error("[weekly-cockpit]", err);
     const message = err instanceof Error ? err.message : "Unknown error";
     return NextResponse.json({ ok: false, error: message }, { status: 502 });
   }
