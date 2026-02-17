@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { createClient } from "@/lib/supabase";
+import { getClientForRoute } from "@/lib/supabase";
 import {
   getWeekStart,
   getWeekEnd,
@@ -46,7 +46,7 @@ export async function GET(request: NextRequest) {
   }
 
   try {
-    const supabase = createClient();
+    const supabase = await getClientForRoute();
 
     const { data: storesRows, error: storesError } = await supabase
       .from("stores")

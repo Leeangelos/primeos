@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { createClient } from "@/lib/supabase";
+import { getClientForRoute } from "@/lib/supabase";
 import {
   COCKPIT_STORE_SLUGS,
   COCKPIT_TARGETS,
@@ -45,7 +45,7 @@ export async function GET(request: NextRequest) {
         : [...COCKPIT_STORE_SLUGS];
 
   try {
-    const supabase = createClient();
+    const supabase = await getClientForRoute();
 
     const { data: storesRows, error: storesErr } = await supabase
       .from("stores")

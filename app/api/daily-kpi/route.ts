@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { createClient } from "@/lib/supabase";
+import { getClientForRoute } from "@/lib/supabase";
 
 function safeNum(value: unknown): number {
   const n = Number(value);
@@ -29,7 +29,7 @@ export async function GET(request: NextRequest) {
   }
 
   try {
-    const supabase = createClient();
+    const supabase = await getClientForRoute();
 
     const { data: store, error: storeError } = await supabase
       .from("stores")
@@ -101,7 +101,7 @@ export async function POST(request: NextRequest) {
   }
 
   try {
-    const supabase = createClient();
+    const supabase = await getClientForRoute();
 
     const { data: store, error: storeError } = await supabase
       .from("stores")
