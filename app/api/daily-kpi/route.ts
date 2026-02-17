@@ -6,6 +6,12 @@ function safeNum(value: unknown): number {
   return Number.isFinite(n) ? n : 0;
 }
 
+function safeNumOptional(value: unknown): number | null {
+  if (value == null) return null;
+  const n = Number(value);
+  return Number.isFinite(n) ? n : null;
+}
+
 /**
  * GET /api/daily-kpi?store=slug&date=YYYY-MM-DD
  * Returns daily_kpis row for that store + date, or { ok: true, entry: null } if none.
@@ -126,6 +132,9 @@ export async function POST(request: NextRequest) {
       voids_dollars: safeNum(b.voids_dollars),
       waste_dollars: safeNum(b.waste_dollars),
       customers: safeNum(b.customers),
+      notes: typeof b.notes === "string" ? b.notes : null,
+      scheduled_hours: safeNumOptional(b.scheduled_hours),
+      bump_time_minutes: safeNumOptional(b.bump_time_minutes),
     };
 
     const { data: entry, error: upsertError } = await supabase

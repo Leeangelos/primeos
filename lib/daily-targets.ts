@@ -1,15 +1,16 @@
 /**
  * Store-specific KPI targets and status logic for the Daily scoreboard.
- * No backend — operational clarity only.
+ * Binary status only: On Track, Over, Under. No "near limit".
  */
 
 export type StoreId = "leeangelo" | "lindsey";
 
-export type KpiStatus = "green" | "yellow" | "red";
+/** Binary status for display. null = no value / do not show status. */
+export type StatusLabel = "on_track" | "over" | "under";
 
 export interface StoreTargets {
   name: string;
-  /** Combined Food + Disposables max % (green when at or under) */
+  /** Combined Food + Disposables max % (on track when at or under) */
   foodDisposablesMax: number;
   /** Labor: for LeeAngelo 19–21% range; for Lindsey max 25% */
   laborMin?: number;
@@ -23,7 +24,7 @@ export interface StoreTargets {
 export const STORE_TARGETS: Record<StoreId, StoreTargets> = {
   leeangelo: {
     name: "LeeAngelo's",
-    foodDisposablesMax: 35, // 30% food + 5% disposables
+    foodDisposablesMax: 35,
     laborMin: 19,
     laborMax: 21,
     primeMax: 55,
@@ -31,53 +32,41 @@ export const STORE_TARGETS: Record<StoreId, StoreTargets> = {
   },
   lindsey: {
     name: "Lindsey's",
-    foodDisposablesMax: 35, // ≤30% + ≤5%
+    foodDisposablesMax: 35,
     laborMax: 25,
     primeMax: 60,
     slphMin: 80,
   },
 };
 
-/** Yellow band: within this many points of threshold = caution */
-const YELLOW_BAND = 2;
-
-export function getPrimeStatus(storeId: StoreId, primePct: number | null): KpiStatus {
-  if (primePct == null) return "yellow";
+/** Cost metrics (lower is better): ON TRACK if <= max else OVER */
+export function getPrimeStatus(storeId: StoreId, primePct: number | null): StatusLabel | null {
+  if (primePct == null) return null;
   const max = STORE_TARGETS[storeId].primeMax;
-  if (primePct <= max) return "green";
-  if (primePct <= max + YELLOW_BAND) return "yellow";
-  return "red";
+  return primePct <= max ? "on_track" : "over";
 }
 
-export function getLaborStatus(storeId: StoreId, laborPct: number | null): KpiStatus {
-  if (laborPct == null) return "yellow";
+/** Range: ON TRACK if in [min,max], UNDER if < min, OVER if > max */
+export function getLaborStatus(storeId: StoreId, laborPct: number | null): StatusLabel | null {
+  if (laborPct == null) return null;
   const t = STORE_TARGETS[storeId];
-  const hasRange = t.laborMin != null;
-  if (hasRange) {
-    // LeeAngelo's: 19–21% green; below 19 = caution (yellow); above 21 = red
-    if (laborPct >= t.laborMin! && laborPct <= t.laborMax) return "green";
-    if (laborPct < t.laborMin!) return "yellow"; // below range = caution
-    if (laborPct <= t.laborMax + YELLOW_BAND) return "yellow";
-    return "red";
+  if (t.laborMin != null) {
+    if (laborPct >= t.laborMin && laborPct <= t.laborMax) return "on_track";
+    return laborPct < t.laborMin ? "under" : "over";
   }
-  // Lindsey's: ≤25% green
-  if (laborPct <= t.laborMax) return "green";
-  if (laborPct <= t.laborMax + YELLOW_BAND) return "yellow";
-  return "red";
+  return laborPct <= t.laborMax ? "on_track" : "over";
 }
 
-export function getSlphStatus(storeId: StoreId, slph: number | null): KpiStatus {
-  if (slph == null) return "yellow";
+/** Performance (higher is better): ON TRACK if >= min else UNDER */
+export function getSlphStatus(storeId: StoreId, slph: number | null): StatusLabel | null {
+  if (slph == null) return null;
   const min = STORE_TARGETS[storeId].slphMin;
-  if (slph >= min) return "green";
-  if (slph >= min - YELLOW_BAND) return "yellow";
-  return "red";
+  return slph >= min ? "on_track" : "under";
 }
 
-export function getFoodStatus(storeId: StoreId, foodPct: number | null): KpiStatus {
-  if (foodPct == null) return "yellow";
+/** Cost (lower is better): ON TRACK if <= max else OVER */
+export function getFoodStatus(storeId: StoreId, foodPct: number | null): StatusLabel | null {
+  if (foodPct == null) return null;
   const max = STORE_TARGETS[storeId].foodDisposablesMax;
-  if (foodPct <= max) return "green";
-  if (foodPct <= max + YELLOW_BAND) return "yellow";
-  return "red";
+  return foodPct <= max ? "on_track" : "over";
 }

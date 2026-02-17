@@ -1,4 +1,8 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app). PrimeOS: internal KPI system (daily entry, weekly rollups).
+
+## Verification
+
+For weekly aggregation logic, week boundaries, manual SQL verification, and store-level PRIME/Labor targets, see **[docs/WEEKLY-VERIFICATION.md](docs/WEEKLY-VERIFICATION.md)**.
 
 ## Getting Started
 
