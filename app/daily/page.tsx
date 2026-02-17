@@ -135,7 +135,9 @@ function DailyPageContent() {
     const date = businessDate;
     let cancelled = false;
     setSaveStatus("idle");
-    fetch(`/api/daily-kpi?store=${encodeURIComponent(slug)}&date=${encodeURIComponent(date)}`)
+    const path = `/api/daily-kpi?store=${encodeURIComponent(slug)}&date=${encodeURIComponent(date)}`;
+    const url = typeof window !== "undefined" ? `${window.location.origin}${path}` : path;
+    fetch(url)
       .then((res) => res.json())
       .then((data) => {
         if (cancelled || !data.ok) return;
@@ -622,7 +624,8 @@ function DailyPageContent() {
                 if (!canSave) return;
                 setSaveStatus("saving");
                 try {
-                  const res = await fetch("/api/daily-kpi", {
+                  const postUrl = typeof window !== "undefined" ? `${window.location.origin}/api/daily-kpi` : "/api/daily-kpi";
+                  const res = await fetch(postUrl, {
                     method: "POST",
                     headers: { "Content-Type": "application/json" },
                     body: JSON.stringify({

@@ -105,9 +105,9 @@ function WeeklyPageContent() {
   useEffect(() => {
     setLoading(true);
     setError(null);
-    fetch(
-      `/api/weekly-cockpit?store=${encodeURIComponent(store)}&week_start=${encodeURIComponent(weekStart)}`
-    )
+    const path = `/api/weekly-cockpit?store=${encodeURIComponent(store)}&week_start=${encodeURIComponent(weekStart)}`;
+    const url = typeof window !== "undefined" ? `${window.location.origin}${path}` : path;
+    fetch(url)
       .then((res) => res.json())
       .then((json: ApiPayload) => {
         if (!json.ok) {
@@ -536,10 +536,10 @@ function WeeklyPageContent() {
   );
 }
 
-export default function WeeklyPage() {
-  return (
-    <Suspense fallback={<div className="p-8 text-center text-muted">Loading…</div>}>
-      <WeeklyPageContent />
-    </Suspense>
-  );
-}
+const WeeklyPage = () => (
+  <Suspense fallback={<div className="p-8 text-center text-muted">Loading…</div>}>
+    <WeeklyPageContent />
+  </Suspense>
+);
+
+export default WeeklyPage;

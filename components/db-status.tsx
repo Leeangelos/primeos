@@ -10,7 +10,8 @@ export function DbStatus() {
 
   useEffect(() => {
     let cancelled = false;
-    fetch("/api/db-check")
+    const url = typeof window !== "undefined" ? `${window.location.origin}/api/db-check` : "/api/db-check";
+    fetch(url)
       .then((res) => res.json())
       .then((data) => {
         if (cancelled) return;

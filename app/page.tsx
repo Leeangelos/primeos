@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { Flame, LineChart, ClipboardList, Shield } from "lucide-react";
+import { LineChart, ClipboardList } from "lucide-react";
 import { Card, CardHeader, CardHeading, CardIcon, CardHeaderText, CardTitle, CardDescription, CardContent } from "@/components/ui/card";
 
 const items = [
@@ -15,18 +15,6 @@ const items = [
     title: "Weekly Rollups",
     desc: "Mon–Sun with 4AM cutoff, trends + charts.",
   },
-  {
-    href: "/rbac",
-    icon: Shield,
-    title: "RBAC + Audit",
-    desc: "Admin / Manager / Viewer, audit log, controlled access.",
-  },
-  {
-    href: "/targets",
-    icon: Flame,
-    title: "Targets",
-    desc: "Effective date ranges, store-level target history.",
-  },
 ];
 
 export default function HomePage() {
@@ -36,7 +24,7 @@ export default function HomePage() {
         <div>
           <h1 className="text-2xl font-semibold">PrimeOS</h1>
           <p className="mt-1 text-sm text-muted">
-            Daily entry, weekly rollups, targets, and access control.
+            Daily entry and weekly rollups.
           </p>
         </div>
         <div className="rounded-2xl bg-brand/10 px-3 py-2 text-sm text-brand ring-1 ring-brand/20">
