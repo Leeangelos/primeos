@@ -2,9 +2,23 @@ import "./globals.css";
 import { AppNav } from "@/components/app-nav";
 import { DbStatus } from "@/components/db-status";
 
+import type { Viewport } from "next";
+
+export const viewport: Viewport = {
+  width: "device-width",
+  initialScale: 1,
+  maximumScale: 1,
+  userScalable: false,
+};
+
 export const metadata = {
   title: "PrimeOS",
-  description: "Internal KPI Operating System",
+  description: "The 90-Day Pizza Profit System",
+  appleWebApp: {
+    capable: true,
+    statusBarStyle: "black-translucent" as const,
+    title: "PrimeOS",
+  },
 };
 
 export default function RootLayout({

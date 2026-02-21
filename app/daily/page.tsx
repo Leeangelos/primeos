@@ -288,42 +288,21 @@ function DailyPageContent() {
   return (
     <div className="space-y-5">
       {/* Toolbar */}
-      <div className="dashboard-toolbar p-5">
-        <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-          <div>
-            <h1 className="text-xl font-semibold sm:text-2xl">Daily KPI Entry</h1>
-            <p className="mt-0.5 text-sm text-muted">
-              Business cutoff: 4:00 AM America/New_York • Manual entry • PRIME-first
-            </p>
-          </div>
-          <div className="flex flex-wrap items-center gap-2">
-            <div className="flex items-end gap-1">
-              <button
-                type="button"
-                onClick={() => setBusinessDate(prevDay(businessDate))}
-                className="rounded-lg border border-border/50 bg-black/30 px-3 py-2.5 text-sm font-medium text-muted hover:border-border hover:bg-black/40 hover:text-white"
-                aria-label="Previous day"
-              >
-                ← Prev Day
-              </button>
-              <div>
-                <label className="block text-xs text-muted mb-0.5">Business Date (4 AM cutoff)</label>
-                <input
-                  type="date"
-                  value={businessDate}
-                  onChange={(e) => setBusinessDate(e.target.value)}
-                  className="dashboard-input px-3 py-2.5 text-sm focus:border-brand/60 focus:ring-1 focus:ring-brand/40 focus:outline-none"
-                />
-              </div>
-              <button
-                type="button"
-                onClick={() => setBusinessDate(nextDay(businessDate))}
-                className="rounded-lg border border-border/50 bg-black/30 px-3 py-2.5 text-sm font-medium text-muted hover:border-border hover:bg-black/40 hover:text-white"
-                aria-label="Next day"
-              >
-                Next Day →
-              </button>
-            </div>
+      <div className="dashboard-toolbar p-4 sm:p-5 space-y-3">
+        <div className="flex items-center justify-between gap-3">
+          <h1 className="text-lg font-semibold sm:text-2xl">Daily KPI Entry</h1>
+          <select
+            value={storeId}
+            onChange={(e) => setStoreId(e.target.value as CockpitStoreSlug)}
+            className="sm:hidden dashboard-input rounded-lg border border-border/50 bg-black/30 px-3 py-2.5 text-sm font-medium text-brand focus:border-brand/60 focus:ring-1 focus:ring-brand/40 focus:outline-none"
+          >
+            {COCKPIT_STORE_SLUGS.map((id) => (
+              <option key={id} value={id}>
+                {COCKPIT_TARGETS[id].name}
+              </option>
+            ))}
+          </select>
+          <div className="hidden sm:flex items-center gap-2">
             {COCKPIT_STORE_SLUGS.map((id) => (
               <button
                 key={id}
@@ -341,10 +320,37 @@ function DailyPageContent() {
             ))}
           </div>
         </div>
+        <div className="flex items-center gap-2">
+          <button
+            type="button"
+            onClick={() => setBusinessDate(prevDay(businessDate))}
+            className="rounded-lg border border-border/50 bg-black/30 px-3 py-3 text-base font-medium text-muted hover:border-border hover:bg-black/40 hover:text-white active:bg-black/50"
+            aria-label="Previous day"
+          >
+            ←
+          </button>
+          <div className="flex-1 text-center">
+            <label className="block text-[10px] uppercase tracking-wider text-muted/70 mb-0.5">Business Date</label>
+            <input
+              type="date"
+              value={businessDate}
+              onChange={(e) => setBusinessDate(e.target.value)}
+              className="w-full dashboard-input px-3 py-2.5 text-center text-sm font-medium focus:border-brand/60 focus:ring-1 focus:ring-brand/40 focus:outline-none"
+            />
+          </div>
+          <button
+            type="button"
+            onClick={() => setBusinessDate(nextDay(businessDate))}
+            className="rounded-lg border border-border/50 bg-black/30 px-3 py-3 text-base font-medium text-muted hover:border-border hover:bg-black/40 hover:text-white active:bg-black/50"
+            aria-label="Next day"
+          >
+            →
+          </button>
+        </div>
       </div>
 
       {/* Scoreboard: PRIME primary, then Labor / Food+Disposables / SLPH */}
-      <div className="py-6 space-y-4">
+      <div className="py-4 sm:py-6 space-y-3 sm:space-y-4">
         {(() => {
           const prime = scoreboardItems[0];
           const valueColor =
@@ -369,13 +375,13 @@ function DailyPageContent() {
               </div>
               <div
                 className={cn(
-                  "mt-8 text-6xl font-black tabular-nums tracking-tight sm:text-7xl md:text-8xl leading-none",
+                  "mt-4 sm:mt-8 text-7xl font-black tabular-nums tracking-tight sm:text-8xl leading-none",
                   valueColor
                 )}
               >
                 {prime.value}
               </div>
-              <div className="mt-5 text-xs text-muted/70">Target: {prime.target}</div>
+              <div className="mt-3 sm:mt-5 text-xs text-muted/70">Target: {prime.target}</div>
             </div>
           );
         })()}
@@ -404,7 +410,7 @@ function DailyPageContent() {
                   </div>
                   <div
                     className={cn(
-                      "mt-3 text-2xl font-bold tabular-nums tracking-tight sm:text-3xl",
+                      "mt-2 sm:mt-3 text-3xl font-bold tabular-nums tracking-tight",
                       valueColor
                     )}
                   >
