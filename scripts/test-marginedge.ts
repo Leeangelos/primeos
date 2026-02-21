@@ -2,9 +2,9 @@ const API_KEY = process.env.MARGINEDGE_API_KEY;
 const BASE = "https://api.marginedge.com/public";
 
 const UNITS = [
-  { id: 375258487, name: "LeeAngelo's Aurora" },
-  { id: 559563420, name: "LeeAngelo's Kent" },
-  { id: 778992713, name: "Lindsey's Pizza" },
+  { meId: 375258487, name: "LeeAngelo's Aurora" },
+  { meId: 559563420, name: "LeeAngelo's Kent" },
+  { meId: 778992713, name: "Lindsey's Pizza" },
 ];
 
 async function meGet(endpoint: string) {
@@ -23,11 +23,11 @@ async function main() {
   console.log("=== FULL MARGIN EDGE DATA PULL ===\n");
 
   for (const unit of UNITS) {
-    console.log(`\n========== ${unit.name} (${unit.id}) ==========\n`);
+    console.log(`\n========== ${unit.name} (${unit.meId}) ==========\n`);
 
     // Products
     console.log("--- PRODUCTS ---");
-    const products = await meGet(`/products?restaurantUnitId=${unit.id}`);
+    const products = await meGet(`/products?restaurantUnitId=${unit.meId}`);
     if (products) {
       const list = Array.isArray(products) ? products : products.data || products.products || products.items || Object.values(products)[0] || [];
       const arr = Array.isArray(list) ? list : [];
@@ -43,14 +43,14 @@ async function main() {
 
     // Categories
     console.log("\n--- CATEGORIES ---");
-    const cats = await meGet(`/categories?restaurantUnitId=${unit.id}`);
+    const cats = await meGet(`/categories?restaurantUnitId=${unit.meId}`);
     if (cats) {
       console.log(JSON.stringify(cats).slice(0, 1500));
     }
 
     // Vendors
     console.log("\n--- VENDORS ---");
-    const vendors = await meGet(`/vendors?restaurantUnitId=${unit.id}`);
+    const vendors = await meGet(`/vendors?restaurantUnitId=${unit.meId}`);
     if (vendors) {
       const list = Array.isArray(vendors) ? vendors : vendors.data || vendors.vendors || Object.values(vendors)[0] || [];
       const arr = Array.isArray(list) ? list : [];
@@ -63,3 +63,4 @@ async function main() {
 }
 
 main();
+export {};
