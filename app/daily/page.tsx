@@ -230,6 +230,7 @@ function DailyPageContent() {
     return {
       primeDollars,
       primePct,
+      gpPct,
       laborPct,
       foodDispPct,
       slph,

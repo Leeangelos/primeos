@@ -1,10 +1,10 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { Suspense, useState, useEffect } from "react";
 import { useSearchParams } from "next/navigation";
 import { cn } from "@/lib/utils";
 
-export default function BillingPage() {
+function BillingContent() {
   const searchParams = useSearchParams();
   const success = searchParams.get("success");
   const canceled = searchParams.get("canceled");
@@ -162,5 +162,13 @@ export default function BillingPage() {
         <p className="text-[10px] text-muted text-center">Cancel anytime. 90-day guarantee. Founding rate locked forever.</p>
       </div>
     </div>
+  );
+}
+
+export default function BillingPage() {
+  return (
+    <Suspense fallback={<div className="space-y-5 p-5"><div className="h-8 w-48 bg-muted/20 rounded animate-pulse" /></div>}>
+      <BillingContent />
+    </Suspense>
   );
 }

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
+import { Suspense, useState, useEffect, useCallback } from "react";
 import { useSearchParams } from "next/navigation";
 import { cn } from "@/lib/utils";
 
@@ -24,7 +24,7 @@ type CartItem = {
   qty: number;
 };
 
-export default function MerchPage() {
+function MerchContent() {
   const searchParams = useSearchParams();
   const success = searchParams.get("success");
   const canceled = searchParams.get("canceled");
@@ -343,5 +343,13 @@ export default function MerchPage() {
         </div>
       )}
     </div>
+  );
+}
+
+export default function MerchPage() {
+  return (
+    <Suspense fallback={<div className="space-y-5 p-5"><div className="h-8 w-48 bg-muted/20 rounded animate-pulse" /></div>}>
+      <MerchContent />
+    </Suspense>
   );
 }
