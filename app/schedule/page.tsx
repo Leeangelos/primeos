@@ -6,6 +6,8 @@ import { COCKPIT_STORE_SLUGS, COCKPIT_TARGETS, type CockpitStoreSlug } from "@/l
 import { getStoreColor } from "@/lib/store-colors";
 import { cn } from "@/lib/utils";
 
+type ShiftEmployee = { id: string; name: string; role: string; start: string; end: string; hours: number; cost: number };
+
 type DayLabor = {
   date: string;
   day: string;
@@ -15,7 +17,7 @@ type DayLabor = {
   projectedSales: number;
   laborPct: number;
   slph: number;
-  employees: { name: string; role: string; start: string; end: string; hours: number; cost: number }[];
+  employees: ShiftEmployee[];
 };
 
 type LaborData = {
@@ -32,6 +34,7 @@ type LaborData = {
 };
 
 const ROLES: Record<string, string> = { manager: "MGR", shift_lead: "SL", cook: "COOK", cashier: "CASH", driver: "DRV", team: "TEAM" };
+const ROLE_OPTIONS = ["manager", "shift_lead", "cook", "cashier", "driver", "team"] as const;
 
 export default function SchedulePage() {
   const [store, setStore] = useState<CockpitStoreSlug>("kent");
@@ -39,8 +42,26 @@ export default function SchedulePage() {
   const [loading, setLoading] = useState(true);
   const [expandedDay, setExpandedDay] = useState<string | null>(null);
   const [showEducation, setShowEducation] = useState(false);
+  const [showAddShift, setShowAddShift] = useState(false);
+  const [editingShift, setEditingShift] = useState<ShiftEmployee & { date: string } | null>(null);
+  const [copyingWeek, setCopyingWeek] = useState(false);
 
   const [weekOffset, setWeekOffset] = useState(0);
+
+  const [addName, setAddName] = useState("");
+  const [addRole, setAddRole] = useState<(typeof ROLE_OPTIONS)[number]>("team");
+  const [addDate, setAddDate] = useState("");
+  const [addStart, setAddStart] = useState("09:00");
+  const [addEnd, setAddEnd] = useState("17:00");
+  const [addNotes, setAddNotes] = useState("");
+  const [saving, setSaving] = useState(false);
+
+  const [editName, setEditName] = useState("");
+  const [editRole, setEditRole] = useState<(typeof ROLE_OPTIONS)[number]>("team");
+  const [editDate, setEditDate] = useState("");
+  const [editStart, setEditStart] = useState("09:00");
+  const [editEnd, setEditEnd] = useState("17:00");
+  const [editNotes, setEditNotes] = useState("");
   
   const now = new Date();
   const dayOfWeek = now.getDay();
@@ -56,6 +77,109 @@ export default function SchedulePage() {
   }, [store, weekOf, weekOffset]);
 
   useEffect(() => { loadData(); }, [loadData]);
+  useEffect(() => { setAddDate(weekOf); }, [weekOf]);
+
+  const openAddShift = () => {
+    setAddName("");
+    setAddRole("team");
+    setAddDate(weekOf);
+    setAddStart("09:00");
+    setAddEnd("17:00");
+    setAddNotes("");
+    setShowAddShift(true);
+  };
+
+  const openEditShift = (emp: ShiftEmployee, date: string) => {
+    setEditingShift({ ...emp, date });
+    setEditName(emp.name);
+    setEditRole(emp.role as (typeof ROLE_OPTIONS)[number]);
+    setEditDate(date);
+    setEditStart(emp.start);
+    setEditEnd(emp.end);
+    setEditNotes("");
+  };
+
+  async function handleSaveAdd() {
+    setSaving(true);
+    await fetch("/api/schedules", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        store_slug: store,
+        employee_name: addName.trim() || "Unnamed",
+        role: addRole,
+        shift_date: addDate,
+        start_time: addStart,
+        end_time: addEnd,
+        notes: addNotes.trim() || undefined,
+      }),
+    });
+    setSaving(false);
+    setShowAddShift(false);
+    loadData();
+  }
+
+  async function handleSaveEdit() {
+    if (!editingShift) return;
+    setSaving(true);
+    await fetch("/api/schedules", {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        id: editingShift.id,
+        employee_name: editName.trim() || "Unnamed",
+        role: editRole,
+        shift_date: editDate,
+        start_time: editStart,
+        end_time: editEnd,
+        notes: editNotes.trim() || undefined,
+      }),
+    });
+    setSaving(false);
+    setEditingShift(null);
+    loadData();
+  }
+
+  async function handleDeleteShift() {
+    if (!editingShift) return;
+    setSaving(true);
+    await fetch(`/api/schedules?id=${encodeURIComponent(editingShift.id)}`, { method: "DELETE" });
+    setSaving(false);
+    setEditingShift(null);
+    loadData();
+  }
+
+  async function handleCopyLastWeek() {
+    const prevMonday = new Date(weekOf);
+    prevMonday.setDate(prevMonday.getDate() - 7);
+    const lastWeek = prevMonday.toISOString().slice(0, 10);
+    setCopyingWeek(true);
+    const res = await fetch(`/api/schedules?store=${store}&week=${lastWeek}`).then((r) => r.json());
+    if (!res.ok || !res.shifts?.length) {
+      setCopyingWeek(false);
+      return;
+    }
+    for (const s of res.shifts) {
+      const nextDate = new Date(s.shift_date);
+      nextDate.setDate(nextDate.getDate() + 7);
+      const newDate = nextDate.toISOString().slice(0, 10);
+      await fetch("/api/schedules", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          store_slug: store,
+          employee_name: s.employee_name,
+          role: s.role,
+          shift_date: newDate,
+          start_time: s.start_time,
+          end_time: s.end_time,
+          notes: s.notes ?? undefined,
+        }),
+      });
+    }
+    setCopyingWeek(false);
+    loadData();
+  }
 
   const l = labor;
 
@@ -77,12 +201,16 @@ export default function SchedulePage() {
           })}
         </div>
 
-        <div className="flex items-center justify-center gap-3">
+        <div className="flex flex-wrap items-center justify-center gap-2 sm:gap-3">
           <button type="button" onClick={() => setWeekOffset((p: number) => p - 1)} className="rounded-lg border border-border/30 bg-black/20 px-2.5 py-1 text-sm text-muted hover:text-white">←</button>
           <span className="text-xs text-muted">
             Week of {new Date(weekOf + "T12:00:00Z").toLocaleDateString("en-US", { month: "short", day: "numeric" })} – {new Date(new Date(weekOf).getTime() + 6 * 86400000).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })}
           </span>
           <button type="button" onClick={() => setWeekOffset((p: number) => p + 1)} className="rounded-lg border border-border/30 bg-black/20 px-2.5 py-1 text-sm text-muted hover:text-white">→</button>
+          <button type="button" onClick={handleCopyLastWeek} disabled={copyingWeek} className="rounded-lg border border-border/30 bg-black/20 px-2.5 py-1 text-sm text-muted hover:text-white disabled:opacity-50">
+            {copyingWeek ? "Copying…" : "Copy Last Week"}
+          </button>
+          <button type="button" onClick={openAddShift} className="rounded-lg border border-brand/50 bg-brand/15 px-3 py-1.5 text-sm font-medium text-brand hover:bg-brand/25">+ Add Shift</button>
         </div>
       </div>
 
@@ -176,8 +304,13 @@ export default function SchedulePage() {
 
                   {isExpanded && day.employees.length > 0 && (
                     <div className="mt-1 ml-4 space-y-1">
-                      {day.employees.map((emp, idx) => (
-                        <div key={idx} className="flex items-center justify-between rounded-lg border border-border/20 bg-black/10 px-3 py-2 text-xs">
+                      {day.employees.map((emp) => (
+                        <button
+                          key={emp.id}
+                          type="button"
+                          onClick={() => openEditShift(emp, day.date)}
+                          className="w-full flex items-center justify-between rounded-lg border border-border/20 bg-black/10 px-3 py-2 text-xs text-left hover:border-brand/30 hover:bg-black/20 transition-colors"
+                        >
                           <div className="flex items-center gap-2">
                             <span className="text-[9px] uppercase bg-muted/10 px-1.5 py-0.5 rounded text-muted">{ROLES[emp.role] || emp.role}</span>
                             <span className="text-white font-medium">{emp.name}</span>
@@ -187,7 +320,7 @@ export default function SchedulePage() {
                             <span>{emp.hours}hrs</span>
                             <span className="text-white">${emp.cost}</span>
                           </div>
-                        </div>
+                        </button>
                       ))}
                     </div>
                   )}
@@ -198,6 +331,100 @@ export default function SchedulePage() {
         </>
       ) : (
         <div className="text-center py-12 text-muted text-sm">No schedule data for this week.</div>
+      )}
+
+      {/* Add Shift Modal */}
+      {showAddShift && typeof document !== "undefined" && createPortal(
+        <div className="fixed inset-0 z-[9999] flex items-center justify-center p-4" style={{ position: "fixed", top: 0, left: 0, right: 0, bottom: 0 }} onClick={() => setShowAddShift(false)}>
+          <div className="absolute inset-0 bg-black/80 backdrop-blur-sm" />
+          <div className="relative w-full max-w-md rounded-2xl border border-border bg-[#0d0f13] p-5 shadow-2xl overflow-y-auto" style={{ maxHeight: "90vh" }} onClick={(e) => e.stopPropagation()}>
+            <button type="button" onClick={() => setShowAddShift(false)} className="absolute top-3 right-3 text-muted hover:text-white text-lg leading-none">✕</button>
+            <h3 className="text-base font-semibold text-white mb-4">Add Shift</h3>
+            <div className="space-y-3">
+              <div>
+                <label className="block text-xs text-muted mb-1">Employee name</label>
+                <input type="text" value={addName} onChange={(e) => setAddName(e.target.value)} placeholder="e.g. Jordan" className="w-full rounded-lg border border-border/50 bg-black/30 px-3 py-2.5 text-sm text-white placeholder:text-muted focus:border-brand/60 focus:outline-none" />
+              </div>
+              <div>
+                <label className="block text-xs text-muted mb-1">Role</label>
+                <select value={addRole} onChange={(e) => setAddRole(e.target.value as (typeof ROLE_OPTIONS)[number])} className="w-full rounded-lg border border-border/50 bg-black/30 px-3 py-2.5 text-sm text-white focus:border-brand/60 focus:outline-none">
+                  {ROLE_OPTIONS.map((r) => <option key={r} value={r}>{ROLES[r] ?? r}</option>)}
+                </select>
+              </div>
+              <div>
+                <label className="block text-xs text-muted mb-1">Date</label>
+                <input type="date" value={addDate} onChange={(e) => setAddDate(e.target.value)} className="w-full rounded-lg border border-border/50 bg-black/30 px-3 py-2.5 text-sm text-white focus:border-brand/60 focus:outline-none" />
+              </div>
+              <div className="grid grid-cols-2 gap-2">
+                <div>
+                  <label className="block text-xs text-muted mb-1">Start time</label>
+                  <input type="time" value={addStart} onChange={(e) => setAddStart(e.target.value)} className="w-full rounded-lg border border-border/50 bg-black/30 px-3 py-2.5 text-sm text-white focus:border-brand/60 focus:outline-none" />
+                </div>
+                <div>
+                  <label className="block text-xs text-muted mb-1">End time</label>
+                  <input type="time" value={addEnd} onChange={(e) => setAddEnd(e.target.value)} className="w-full rounded-lg border border-border/50 bg-black/30 px-3 py-2.5 text-sm text-white focus:border-brand/60 focus:outline-none" />
+                </div>
+              </div>
+              <div>
+                <label className="block text-xs text-muted mb-1">Notes (optional)</label>
+                <textarea value={addNotes} onChange={(e) => setAddNotes(e.target.value)} rows={2} placeholder="Optional notes" className="w-full rounded-lg border border-border/50 bg-black/30 px-3 py-2.5 text-sm text-white placeholder:text-muted focus:border-brand/60 focus:outline-none resize-none" />
+              </div>
+            </div>
+            <div className="flex gap-2 mt-4">
+              <button type="button" onClick={handleSaveAdd} disabled={saving} className="flex-1 rounded-lg border border-brand/50 bg-brand/15 px-4 py-2.5 text-sm font-semibold text-brand hover:bg-brand/25 disabled:opacity-50">Save</button>
+              <button type="button" onClick={() => setShowAddShift(false)} className="flex-1 rounded-lg border border-border/50 bg-black/30 px-4 py-2.5 text-sm text-muted hover:text-white">Cancel</button>
+            </div>
+          </div>
+        </div>,
+        document.body
+      )}
+
+      {/* Edit Shift Modal */}
+      {editingShift && typeof document !== "undefined" && createPortal(
+        <div className="fixed inset-0 z-[9999] flex items-center justify-center p-4" style={{ position: "fixed", top: 0, left: 0, right: 0, bottom: 0 }} onClick={() => setEditingShift(null)}>
+          <div className="absolute inset-0 bg-black/80 backdrop-blur-sm" />
+          <div className="relative w-full max-w-md rounded-2xl border border-border bg-[#0d0f13] p-5 shadow-2xl overflow-y-auto" style={{ maxHeight: "90vh" }} onClick={(e) => e.stopPropagation()}>
+            <button type="button" onClick={() => setEditingShift(null)} className="absolute top-3 right-3 text-muted hover:text-white text-lg leading-none">✕</button>
+            <h3 className="text-base font-semibold text-white mb-4">Edit Shift</h3>
+            <div className="space-y-3">
+              <div>
+                <label className="block text-xs text-muted mb-1">Employee name</label>
+                <input type="text" value={editName} onChange={(e) => setEditName(e.target.value)} className="w-full rounded-lg border border-border/50 bg-black/30 px-3 py-2.5 text-sm text-white focus:border-brand/60 focus:outline-none" />
+              </div>
+              <div>
+                <label className="block text-xs text-muted mb-1">Role</label>
+                <select value={editRole} onChange={(e) => setEditRole(e.target.value as (typeof ROLE_OPTIONS)[number])} className="w-full rounded-lg border border-border/50 bg-black/30 px-3 py-2.5 text-sm text-white focus:border-brand/60 focus:outline-none">
+                  {ROLE_OPTIONS.map((r) => <option key={r} value={r}>{ROLES[r] ?? r}</option>)}
+                </select>
+              </div>
+              <div>
+                <label className="block text-xs text-muted mb-1">Date</label>
+                <input type="date" value={editDate} onChange={(e) => setEditDate(e.target.value)} className="w-full rounded-lg border border-border/50 bg-black/30 px-3 py-2.5 text-sm text-white focus:border-brand/60 focus:outline-none" />
+              </div>
+              <div className="grid grid-cols-2 gap-2">
+                <div>
+                  <label className="block text-xs text-muted mb-1">Start time</label>
+                  <input type="time" value={editStart} onChange={(e) => setEditStart(e.target.value)} className="w-full rounded-lg border border-border/50 bg-black/30 px-3 py-2.5 text-sm text-white focus:border-brand/60 focus:outline-none" />
+                </div>
+                <div>
+                  <label className="block text-xs text-muted mb-1">End time</label>
+                  <input type="time" value={editEnd} onChange={(e) => setEditEnd(e.target.value)} className="w-full rounded-lg border border-border/50 bg-black/30 px-3 py-2.5 text-sm text-white focus:border-brand/60 focus:outline-none" />
+                </div>
+              </div>
+              <div>
+                <label className="block text-xs text-muted mb-1">Notes (optional)</label>
+                <textarea value={editNotes} onChange={(e) => setEditNotes(e.target.value)} rows={2} placeholder="Optional notes" className="w-full rounded-lg border border-border/50 bg-black/30 px-3 py-2.5 text-sm text-white placeholder:text-muted focus:border-brand/60 focus:outline-none resize-none" />
+              </div>
+            </div>
+            <p className="text-xs text-amber-400/90 mt-3">Removing this shift saves ${Number(editingShift.cost).toFixed(2)} on this day.</p>
+            <div className="flex gap-2 mt-4">
+              <button type="button" onClick={handleSaveEdit} disabled={saving} className="flex-1 rounded-lg border border-brand/50 bg-brand/15 px-4 py-2.5 text-sm font-semibold text-brand hover:bg-brand/25 disabled:opacity-50">Save</button>
+              <button type="button" onClick={handleDeleteShift} disabled={saving} className="flex-1 rounded-lg border border-red-500/50 bg-red-500/10 px-4 py-2.5 text-sm font-semibold text-red-400 hover:bg-red-500/20 disabled:opacity-50">Delete</button>
+              <button type="button" onClick={() => setEditingShift(null)} className="flex-1 rounded-lg border border-border/50 bg-black/30 px-4 py-2.5 text-sm text-muted hover:text-white">Cancel</button>
+            </div>
+          </div>
+        </div>,
+        document.body
       )}
 
       {/* Education Modal */}

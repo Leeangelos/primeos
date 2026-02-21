@@ -83,7 +83,7 @@ export async function GET(req: NextRequest) {
       projectedSales: Math.round(projectedSales),
       laborPct: +laborPct.toFixed(1),
       slph: Math.round(slph),
-      employees: dayShifts.map((s: any) => ({ name: s.employee_name, role: s.role, start: s.start_time, end: s.end_time, hours: s.hours, cost: s.labor_cost })),
+      employees: dayShifts.map((s: any) => ({ id: s.id, name: s.employee_name, role: s.role, start: s.start_time, end: s.end_time, hours: s.hours, cost: s.labor_cost })),
     });
   }
 
