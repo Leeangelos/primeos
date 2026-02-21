@@ -8,6 +8,7 @@ const tabs = [
   { href: "/daily", label: "Daily" },
   { href: "/weekly", label: "Weekly" },
   { href: "/monthly", label: "Monthly" },
+  { href: "/rolodex", label: "Rolodex" },
 ] as const;
 
 export function AppNav() {
