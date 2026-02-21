@@ -630,8 +630,7 @@ function DailyPageContent() {
                 if (!canSave) return;
                 setSaveStatus("saving");
                 try {
-                  const postUrl = typeof window !== "undefined" ? `${window.location.origin}/api/daily-kpi` : "/api/daily-kpi";
-                  const res = await fetch(postUrl, {
+                  const res = await fetch("/api/daily-kpi", {
                     method: "POST",
                     headers: { "Content-Type": "application/json" },
                     body: JSON.stringify({
@@ -651,21 +650,30 @@ function DailyPageContent() {
                     }),
                   });
                   const data = await res.json();
-                  setSaveStatus(data.ok ? "saved" : "error");
+                  if (data.ok) {
+                    setSaveStatus("saved");
+                    setTimeout(() => setSaveStatus("idle"), 2000);
+                  } else {
+                    setSaveStatus("error");
+                  }
                 } catch {
                   setSaveStatus("error");
                 }
               }}
               disabled={saveStatus === "saving" || !canSave}
-              className="rounded-lg border border-brand/50 bg-brand/15 px-4 py-2.5 text-sm font-semibold text-brand hover:bg-brand/25 disabled:opacity-50"
+              className={cn(
+                "rounded-lg border px-5 py-3 text-sm font-semibold transition-all duration-200",
+                saveStatus === "saved"
+                  ? "border-emerald-500/50 bg-emerald-500/15 text-emerald-400"
+                  : "border-brand/50 bg-brand/15 text-brand hover:bg-brand/25",
+                "disabled:opacity-50"
+              )}
             >
-              Save
+              {saveStatus === "saving" ? "Saving…" : saveStatus === "saved" ? "✓ Saved" : "Save"}
             </button>
-            <span className="text-sm text-muted">
-              {saveStatus === "saving" && "Saving…"}
-              {saveStatus === "saved" && "Saved"}
-              {saveStatus === "error" && "Error saving"}
-            </span>
+            {saveStatus === "error" && (
+              <span className="text-sm text-red-400">Error saving — try again</span>
+            )}
           </div>
         </div>
       </div>

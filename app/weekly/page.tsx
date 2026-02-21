@@ -413,111 +413,87 @@ function WeeklyPageContent() {
           )}
 
           {data.comparison && data.comparison.length > 0 && (
-            <section className="dashboard-surface rounded-lg border border-border bg-panel p-4 overflow-x-auto">
+            <section className="dashboard-surface rounded-lg border border-border bg-panel p-4">
               <h2 className="text-xs font-semibold uppercase tracking-wider text-muted mb-3">
                 Per-store breakdown (worst PRIME first)
               </h2>
-              <table className="w-full text-sm">
-                <thead>
-                  <tr className="border-b border-border text-left text-muted">
-                    <th className="pb-2 pr-4">Store</th>
-                    <th className="pb-2 pr-4">PRIME %</th>
-                    <th className="pb-2 pr-4">Labor %</th>
-                    <th className="pb-2 pr-4">Food+Disp %</th>
-                    <th className="pb-2 pr-4">SLPH</th>
-                    <th className="pb-2 pr-4">AOV ($)</th>
-                    <th className="pb-2 pr-4">Sched (hrs)</th>
-                    <th className="pb-2 pr-4">Actual (hrs)</th>
-                    <th className="pb-2 pr-4">Var (hrs)</th>
-                    <th className="pb-2 pr-4">Bump (min)</th>
-                    <th className="pb-2">Status</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {data.comparison.map((row, idx) => {
-                    const isBest =
-                      idx === data.comparison!.length - 1 &&
-                      data.comparison!.length > 1;
-                    const isWorst = idx === 0 && data.comparison!.length > 1;
-                    return (
-                      <tr
-                        key={row.slug}
-                        className={
-                          isWorst
-                            ? "bg-red-500/10"
-                            : isBest
-                              ? "bg-emerald-500/10"
-                              : ""
-                        }
-                      >
-                        <td className="py-2 pr-4 font-medium">{row.name}</td>
-                        <td className="py-2 pr-4 tabular-nums">
-                          {row.weekly_prime_pct != null
-                            ? `${row.weekly_prime_pct.toFixed(1)}%`
-                            : "—"}
-                        </td>
-                        <td className="py-2 pr-4 tabular-nums">
-                          {row.weekly_labor_pct != null
-                            ? `${row.weekly_labor_pct.toFixed(1)}%`
-                            : "—"}
-                        </td>
-                        <td className="py-2 pr-4 tabular-nums">
-                          {row.weekly_food_disposables_pct != null
-                            ? `${row.weekly_food_disposables_pct.toFixed(1)}%`
-                            : "—"}
-                        </td>
-                        <td className="py-2 pr-4 tabular-nums">
-                          {row.weekly_slph != null
-                            ? row.weekly_slph.toFixed(0)
-                            : "—"}
-                        </td>
-                        <td className="py-2 pr-4 tabular-nums">
-                          {row.weekly_aov != null
-                            ? `$${row.weekly_aov.toFixed(2)}`
-                            : "—"}
-                        </td>
-                        <td className="py-2 pr-4 tabular-nums">
-                          {row.total_scheduled_hours.toFixed(1)}
-                        </td>
-                        <td className="py-2 pr-4 tabular-nums">
-                          {row.total_labor_hours.toFixed(1)}
-                        </td>
-                        <td className="py-2 pr-4 tabular-nums">
-                          {row.scheduled_variance != null
-                            ? `${row.scheduled_variance >= 0 ? "+" : ""}${row.scheduled_variance.toFixed(1)}`
-                            : "—"}
-                        </td>
-                        <td className="py-2 pr-4 tabular-nums">
-                          {row.weekly_bump_time_minutes != null
-                            ? row.weekly_bump_time_minutes.toFixed(1)
-                            : "—"}
-                        </td>
-                        <td className="py-2">
-                          <span
-                            className={
-                              row.status === "on_track"
-                                ? "text-emerald-500"
-                                : "text-red-500"
-                            }
-                          >
-                            {row.status === "on_track" ? "On track" : "Over"}
-                          </span>
-                          {isWorst && (
-                            <span className="ml-1 text-xs text-red-500">
-                              (worst)
+              {/* Desktop: table */}
+              <div className="hidden sm:block overflow-x-auto">
+                <table className="w-full text-sm">
+                  <thead>
+                    <tr className="border-b border-border text-left text-muted">
+                      <th className="pb-2 pr-4">Store</th>
+                      <th className="pb-2 pr-4">PRIME %</th>
+                      <th className="pb-2 pr-4">Labor %</th>
+                      <th className="pb-2 pr-4">Food+Disp %</th>
+                      <th className="pb-2 pr-4">SLPH</th>
+                      <th className="pb-2">Status</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {data.comparison.map((row, idx) => {
+                      const isBest = idx === data.comparison!.length - 1 && data.comparison!.length > 1;
+                      const isWorst = idx === 0 && data.comparison!.length > 1;
+                      return (
+                        <tr key={row.slug} className={isWorst ? "bg-red-500/10" : isBest ? "bg-emerald-500/10" : ""}>
+                          <td className="py-2 pr-4 font-medium">{row.name}</td>
+                          <td className="py-2 pr-4 tabular-nums">{row.weekly_prime_pct != null ? `${row.weekly_prime_pct.toFixed(1)}%` : "—"}</td>
+                          <td className="py-2 pr-4 tabular-nums">{row.weekly_labor_pct != null ? `${row.weekly_labor_pct.toFixed(1)}%` : "—"}</td>
+                          <td className="py-2 pr-4 tabular-nums">{row.weekly_food_disposables_pct != null ? `${row.weekly_food_disposables_pct.toFixed(1)}%` : "—"}</td>
+                          <td className="py-2 pr-4 tabular-nums">{row.weekly_slph != null ? row.weekly_slph.toFixed(0) : "—"}</td>
+                          <td className="py-2">
+                            <span className={row.status === "on_track" ? "text-emerald-500" : "text-red-500"}>
+                              {row.status === "on_track" ? "On track" : "Over"}
                             </span>
-                          )}
-                          {isBest && (
-                            <span className="ml-1 text-xs text-emerald-500">
-                              (best)
-                            </span>
-                          )}
-                        </td>
-                      </tr>
-                    );
-                  })}
-                </tbody>
-              </table>
+                            {isWorst && <span className="ml-1 text-xs text-red-500">(worst)</span>}
+                            {isBest && <span className="ml-1 text-xs text-emerald-500">(best)</span>}
+                          </td>
+                        </tr>
+                      );
+                    })}
+                  </tbody>
+                </table>
+              </div>
+              {/* Mobile: stacked cards */}
+              <div className="sm:hidden space-y-3">
+                {data.comparison.map((row, idx) => {
+                  const isBest = idx === data.comparison!.length - 1 && data.comparison!.length > 1;
+                  const isWorst = idx === 0 && data.comparison!.length > 1;
+                  return (
+                    <div
+                      key={row.slug}
+                      className={`rounded-lg border p-4 ${isWorst ? "border-red-500/50 bg-red-500/10" : isBest ? "border-emerald-500/50 bg-emerald-500/10" : "border-border/50 bg-black/20"}`}
+                    >
+                      <div className="flex items-center justify-between mb-3">
+                        <span className="font-medium">{row.name}</span>
+                        <span className={row.status === "on_track" ? "text-emerald-500 text-sm font-medium" : "text-red-500 text-sm font-medium"}>
+                          {row.status === "on_track" ? "On track" : "Over"}
+                          {isWorst && " (worst)"}
+                          {isBest && " (best)"}
+                        </span>
+                      </div>
+                      <div className="grid grid-cols-2 gap-2 text-sm">
+                        <div>
+                          <div className="text-[10px] uppercase text-muted">PRIME %</div>
+                          <div className="text-lg font-bold tabular-nums">{row.weekly_prime_pct != null ? `${row.weekly_prime_pct.toFixed(1)}%` : "—"}</div>
+                        </div>
+                        <div>
+                          <div className="text-[10px] uppercase text-muted">Labor %</div>
+                          <div className="text-lg font-bold tabular-nums">{row.weekly_labor_pct != null ? `${row.weekly_labor_pct.toFixed(1)}%` : "—"}</div>
+                        </div>
+                        <div>
+                          <div className="text-[10px] uppercase text-muted">Food+Disp %</div>
+                          <div className="text-lg font-bold tabular-nums">{row.weekly_food_disposables_pct != null ? `${row.weekly_food_disposables_pct.toFixed(1)}%` : "—"}</div>
+                        </div>
+                        <div>
+                          <div className="text-[10px] uppercase text-muted">SLPH</div>
+                          <div className="text-lg font-bold tabular-nums">{row.weekly_slph != null ? row.weekly_slph.toFixed(0) : "—"}</div>
+                        </div>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
             </section>
           )}
         </>
