@@ -1,68 +1,138 @@
-import Link from "next/link";
-import { LineChart, ClipboardList } from "lucide-react";
-import { Card, CardHeader, CardHeading, CardIcon, CardHeaderText, CardTitle, CardDescription, CardContent } from "@/components/ui/card";
+"use client";
 
-const items = [
-  {
-    href: "/daily",
-    icon: ClipboardList,
-    title: "Daily KPI Entry",
-    desc: "Manual entry, PRIME-first hierarchy, SLPH core metric.",
-  },
-  {
-    href: "/weekly",
-    icon: LineChart,
-    title: "Weekly Rollups",
-    desc: "Mon–Sun with 4AM cutoff, trends + charts.",
-  },
-];
+import Link from "next/link";
+import { useState, useEffect } from "react";
+import { COCKPIT_STORE_SLUGS, COCKPIT_TARGETS, type CockpitStoreSlug } from "@/lib/cockpit-config";
+
+function todayYYYYMMDD(): string {
+  const t = new Date();
+  const y = t.getFullYear();
+  const m = String(t.getMonth() + 1).padStart(2, "0");
+  const d = String(t.getDate()).padStart(2, "0");
+  return `${y}-${m}-${d}`;
+}
+
+type StoreSnapshot = {
+  slug: CockpitStoreSlug;
+  name: string;
+  primePct: number | null;
+  laborPct: number | null;
+  slph: number | null;
+  status: "on_track" | "over" | null;
+};
 
 export default function HomePage() {
+  const [snapshots, setSnapshots] = useState<StoreSnapshot[]>([]);
+  const [loading, setLoading] = useState(true);
+  const today = todayYYYYMMDD();
+
+  useEffect(() => {
+    let cancelled = false;
+    async function load() {
+      const results: StoreSnapshot[] = [];
+      for (const slug of COCKPIT_STORE_SLUGS) {
+        try {
+          const res = await fetch(`/api/daily-kpi?store=${slug}&date=${today}`);
+          const data = await res.json();
+          const targets = COCKPIT_TARGETS[slug];
+          if (data.ok && data.entry) {
+            const e = data.entry;
+            const ns = e.net_sales ?? 0;
+            const lc = e.labor_dollars ?? 0;
+            const fc = e.food_dollars ?? 0;
+            const dc = e.disposables_dollars ?? 0;
+            const lh = e.labor_hours ?? 0;
+            const primeDollars = lc + fc + dc;
+            const primePct = ns > 0 ? (primeDollars / ns) * 100 : null;
+            const laborPct = ns > 0 ? (lc / ns) * 100 : null;
+            const slph = lh > 0 ? ns / lh : null;
+            const status = primePct != null ? (primePct <= targets.primeMax ? "on_track" : "over") : null;
+            results.push({ slug, name: targets.name, primePct, laborPct, slph, status });
+          } else {
+            results.push({ slug, name: targets.name, primePct: null, laborPct: null, slph: null, status: null });
+          }
+        } catch {
+          results.push({ slug, name: COCKPIT_TARGETS[slug].name, primePct: null, laborPct: null, slph: null, status: null });
+        }
+      }
+      if (!cancelled) {
+        setSnapshots(results);
+        setLoading(false);
+      }
+    }
+    load();
+    return () => { cancelled = true; };
+  }, [today]);
+
   return (
-    <div className="space-y-5">
+    <div className="space-y-6">
       <div className="flex items-start justify-between gap-4">
         <div>
           <h1 className="text-2xl font-semibold">PrimeOS</h1>
           <p className="mt-1 text-sm text-muted">
-            Daily entry and weekly rollups.
+            Today's pulse — {new Date(today + "T12:00:00Z").toLocaleDateString("en-US", { weekday: "long", month: "short", day: "numeric" })}
           </p>
         </div>
-        <div className="rounded-2xl bg-brand/10 px-3 py-2 text-sm text-brand ring-1 ring-brand/20">
-          PRIME-first
-        </div>
       </div>
 
-      <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
-        {items.map((it) => (
-          <Link key={it.title} href={it.href} className="block transition-opacity hover:opacity-95 active:opacity-90">
-            <Card>
-              <CardHeader>
-                <CardHeading>
-                  <CardIcon>
-                    <it.icon className="h-5 w-5" />
-                  </CardIcon>
-                  <CardHeaderText>
-                    <CardTitle>{it.title}</CardTitle>
-                    <CardDescription>
-                      {it.desc}
-                    </CardDescription>
-                  </CardHeaderText>
-                </CardHeading>
-              </CardHeader>
-              {it.href === "/daily" ? (
-                <CardContent>
-                  Enter and save the day’s numbers. Store-aware, live scoreboard.
-                </CardContent>
-              ) : null}
-            </Card>
-          </Link>
-        ))}
-      </div>
-
-      <div className="rounded-2xl bg-panel/35 ring-1 ring-border/25 p-4">
-        <div className="text-sm text-muted">
-          Business cutoff: 4:00 AM America/New_York
+      {loading ? (
+        <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
+          {COCKPIT_STORE_SLUGS.map((slug) => (
+            <div key={slug} className="dashboard-scoreboard rounded-lg border border-border/50 p-5 animate-pulse">
+              <div className="h-3 w-24 bg-muted/20 rounded mb-3" />
+              <div className="h-10 w-20 bg-muted/20 rounded" />
+            </div>
+          ))}
         </div>
+      ) : (
+        <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
+          {snapshots.map((s) => (
+            <Link key={s.slug} href={`/daily?store=${s.slug}&date=${today}`} className="block">
+              <div
+                className={`dashboard-scoreboard rounded-lg border p-5 transition-colors ${
+                  s.status === "on_track"
+                    ? "border-emerald-500/50 bg-emerald-500/10"
+                    : s.status === "over"
+                      ? "border-red-500/50 bg-red-500/10"
+                      : "border-border/50"
+                }`}
+              >
+                <div className="text-xs font-medium text-muted">{s.name}</div>
+                <div
+                  className={`mt-2 text-4xl font-black tabular-nums ${
+                    s.status === "on_track"
+                      ? "text-emerald-300"
+                      : s.status === "over"
+                        ? "text-red-300"
+                        : "text-white"
+                  }`}
+                >
+                  {s.primePct != null ? `${s.primePct.toFixed(1)}%` : "—"}
+                </div>
+                <div className="text-[10px] uppercase tracking-wider text-muted/70 mt-1">PRIME %</div>
+                <div className="mt-3 flex gap-4 text-xs text-muted">
+                  <span>Labor: {s.laborPct != null ? `${s.laborPct.toFixed(1)}%` : "—"}</span>
+                  <span>SLPH: {s.slph != null ? s.slph.toFixed(0) : "—"}</span>
+                </div>
+              </div>
+            </Link>
+          ))}
+        </div>
+      )}
+
+      <div className="grid grid-cols-2 gap-3">
+        <Link href="/daily" className="block">
+          <div className="dashboard-surface rounded-lg border border-border/50 p-4 hover:border-brand/30 transition-colors">
+            <div className="text-sm font-medium">Daily Entry</div>
+            <div className="text-xs text-muted mt-1">90-second number entry</div>
+          </div>
+        </Link>
+        <Link href="/weekly" className="block">
+          <div className="dashboard-surface rounded-lg border border-border/50 p-4 hover:border-brand/30 transition-colors">
+            <div className="text-sm font-medium">Weekly Cockpit</div>
+            <div className="text-xs text-muted mt-1">Trends + comparisons</div>
+          </div>
+        </Link>
       </div>
     </div>
   );

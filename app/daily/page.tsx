@@ -119,6 +119,7 @@ function DailyPageContent() {
   const [tickets, setTickets] = useState<string>("");
   const [notes, setNotes] = useState<string>("");
   const [saveStatus, setSaveStatus] = useState<SaveStatus>("idle");
+  const [showPrimeInfo, setShowPrimeInfo] = useState(false);
 
   /* eslint-disable react-hooks/set-state-in-effect -- sync URL params to state */
   useEffect(() => {
@@ -370,8 +371,16 @@ function DailyPageContent() {
                 prime.status == null ? STATUS_NEUTRAL : STATUS_STYLES[prime.status]
               )}
             >
-              <div className="text-[10px] font-medium uppercase tracking-widest text-muted/70">
+              <div className="text-[10px] font-medium uppercase tracking-widest text-muted/70 flex items-center justify-center gap-1.5">
                 {prime.label}
+                <button
+                  type="button"
+                  onClick={() => setShowPrimeInfo(true)}
+                  className="inline-flex items-center justify-center h-4 w-4 rounded-full bg-muted/20 text-muted hover:bg-brand/20 hover:text-brand transition-colors text-[9px] font-bold"
+                  aria-label="What is PRIME %?"
+                >
+                  i
+                </button>
               </div>
               <div
                 className={cn(
@@ -677,6 +686,50 @@ function DailyPageContent() {
           </div>
         </div>
       </div>
+      {showPrimeInfo && (
+        <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-4" onClick={() => setShowPrimeInfo(false)}>
+          <div className="absolute inset-0 bg-black/70 backdrop-blur-sm" />
+          <div
+            className="relative w-full max-w-lg rounded-2xl border border-border bg-panel p-6 shadow-2xl max-h-[80vh] overflow-y-auto"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <button
+              type="button"
+              onClick={() => setShowPrimeInfo(false)}
+              className="absolute top-4 right-4 text-muted hover:text-white text-lg"
+              aria-label="Close"
+            >
+              ✕
+            </button>
+            <h3 className="text-lg font-semibold text-brand mb-1">🎓 PRIME % — The Number That Matters Most</h3>
+            <p className="text-sm text-muted mb-4">How it's calculated, why it matters, and what to do when it's red.</p>
+
+            <div className="space-y-4 text-sm">
+              <div>
+                <h4 className="font-medium text-white mb-1">How It's Calculated</h4>
+                <p className="text-muted">PRIME % = (Labor + Food + Disposables) ÷ Net Sales × 100</p>
+                <p className="text-muted mt-1">These are your controllable costs. Everything else (rent, insurance, utilities) is fixed. PRIME is the number you can actually move.</p>
+              </div>
+
+              <div>
+                <h4 className="font-medium text-white mb-1">Why It Matters</h4>
+                <p className="text-muted">If PRIME is 60% and fixed costs are 30%, profit = 10%. Drop PRIME to 55% and profit doubles to 15%. On $5,000/day in sales, every point = $50/day = $1,500/month = $18,000/year.</p>
+              </div>
+
+              <div className="rounded-lg border border-red-500/30 bg-red-500/5 p-4">
+                <h4 className="font-medium text-red-400 mb-2">📕 When PRIME Goes RED (over target)</h4>
+                <ol className="space-y-2 text-muted list-decimal list-inside">
+                  <li>Check last 3 vendor deliveries for price increases vs previous invoices.</li>
+                  <li>Observe prep line. Weigh 10 cheese portions on 16-inch pies vs recipe spec.</li>
+                  <li>Run 48-hour waste log. Track everything thrown away with a reason.</li>
+                  <li>Compare scheduled hours to actual clock-in/out. Look for early ins and late outs.</li>
+                  <li>Check shift overlaps — closer/late driver overlap is most common ($15-20/day wasted).</li>
+                </ol>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
