@@ -7,6 +7,7 @@ import { cn } from "@/lib/utils";
 const tabs = [
   { href: "/daily", label: "Daily" },
   { href: "/weekly", label: "Weekly" },
+  { href: "/monthly", label: "Monthly" },
 ] as const;
 
 export function AppNav() {

@@ -736,7 +736,34 @@ function DailyPageContent() {
 
 export default function DailyPage() {
   return (
-    <Suspense fallback={<div className="p-8 text-center text-muted">Loading…</div>}>
+    <Suspense fallback={
+  <div className="space-y-5">
+    <div className="dashboard-toolbar p-4 sm:p-5 space-y-3 animate-pulse">
+      <div className="flex items-center justify-between">
+        <div className="h-6 w-40 bg-muted/20 rounded" />
+        <div className="h-10 w-32 bg-muted/20 rounded-lg" />
+      </div>
+      <div className="flex items-center gap-2">
+        <div className="h-12 w-12 bg-muted/20 rounded-lg" />
+        <div className="h-12 flex-1 bg-muted/20 rounded-lg" />
+        <div className="h-12 w-12 bg-muted/20 rounded-lg" />
+      </div>
+    </div>
+    <div className="dashboard-scoreboard rounded-lg border border-border/50 p-6 animate-pulse">
+      <div className="h-3 w-16 bg-muted/20 rounded mx-auto mb-4" />
+      <div className="h-16 w-32 bg-muted/20 rounded mx-auto" />
+      <div className="h-3 w-24 bg-muted/20 rounded mx-auto mt-4" />
+    </div>
+    <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
+      {[1,2,3].map((i) => (
+        <div key={i} className="dashboard-scoreboard rounded-lg border border-border/50 p-4 animate-pulse">
+          <div className="h-3 w-16 bg-muted/20 rounded mb-3" />
+          <div className="h-8 w-20 bg-muted/20 rounded" />
+        </div>
+      ))}
+    </div>
+  </div>
+}>
       <DailyPageContent />
     </Suspense>
   );

@@ -513,7 +513,30 @@ function WeeklyPageContent() {
 }
 
 const WeeklyPage = () => (
-  <Suspense fallback={<div className="p-8 text-center text-muted">Loading…</div>}>
+  <Suspense fallback={
+  <div className="space-y-6">
+    <div className="dashboard-toolbar p-5 animate-pulse">
+      <div className="flex items-center justify-between">
+        <div>
+          <div className="h-7 w-48 bg-muted/20 rounded mb-2" />
+          <div className="h-4 w-64 bg-muted/20 rounded" />
+        </div>
+        <div className="flex gap-3">
+          <div className="h-10 w-24 bg-muted/20 rounded-lg" />
+          <div className="h-10 w-36 bg-muted/20 rounded-lg" />
+        </div>
+      </div>
+    </div>
+    <div className="dashboard-surface rounded-lg border border-border p-6 animate-pulse">
+      <div className="h-3 w-24 bg-muted/20 rounded mb-3" />
+      <div className="h-10 w-28 bg-muted/20 rounded" />
+    </div>
+    <div className="dashboard-surface rounded-lg border border-border p-4 animate-pulse">
+      <div className="h-3 w-32 bg-muted/20 rounded mb-4" />
+      <div className="h-64 w-full bg-muted/20 rounded" />
+    </div>
+  </div>
+}>
     <WeeklyPageContent />
   </Suspense>
 );
