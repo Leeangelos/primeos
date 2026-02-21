@@ -17,6 +17,7 @@ const tabs = [
   { href: "/inventory", label: "Inventory" },
   { href: "/people", label: "People" },
   { href: "/marketing", label: "Marketing" },
+  { href: "/parties", label: "Parties" },
 ] as const;
 
 export function AppNav() {
