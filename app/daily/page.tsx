@@ -1,6 +1,7 @@
 "use client";
 
 import { Suspense, useState, useMemo, useEffect } from "react";
+import { createPortal } from "react-dom";
 import { useSearchParams } from "next/navigation";
 import {
   COCKPIT_STORE_SLUGS,
@@ -287,7 +288,8 @@ function DailyPageContent() {
     "mt-1 w-full dashboard-input px-4 py-3 text-base font-medium tabular-nums placeholder:text-muted focus:border-brand/60 focus:ring-1 focus:ring-brand/40 focus:outline-none";
 
   return (
-    <div className="space-y-5">
+    <>
+      <div className="space-y-5">
       {/* Toolbar */}
       <div className="dashboard-toolbar p-4 sm:p-5 space-y-3">
         <div className="flex items-center justify-between gap-3">
@@ -686,51 +688,58 @@ function DailyPageContent() {
           </div>
         </div>
       </div>
-      {showPrimeInfo && (
-        <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-4" onClick={() => setShowPrimeInfo(false)}>
-          <div className="absolute inset-0 bg-black/70 backdrop-blur-sm" />
+      </div>
+
+      {showPrimeInfo && typeof document !== "undefined" && createPortal(
+        <div
+          className="fixed inset-0 z-[9999] flex items-center justify-center p-4"
+          style={{ position: "fixed", top: 0, left: 0, right: 0, bottom: 0 }}
+          onClick={() => setShowPrimeInfo(false)}
+        >
+          <div className="absolute inset-0 bg-black/80 backdrop-blur-sm" />
           <div
-            className="relative w-full max-w-lg rounded-2xl border border-border bg-panel p-6 shadow-2xl max-h-[80vh] overflow-y-auto"
+            className="relative w-full max-w-md mx-auto rounded-2xl border border-border bg-[#0d0f13] p-5 shadow-2xl overflow-y-auto"
+            style={{ maxHeight: "85vh" }}
             onClick={(e) => e.stopPropagation()}
           >
             <button
               type="button"
               onClick={() => setShowPrimeInfo(false)}
-              className="absolute top-4 right-4 text-muted hover:text-white text-lg"
+              className="absolute top-3 right-3 text-muted hover:text-white text-lg leading-none"
               aria-label="Close"
             >
               ✕
             </button>
-            <h3 className="text-lg font-semibold text-brand mb-1">🎓 PRIME % — The Number That Matters Most</h3>
-            <p className="text-sm text-muted mb-4">How it's calculated, why it matters, and what to do when it's red.</p>
+            <h3 className="text-base font-semibold text-brand mb-1">🎓 PRIME %</h3>
+            <p className="text-xs text-muted mb-4">The number that matters most.</p>
 
-            <div className="space-y-4 text-sm">
+            <div className="space-y-3 text-sm">
               <div>
                 <h4 className="font-medium text-white mb-1">How It's Calculated</h4>
-                <p className="text-muted">PRIME % = (Labor + Food + Disposables) ÷ Net Sales × 100</p>
-                <p className="text-muted mt-1">These are your controllable costs. Everything else (rent, insurance, utilities) is fixed. PRIME is the number you can actually move.</p>
+                <p className="text-muted text-xs leading-relaxed">PRIME % = (Labor + Food + Disposables) ÷ Net Sales × 100. These are your controllable costs — the number you can actually move.</p>
               </div>
 
               <div>
                 <h4 className="font-medium text-white mb-1">Why It Matters</h4>
-                <p className="text-muted">If PRIME is 60% and fixed costs are 30%, profit = 10%. Drop PRIME to 55% and profit doubles to 15%. On $5,000/day in sales, every point = $50/day = $1,500/month = $18,000/year.</p>
+                <p className="text-muted text-xs leading-relaxed">If PRIME is 60% and fixed costs are 30%, profit = 10%. Drop PRIME to 55% and profit doubles to 15%. On $5K/day, every point = $50/day = $1,500/month.</p>
               </div>
 
-              <div className="rounded-lg border border-red-500/30 bg-red-500/5 p-4">
-                <h4 className="font-medium text-red-400 mb-2">📕 When PRIME Goes RED (over target)</h4>
-                <ol className="space-y-2 text-muted list-decimal list-inside">
-                  <li>Check last 3 vendor deliveries for price increases vs previous invoices.</li>
-                  <li>Observe prep line. Weigh 10 cheese portions on 16-inch pies vs recipe spec.</li>
-                  <li>Run 48-hour waste log. Track everything thrown away with a reason.</li>
-                  <li>Compare scheduled hours to actual clock-in/out. Look for early ins and late outs.</li>
-                  <li>Check shift overlaps — closer/late driver overlap is most common ($15-20/day wasted).</li>
+              <div className="rounded-lg border border-red-500/30 bg-red-500/5 p-3">
+                <h4 className="font-medium text-red-400 text-xs mb-2">📕 When PRIME Goes RED</h4>
+                <ol className="space-y-1.5 text-muted text-xs list-decimal list-inside leading-relaxed">
+                  <li>Check last 3 vendor deliveries for price increases.</li>
+                  <li>Weigh 10 cheese portions on 16" pies vs recipe spec.</li>
+                  <li>Run 48-hour waste log — track everything thrown away.</li>
+                  <li>Compare scheduled vs actual clock-in/out times.</li>
+                  <li>Check shift overlaps — closer/driver overlap = $15-20/day wasted.</li>
                 </ol>
               </div>
             </div>
           </div>
-        </div>
+        </div>,
+        document.body
       )}
-    </div>
+    </>
   );
 }
 
