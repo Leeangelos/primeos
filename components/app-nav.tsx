@@ -11,6 +11,7 @@ const tabs = [
   { href: "/rolodex", label: "Rolodex" },
   { href: "/brief", label: "Brief" },
   { href: "/pnl", label: "P&L" },
+  { href: "/recipes", label: "Recipes" },
 ] as const;
 
 export function AppNav() {
