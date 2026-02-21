@@ -120,7 +120,7 @@ function DailyPageContent() {
   const [tickets, setTickets] = useState<string>("");
   const [notes, setNotes] = useState<string>("");
   const [saveStatus, setSaveStatus] = useState<SaveStatus>("idle");
-  const [showPrimeInfo, setShowPrimeInfo] = useState(false);
+  const [showEducation, setShowEducation] = useState<string | null>(null);
   const [rolling, setRolling] = useState<any>(null);
   const [acknowledged, setAcknowledged] = useState<string | null>(null); // timestamp
   const [ackLoading, setAckLoading] = useState(false);
@@ -388,9 +388,9 @@ function DailyPageContent() {
                 {prime.label}
                 <button
                   type="button"
-                  onClick={() => setShowPrimeInfo(true)}
+                  onClick={() => setShowEducation("prime")}
                   className="inline-flex items-center justify-center h-4 w-4 rounded-full bg-muted/20 text-muted hover:bg-brand/20 hover:text-brand transition-colors text-[9px] font-bold"
-                  aria-label="What is PRIME %?"
+                  aria-label="Learn more"
                 >
                   i
                 </button>
@@ -430,8 +430,16 @@ function DailyPageContent() {
                     status == null ? STATUS_NEUTRAL : STATUS_STYLES[status]
                   )}
                 >
-                  <div className="text-[10px] font-medium uppercase tracking-widest text-muted/70">
+                  <div className="text-[10px] font-medium uppercase tracking-widest text-muted/70 flex items-center justify-center gap-1.5">
                     {label}
+                    <button
+                      type="button"
+                      onClick={() => setShowEducation(label === "Labor %" ? "labor" : label === "Food+Disposables %" ? "food" : "slph")}
+                      className="inline-flex items-center justify-center h-4 w-4 rounded-full bg-muted/20 text-muted hover:bg-brand/20 hover:text-brand transition-colors text-[9px] font-bold"
+                      aria-label="Learn more"
+                    >
+                      i
+                    </button>
                   </div>
                   <div
                     className={cn(
@@ -742,11 +750,11 @@ function DailyPageContent() {
       </div>
       </div>
 
-      {showPrimeInfo && typeof document !== "undefined" && createPortal(
+      {showEducation && typeof document !== "undefined" && createPortal(
         <div
           className="fixed inset-0 z-[9999] flex items-center justify-center p-4"
           style={{ position: "fixed", top: 0, left: 0, right: 0, bottom: 0 }}
-          onClick={() => setShowPrimeInfo(false)}
+          onClick={() => setShowEducation(null)}
         >
           <div className="absolute inset-0 bg-black/80 backdrop-blur-sm" />
           <div
@@ -756,37 +764,175 @@ function DailyPageContent() {
           >
             <button
               type="button"
-              onClick={() => setShowPrimeInfo(false)}
+              onClick={() => setShowEducation(null)}
               className="absolute top-3 right-3 text-muted hover:text-white text-lg leading-none"
               aria-label="Close"
             >
               ✕
             </button>
-            <h3 className="text-base font-semibold text-brand mb-1">🎓 PRIME %</h3>
-            <p className="text-xs text-muted mb-4">The number that matters most.</p>
 
-            <div className="space-y-3 text-sm">
+            {showEducation === "prime" && (
               <div>
-                <h4 className="font-medium text-white mb-1">How It's Calculated</h4>
-                <p className="text-muted text-xs leading-relaxed">PRIME % = (Labor + Food + Disposables) ÷ Net Sales × 100. These are your controllable costs — the number you can actually move.</p>
+                <h3 className="text-base font-semibold text-brand mb-1">🎓 PRIME %</h3>
+                <p className="text-xs text-muted mb-4">The number that matters most.</p>
+                <div className="space-y-3 text-sm">
+                  <div>
+                    <h4 className="font-medium text-white mb-1">How It's Calculated</h4>
+                    <p className="text-muted text-xs leading-relaxed">PRIME % = (Labor + Food + Disposables) ÷ Net Sales × 100. These are your controllable costs — the number you can actually move.</p>
+                  </div>
+                  <div>
+                    <h4 className="font-medium text-white mb-1">Why It Matters</h4>
+                    <p className="text-muted text-xs leading-relaxed">If PRIME is 60% and fixed costs are 30%, profit = 10%. Drop PRIME to 55% and profit doubles to 15%. On $5K/day, every point = $50/day = $1,500/month.</p>
+                  </div>
+                  <div className="rounded-lg border border-red-500/30 bg-red-500/5 p-3">
+                    <h4 className="font-medium text-red-400 text-xs mb-2">📕 When PRIME Goes RED</h4>
+                    <ol className="space-y-1.5 text-muted text-xs list-decimal list-inside leading-relaxed">
+                      <li>Check last 3 vendor deliveries for price increases.</li>
+                      <li>Weigh 10 cheese portions on 16" pies vs recipe spec.</li>
+                      <li>Run 48-hour waste log — track everything thrown away.</li>
+                      <li>Compare scheduled vs actual clock-in/out times.</li>
+                      <li>Check shift overlaps — closer/driver overlap = $15-20/day wasted.</li>
+                    </ol>
+                  </div>
+                </div>
               </div>
+            )}
 
+            {showEducation === "labor" && (
               <div>
-                <h4 className="font-medium text-white mb-1">Why It Matters</h4>
-                <p className="text-muted text-xs leading-relaxed">If PRIME is 60% and fixed costs are 30%, profit = 10%. Drop PRIME to 55% and profit doubles to 15%. On $5K/day, every point = $50/day = $1,500/month.</p>
+                <h3 className="text-base font-semibold text-brand mb-1">🎓 Labor %</h3>
+                <p className="text-xs text-muted mb-4">Your biggest controllable expense.</p>
+                <div className="space-y-3 text-sm">
+                  <div>
+                    <h4 className="font-medium text-white mb-1">How It's Calculated</h4>
+                    <p className="text-muted text-xs leading-relaxed">Labor % = Total Labor Dollars ÷ Net Sales × 100. Target: 19-21%. On $5K/day, every point over = $50/day = $1,500/month.</p>
+                  </div>
+                  <div>
+                    <h4 className="font-medium text-white mb-1">Why It Matters</h4>
+                    <p className="text-muted text-xs leading-relaxed">Labor is the cost you control most directly through scheduling. Unlike food cost which fluctuates with deliveries, labor is a daily decision you make before the store opens.</p>
+                  </div>
+                  <div className="rounded-lg border border-red-500/30 bg-red-500/5 p-3">
+                    <h4 className="font-medium text-red-400 text-xs mb-2">📕 When Labor Goes RED (&gt; 24%)</h4>
+                    <ol className="space-y-1.5 text-muted text-xs list-decimal list-inside leading-relaxed">
+                      <li>Compare scheduled hours to actual clock-in/out. Look for early ins and late outs.</li>
+                      <li>Check shift overlaps — closer/late driver overlap is most common ($15-20/day wasted).</li>
+                      <li>Review SLPH. Below 65 means too many people for the volume.</li>
+                      <li>Check last 4 of same weekday — pattern or one-off? Patterns need restructuring.</li>
+                      <li>Review overtime — anyone over 40hrs costs 1.5x. Redistribute may be cheaper.</li>
+                    </ol>
+                  </div>
+                </div>
               </div>
+            )}
 
-              <div className="rounded-lg border border-red-500/30 bg-red-500/5 p-3">
-                <h4 className="font-medium text-red-400 text-xs mb-2">📕 When PRIME Goes RED</h4>
-                <ol className="space-y-1.5 text-muted text-xs list-decimal list-inside leading-relaxed">
-                  <li>Check last 3 vendor deliveries for price increases.</li>
-                  <li>Weigh 10 cheese portions on 16" pies vs recipe spec.</li>
-                  <li>Run 48-hour waste log — track everything thrown away.</li>
-                  <li>Compare scheduled vs actual clock-in/out times.</li>
-                  <li>Check shift overlaps — closer/driver overlap = $15-20/day wasted.</li>
-                </ol>
+            {showEducation === "food" && (
+              <div>
+                <h3 className="text-base font-semibold text-brand mb-1">🎓 Food + Disposables %</h3>
+                <p className="text-xs text-muted mb-4">Where money disappears without anyone noticing.</p>
+                <div className="space-y-3 text-sm">
+                  <div>
+                    <h4 className="font-medium text-white mb-1">How It's Calculated</h4>
+                    <p className="text-muted text-xs leading-relaxed">Food+Disp % = (Food Purchases + Disposables) ÷ Net Sales × 100. Target: ≤35%. Note: this uses a 7-day rolling average to smooth delivery-day spikes.</p>
+                  </div>
+                  <div>
+                    <h4 className="font-medium text-white mb-1">Why It Matters</h4>
+                    <p className="text-muted text-xs leading-relaxed">A 2% gap between theoretical food cost (recipe) and actual food cost = overportioning + waste + theft + spoilage. On $150K/year in food, that's $3,000 walking out the door.</p>
+                  </div>
+                  <div className="rounded-lg border border-red-500/30 bg-red-500/5 p-3">
+                    <h4 className="font-medium text-red-400 text-xs mb-2">📕 When Food Cost Goes RED (&gt; 33%)</h4>
+                    <ol className="space-y-1.5 text-muted text-xs list-decimal list-inside leading-relaxed">
+                      <li>Check last 3 vendor deliveries for price increases vs previous invoices.</li>
+                      <li>Observe prep line. Weigh 10 cheese portions on 16" pies vs recipe spec.</li>
+                      <li>Run 48-hour waste log. Track everything thrown away with a reason.</li>
+                      <li>Compare theoretical cost (recipe) vs actual (purchases ÷ units sold) on top 5 items.</li>
+                      <li>Check for vendor substitutions — distributors sometimes sub higher-cost items.</li>
+                    </ol>
+                  </div>
+                </div>
               </div>
-            </div>
+            )}
+
+            {showEducation === "slph" && (
+              <div>
+                <h3 className="text-base font-semibold text-brand mb-1">🎓 SLPH (Sales per Labor Hour)</h3>
+                <p className="text-xs text-muted mb-4">Are you getting enough output per hour worked?</p>
+                <div className="space-y-3 text-sm">
+                  <div>
+                    <h4 className="font-medium text-white mb-1">How It's Calculated</h4>
+                    <p className="text-muted text-xs leading-relaxed">SLPH = Net Sales ÷ Total Labor Hours. Target: $80+. This tells you how productive each hour of labor is.</p>
+                  </div>
+                  <div>
+                    <h4 className="font-medium text-white mb-1">Why It Matters</h4>
+                    <p className="text-muted text-xs leading-relaxed">SLPH connects sales volume to staffing. A slow Tuesday with the same staff as Friday means you're paying people to stand around. The goal isn't minimum staffing — it's optimal staffing.</p>
+                  </div>
+                  <div className="rounded-lg border border-red-500/30 bg-red-500/5 p-3">
+                    <h4 className="font-medium text-red-400 text-xs mb-2">📕 When SLPH Goes RED (&lt; 65)</h4>
+                    <ol className="space-y-1.5 text-muted text-xs list-decimal list-inside leading-relaxed">
+                      <li>Calculate: Total Sales ÷ Total Labor Hours. Below 65 = low productivity.</li>
+                      <li>Check if slow day or overstaffed. If sales were normal, you scheduled too many people.</li>
+                      <li>Review each position — did you need both a mid-shift AND a closer?</li>
+                      <li>Cross-reference with customer traffic patterns from POS data.</li>
+                      <li>Build an SLPH target by day-of-week. Mon/Tue may need different staffing than Fri/Sat.</li>
+                    </ol>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {showEducation === "voids" && (
+              <div>
+                <h3 className="text-base font-semibold text-brand mb-1">🎓 Voids %</h3>
+                <p className="text-xs text-muted mb-4">Every void is revenue that disappeared.</p>
+                <div className="space-y-3 text-sm">
+                  <div>
+                    <h4 className="font-medium text-white mb-1">How It's Calculated</h4>
+                    <p className="text-muted text-xs leading-relaxed">Voids % = Void Dollars ÷ Net Sales × 100. Target: &lt; 2%. Voids include cancelled orders, remakes, and manager comps.</p>
+                  </div>
+                  <div>
+                    <h4 className="font-medium text-white mb-1">Why It Matters</h4>
+                    <p className="text-muted text-xs leading-relaxed">2% voids on $5K/day = $100/day = $3,000/month in revenue that came in and went right back out. Some voids are legitimate (wrong orders), but patterns reveal training gaps or worse.</p>
+                  </div>
+                  <div className="rounded-lg border border-red-500/30 bg-red-500/5 p-3">
+                    <h4 className="font-medium text-red-400 text-xs mb-2">📕 When Voids Go RED (&gt; 3%)</h4>
+                    <ol className="space-y-1.5 text-muted text-xs list-decimal list-inside leading-relaxed">
+                      <li>Pull void report by employee. Is one person responsible for most voids?</li>
+                      <li>Check void timing — end of shift voids are a red flag.</li>
+                      <li>Review reasons — "wrong order" repeatedly = order-taking training issue.</li>
+                      <li>Compare voids by day — certain shifts may need more supervision.</li>
+                      <li>Manager comps are voids too. Track who's giving away food and why.</li>
+                    </ol>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {showEducation === "waste" && (
+              <div>
+                <h3 className="text-base font-semibold text-brand mb-1">🎓 Waste %</h3>
+                <p className="text-xs text-muted mb-4">Product you bought but never sold.</p>
+                <div className="space-y-3 text-sm">
+                  <div>
+                    <h4 className="font-medium text-white mb-1">How It's Calculated</h4>
+                    <p className="text-muted text-xs leading-relaxed">Waste % = Waste Dollars ÷ Net Sales × 100. Target: &lt; 1.5%. Waste includes expired product, dropped/burned food, and overprepped items.</p>
+                  </div>
+                  <div>
+                    <h4 className="font-medium text-white mb-1">Why It Matters</h4>
+                    <p className="text-muted text-xs leading-relaxed">Waste is purchased inventory that generated zero revenue. 1.5% waste on $150K/year in food = $2,250/year thrown in the trash. Most waste is preventable with better prep planning.</p>
+                  </div>
+                  <div className="rounded-lg border border-red-500/30 bg-red-500/5 p-3">
+                    <h4 className="font-medium text-red-400 text-xs mb-2">📕 When Waste Goes RED (&gt; 2.5%)</h4>
+                    <ol className="space-y-1.5 text-muted text-xs list-decimal list-inside leading-relaxed">
+                      <li>Run a 48-hour waste log. Write down every item thrown away with a reason.</li>
+                      <li>Check prep quantities vs actual sales. Are you prepping Saturday amounts on Tuesday?</li>
+                      <li>Review walk-in organization — FIFO (first in, first out) prevents expiration.</li>
+                      <li>Check dough waste — overproofed dough is the #1 waste item in pizza shops.</li>
+                      <li>Employee meals and untracked giveaways count as waste. Track them.</li>
+                    </ol>
+                  </div>
+                </div>
+              </div>
+            )}
+
           </div>
         </div>,
         document.body
