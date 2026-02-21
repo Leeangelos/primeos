@@ -121,6 +121,7 @@ function DailyPageContent() {
   const [notes, setNotes] = useState<string>("");
   const [saveStatus, setSaveStatus] = useState<SaveStatus>("idle");
   const [showPrimeInfo, setShowPrimeInfo] = useState(false);
+  const [rolling, setRolling] = useState<any>(null);
 
   /* eslint-disable react-hooks/set-state-in-effect -- sync URL params to state */
   useEffect(() => {
@@ -169,6 +170,7 @@ function DailyPageContent() {
           setTickets("");
           setNotes("");
         }
+        setRolling(data.rolling7 || null);
       })
       .catch(() => {});
     return () => {
@@ -393,6 +395,9 @@ function DailyPageContent() {
                 {prime.value}
               </div>
               <div className="mt-3 sm:mt-5 text-xs text-muted/70">Target: {prime.target}</div>
+              {rolling && rolling.primePct != null && (
+                <div className="text-xs text-muted/60 mt-1">7-day avg: {rolling.primePct}%</div>
+              )}
             </div>
           );
         })()}
@@ -428,6 +433,15 @@ function DailyPageContent() {
                     {value}
                   </div>
                   <div className="mt-1 text-[11px] text-muted/70">Target: {target}</div>
+                  {rolling && label === "Labor %" && rolling.laborPct != null && (
+                    <div className="text-xs text-muted/60 mt-1">7-day avg: {rolling.laborPct}%</div>
+                  )}
+                  {rolling && label === "Food+Disposables %" && rolling.foodDispPct != null && (
+                    <div className="text-xs text-muted/60 mt-1">7-day avg: {rolling.foodDispPct}%</div>
+                  )}
+                  {rolling && label === "SLPH" && rolling.slph != null && (
+                    <div className="text-xs text-muted/60 mt-1">7-day avg: {rolling.slph}</div>
+                  )}
                 </div>
               );
             }

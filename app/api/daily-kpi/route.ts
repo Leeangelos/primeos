@@ -64,7 +64,45 @@ export async function GET(request: NextRequest) {
       );
     }
 
-    return NextResponse.json({ ok: true, entry: entry ?? null });
+    // Fetch last 7 days for rolling averages
+    const weekAgo = new Date(date + "T12:00:00Z");
+    weekAgo.setUTCDate(weekAgo.getUTCDate() - 6);
+    const { data: rolling } = await supabase
+      .from("daily_kpis")
+      .select("net_sales, food_dollars, disposables_dollars, labor_dollars, labor_hours, voids_dollars, waste_dollars")
+      .eq("store_id", store.id)
+      .gte("business_date", weekAgo.toISOString().slice(0, 10))
+      .lte("business_date", date)
+      .order("business_date", { ascending: true });
+
+    let rolling7 = null;
+    if (rolling && rolling.length > 0) {
+      const totals = rolling.reduce(
+        (acc, r) => ({
+          sales: acc.sales + (r.net_sales ?? 0),
+          food: acc.food + (r.food_dollars ?? 0),
+          disp: acc.disp + (r.disposables_dollars ?? 0),
+          labor: acc.labor + (r.labor_dollars ?? 0),
+          hours: acc.hours + (r.labor_hours ?? 0),
+          voids: acc.voids + (r.voids_dollars ?? 0),
+          waste: acc.waste + (r.waste_dollars ?? 0),
+        }),
+        { sales: 0, food: 0, disp: 0, labor: 0, hours: 0, voids: 0, waste: 0 }
+      );
+      rolling7 = {
+        days: rolling.length,
+        foodPct: totals.sales > 0 ? +((totals.food / totals.sales) * 100).toFixed(1) : null,
+        dispPct: totals.sales > 0 ? +((totals.disp / totals.sales) * 100).toFixed(1) : null,
+        foodDispPct: totals.sales > 0 ? +(((totals.food + totals.disp) / totals.sales) * 100).toFixed(1) : null,
+        laborPct: totals.sales > 0 ? +((totals.labor / totals.sales) * 100).toFixed(1) : null,
+        primePct: totals.sales > 0 ? +(((totals.labor + totals.food + totals.disp) / totals.sales) * 100).toFixed(1) : null,
+        slph: totals.hours > 0 ? +(totals.sales / totals.hours).toFixed(1) : null,
+        voidsPct: totals.sales > 0 ? +((totals.voids / totals.sales) * 100).toFixed(1) : null,
+        wastePct: totals.sales > 0 ? +((totals.waste / totals.sales) * 100).toFixed(1) : null,
+      };
+    }
+
+    return NextResponse.json({ ok: true, entry: entry ?? null, rolling7 });
   } catch (err) {
     console.error("[daily-kpi GET]", err);
     const message = err instanceof Error ? err.message : "Unknown error";
