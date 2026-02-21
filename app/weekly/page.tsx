@@ -56,7 +56,7 @@ type ApiPayload = {
     scheduled_variance: number | null;
     weekly_bump_time_minutes: number | null;
   } | null;
-  issues?: { type: string; message: string; date?: string; count?: number }[];
+  issues?: { type: string; message: string; date?: string; count?: number; store?: string }[];
   comparison?: {
     slug: string;
     name: string;
@@ -142,7 +142,7 @@ function WeeklyPageContent() {
         <div>
           <h1 className="text-2xl font-semibold">Weekly Cockpit</h1>
           <p className="mt-1 text-sm text-muted">
-            Week = Mon–Sun. Data from daily KPIs. Drill down to edit a day.
+            Tap any day to edit. Tap a store card to drill in.
           </p>
         </div>
         <div className="flex flex-wrap items-center gap-3">
@@ -274,6 +274,16 @@ function WeeklyPageContent() {
                       tickFormatter={(v) => `${v}%`}
                     />
                     <Tooltip
+                      contentStyle={{
+                        backgroundColor: "#1a1d23",
+                        border: "1px solid rgba(255,255,255,0.1)",
+                        borderRadius: "8px",
+                        padding: "8px 12px",
+                        color: "#fff",
+                        fontSize: "13px",
+                      }}
+                      labelStyle={{ color: "#9ca3af", fontSize: "11px", marginBottom: "4px" }}
+                      itemStyle={{ color: "#fff", padding: "2px 0" }}
                       formatter={(v: number | undefined) => [v != null ? `${v.toFixed(1)}%` : "—", "PRIME %"]}
                       labelFormatter={(_, payload) =>
                         payload?.[0]?.payload?.date ?? ""
@@ -399,18 +409,53 @@ function WeeklyPageContent() {
             </section>
           )}
 
-          {data.issues && data.issues.length > 0 && (
-            <section className="dashboard-surface rounded-lg border border-amber-500/30 bg-amber-500/5 p-4">
-              <h2 className="text-xs font-semibold uppercase tracking-wider text-amber-400/90 mb-2">
-                Top issues this week
-              </h2>
-              <ul className="list-disc list-inside space-y-1 text-sm text-muted">
-                {data.issues.map((i, idx) => (
-                  <li key={idx}>{i.message}</li>
-                ))}
-              </ul>
-            </section>
-          )}
+          {data.issues && data.issues.length > 0 && (() => {
+            const DAYS_IN_WEEK = 7;
+            function shortDay(dateStr: string): string {
+              const d = new Date(dateStr + "T12:00:00Z");
+              const day = d.toLocaleDateString("en-US", { weekday: "short" });
+              const m = d.getUTCMonth() + 1;
+              const dayNum = d.getUTCDate();
+              return `${day} ${m}/${dayNum}`;
+            }
+            function issueBullet(i: { type: string; message: string; date?: string; count?: number }): string {
+              if (i.type === "worst_prime_day" && i.date) {
+                const varianceMatch = i.message.match(/\(\+[\d.]+% vs target\)/);
+                const variance = varianceMatch ? varianceMatch[0] : "";
+                return `Worst: ${shortDay(i.date)} ${variance}`.trim();
+              }
+              const count = i.count ?? 0;
+              if (i.type === "prime_over") return `PRIME over target ${count} of ${DAYS_IN_WEEK} days`;
+              if (i.type === "labor_outside") return `Labor outside target ${count} of ${DAYS_IN_WEEK} days`;
+              if (i.type === "slph_below") return `SLPH below target ${count} of ${DAYS_IN_WEEK} days`;
+              return i.message;
+            }
+            const byStore = new Map<string, typeof data.issues>();
+            for (const i of data.issues!) {
+              const key = i.store ?? (store !== "all" ? COCKPIT_TARGETS[store].name : "All");
+              if (!byStore.has(key)) byStore.set(key, []);
+              byStore.get(key)!.push(i);
+            }
+            return (
+              <section className="dashboard-surface rounded-lg border border-amber-500/30 bg-amber-500/5 p-4">
+                <h2 className="text-xs font-semibold uppercase tracking-wider text-amber-400/90 mb-3">
+                  Top issues this week
+                </h2>
+                <div className="space-y-4">
+                  {Array.from(byStore.entries()).map(([storeName, issues]) => (
+                    <div key={storeName}>
+                      <h3 className="text-xs font-medium text-amber-400/80 mb-1.5">{storeName}</h3>
+                      <ul className="list-disc list-inside space-y-1 text-sm text-muted">
+                        {issues.slice(0, 3).map((i, idx) => (
+                          <li key={idx} className="truncate" title={issueBullet(i)}>{issueBullet(i)}</li>
+                        ))}
+                      </ul>
+                    </div>
+                  ))}
+                </div>
+              </section>
+            );
+          })()}
 
           {data.comparison && data.comparison.length > 0 && (
             <section className="dashboard-surface rounded-lg border border-border bg-panel p-4">

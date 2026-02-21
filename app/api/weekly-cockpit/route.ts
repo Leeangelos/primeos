@@ -301,7 +301,9 @@ export async function GET(request: NextRequest) {
         const prime_pct = totalNs > 0 ? (totalPrime / totalNs) * 100 : null;
         return { date, prime_pct };
       });
-      issues = storeResults.flatMap((s) => s.issues);
+      issues = storeResults.flatMap((s) =>
+        s.issues.map((i) => ({ ...i, store: s.name }))
+      );
     } else if (singleStore) {
       const w = singleStore.weekly;
       const t = getCockpitTargets(singleStore.slug as CockpitStoreSlug);
