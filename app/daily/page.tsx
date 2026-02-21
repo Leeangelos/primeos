@@ -122,6 +122,9 @@ function DailyPageContent() {
   const [saveStatus, setSaveStatus] = useState<SaveStatus>("idle");
   const [showPrimeInfo, setShowPrimeInfo] = useState(false);
   const [rolling, setRolling] = useState<any>(null);
+  const [acknowledged, setAcknowledged] = useState<string | null>(null); // timestamp
+  const [ackLoading, setAckLoading] = useState(false);
+  const [entry, setEntry] = useState<any>(null); // current day's data from API
 
   /* eslint-disable react-hooks/set-state-in-effect -- sync URL params to state */
   useEffect(() => {
@@ -170,7 +173,13 @@ function DailyPageContent() {
           setTickets("");
           setNotes("");
         }
+        setEntry(data.entry ?? null);
         setRolling(data.rolling7 || null);
+        if (data.entry?.acknowledged_at) {
+          setAcknowledged(data.entry.acknowledged_at);
+        } else {
+          setAcknowledged(null);
+        }
       })
       .catch(() => {});
     return () => {
@@ -698,6 +707,35 @@ function DailyPageContent() {
             </button>
             {saveStatus === "error" && (
               <span className="text-sm text-red-400">Error saving — try again</span>
+            )}
+            {saveStatus === "idle" && entry && !acknowledged && (
+              <button
+                type="button"
+                onClick={async () => {
+                  setAckLoading(true);
+                  try {
+                    const res = await fetch("/api/daily-kpi/acknowledge", {
+                      method: "POST",
+                      headers: { "Content-Type": "application/json" },
+                      body: JSON.stringify({ store: storeId, business_date: businessDate }),
+                    });
+                    const data = await res.json();
+                    if (data.ok) {
+                      setAcknowledged(data.acknowledged_at);
+                    }
+                  } catch {}
+                  setAckLoading(false);
+                }}
+                disabled={ackLoading}
+                className="rounded-lg border border-emerald-500/50 bg-emerald-500/15 px-5 py-3 text-sm font-semibold text-emerald-400 hover:bg-emerald-500/25 disabled:opacity-50"
+              >
+                {ackLoading ? "..." : "✓ Acknowledge"}
+              </button>
+            )}
+            {acknowledged && (
+              <div className="text-xs text-emerald-400/70">
+                Acknowledged {new Date(acknowledged).toLocaleString("en-US", { month: "short", day: "numeric", hour: "numeric", minute: "2-digit" })}
+              </div>
             )}
           </div>
         </div>
