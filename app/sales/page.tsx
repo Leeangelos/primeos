@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import { createPortal } from "react-dom";
 import { COCKPIT_STORE_SLUGS, COCKPIT_TARGETS, type CockpitStoreSlug } from "@/lib/cockpit-config";
 import { getStoreColor } from "@/lib/store-colors";
 import { cn } from "@/lib/utils";
@@ -36,6 +37,7 @@ export default function SalesPage() {
   const [store, setStore] = useState<CockpitStoreSlug | "all">("all");
   const [data, setData] = useState<ReportData | null>(null);
   const [loading, setLoading] = useState(true);
+  const [showEducation, setShowEducation] = useState(false);
 
   useEffect(() => {
     let cancelled = false;
@@ -60,7 +62,10 @@ export default function SalesPage() {
   return (
     <div className="space-y-5">
       <div className="dashboard-toolbar p-4 sm:p-5 space-y-3">
-        <h1 className="text-lg font-semibold sm:text-2xl">Sales Report</h1>
+        <div className="flex items-center gap-2">
+          <h1 className="text-lg font-semibold sm:text-2xl">Sales Report</h1>
+          <button type="button" onClick={() => setShowEducation(true)} className="inline-flex items-center justify-center h-5 w-5 rounded-full bg-muted/20 text-muted hover:bg-brand/20 hover:text-brand transition-colors text-[10px] font-bold">i</button>
+        </div>
         <p className="text-xs text-muted">Week of {weekLabel || "..."} — This Week vs Last Week vs Last Year</p>
         <div className="flex flex-wrap gap-1.5 justify-center">
           <button type="button" onClick={() => setStore("all")} className={cn("rounded-lg border px-3 py-2 text-sm font-medium transition-colors", store === "all" ? "border-brand/50 bg-brand/15 text-brand" : "border-border/30 bg-black/20 text-muted hover:text-white")}>All Stores</button>
@@ -136,6 +141,32 @@ export default function SalesPage() {
         </>
       ) : (
         <div className="text-center py-12 text-muted text-sm">No data available.</div>
+      )}
+
+      {showEducation && typeof document !== "undefined" && createPortal(
+        <div className="fixed inset-0 z-[9999] flex items-center justify-center p-4" style={{ position: "fixed", top: 0, left: 0, right: 0, bottom: 0 }} onClick={() => setShowEducation(false)}>
+          <div className="absolute inset-0 bg-black/80 backdrop-blur-sm" />
+          <div className="relative w-full max-w-md mx-auto rounded-2xl border border-border bg-[#0d0f13] p-5 shadow-2xl overflow-y-auto" style={{ maxHeight: "85vh" }} onClick={(e) => e.stopPropagation()}>
+            <button type="button" onClick={() => setShowEducation(false)} className="absolute top-3 right-3 text-muted hover:text-white text-lg leading-none">✕</button>
+            <h3 className="text-base font-semibold text-brand mb-1">🎓 This Week vs Last Week vs Last Year</h3>
+            <p className="text-xs text-muted mb-4">How to read trends and seasonal patterns.</p>
+            <div className="space-y-3 text-sm">
+              <div>
+                <h4 className="font-medium text-white mb-1">How to Read the Report</h4>
+                <p className="text-muted text-xs leading-relaxed">Day by day you see this week's sales next to last week and last year. Green up arrows = you're ahead. Red down = you're behind. One slow day isn't a trend. A whole week down 10% vs last year is. Same for period-to-date and year-to-date. This is your "are we growing or shrinking?" view.</p>
+              </div>
+              <div>
+                <h4 className="font-medium text-white mb-1">What Seasonal Patterns Mean</h4>
+                <p className="text-muted text-xs leading-relaxed">Pizza does more in football season, holidays, and back-to-school. So compare apples to apples: this September to last September. If you're flat year-over-year in a growth month, something's wrong — marketing, operations, or competition. If you're up 5% in a slow month, you're gaining share. Use this report to see the pattern, not just the number.</p>
+              </div>
+              <div className="rounded-lg border border-red-500/30 bg-red-500/5 p-3">
+                <h4 className="font-medium text-red-400 text-xs mb-2">📕 When the Week Goes Red</h4>
+                <p className="text-muted text-xs leading-relaxed">A bad week happens. Two bad weeks in a row = dig in. Check labor (did you overstaff?), food (waste or price creep?), and traffic (did something change — road work, a new competitor?). Don't wait for the month to close. Fix the trend now or you'll give back a month of profit in one bad quarter.</p>
+              </div>
+            </div>
+          </div>
+        </div>,
+        document.body
       )}
     </div>
   );

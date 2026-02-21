@@ -324,7 +324,10 @@ function DailyPageContent() {
       {/* Toolbar */}
       <div className={`dashboard-toolbar p-4 sm:p-5 space-y-3 ${getStoreColor(storeId).glow}`}>
         <div className="flex items-center justify-between gap-3">
-          <h1 className="text-lg font-semibold sm:text-2xl">Daily KPI Entry</h1>
+          <div className="flex items-center gap-2">
+            <h1 className="text-lg font-semibold sm:text-2xl">Daily KPI Entry</h1>
+            <button type="button" onClick={() => setShowEducation("overview")} className="inline-flex items-center justify-center h-5 w-5 rounded-full bg-muted/20 text-muted hover:bg-brand/20 hover:text-brand transition-colors text-[10px] font-bold">i</button>
+          </div>
           <select
             value={storeId}
             onChange={(e) => setStoreId(e.target.value as CockpitStoreSlug)}
@@ -799,6 +802,26 @@ function DailyPageContent() {
               ✕
             </button>
 
+            {showEducation === "overview" && (
+              <div>
+                <h3 className="text-base font-semibold text-brand mb-1">🎓 Daily KPIs & PRIME %</h3>
+                <p className="text-xs text-muted mb-4">What you enter, what it means, and what to do when numbers go red.</p>
+                <div className="space-y-3 text-sm">
+                  <div>
+                    <h4 className="font-medium text-white mb-1">What Daily KPIs Are</h4>
+                    <p className="text-muted text-xs leading-relaxed">You enter one day's numbers: net sales, labor dollars, food, disposables, voids, waste, labor hours. PrimeOS turns that into PRIME % (labor + food + disposables as % of sales), labor %, food+disposables %, and SLPH (sales per labor hour). One bad day here is a signal. A week of red is a $2K+ problem.</p>
+                  </div>
+                  <div>
+                    <h4 className="font-medium text-white mb-1">How PRIME % Works</h4>
+                    <p className="text-muted text-xs leading-relaxed">PRIME % is the single number that tells you if you made money after the big three costs. Target is usually 55% or below for LeeAngelo's, 60% for Lindsey's. Over that and you're leaving money on the table. Tap the (i) on each metric for the full playbook.</p>
+                  </div>
+                  <div>
+                    <h4 className="font-medium text-white mb-1">Red Playbooks in Short</h4>
+                    <p className="text-muted text-xs leading-relaxed"><strong>Food cost red:</strong> Check portioning, waste, and last invoice — someone raised a price. <strong>Labor red:</strong> Trim overlap, cut a shift, or fix scheduling. <strong>Voids red:</strong> Train on the POS; comps and walkouts add up. <strong>Waste red:</strong> Prep to par, check dates, and fix the line. Tap each metric's (i) for the full playbook.</p>
+                  </div>
+                </div>
+              </div>
+            )}
             {showEducation === "prime" && (
               <div>
                 <h3 className="text-base font-semibold text-brand mb-1">🎓 PRIME %</h3>

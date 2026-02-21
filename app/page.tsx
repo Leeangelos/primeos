@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { useState, useEffect } from "react";
+import { createPortal } from "react-dom";
 import { COCKPIT_STORE_SLUGS, COCKPIT_TARGETS, type CockpitStoreSlug } from "@/lib/cockpit-config";
 import { getStoreColor } from "@/lib/store-colors";
 
@@ -26,6 +27,7 @@ type StoreSnapshot = {
 export default function HomePage() {
   const [snapshots, setSnapshots] = useState<StoreSnapshot[]>([]);
   const [loading, setLoading] = useState(true);
+  const [showEducation, setShowEducation] = useState(false);
   const today = todayYYYYMMDD();
 
   useEffect(() => {
@@ -71,7 +73,10 @@ export default function HomePage() {
     <div className="space-y-6">
       <div className="flex items-start justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-semibold">PrimeOS</h1>
+          <div className="flex items-center gap-2">
+            <h1 className="text-2xl font-semibold">PrimeOS</h1>
+            <button type="button" onClick={() => setShowEducation(true)} className="inline-flex items-center justify-center h-5 w-5 rounded-full bg-muted/20 text-muted hover:bg-brand/20 hover:text-brand transition-colors text-[10px] font-bold">i</button>
+          </div>
           <p className="mt-1 text-sm text-muted">
             Today's pulse — {new Date(today + "T12:00:00Z").toLocaleDateString("en-US", { weekday: "long", month: "short", day: "numeric" })}
           </p>
@@ -135,6 +140,32 @@ export default function HomePage() {
           </div>
         </Link>
       </div>
+
+      {showEducation && typeof document !== "undefined" && createPortal(
+        <div className="fixed inset-0 z-[9999] flex items-center justify-center p-4" style={{ position: "fixed", top: 0, left: 0, right: 0, bottom: 0 }} onClick={() => setShowEducation(false)}>
+          <div className="absolute inset-0 bg-black/80 backdrop-blur-sm" />
+          <div className="relative w-full max-w-md mx-auto rounded-2xl border border-border bg-[#0d0f13] p-5 shadow-2xl overflow-y-auto" style={{ maxHeight: "85vh" }} onClick={(e) => e.stopPropagation()}>
+            <button type="button" onClick={() => setShowEducation(false)} className="absolute top-3 right-3 text-muted hover:text-white text-lg leading-none">✕</button>
+            <h3 className="text-base font-semibold text-brand mb-1">🎓 Command Center</h3>
+            <p className="text-xs text-muted mb-4">Your 90-second daily routine.</p>
+            <div className="space-y-3 text-sm">
+              <div>
+                <h4 className="font-medium text-white mb-1">What to Check First Each Morning</h4>
+                <p className="text-muted text-xs leading-relaxed">This screen shows today's PRIME % at a glance for every store. Green means you're on target. Red means you're bleeding — labor, food, or disposables (or all three) ate too much of yesterday's sales. One store at 58% PRIME when target is 55% is roughly $300–$600 lost to the house on a $10K day.</p>
+              </div>
+              <div>
+                <h4 className="font-medium text-white mb-1">The 90-Second Daily Routine</h4>
+                <p className="text-muted text-xs leading-relaxed">Tap a store card to open Daily Entry. Enter yesterday's numbers: sales, labor, food, disposables, voids, waste. That's it. PrimeOS turns them into PRIME %, labor %, SLPH. If you haven't acknowledged the day, do it. Then hit Morning Brief to see what the AI made of it. Operators who do this every morning catch problems in days, not months.</p>
+              </div>
+              <div className="rounded-lg border border-red-500/30 bg-red-500/5 p-3">
+                <h4 className="font-medium text-red-400 text-xs mb-2">📕 When a Store Goes Red</h4>
+                <p className="text-muted text-xs leading-relaxed">Tap that store. Check which lever is over — labor, food+disposables, or both. Same-day fixes: trim a shift tomorrow, check prep waste and portioning, look for a price creep on an invoice. One red day is a signal. A week of red is a $2K+ problem. Fix it before the month closes.</p>
+              </div>
+            </div>
+          </div>
+        </div>,
+        document.body
+      )}
     </div>
   );
 }

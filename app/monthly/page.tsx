@@ -1,6 +1,7 @@
 "use client";
 
 import { Suspense, useState, useEffect } from "react";
+import { createPortal } from "react-dom";
 import {
   COCKPIT_STORE_SLUGS,
   COCKPIT_TARGETS,
@@ -67,6 +68,7 @@ function MonthlyContent() {
   const [storeFilter, setStoreFilter] = useState<"all" | CockpitStoreSlug>("all");
   const [summaries, setSummaries] = useState<StoreSummary[]>([]);
   const [loading, setLoading] = useState(true);
+  const [showEducation, setShowEducation] = useState(false);
 
   const month = monthOptions[selectedMonth];
 
@@ -143,7 +145,10 @@ function MonthlyContent() {
   return (
     <div className="space-y-6">
       <div className="dashboard-toolbar p-4 sm:p-5 space-y-3">
-        <h1 className="text-lg font-semibold sm:text-2xl">Monthly P&L Summary</h1>
+        <div className="flex items-center gap-2">
+          <h1 className="text-lg font-semibold sm:text-2xl">Monthly P&L Summary</h1>
+          <button type="button" onClick={() => setShowEducation(true)} className="inline-flex items-center justify-center h-5 w-5 rounded-full bg-muted/20 text-muted hover:bg-brand/20 hover:text-brand transition-colors text-[10px] font-bold">i</button>
+        </div>
         <div className="flex flex-wrap gap-2">
           {monthOptions.map((opt, i) => (
             <button
@@ -283,6 +288,36 @@ function MonthlyContent() {
             ))}
           </div>
         </>
+      )}
+
+      {showEducation && typeof document !== "undefined" && createPortal(
+        <div className="fixed inset-0 z-[9999] flex items-center justify-center p-4" style={{ position: "fixed", top: 0, left: 0, right: 0, bottom: 0 }} onClick={() => setShowEducation(false)}>
+          <div className="absolute inset-0 bg-black/80 backdrop-blur-sm" />
+          <div className="relative w-full max-w-md mx-auto rounded-2xl border border-border bg-[#0d0f13] p-5 shadow-2xl overflow-y-auto" style={{ maxHeight: "85vh" }} onClick={(e) => e.stopPropagation()}>
+            <button type="button" onClick={() => setShowEducation(false)} className="absolute top-3 right-3 text-muted hover:text-white text-lg leading-none">✕</button>
+            <h3 className="text-base font-semibold text-brand mb-1">🎓 Monthly P&L View</h3>
+            <p className="text-xs text-muted mb-4">Track profitability over time. Spot seasonal patterns.</p>
+            <div className="space-y-3 text-sm">
+              <div>
+                <h4 className="font-medium text-white mb-1">What This Page Measures</h4>
+                <p className="text-muted text-xs leading-relaxed">One month of sales, labor, food, disposables, voids, waste, and customers rolled up by store. PRIME % for the month tells you if you made money after the big three costs. A $80K month at 58% PRIME means you left $2,400 on the table vs a 55% target.</p>
+              </div>
+              <div>
+                <h4 className="font-medium text-white mb-1">Why Monthly Beats Daily Guesswork</h4>
+                <p className="text-muted text-xs leading-relaxed">Daily numbers jump around. One slow Tuesday doesn't mean the model is broken. Monthly smooths that out. You see real trends: labor creeping up, food cost spiking in summer, or a store that's been red for three months. That's when you act — renegotiate a contract, fix scheduling, or dig into waste.</p>
+              </div>
+              <div>
+                <h4 className="font-medium text-white mb-1">Seasonal Patterns</h4>
+                <p className="text-muted text-xs leading-relaxed">Pizza does more in football season and holidays. Compare this month to last month and last year. If you're up 5% on sales but labor is up 12%, you're not winning. Use this view to set next month's targets and catch drift before it becomes a habit.</p>
+              </div>
+              <div className="rounded-lg border border-red-500/30 bg-red-500/5 p-3">
+                <h4 className="font-medium text-red-400 text-xs mb-2">📕 When the Month Goes Red</h4>
+                <p className="text-muted text-xs leading-relaxed">PRIME over target for the full month = you're leaving thousands on the table. Break it down by store. One store dragging the average? Fix that location. All stores red? Labor and food discipline slipped — tighten portions, trim overlap, and re-bid high-cost vendors. Don't wait for the accountant. Fix it now.</p>
+              </div>
+            </div>
+          </div>
+        </div>,
+        document.body
       )}
     </div>
   );

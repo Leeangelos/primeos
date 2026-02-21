@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
+import { createPortal } from "react-dom";
 import { cn } from "@/lib/utils";
 
 const CATEGORIES = [
@@ -42,6 +43,7 @@ export default function RolodexPage() {
   const [editing, setEditing] = useState<Contact | null>(null);
   const [saving, setSaving] = useState(false);
   const [deleting, setDeleting] = useState<string | null>(null);
+  const [showEducation, setShowEducation] = useState(false);
 
   // Form fields
   const [fName, setFName] = useState("");
@@ -122,7 +124,10 @@ export default function RolodexPage() {
     <div className="space-y-5">
       <div className="dashboard-toolbar p-4 sm:p-5 space-y-3">
         <div className="flex items-center justify-between gap-3">
-          <h1 className="text-lg font-semibold sm:text-2xl">Trusted Rolodex</h1>
+          <div className="flex items-center gap-2">
+            <h1 className="text-lg font-semibold sm:text-2xl">Trusted Rolodex</h1>
+            <button type="button" onClick={() => setShowEducation(true)} className="inline-flex items-center justify-center h-5 w-5 rounded-full bg-muted/20 text-muted hover:bg-brand/20 hover:text-brand transition-colors text-[10px] font-bold">i</button>
+          </div>
           <button
             type="button"
             onClick={() => { resetForm(); setShowForm(true); }}
@@ -343,6 +348,32 @@ export default function RolodexPage() {
             </div>
           </div>
         </div>
+      )}
+
+      {showEducation && typeof document !== "undefined" && createPortal(
+        <div className="fixed inset-0 z-[9999] flex items-center justify-center p-4" style={{ position: "fixed", top: 0, left: 0, right: 0, bottom: 0 }} onClick={() => setShowEducation(false)}>
+          <div className="absolute inset-0 bg-black/80 backdrop-blur-sm" />
+          <div className="relative w-full max-w-md mx-auto rounded-2xl border border-border bg-[#0d0f13] p-5 shadow-2xl overflow-y-auto" style={{ maxHeight: "85vh" }} onClick={(e) => e.stopPropagation()}>
+            <button type="button" onClick={() => setShowEducation(false)} className="absolute top-3 right-3 text-muted hover:text-white text-lg leading-none">✕</button>
+            <h3 className="text-base font-semibold text-brand mb-1">🎓 Owner-Controlled Vendor List</h3>
+            <p className="text-xs text-muted mb-4">Why your contact list is a profit lever.</p>
+            <div className="space-y-3 text-sm">
+              <div>
+                <h4 className="font-medium text-white mb-1">Why Owner-Controlled Vendor Lists Matter</h4>
+                <p className="text-muted text-xs leading-relaxed">When the owner holds the vendor relationships — not a random manager or a Google search — you keep negotiating power. One shop we know had three different people calling the same paper supplier; the supplier had no reason to give a break. One contact, one relationship, one price. That's the rolodex.</p>
+              </div>
+              <div>
+                <h4 className="font-medium text-white mb-1">How Random Google Calls Lose You Money</h4>
+                <p className="text-muted text-xs leading-relaxed">Every time someone new calls a vendor, you're a new customer. New customers don't get the best terms. You lose volume discounts, loyalty pricing, and the ability to say "we've been with you for five years." Centralize contacts here. When someone needs a plumber or a flour quote, they use this list. You re-bid from strength.</p>
+              </div>
+              <div className="rounded-lg border border-red-500/30 bg-red-500/5 p-3">
+                <h4 className="font-medium text-red-400 text-xs mb-2">📕 When Vendors Drift</h4>
+                <p className="text-muted text-xs leading-relaxed">If you haven't updated the rolodex in a year, prices have crept. Call each vendor category once a quarter. Get one quote from a competitor and use it. "I'm getting X from someone else — can you match it?" That call saves more than the hour it takes. Put the winner in the rolodex and own the relationship.</p>
+              </div>
+            </div>
+          </div>
+        </div>,
+        document.body
       )}
     </div>
   );

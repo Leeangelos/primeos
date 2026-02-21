@@ -1,6 +1,7 @@
 "use client";
 
 import { Suspense, useState, useEffect, useCallback } from "react";
+import { createPortal } from "react-dom";
 import { useSearchParams } from "next/navigation";
 import { cn } from "@/lib/utils";
 
@@ -39,6 +40,7 @@ function MerchContent() {
   const [employeeEmail, setEmployeeEmail] = useState("");
   const [checkingOut, setCheckingOut] = useState(false);
   const [showCart, setShowCart] = useState(false);
+  const [showEducation, setShowEducation] = useState(false);
 
   const loadItems = useCallback(async () => {
     setLoading(true);
@@ -98,7 +100,10 @@ function MerchContent() {
   return (
     <div className="space-y-5">
       <div className="dashboard-toolbar p-4 sm:p-5 space-y-3">
-        <h1 className="text-lg font-semibold sm:text-2xl">Team Merch</h1>
+        <div className="flex items-center gap-2">
+          <h1 className="text-lg font-semibold sm:text-2xl">Team Merch</h1>
+          <button type="button" onClick={() => setShowEducation(true)} className="inline-flex items-center justify-center h-5 w-5 rounded-full bg-muted/20 text-muted hover:bg-brand/20 hover:text-brand transition-colors text-[10px] font-bold">i</button>
+        </div>
         <p className="text-xs text-muted">Official team apparel and gear. Order and pay through Stripe.</p>
 
         <div className="flex flex-wrap gap-1.5 justify-center">
@@ -341,6 +346,32 @@ function MerchContent() {
             )}
           </div>
         </div>
+      )}
+
+      {showEducation && typeof document !== "undefined" && createPortal(
+        <div className="fixed inset-0 z-[9999] flex items-center justify-center p-4" style={{ position: "fixed", top: 0, left: 0, right: 0, bottom: 0 }} onClick={() => setShowEducation(false)}>
+          <div className="absolute inset-0 bg-black/80 backdrop-blur-sm" />
+          <div className="relative w-full max-w-md mx-auto rounded-2xl border border-border bg-[#0d0f13] p-5 shadow-2xl overflow-y-auto" style={{ maxHeight: "85vh" }} onClick={(e) => e.stopPropagation()}>
+            <button type="button" onClick={() => setShowEducation(false)} className="absolute top-3 right-3 text-muted hover:text-white text-lg leading-none">✕</button>
+            <h3 className="text-base font-semibold text-brand mb-1">🎓 Why Branded Gear Builds Team Identity</h3>
+            <p className="text-xs text-muted mb-4">Package value stacking and the real ROI of merch.</p>
+            <div className="space-y-3 text-sm">
+              <div>
+                <h4 className="font-medium text-white mb-1">Why Branded Gear Matters</h4>
+                <p className="text-muted text-xs leading-relaxed">When your crew wears your brand, they represent you on and off the clock. A cook in a LeeAngelo's tee is walking advertising. More than that — it builds identity. "We're on the same team." That reduces turnover and makes new hires feel part of something. Shops that invest in one good run of tees and hats see better retention. It's not just swag; it's culture.</p>
+              </div>
+              <div>
+                <h4 className="font-medium text-white mb-1">Package Value Stacking</h4>
+                <p className="text-muted text-xs leading-relaxed">Bundles (shirt + hat + apron) feel like a deal and move more product. "New hire pack" or "opening crew pack" gives one price for everything they need. You're not nickel-and-diming; you're giving a clear value. Stack the items, show the "you save" number, and watch take-up. One package per new hire is a no-brainer — they look the part day one.</p>
+              </div>
+              <div className="rounded-lg border border-red-500/30 bg-red-500/5 p-3">
+                <h4 className="font-medium text-red-400 text-xs mb-2">📕 When Merch Sits in the Closet</h4>
+                <p className="text-muted text-xs leading-relaxed">If nobody's buying, either the design is wrong or the price is. Ask the team what they'd actually wear. One good design beats five mediocre ones. And don't use merch as a substitute for pay — it's a perk and identity builder. If turnover is high, fix pay and culture first; then add merch so they're proud to wear it.</p>
+              </div>
+            </div>
+          </div>
+        </div>,
+        document.body
       )}
     </div>
   );

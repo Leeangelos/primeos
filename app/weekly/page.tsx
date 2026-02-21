@@ -143,7 +143,10 @@ function WeeklyPageContent() {
     <div className="space-y-6">
       <div className={`dashboard-toolbar p-5 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between ${store !== "all" ? getStoreColor(store).glow : ""}`}>
         <div>
-          <h1 className="text-2xl font-semibold">Weekly Cockpit</h1>
+          <div className="flex items-center gap-2">
+            <h1 className="text-2xl font-semibold">Weekly Cockpit</h1>
+            <button type="button" onClick={() => setShowEducation("overview")} className="inline-flex items-center justify-center h-5 w-5 rounded-full bg-muted/20 text-muted hover:bg-brand/20 hover:text-brand transition-colors text-[10px] font-bold">i</button>
+          </div>
           <p className="mt-1 text-sm text-muted">
             Tap any day to edit. Tap a store card to drill in.
           </p>
@@ -607,6 +610,26 @@ function WeeklyPageContent() {
           <div className="relative w-full max-w-md mx-auto rounded-2xl border border-border bg-[#0d0f13] p-5 shadow-2xl overflow-y-auto" style={{ maxHeight: "85vh" }} onClick={(e) => e.stopPropagation()}>
             <button type="button" onClick={() => setShowEducation(null)} className="absolute top-3 right-3 text-muted hover:text-white text-lg leading-none" aria-label="Close">✕</button>
 
+            {showEducation === "overview" && (
+              <div>
+                <h3 className="text-base font-semibold text-brand mb-1">🎓 Weekly Trends & the Cockpit</h3>
+                <p className="text-xs text-muted mb-4">Why weekly matters more than daily. How to read it. What PRIME grading means.</p>
+                <div className="space-y-3 text-sm">
+                  <div>
+                    <h4 className="font-medium text-white mb-1">Weekly Trends Matter More Than Daily Spikes</h4>
+                    <p className="text-muted text-xs leading-relaxed">One bad Tuesday doesn't mean the model is broken. One great Friday doesn't mean you're winning. The weekly cockpit rolls up the whole week so you see the real trend. If PRIME is red for the week, you're leaving $500–$2K on the table. Fix it before the month closes.</p>
+                  </div>
+                  <div>
+                    <h4 className="font-medium text-white mb-1">How to Read the Cockpit</h4>
+                    <p className="text-muted text-xs leading-relaxed">Top number is Weekly PRIME %. Below that you see labor %, food+disposables %, and SLPH by store. Green = on target. Red = over. Tap any metric's (i) for the full playbook. Use the store filter to see one location or all. Tap a day to open daily entry and fix the numbers that drove the week red.</p>
+                  </div>
+                  <div>
+                    <h4 className="font-medium text-white mb-1">What PRIME Grading Means</h4>
+                    <p className="text-muted text-xs leading-relaxed">PRIME is graded against your target (e.g. 55% for LeeAngelo's). At or below = you're good. Above = you're giving back profit. Every point over target on a $50K week is about $500 left on the table. The cockpit shows you the week's grade so you know whether to celebrate or act.</p>
+                  </div>
+                </div>
+              </div>
+            )}
             {showEducation === "prime" && (
               <div>
                 <h3 className="text-base font-semibold text-brand mb-1">🎓 PRIME %</h3>

@@ -1,6 +1,7 @@
 "use client";
 
 import { Suspense, useState, useEffect } from "react";
+import { createPortal } from "react-dom";
 import { useSearchParams } from "next/navigation";
 import { cn } from "@/lib/utils";
 
@@ -14,6 +15,7 @@ function BillingContent() {
   const [setupLoading, setSetupLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [locations, setLocations] = useState(1);
+  const [showEducation, setShowEducation] = useState(false);
 
   useEffect(() => {
     fetch("/api/billing/setup", { method: "POST" })
@@ -56,7 +58,10 @@ function BillingContent() {
   return (
     <div className="space-y-5">
       <div className="dashboard-toolbar p-4 sm:p-5 space-y-3">
-        <h1 className="text-lg font-semibold sm:text-2xl">Billing</h1>
+        <div className="flex items-center gap-2">
+          <h1 className="text-lg font-semibold sm:text-2xl">Billing</h1>
+          <button type="button" onClick={() => setShowEducation(true)} className="inline-flex items-center justify-center h-5 w-5 rounded-full bg-muted/20 text-muted hover:bg-brand/20 hover:text-brand transition-colors text-[10px] font-bold">i</button>
+        </div>
         <p className="text-xs text-muted">The 90-Day Pizza Profit System — Founding Operator Program</p>
       </div>
 
@@ -160,6 +165,32 @@ function BillingContent() {
         </button>
 
         <p className="text-[10px] text-muted text-center">Cancel anytime. 90-day guarantee. Founding rate locked forever.</p>
+
+      {showEducation && typeof document !== "undefined" && createPortal(
+        <div className="fixed inset-0 z-[9999] flex items-center justify-center p-4" style={{ position: "fixed", top: 0, left: 0, right: 0, bottom: 0 }} onClick={() => setShowEducation(false)}>
+          <div className="absolute inset-0 bg-black/80 backdrop-blur-sm" />
+          <div className="relative w-full max-w-md mx-auto rounded-2xl border border-border bg-[#0d0f13] p-5 shadow-2xl overflow-y-auto" style={{ maxHeight: "85vh" }} onClick={(e) => e.stopPropagation()}>
+            <button type="button" onClick={() => setShowEducation(false)} className="absolute top-3 right-3 text-muted hover:text-white text-lg leading-none">✕</button>
+            <h3 className="text-base font-semibold text-brand mb-1">🎓 What's Included & ROI</h3>
+            <p className="text-xs text-muted mb-4">PrimeOS replaces spreadsheets and multiple tools. Here's the math.</p>
+            <div className="space-y-3 text-sm">
+              <div>
+                <h4 className="font-medium text-white mb-1">What's Included</h4>
+                <p className="text-muted text-xs leading-relaxed">Daily KPI entry, weekly cockpit, monthly P&L, live P&L, morning brief (AI), sales reports, recipes & food cost, invoices, inventory, people, marketing, parties, schedule, tasks, chat, billing, DoorDash view, merch. One system. One login. No more Margin Edge for invoices ($330/mo), no more scattered sheets, no more "where's that number?"</p>
+              </div>
+              <div>
+                <h4 className="font-medium text-white mb-1">ROI of PrimeOS</h4>
+                <p className="text-muted text-xs leading-relaxed">Founding operator pricing is locked. One location is one price. If you save Margin Edge alone you're ahead in month one. Add the time you don't spend chasing numbers across five apps, and the cost of one missed red flag ($500–$2K a month when labor or food drifts), and PrimeOS pays for itself many times over. The 90-day system is built so you see results in the first month.</p>
+              </div>
+              <div className="rounded-lg border border-red-500/30 bg-red-500/5 p-3">
+                <h4 className="font-medium text-red-400 text-xs mb-2">📕 Tools Replaced, Money Saved</h4>
+                <p className="text-muted text-xs leading-relaxed">Invoice scanning replaces Margin Edge ($330/mo). Daily entry + brief replace manual spreadsheets and guesswork. Schedule, tasks, and chat replace paper and group texts. One subscription. No surprise add-ons. If you're paying for three different things today, do the math — PrimeOS likely saves you money and definitely saves you time.</p>
+              </div>
+            </div>
+          </div>
+        </div>,
+        document.body
+      )}
       </div>
     </div>
   );

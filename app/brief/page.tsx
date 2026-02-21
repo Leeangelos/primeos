@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import { createPortal } from "react-dom";
 import { COCKPIT_STORE_SLUGS, COCKPIT_TARGETS } from "@/lib/cockpit-config";
 import { getStoreColor } from "@/lib/store-colors";
 
@@ -40,6 +41,7 @@ export default function BriefPage() {
   const [storeData, setStoreData] = useState<Record<string, StoreMetrics | null>>({});
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [showEducation, setShowEducation] = useState(false);
 
   async function loadBrief(d: string) {
     setLoading(true);
@@ -76,7 +78,10 @@ export default function BriefPage() {
   return (
     <div className="space-y-5">
       <div className="dashboard-toolbar p-4 sm:p-5 space-y-3">
-        <h1 className="text-lg font-semibold sm:text-2xl">Morning Brief</h1>
+        <div className="flex items-center gap-2">
+          <h1 className="text-lg font-semibold sm:text-2xl">Morning Brief</h1>
+          <button type="button" onClick={() => setShowEducation(true)} className="inline-flex items-center justify-center h-5 w-5 rounded-full bg-muted/20 text-muted hover:bg-brand/20 hover:text-brand transition-colors text-[10px] font-bold">i</button>
+        </div>
         <p className="text-xs text-muted">AI-generated summary of yesterday's operations. Powered by Claude.</p>
         <div className="flex items-center gap-2">
           <button
@@ -201,6 +206,32 @@ export default function BriefPage() {
           )}
         </>
       ) : null}
+
+      {showEducation && typeof document !== "undefined" && createPortal(
+        <div className="fixed inset-0 z-[9999] flex items-center justify-center p-4" style={{ position: "fixed", top: 0, left: 0, right: 0, bottom: 0 }} onClick={() => setShowEducation(false)}>
+          <div className="absolute inset-0 bg-black/80 backdrop-blur-sm" />
+          <div className="relative w-full max-w-md mx-auto rounded-2xl border border-border bg-[#0d0f13] p-5 shadow-2xl overflow-y-auto" style={{ maxHeight: "85vh" }} onClick={(e) => e.stopPropagation()}>
+            <button type="button" onClick={() => setShowEducation(false)} className="absolute top-3 right-3 text-muted hover:text-white text-lg leading-none">✕</button>
+            <h3 className="text-base font-semibold text-brand mb-1">🎓 Why Morning Briefs Change Behavior</h3>
+            <p className="text-xs text-muted mb-4">AI analyzes your numbers overnight. You act before lunch.</p>
+            <div className="space-y-3 text-sm">
+              <div>
+                <h4 className="font-medium text-white mb-1">Why a Brief Beats Raw Numbers</h4>
+                <p className="text-muted text-xs leading-relaxed">Most owners see sales and labor on a spreadsheet and don't know what to do. The brief turns yesterday's data into plain English: "Kent was over on labor; Aurora's food cost spiked." One read and you know where to look. Operators who read the brief every morning fix problems in days, not months. That's $500–$2K back in your pocket per month when you act fast.</p>
+              </div>
+              <div>
+                <h4 className="font-medium text-white mb-1">How AI Analyzes Your Numbers Overnight</h4>
+                <p className="text-muted text-xs leading-relaxed">Claude reads your daily KPIs — sales, labor, food, disposables, voids, waste — and compares them to your targets and to prior periods. It flags what's off and why it might be. No more digging through rows. The brief is your 60-second debrief so you can walk in and say "check the walk-in" or "who was on the make line Tuesday?" instead of guessing.</p>
+              </div>
+              <div className="rounded-lg border border-red-500/30 bg-red-500/5 p-3">
+                <h4 className="font-medium text-red-400 text-xs mb-2">📕 When the Brief Says You're Over</h4>
+                <p className="text-muted text-xs leading-relaxed">If the brief calls out labor or food, don't ignore it. Same-day: trim a shift, check portioning, look at the last invoice. One red day is a signal. A week of red in the brief means you're leaving real money on the table. Use the brief to decide what to fix first — then go fix it.</p>
+              </div>
+            </div>
+          </div>
+        </div>,
+        document.body
+      )}
     </div>
   );
 }
