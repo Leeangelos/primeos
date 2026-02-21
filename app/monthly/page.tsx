@@ -6,6 +6,7 @@ import {
   COCKPIT_TARGETS,
   type CockpitStoreSlug,
 } from "@/lib/cockpit-config";
+import { getStoreColor } from "@/lib/store-colors";
 
 function formatPct(n: number | null): string {
   if (n == null || Number.isNaN(n)) return "—";
@@ -231,16 +232,13 @@ function MonthlyContent() {
             {summaries.map((s) => (
               <div
                 key={s.slug}
-                className={`rounded-lg border p-5 ${
-                  s.status === "on_track"
-                    ? "border-emerald-500/50 bg-emerald-500/10"
-                    : s.status === "over"
-                      ? "border-red-500/50 bg-red-500/10"
-                      : "border-border/50"
-                }`}
+                className={`rounded-lg border p-5 ${getStoreColor(s.slug).border} ${getStoreColor(s.slug).bg}`}
               >
                 <div className="flex items-center justify-between mb-4">
-                  <span className="font-medium">{s.name}</span>
+                  <div className="flex items-center gap-2">
+                    <div className={`h-2.5 w-2.5 shrink-0 rounded-full ${getStoreColor(s.slug).dot}`} />
+                    <span className="font-medium">{s.name}</span>
+                  </div>
                   <span className={`text-sm font-medium ${
                     s.status === "on_track" ? "text-emerald-400" : s.status === "over" ? "text-red-400" : "text-muted"
                   }`}>

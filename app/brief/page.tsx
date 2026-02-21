@@ -1,6 +1,8 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import { COCKPIT_STORE_SLUGS, COCKPIT_TARGETS } from "@/lib/cockpit-config";
+import { getStoreColor } from "@/lib/store-colors";
 
 function todayYYYYMMDD(): string {
   const t = new Date();
@@ -144,16 +146,24 @@ export default function BriefPage() {
             <div className="space-y-2">
               <h2 className="text-[10px] font-semibold uppercase tracking-wider text-muted px-1">Store Snapshot</h2>
               {Object.entries(storeData).map(([name, metrics]) => {
+                const slug = COCKPIT_STORE_SLUGS.find((s) => COCKPIT_TARGETS[s].name === name) ?? "";
+                const colors = getStoreColor(slug);
                 if (!metrics) return (
-                  <div key={name} className="rounded-lg border border-border/50 bg-black/20 p-4">
-                    <span className="font-medium text-white">{name}</span>
+                  <div key={name} className={`rounded-lg border p-4 ${colors.border} ${colors.bg}`}>
+                    <div className="flex items-center gap-2">
+                      <div className={`h-2.5 w-2.5 rounded-full ${colors.dot}`} />
+                      <span className="font-medium text-white">{name}</span>
+                    </div>
                     <span className="text-xs text-muted ml-2">No data</span>
                   </div>
                 );
                 return (
-                  <div key={name} className="rounded-lg border border-border/50 bg-black/20 p-4">
+                  <div key={name} className={`rounded-lg border p-4 ${colors.border} ${colors.bg}`}>
                     <div className="flex items-center justify-between mb-3">
-                      <span className="font-medium text-white">{name}</span>
+                      <div className="flex items-center gap-2">
+                        <div className={`h-2.5 w-2.5 rounded-full ${colors.dot}`} />
+                        <span className="font-medium text-white">{name}</span>
+                      </div>
                       <span className="text-sm font-medium tabular-nums text-muted">
                         ${metrics.sales.toLocaleString()}
                       </span>

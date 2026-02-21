@@ -130,3 +130,11 @@ body {
   border: 1px solid rgba(var(--border), 0.4);
   border-radius: 8px;
 }
+
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+.no-scrollbar {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}

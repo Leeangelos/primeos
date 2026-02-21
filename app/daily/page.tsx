@@ -13,6 +13,7 @@ import {
   type CockpitStoreSlug,
   type CockpitStatusLabel,
 } from "@/lib/cockpit-config";
+import { getStoreColor } from "@/lib/store-colors";
 import { cn } from "@/lib/utils";
 
 function todayYYYYMMDD(): string {
@@ -217,6 +218,10 @@ function DailyPageContent() {
         : null;
     const slph =
       ns != null && lh != null && lh > 0 ? ns / lh : null;
+    const gpPct =
+      ns != null && ns > 0
+        ? ((ns - (lc ?? 0) - (fc ?? 0) - (dc ?? 0)) / ns) * 100
+        : null;
     const wastePct = ns != null && ns > 0 && w != null ? (w / ns) * 100 : null;
     const voidPct = ns != null && ns > 0 && va != null ? (va / ns) * 100 : null;
     const avgTicket = ns != null && tix != null && tix > 0 ? ns / tix : null;
@@ -235,6 +240,14 @@ function DailyPageContent() {
       scheduledVsActual,
     };
   }, [ns, lc, fc, dc, va, w, lh, sh, tix]);
+  const gpStatus: CockpitStatusLabel | null =
+    computed.gpPct == null
+      ? null
+      : computed.gpPct >= 45
+        ? "on_track"
+        : computed.gpPct >= 40
+          ? "under"
+          : "over";
 
   const targets = COCKPIT_TARGETS[storeId];
   const primeStatus = getPrimeStatus(storeId, computed.primePct);
@@ -293,6 +306,12 @@ function DailyPageContent() {
       target: `≤${targets.foodDisposablesMax}%`,
       status: foodDispStatus,
     },
+    {
+      label: "GROSS PROFIT %",
+      value: formatPct(computed.gpPct),
+      target: "≥45%",
+      status: gpStatus,
+    },
   ];
 
   const inputCls =
@@ -302,13 +321,18 @@ function DailyPageContent() {
     <>
       <div className="space-y-5">
       {/* Toolbar */}
-      <div className="dashboard-toolbar p-4 sm:p-5 space-y-3">
+      <div className={`dashboard-toolbar p-4 sm:p-5 space-y-3 ${getStoreColor(storeId).glow}`}>
         <div className="flex items-center justify-between gap-3">
           <h1 className="text-lg font-semibold sm:text-2xl">Daily KPI Entry</h1>
           <select
             value={storeId}
             onChange={(e) => setStoreId(e.target.value as CockpitStoreSlug)}
-            className="sm:hidden dashboard-input rounded-lg border border-border/50 bg-black/30 px-3 py-2.5 text-sm font-medium text-brand focus:border-brand/60 focus:ring-1 focus:ring-brand/40 focus:outline-none"
+            className={cn(
+              "sm:hidden dashboard-input rounded-lg border-2 px-3 py-2.5 text-sm font-medium focus:outline-none",
+              getStoreColor(storeId).borderActive,
+              getStoreColor(storeId).bgActive,
+              getStoreColor(storeId).text
+            )}
           >
             {COCKPIT_STORE_SLUGS.map((id) => (
               <option key={id} value={id}>
@@ -325,7 +349,7 @@ function DailyPageContent() {
                 className={cn(
                   "rounded-lg border px-4 py-2.5 text-sm font-medium transition-colors",
                   storeId === id
-                    ? "border-brand/50 bg-brand/15 text-brand"
+                    ? cn(getStoreColor(id).borderActive, getStoreColor(id).bgActive, getStoreColor(id).text)
                     : "border-border/50 bg-black/30 text-muted hover:border-border hover:bg-black/40"
                 )}
               >
@@ -410,8 +434,8 @@ function DailyPageContent() {
             </div>
           );
         })()}
-        <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
-          {[scoreboardItems[1], scoreboardItems[3], scoreboardItems[2]].map(
+        <div className="grid grid-cols-1 gap-3 sm:grid-cols-4">
+          {[scoreboardItems[1], scoreboardItems[3], scoreboardItems[2], scoreboardItems[4]].map(
             ({ label, value, target, status }) => {
               const valueColor =
                 status == null
@@ -434,7 +458,7 @@ function DailyPageContent() {
                     {label}
                     <button
                       type="button"
-                      onClick={() => setShowEducation(label === "Labor %" ? "labor" : label === "Food+Disposables %" ? "food" : "slph")}
+                      onClick={() => setShowEducation(label === "Labor %" ? "labor" : label === "Food+Disposables %" ? "food" : label === "SLPH" ? "slph" : "gp")}
                       className="inline-flex items-center justify-center h-4 w-4 rounded-full bg-muted/20 text-muted hover:bg-brand/20 hover:text-brand transition-colors text-[9px] font-bold"
                       aria-label="Learn more"
                     >
@@ -458,6 +482,9 @@ function DailyPageContent() {
                   )}
                   {rolling && label === "SLPH" && rolling.slph != null && (
                     <div className="text-xs text-muted/60 mt-1">7-day avg: {rolling.slph}</div>
+                  )}
+                  {rolling && label === "GROSS PROFIT %" && rolling.primePct != null && (
+                    <div className="text-xs text-muted/60 mt-1">7-day avg: {(100 - rolling.primePct).toFixed(1)}%</div>
                   )}
                 </div>
               );
@@ -900,6 +927,33 @@ function DailyPageContent() {
                       <li>Review reasons — "wrong order" repeatedly = order-taking training issue.</li>
                       <li>Compare voids by day — certain shifts may need more supervision.</li>
                       <li>Manager comps are voids too. Track who's giving away food and why.</li>
+                    </ol>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {showEducation === "gp" && (
+              <div>
+                <h3 className="text-base font-semibold text-brand mb-1">🎓 Gross Profit %</h3>
+                <p className="text-xs text-muted mb-4">What's left after controllable costs.</p>
+                <div className="space-y-3 text-sm">
+                  <div>
+                    <h4 className="font-medium text-white mb-1">How It's Calculated</h4>
+                    <p className="text-muted text-xs leading-relaxed">GP % = 100% − PRIME %. If PRIME is 55%, GP is 45%. This is the money left to cover rent, insurance, utilities, and profit.</p>
+                  </div>
+                  <div>
+                    <h4 className="font-medium text-white mb-1">Why It Matters</h4>
+                    <p className="text-muted text-xs leading-relaxed">Most pizzerias have 25-35% in fixed costs. If GP is 45% and fixed costs are 30%, net profit is 15%. If GP drops to 40%, net profit is 10% — a 33% pay cut to the business. Every point of GP is a point of profit.</p>
+                  </div>
+                  <div className="rounded-lg border border-red-500/30 bg-red-500/5 p-3">
+                    <h4 className="font-medium text-red-400 text-xs mb-2">📕 When GP Goes RED (&lt; 40%)</h4>
+                    <ol className="space-y-1.5 text-muted text-xs list-decimal list-inside leading-relaxed">
+                      <li>GP is the inverse of PRIME — fix PRIME and GP fixes itself.</li>
+                      <li>Check which component is dragging PRIME up: labor, food, or disposables.</li>
+                      <li>Run the PRIME playbook for whichever component is over target.</li>
+                      <li>Review pricing — when was your last menu price increase?</li>
+                      <li>Calculate: every 1% GP improvement on $100K/month = $1,000/month more to the bottom line.</li>
                     </ol>
                   </div>
                 </div>

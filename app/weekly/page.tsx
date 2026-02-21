@@ -1,6 +1,7 @@
 "use client";
 
 import { Suspense, useState, useEffect } from "react";
+import { createPortal } from "react-dom";
 import { useSearchParams } from "next/navigation";
 import Link from "next/link";
 import {
@@ -15,6 +16,7 @@ import {
 } from "recharts";
 import { getWeekStart } from "@/lib/weekly-cockpit";
 import { COCKPIT_STORE_SLUGS, COCKPIT_TARGETS, type CockpitStoreSlug } from "@/lib/cockpit-config";
+import { getStoreColor } from "@/lib/store-colors";
 
 /** Store slug for daily drill-down; daily page uses cockpit slugs (kent, aurora, lindseys). */
 function toDailyStoreSlug(store: "all" | CockpitStoreSlug): CockpitStoreSlug {
@@ -91,6 +93,7 @@ function WeeklyPageContent() {
   const [data, setData] = useState<ApiPayload | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [showEducation, setShowEducation] = useState<string | null>(null);
 
   /* eslint-disable react-hooks/set-state-in-effect -- sync URL params to state */
   useEffect(() => {
@@ -138,7 +141,7 @@ function WeeklyPageContent() {
 
   return (
     <div className="space-y-6">
-      <div className="dashboard-toolbar p-5 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+      <div className={`dashboard-toolbar p-5 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between ${store !== "all" ? getStoreColor(store).glow : ""}`}>
         <div>
           <h1 className="text-2xl font-semibold">Weekly Cockpit</h1>
           <p className="mt-1 text-sm text-muted">
@@ -207,8 +210,16 @@ function WeeklyPageContent() {
 
           {data.hero && (
             <section className="dashboard-surface rounded-lg border border-border bg-panel p-6">
-              <h2 className="text-xs font-semibold uppercase tracking-wider text-muted">
+              <h2 className="text-xs font-semibold uppercase tracking-wider text-muted flex items-center">
                 Weekly PRIME %
+                <button
+                  type="button"
+                  onClick={() => setShowEducation("prime")}
+                  className="inline-flex items-center justify-center h-4 w-4 rounded-full bg-muted/20 text-muted hover:bg-brand/20 hover:text-brand transition-colors text-[9px] font-bold ml-1.5"
+                  aria-label="Learn more"
+                >
+                  i
+                </button>
               </h2>
               <div className="mt-2 flex flex-wrap items-baseline gap-4">
                 <span className="text-4xl font-bold tabular-nums">
@@ -333,7 +344,17 @@ function WeeklyPageContent() {
               </h2>
               <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
                 <div className="rounded border border-border/50 bg-black/20 p-3">
-                  <div className="text-[10px] uppercase text-muted">Labor %</div>
+                  <div className="text-[10px] uppercase text-muted flex items-center">
+                    Labor %
+                    <button
+                      type="button"
+                      onClick={() => setShowEducation("labor")}
+                      className="inline-flex items-center justify-center h-4 w-4 rounded-full bg-muted/20 text-muted hover:bg-brand/20 hover:text-brand transition-colors text-[9px] font-bold ml-1.5"
+                      aria-label="Learn more"
+                    >
+                      i
+                    </button>
+                  </div>
                   <div className="text-xl font-bold tabular-nums">
                     {data.secondary.labor_pct != null
                       ? `${data.secondary.labor_pct.toFixed(1)}%`
@@ -347,8 +368,16 @@ function WeeklyPageContent() {
                   </div>
                 </div>
                 <div className="rounded border border-border/50 bg-black/20 p-3">
-                  <div className="text-[10px] uppercase text-muted">
+                  <div className="text-[10px] uppercase text-muted flex items-center">
                     Food + Disposables %
+                    <button
+                      type="button"
+                      onClick={() => setShowEducation("food")}
+                      className="inline-flex items-center justify-center h-4 w-4 rounded-full bg-muted/20 text-muted hover:bg-brand/20 hover:text-brand transition-colors text-[9px] font-bold ml-1.5"
+                      aria-label="Learn more"
+                    >
+                      i
+                    </button>
                   </div>
                   <div className="text-xl font-bold tabular-nums">
                     {data.secondary.food_disp_pct != null
@@ -363,7 +392,17 @@ function WeeklyPageContent() {
                   </div>
                 </div>
                 <div className="rounded border border-border/50 bg-black/20 p-3">
-                  <div className="text-[10px] uppercase text-muted">SLPH</div>
+                  <div className="text-[10px] uppercase text-muted flex items-center">
+                    SLPH
+                    <button
+                      type="button"
+                      onClick={() => setShowEducation("slph")}
+                      className="inline-flex items-center justify-center h-4 w-4 rounded-full bg-muted/20 text-muted hover:bg-brand/20 hover:text-brand transition-colors text-[9px] font-bold ml-1.5"
+                      aria-label="Learn more"
+                    >
+                      i
+                    </button>
+                  </div>
                   <div className="text-xl font-bold tabular-nums">
                     {data.secondary.slph != null
                       ? data.secondary.slph.toFixed(0)
@@ -481,7 +520,12 @@ function WeeklyPageContent() {
                       const isWorst = idx === 0 && data.comparison!.length > 1;
                       return (
                         <tr key={row.slug} className={isWorst ? "bg-red-500/10" : isBest ? "bg-emerald-500/10" : ""}>
-                          <td className="py-2 pr-4 font-medium">{row.name}</td>
+                          <td className="py-2 pr-4">
+                            <div className="flex items-center gap-2">
+                              <div className={`h-2.5 w-2.5 shrink-0 rounded-full ${getStoreColor(row.slug).dot}`} />
+                              <span className="font-medium">{row.name}</span>
+                            </div>
+                          </td>
                           <td className="py-2 pr-4 tabular-nums">{row.weekly_prime_pct != null ? `${row.weekly_prime_pct.toFixed(1)}%` : "—"}</td>
                           <td className="py-2 pr-4 tabular-nums">{row.weekly_labor_pct != null ? `${row.weekly_labor_pct.toFixed(1)}%` : "—"}</td>
                           <td className="py-2 pr-4 tabular-nums">{row.weekly_food_disposables_pct != null ? `${row.weekly_food_disposables_pct.toFixed(1)}%` : "—"}</td>
@@ -507,10 +551,13 @@ function WeeklyPageContent() {
                   return (
                     <div
                       key={row.slug}
-                      className={`rounded-lg border p-4 ${isWorst ? "border-red-500/50 bg-red-500/10" : isBest ? "border-emerald-500/50 bg-emerald-500/10" : "border-border/50 bg-black/20"}`}
+                      className={`rounded-lg border p-4 ${getStoreColor(row.slug).border} ${getStoreColor(row.slug).bg} ${isWorst ? "ring-1 ring-red-500/30" : ""} ${isBest ? "ring-1 ring-emerald-500/30" : ""}`}
                     >
                       <div className="flex items-center justify-between mb-3">
-                        <span className="font-medium">{row.name}</span>
+                        <div className="flex items-center gap-2">
+                          <div className={`h-2.5 w-2.5 shrink-0 rounded-full ${getStoreColor(row.slug).dot}`} />
+                          <span className="font-medium">{row.name}</span>
+                        </div>
                         <span className={row.status === "on_track" ? "text-emerald-500 text-sm font-medium" : "text-red-500 text-sm font-medium"}>
                           {row.status === "on_track" ? "On track" : "Over"}
                           {isWorst && " (worst)"}
@@ -553,6 +600,54 @@ function WeeklyPageContent() {
       <Link href="/" className="inline-block text-sm text-brand hover:underline">
         ← Back to home
       </Link>
+
+      {showEducation && typeof document !== "undefined" && createPortal(
+        <div className="fixed inset-0 z-[9999] flex items-center justify-center p-4" style={{ position: "fixed", top: 0, left: 0, right: 0, bottom: 0 }} onClick={() => setShowEducation(null)}>
+          <div className="absolute inset-0 bg-black/80 backdrop-blur-sm" />
+          <div className="relative w-full max-w-md mx-auto rounded-2xl border border-border bg-[#0d0f13] p-5 shadow-2xl overflow-y-auto" style={{ maxHeight: "85vh" }} onClick={(e) => e.stopPropagation()}>
+            <button type="button" onClick={() => setShowEducation(null)} className="absolute top-3 right-3 text-muted hover:text-white text-lg leading-none" aria-label="Close">✕</button>
+
+            {showEducation === "prime" && (
+              <div>
+                <h3 className="text-base font-semibold text-brand mb-1">🎓 PRIME %</h3>
+                <p className="text-xs text-muted mb-4">The number that matters most.</p>
+                <div className="space-y-3 text-sm">
+                  <div><h4 className="font-medium text-white mb-1">How It's Calculated</h4><p className="text-muted text-xs leading-relaxed">PRIME % = (Labor + Food + Disposables) ÷ Net Sales × 100. These are your controllable costs — the number you can actually move.</p></div>
+                  <div><h4 className="font-medium text-white mb-1">Why It Matters</h4><p className="text-muted text-xs leading-relaxed">If PRIME is 60% and fixed costs are 30%, profit = 10%. Drop PRIME to 55% and profit doubles to 15%. On $5K/day, every point = $50/day = $1,500/month.</p></div>
+                </div>
+              </div>
+            )}
+            {showEducation === "labor" && (
+              <div>
+                <h3 className="text-base font-semibold text-brand mb-1">🎓 Labor %</h3>
+                <p className="text-xs text-muted mb-4">Your biggest controllable expense.</p>
+                <div className="space-y-3 text-sm">
+                  <div><h4 className="font-medium text-white mb-1">How It's Calculated</h4><p className="text-muted text-xs leading-relaxed">Labor % = Total Labor Dollars ÷ Net Sales × 100. Target: 19-21%. On $5K/day, every point over = $50/day = $1,500/month.</p></div>
+                </div>
+              </div>
+            )}
+            {showEducation === "food" && (
+              <div>
+                <h3 className="text-base font-semibold text-brand mb-1">🎓 Food + Disposables %</h3>
+                <p className="text-xs text-muted mb-4">Where money disappears without anyone noticing.</p>
+                <div className="space-y-3 text-sm">
+                  <div><h4 className="font-medium text-white mb-1">How It's Calculated</h4><p className="text-muted text-xs leading-relaxed">Food+Disp % = (Food Purchases + Disposables) ÷ Net Sales × 100. Target: ≤35%. Uses 7-day rolling average to smooth delivery-day spikes.</p></div>
+                </div>
+              </div>
+            )}
+            {showEducation === "slph" && (
+              <div>
+                <h3 className="text-base font-semibold text-brand mb-1">🎓 SLPH</h3>
+                <p className="text-xs text-muted mb-4">Sales per Labor Hour — are you optimally staffed?</p>
+                <div className="space-y-3 text-sm">
+                  <div><h4 className="font-medium text-white mb-1">How It's Calculated</h4><p className="text-muted text-xs leading-relaxed">SLPH = Net Sales ÷ Total Labor Hours. Target: $80+. Below 65 means too many people for the volume.</p></div>
+                </div>
+              </div>
+            )}
+          </div>
+        </div>,
+        document.body
+      )}
     </div>
   );
 }

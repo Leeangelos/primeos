@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useState, useEffect } from "react";
 import { COCKPIT_STORE_SLUGS, COCKPIT_TARGETS, type CockpitStoreSlug } from "@/lib/cockpit-config";
+import { getStoreColor } from "@/lib/store-colors";
 
 function todayYYYYMMDD(): string {
   const t = new Date();
@@ -19,6 +20,7 @@ type StoreSnapshot = {
   laborPct: number | null;
   slph: number | null;
   status: "on_track" | "over" | null;
+  acknowledged?: boolean;
 };
 
 export default function HomePage() {
@@ -47,7 +49,8 @@ export default function HomePage() {
             const laborPct = ns > 0 ? (lc / ns) * 100 : null;
             const slph = lh > 0 ? ns / lh : null;
             const status = primePct != null ? (primePct <= targets.primeMax ? "on_track" : "over") : null;
-            results.push({ slug, name: targets.name, primePct, laborPct, slph, status });
+            const acknowledged = !!(e as { acknowledged_at?: unknown }).acknowledged_at;
+            results.push({ slug, name: targets.name, primePct, laborPct, slph, status, acknowledged });
           } else {
             results.push({ slug, name: targets.name, primePct: null, laborPct: null, slph: null, status: null });
           }
@@ -89,15 +92,13 @@ export default function HomePage() {
           {snapshots.map((s) => (
             <Link key={s.slug} href={`/daily?store=${s.slug}&date=${today}`} className="block">
               <div
-                className={`dashboard-scoreboard rounded-lg border p-5 transition-colors ${
-                  s.status === "on_track"
-                    ? "border-emerald-500/50 bg-emerald-500/10"
-                    : s.status === "over"
-                      ? "border-red-500/50 bg-red-500/10"
-                      : "border-border/50"
-                }`}
+                className={`rounded-lg border p-4 transition-colors active:bg-black/40 ${getStoreColor(s.slug).border} ${getStoreColor(s.slug).bg} ${getStoreColor(s.slug).glow}`}
               >
-                <div className="text-xs font-medium text-muted">{s.name}</div>
+                <div className="flex items-center gap-2">
+                  <div className={`h-2.5 w-2.5 rounded-full ${getStoreColor(s.slug).dot}`} />
+                  <span className="font-medium text-white">{s.name}</span>
+                  {s.acknowledged && <span className="text-emerald-400 text-xs">✓</span>}
+                </div>
                 <div
                   className={`mt-2 text-4xl font-black tabular-nums ${
                     s.status === "on_track"

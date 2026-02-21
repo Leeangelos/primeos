@@ -10,33 +10,42 @@ const tabs = [
   { href: "/monthly", label: "Monthly" },
   { href: "/rolodex", label: "Rolodex" },
   { href: "/brief", label: "Brief" },
+  { href: "/pnl", label: "P&L" },
 ] as const;
 
 export function AppNav() {
   const pathname = usePathname();
+  const linkClass = (isActive: boolean) =>
+    cn(
+      "rounded-lg px-3 py-2 text-sm font-medium transition-colors",
+      isActive
+        ? "border border-brand/50 bg-brand/15 text-brand shadow-[0_0_8px_rgba(249,115,22,0.3)]"
+        : "border border-border/30 bg-black/20 text-muted hover:text-white hover:border-border/50 hover:bg-black/30"
+    );
+  const renderLink = ({ href, label }: { href: string; label: string }) => {
+    const isActive = pathname === href || pathname.startsWith(href + "/");
+    return (
+      <Link
+        key={href}
+        href={href}
+        className={linkClass(isActive)}
+        aria-current={isActive ? "page" : undefined}
+      >
+        {label}
+      </Link>
+    );
+  };
+
   return (
-    <nav
-      className="flex items-center gap-1 rounded-lg border border-border/50 bg-black/20 p-1"
-      aria-label="Main"
-    >
-      {tabs.map(({ href, label }) => {
-        const isActive = pathname === href || pathname.startsWith(href + "/");
-        return (
-          <Link
-            key={href}
-            href={href}
-            className={cn(
-              "rounded-md px-4 py-2 text-sm font-medium transition-colors",
-              isActive
-                ? "bg-brand/15 text-brand ring-1 ring-brand/30"
-                : "text-muted hover:bg-white/5 hover:text-white"
-            )}
-            aria-current={isActive ? "page" : undefined}
-          >
-            {label}
-          </Link>
-        );
-      })}
+    <nav aria-label="Main">
+      <div
+        className="rounded-xl border border-brand/20 bg-black/30 p-2"
+        style={{ boxShadow: "0 0 15px rgba(249,115,22,0.08), inset 0 0 15px rgba(249,115,22,0.03)" }}
+      >
+        <div className="flex flex-wrap gap-1.5 justify-center">
+          {tabs.map(renderLink)}
+        </div>
+      </div>
     </nav>
   );
 }
