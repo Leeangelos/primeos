@@ -162,10 +162,10 @@ export default function TasksPage() {
 
   return (
     <div className="space-y-5">
-      <div className="dashboard-toolbar p-4 sm:p-5 space-y-3">
+      <div className="dashboard-toolbar p-3 sm:p-5 space-y-3">
         <div className="flex items-center gap-2">
           <h1 className="text-lg font-semibold sm:text-2xl">Task Manager</h1>
-          <button type="button" onClick={() => setShowEducation(true)} className="inline-flex items-center justify-center h-5 w-5 rounded-full bg-muted/20 text-muted hover:bg-brand/20 hover:text-brand transition-colors text-[10px] font-bold" aria-label="Learn more">i</button>
+          <button type="button" onClick={() => setShowEducation(true)} className="inline-flex items-center justify-center min-h-[44px] min-w-[44px] rounded-full bg-muted/20 text-muted hover:bg-brand/20 hover:text-brand transition-colors text-xs font-bold" aria-label="Learn more">i</button>
         </div>
         <p className="text-xs text-muted">Daily opening, closing, prep, and cleaning. Check off when done.</p>
 
@@ -177,7 +177,7 @@ export default function TasksPage() {
                 key={slug}
                 type="button"
                 onClick={() => setStore(slug)}
-                className={cn("rounded-lg border px-3 py-2 text-sm font-medium transition-colors", store === slug ? `${s.borderActive} ${s.bgActive} ${s.text}` : "border-border/30 bg-black/20 text-muted hover:text-white")}
+                className={cn("min-h-[44px] rounded-lg border px-3 py-2 text-sm font-medium transition-colors", store === slug ? `${s.borderActive} ${s.bgActive} ${s.text}` : "border-border/30 bg-black/20 text-muted hover:text-white")}
               >
                 {COCKPIT_TARGETS[slug].name}
               </button>
@@ -186,9 +186,9 @@ export default function TasksPage() {
         </div>
 
         <div className="flex items-center justify-center gap-2">
-          <button type="button" onClick={() => setDate(prevDay(date))} className="rounded-lg border border-border/50 bg-black/30 px-3 py-2 text-muted hover:text-white transition-colors">←</button>
-          <span className="text-sm font-medium min-w-[140px] text-center">{formatDate(date)}</span>
-          <button type="button" onClick={() => setDate(nextDay(date))} className="rounded-lg border border-border/50 bg-black/30 px-3 py-2 text-muted hover:text-white transition-colors">→</button>
+          <button type="button" onClick={() => setDate(prevDay(date))} className="min-h-[44px] min-w-[44px] flex items-center justify-center rounded-lg border border-border/50 bg-black/30 text-muted hover:text-white transition-colors" aria-label="Previous day">←</button>
+          <span className="text-sm font-medium min-w-[140px] text-center min-h-[44px] flex items-center justify-center">{formatDate(date)}</span>
+          <button type="button" onClick={() => setDate(nextDay(date))} className="min-h-[44px] min-w-[44px] flex items-center justify-center rounded-lg border border-border/50 bg-black/30 text-muted hover:text-white transition-colors" aria-label="Next day">→</button>
         </div>
 
         <div className="flex flex-wrap gap-1.5 justify-center">
@@ -197,7 +197,7 @@ export default function TasksPage() {
               key={c.key}
               type="button"
               onClick={() => setCategory(c.key)}
-              className={cn("rounded-lg border px-2.5 py-1.5 text-xs font-medium", category === c.key ? "border-brand/50 bg-brand/15 text-brand" : "border-border/30 bg-black/20 text-muted hover:text-white")}
+              className={cn("min-h-[44px] rounded-lg border px-2.5 py-1.5 text-xs font-medium", category === c.key ? "border-brand/50 bg-brand/15 text-brand" : "border-border/30 bg-black/20 text-muted hover:text-white")}
             >
               {c.label}
             </button>
@@ -226,7 +226,7 @@ export default function TasksPage() {
       )}
 
       <div className="flex justify-end">
-        <button type="button" onClick={() => setShowAddTask(true)} className="rounded-lg border border-brand/50 bg-brand/15 px-4 py-2.5 text-sm font-semibold text-brand hover:bg-brand/25">+ Add Task</button>
+        <button type="button" onClick={() => setShowAddTask(true)} className="min-h-[44px] rounded-lg border border-brand/50 bg-brand/15 px-4 py-2.5 text-sm font-semibold text-brand hover:bg-brand/25">+ Add Task</button>
       </div>
 
       {loading ? (
@@ -253,7 +253,7 @@ export default function TasksPage() {
                     setCompleteTarget({ task, name: "" });
                     setCompleteName("");
                   }}
-                  className={cn("shrink-0 w-6 h-6 rounded border flex items-center justify-center text-sm", isCompleted ? "border-emerald-500/50 bg-emerald-500/20 text-emerald-400" : "border-border/50 bg-black/30 text-muted hover:border-brand/50")}
+                  className={cn("shrink-0 min-h-[44px] min-w-[44px] rounded border flex items-center justify-center text-sm", isCompleted ? "border-emerald-500/50 bg-emerald-500/20 text-emerald-400" : "border-border/50 bg-black/30 text-muted hover:border-brand/50")}
                   aria-label={isCompleted ? "Completed" : "Mark complete"}
                 >
                   {isCompleted ? "✓" : ""}
@@ -277,8 +277,8 @@ export default function TasksPage() {
       {completeTarget && typeof document !== "undefined" && createPortal(
         <div className="fixed inset-0 z-[9999] flex items-center justify-center p-4" style={{ position: "fixed", top: 0, left: 0, right: 0, bottom: 0 }} onClick={() => setCompleteTarget(null)}>
           <div className="absolute inset-0 bg-black/80 backdrop-blur-sm" />
-          <div className="relative w-full max-w-sm rounded-2xl border border-border bg-[#0d0f13] p-5 shadow-2xl" onClick={(e) => e.stopPropagation()}>
-            <button type="button" onClick={() => setCompleteTarget(null)} className="absolute top-3 right-3 text-muted hover:text-white text-lg leading-none">✕</button>
+          <div className="relative w-full max-w-sm rounded-2xl border border-border bg-[#0d0f13] p-4 sm:p-5 shadow-2xl min-w-0" onClick={(e) => e.stopPropagation()}>
+            <button type="button" onClick={() => setCompleteTarget(null)} className="absolute top-3 right-3 min-h-[44px] min-w-[44px] flex items-center justify-center text-muted hover:text-white text-lg -mr-2" aria-label="Close">✕</button>
             <h3 className="text-base font-semibold text-white mb-1">Mark complete</h3>
             <p className="text-sm text-muted mb-3">{completeTarget.task.title}</p>
             <label className="block text-xs text-muted mb-1">Your name</label>
@@ -302,8 +302,8 @@ export default function TasksPage() {
       {showAddTask && typeof document !== "undefined" && createPortal(
         <div className="fixed inset-0 z-[9999] flex items-center justify-center p-4" style={{ position: "fixed", top: 0, left: 0, right: 0, bottom: 0 }} onClick={() => setShowAddTask(false)}>
           <div className="absolute inset-0 bg-black/80 backdrop-blur-sm" />
-          <div className="relative w-full max-w-md rounded-2xl border border-border bg-[#0d0f13] p-5 shadow-2xl overflow-y-auto" style={{ maxHeight: "90vh" }} onClick={(e) => e.stopPropagation()}>
-            <button type="button" onClick={() => setShowAddTask(false)} className="absolute top-3 right-3 text-muted hover:text-white text-lg leading-none">✕</button>
+          <div className="relative w-full max-w-md rounded-2xl border border-border bg-[#0d0f13] p-4 sm:p-5 shadow-2xl overflow-y-auto max-h-[85vh] min-w-0" onClick={(e) => e.stopPropagation()}>
+            <button type="button" onClick={() => setShowAddTask(false)} className="absolute top-3 right-3 min-h-[44px] min-w-[44px] flex items-center justify-center text-muted hover:text-white text-lg -mr-2" aria-label="Close">✕</button>
             <h3 className="text-base font-semibold text-white mb-4">Add Task</h3>
             <div className="space-y-3">
               <div>
@@ -352,8 +352,8 @@ export default function TasksPage() {
       {showEducation && typeof document !== "undefined" && createPortal(
         <div className="fixed inset-0 z-[9999] flex items-center justify-center p-4" style={{ position: "fixed", top: 0, left: 0, right: 0, bottom: 0 }} onClick={() => setShowEducation(false)}>
           <div className="absolute inset-0 bg-black/80 backdrop-blur-sm" />
-          <div className="relative w-full max-w-md mx-auto rounded-2xl border border-border bg-[#0d0f13] p-5 shadow-2xl overflow-y-auto" style={{ maxHeight: "85vh" }} onClick={(e) => e.stopPropagation()}>
-            <button type="button" onClick={() => setShowEducation(false)} className="absolute top-3 right-3 text-muted hover:text-white text-lg leading-none" aria-label="Close">✕</button>
+          <div className="relative w-full max-w-md mx-auto rounded-2xl border border-border bg-[#0d0f13] p-4 sm:p-5 shadow-2xl overflow-y-auto max-h-[85vh] min-w-0" onClick={(e) => e.stopPropagation()}>
+            <button type="button" onClick={() => setShowEducation(false)} className="absolute top-3 right-3 min-h-[44px] min-w-[44px] flex items-center justify-center text-muted hover:text-white text-lg -mr-2" aria-label="Close">✕</button>
             <h3 className="text-base font-semibold text-brand mb-1">🎓 Task Accountability</h3>
             <p className="text-xs text-muted mb-4">Why task tracking reduces operational errors.</p>
             <div className="space-y-3 text-sm">

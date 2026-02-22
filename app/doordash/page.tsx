@@ -54,10 +54,10 @@ export default function DoorDashPage() {
 
   return (
     <div className="space-y-5">
-      <div className="dashboard-toolbar p-4 sm:p-5 space-y-3">
+      <div className="dashboard-toolbar p-3 sm:p-5 space-y-3">
         <div className="flex items-center gap-2">
           <h1 className="text-lg font-semibold sm:text-2xl">DoorDash Economics</h1>
-          <button type="button" onClick={() => setShowEducation(true)} className="inline-flex items-center justify-center h-5 w-5 rounded-full bg-muted/20 text-muted hover:bg-brand/20 hover:text-brand transition-colors text-[10px] font-bold">i</button>
+          <button type="button" onClick={() => setShowEducation(true)} className="inline-flex items-center justify-center min-h-[44px] min-w-[44px] rounded-full bg-muted/20 text-muted hover:bg-brand/20 hover:text-brand transition-colors text-xs font-bold" aria-label="Learn more">i</button>
         </div>
         <p className="text-xs text-muted">What you really keep after DoorDash takes their cut.</p>
 
@@ -81,9 +81,9 @@ export default function DoorDashPage() {
       ) : (
         <>
           {/* Hero: What You Actually Keep */}
-          <div className={cn("rounded-lg border p-5 text-center", keepRate >= 60 ? "border-emerald-500/50 bg-emerald-500/10" : keepRate >= 50 ? "border-amber-500/50 bg-amber-500/10" : "border-red-500/50 bg-red-500/10")}>
+          <div className={cn("rounded-lg border p-3 sm:p-5 text-center", keepRate >= 60 ? "border-emerald-500/50 bg-emerald-500/10" : keepRate >= 50 ? "border-amber-500/50 bg-amber-500/10" : "border-red-500/50 bg-red-500/10")}>
             <div className="text-[10px] font-medium uppercase tracking-widest text-muted/70">You Keep (After Fees + Ad Spend)</div>
-            <div className={cn("mt-3 text-5xl font-black tabular-nums", keepRate >= 60 ? "text-emerald-400" : keepRate >= 50 ? "text-amber-400" : "text-red-400")}>
+            <div className={cn("mt-3 text-3xl sm:text-5xl font-black tabular-nums", keepRate >= 60 ? "text-emerald-400" : keepRate >= 50 ? "text-amber-400" : "text-red-400")}>
               {keepRate.toFixed(1)}%
             </div>
             <div className="text-xs text-muted mt-2">
@@ -180,8 +180,8 @@ export default function DoorDashPage() {
       {showEducation && typeof document !== "undefined" && createPortal(
         <div className="fixed inset-0 z-[9999] flex items-center justify-center p-4" style={{ position: "fixed", top: 0, left: 0, right: 0, bottom: 0 }} onClick={() => setShowEducation(false)}>
           <div className="absolute inset-0 bg-black/80 backdrop-blur-sm" />
-          <div className="relative w-full max-w-md mx-auto rounded-2xl border border-border bg-[#0d0f13] p-5 shadow-2xl overflow-y-auto" style={{ maxHeight: "85vh" }} onClick={(e) => e.stopPropagation()}>
-            <button type="button" onClick={() => setShowEducation(false)} className="absolute top-3 right-3 text-muted hover:text-white text-lg leading-none">✕</button>
+          <div className="relative w-full max-w-md mx-auto rounded-2xl border border-border bg-[#0d0f13] p-4 sm:p-5 shadow-2xl overflow-y-auto max-h-[85vh] min-w-0" onClick={(e) => e.stopPropagation()}>
+            <button type="button" onClick={() => setShowEducation(false)} className="absolute top-3 right-3 min-h-[44px] min-w-[44px] flex items-center justify-center text-muted hover:text-white text-lg -mr-2" aria-label="Close">✕</button>
             <h3 className="text-base font-semibold text-brand mb-1">🎓 DoorDash Economics</h3>
             <p className="text-xs text-muted mb-4">What you really make on delivery.</p>
             <div className="space-y-3 text-sm">

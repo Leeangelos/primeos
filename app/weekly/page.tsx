@@ -141,11 +141,11 @@ function WeeklyPageContent() {
 
   return (
     <div className="space-y-6">
-      <div className={`dashboard-toolbar p-5 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between ${store !== "all" ? getStoreColor(store).glow : ""}`}>
+      <div className={`dashboard-toolbar p-3 sm:p-5 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between ${store !== "all" ? getStoreColor(store).glow : ""}`}>
         <div>
           <div className="flex items-center gap-2">
-            <h1 className="text-2xl font-semibold">Weekly Cockpit</h1>
-            <button type="button" onClick={() => setShowEducation("overview")} className="inline-flex items-center justify-center h-5 w-5 rounded-full bg-muted/20 text-muted hover:bg-brand/20 hover:text-brand transition-colors text-[10px] font-bold">i</button>
+            <h1 className="text-xl sm:text-2xl font-semibold">Weekly Cockpit</h1>
+            <button type="button" onClick={() => setShowEducation("overview")} className="inline-flex items-center justify-center min-h-[44px] min-w-[44px] rounded-full bg-muted/20 text-muted hover:bg-brand/20 hover:text-brand transition-colors text-xs font-bold" aria-label="Learn more">i</button>
           </div>
           <p className="mt-1 text-sm text-muted">
             Tap any day to edit. Tap a store card to drill in.
@@ -212,20 +212,20 @@ function WeeklyPageContent() {
           )}
 
           {data.hero && (
-            <section className="dashboard-surface rounded-lg border border-border bg-panel p-6">
+            <section className="dashboard-surface rounded-lg border border-border bg-panel p-3 sm:p-6">
               <h2 className="text-xs font-semibold uppercase tracking-wider text-muted flex items-center">
                 Weekly PRIME %
                 <button
                   type="button"
                   onClick={() => setShowEducation("prime")}
-                  className="inline-flex items-center justify-center h-4 w-4 rounded-full bg-muted/20 text-muted hover:bg-brand/20 hover:text-brand transition-colors text-[9px] font-bold ml-1.5"
+                  className="inline-flex items-center justify-center min-h-[44px] min-w-[44px] rounded-full bg-muted/20 text-muted hover:bg-brand/20 hover:text-brand transition-colors text-xs font-bold ml-1.5"
                   aria-label="Learn more"
                 >
                   i
                 </button>
               </h2>
               <div className="mt-2 flex flex-wrap items-baseline gap-4">
-                <span className="text-4xl font-bold tabular-nums">
+                <span className="text-3xl sm:text-4xl font-bold tabular-nums">
                   {data.hero.weekly_prime_pct != null
                     ? `${data.hero.weekly_prime_pct.toFixed(1)}%`
                     : "—"}
@@ -376,7 +376,7 @@ function WeeklyPageContent() {
                     <button
                       type="button"
                       onClick={() => setShowEducation("food")}
-                      className="inline-flex items-center justify-center h-4 w-4 rounded-full bg-muted/20 text-muted hover:bg-brand/20 hover:text-brand transition-colors text-[9px] font-bold ml-1.5"
+                      className="inline-flex items-center justify-center min-h-[44px] min-w-[44px] rounded-full bg-muted/20 text-muted hover:bg-brand/20 hover:text-brand transition-colors text-xs font-bold ml-1.5"
                       aria-label="Learn more"
                     >
                       i
@@ -400,7 +400,7 @@ function WeeklyPageContent() {
                     <button
                       type="button"
                       onClick={() => setShowEducation("slph")}
-                      className="inline-flex items-center justify-center h-4 w-4 rounded-full bg-muted/20 text-muted hover:bg-brand/20 hover:text-brand transition-colors text-[9px] font-bold ml-1.5"
+                      className="inline-flex items-center justify-center min-h-[44px] min-w-[44px] rounded-full bg-muted/20 text-muted hover:bg-brand/20 hover:text-brand transition-colors text-xs font-bold ml-1.5"
                       aria-label="Learn more"
                     >
                       i
@@ -607,8 +607,8 @@ function WeeklyPageContent() {
       {showEducation && typeof document !== "undefined" && createPortal(
         <div className="fixed inset-0 z-[9999] flex items-center justify-center p-4" style={{ position: "fixed", top: 0, left: 0, right: 0, bottom: 0 }} onClick={() => setShowEducation(null)}>
           <div className="absolute inset-0 bg-black/80 backdrop-blur-sm" />
-          <div className="relative w-full max-w-md mx-auto rounded-2xl border border-border bg-[#0d0f13] p-5 shadow-2xl overflow-y-auto" style={{ maxHeight: "85vh" }} onClick={(e) => e.stopPropagation()}>
-            <button type="button" onClick={() => setShowEducation(null)} className="absolute top-3 right-3 text-muted hover:text-white text-lg leading-none" aria-label="Close">✕</button>
+          <div className="relative w-full max-w-md mx-auto rounded-2xl border border-border bg-[#0d0f13] p-4 sm:p-5 shadow-2xl overflow-y-auto max-h-[85vh] min-w-0" onClick={(e) => e.stopPropagation()}>
+            <button type="button" onClick={() => setShowEducation(null)} className="absolute top-3 right-3 min-h-[44px] min-w-[44px] flex items-center justify-center text-muted hover:text-white text-lg -mr-2" aria-label="Close">✕</button>
 
             {showEducation === "overview" && (
               <div>
@@ -678,7 +678,7 @@ function WeeklyPageContent() {
 const WeeklyPage = () => (
   <Suspense fallback={
   <div className="space-y-6">
-    <div className="dashboard-toolbar p-5 animate-pulse">
+    <div className="dashboard-toolbar p-3 sm:p-5 animate-pulse">
       <div className="flex items-center justify-between">
         <div>
           <div className="h-7 w-48 bg-muted/20 rounded mb-2" />

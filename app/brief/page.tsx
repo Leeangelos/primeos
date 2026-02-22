@@ -77,28 +77,30 @@ export default function BriefPage() {
 
   return (
     <div className="space-y-5">
-      <div className="dashboard-toolbar p-4 sm:p-5 space-y-3">
+      <div className="dashboard-toolbar p-3 sm:p-5 space-y-3">
         <div className="flex items-center gap-2">
           <h1 className="text-lg font-semibold sm:text-2xl">Morning Brief</h1>
-          <button type="button" onClick={() => setShowEducation(true)} className="inline-flex items-center justify-center h-5 w-5 rounded-full bg-muted/20 text-muted hover:bg-brand/20 hover:text-brand transition-colors text-[10px] font-bold">i</button>
+          <button type="button" onClick={() => setShowEducation(true)} className="inline-flex items-center justify-center min-h-[44px] min-w-[44px] rounded-full bg-muted/20 text-muted hover:bg-brand/20 hover:text-brand transition-colors text-xs font-bold" aria-label="Learn more">i</button>
         </div>
         <p className="text-xs text-muted">AI-generated summary of yesterday's operations. Powered by Claude.</p>
         <div className="flex items-center gap-2">
           <button
             type="button"
             onClick={() => setDate(prevDay(date))}
-            className="rounded-lg border border-border/50 bg-black/30 px-3 py-3 text-muted hover:text-white hover:border-border transition-colors"
+            className="min-h-[44px] min-w-[44px] flex items-center justify-center rounded-lg border border-border/50 bg-black/30 text-muted hover:text-white hover:border-border transition-colors"
+            aria-label="Previous day"
           >
             ←
           </button>
-          <div className="flex-1 text-center">
+          <div className="flex-1 text-center min-h-[44px] flex items-center justify-center">
             <div className="text-sm font-medium">{formatDate(date)}</div>
           </div>
           <button
             type="button"
             onClick={() => setDate(nextDay(date))}
             disabled={date >= todayYYYYMMDD()}
-            className="rounded-lg border border-border/50 bg-black/30 px-3 py-3 text-muted hover:text-white hover:border-border transition-colors disabled:opacity-30"
+            className="min-h-[44px] min-w-[44px] flex items-center justify-center rounded-lg border border-border/50 bg-black/30 text-muted hover:text-white hover:border-border transition-colors disabled:opacity-30"
+            aria-label="Next day"
           >
             →
           </button>
@@ -107,7 +109,7 @@ export default function BriefPage() {
 
       {loading ? (
         <div className="space-y-4">
-          <div className="dashboard-surface rounded-lg border border-border p-5">
+          <div className="dashboard-surface rounded-lg border border-border p-3 sm:p-5">
             <div className="flex items-center gap-3 mb-4">
               <div className="h-8 w-8 rounded-full bg-brand/20 animate-pulse" />
               <div className="h-4 w-48 bg-muted/20 rounded animate-pulse" />
@@ -136,7 +138,7 @@ export default function BriefPage() {
         </div>
       ) : brief ? (
         <>
-          <div className="dashboard-surface rounded-lg border border-border p-5">
+          <div className="dashboard-surface rounded-lg border border-border p-3 sm:p-5">
             <div className="flex items-center gap-3 mb-4">
               <div className="h-8 w-8 rounded-full bg-brand/20 flex items-center justify-center text-brand text-sm font-bold">P</div>
               <div>
@@ -144,7 +146,7 @@ export default function BriefPage() {
                 <div className="text-[10px] text-muted uppercase tracking-wider">Morning Brief • {formatDate(date)}</div>
               </div>
             </div>
-            <div className="text-sm text-muted leading-relaxed whitespace-pre-wrap">{brief}</div>
+            <div className="text-xs sm:text-sm text-muted leading-relaxed whitespace-pre-wrap break-words">{brief}</div>
           </div>
 
           {Object.keys(storeData).length > 0 && (
@@ -173,7 +175,7 @@ export default function BriefPage() {
                         ${metrics.sales.toLocaleString()}
                       </span>
                     </div>
-                    <div className="grid grid-cols-4 gap-2 text-center">
+                    <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 text-center">
                       <div>
                         <div className="text-[9px] uppercase text-muted">PRIME</div>
                         <div className={`text-sm font-bold tabular-nums ${pctColor(metrics.primePct, 55)}`}>
@@ -210,8 +212,8 @@ export default function BriefPage() {
       {showEducation && typeof document !== "undefined" && createPortal(
         <div className="fixed inset-0 z-[9999] flex items-center justify-center p-4" style={{ position: "fixed", top: 0, left: 0, right: 0, bottom: 0 }} onClick={() => setShowEducation(false)}>
           <div className="absolute inset-0 bg-black/80 backdrop-blur-sm" />
-          <div className="relative w-full max-w-md mx-auto rounded-2xl border border-border bg-[#0d0f13] p-5 shadow-2xl overflow-y-auto" style={{ maxHeight: "85vh" }} onClick={(e) => e.stopPropagation()}>
-            <button type="button" onClick={() => setShowEducation(false)} className="absolute top-3 right-3 text-muted hover:text-white text-lg leading-none">✕</button>
+          <div className="relative w-full max-w-md mx-auto rounded-2xl border border-border bg-[#0d0f13] p-4 sm:p-5 shadow-2xl overflow-y-auto max-h-[85vh] min-w-0" onClick={(e) => e.stopPropagation()}>
+            <button type="button" onClick={() => setShowEducation(false)} className="absolute top-3 right-3 min-h-[44px] min-w-[44px] flex items-center justify-center text-muted hover:text-white text-lg -mr-2" aria-label="Close">✕</button>
             <h3 className="text-base font-semibold text-brand mb-1">🎓 Why Morning Briefs Change Behavior</h3>
             <p className="text-xs text-muted mb-4">AI analyzes your numbers overnight. You act before lunch.</p>
             <div className="space-y-3 text-sm">

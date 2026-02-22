@@ -75,7 +75,7 @@ export default function HomePage() {
         <div>
           <div className="flex items-center gap-2">
             <h1 className="text-2xl font-semibold">PrimeOS</h1>
-            <button type="button" onClick={() => setShowEducation(true)} className="inline-flex items-center justify-center h-5 w-5 rounded-full bg-muted/20 text-muted hover:bg-brand/20 hover:text-brand transition-colors text-[10px] font-bold">i</button>
+            <button type="button" onClick={() => setShowEducation(true)} className="inline-flex items-center justify-center min-h-[44px] min-w-[44px] h-8 w-8 rounded-full bg-muted/20 text-muted hover:bg-brand/20 hover:text-brand transition-colors text-xs font-bold" aria-label="Learn more">i</button>
           </div>
           <p className="mt-1 text-sm text-muted">
             Today's pulse — {new Date(today + "T12:00:00Z").toLocaleDateString("en-US", { weekday: "long", month: "short", day: "numeric" })}
@@ -105,7 +105,7 @@ export default function HomePage() {
                   {s.acknowledged && <span className="text-emerald-400 text-xs">✓</span>}
                 </div>
                 <div
-                  className={`mt-2 text-4xl font-black tabular-nums ${
+                  className={`mt-2 text-3xl sm:text-4xl font-black tabular-nums ${
                     s.status === "on_track"
                       ? "text-emerald-300"
                       : s.status === "over"
@@ -144,8 +144,8 @@ export default function HomePage() {
       {showEducation && typeof document !== "undefined" && createPortal(
         <div className="fixed inset-0 z-[9999] flex items-center justify-center p-4" style={{ position: "fixed", top: 0, left: 0, right: 0, bottom: 0 }} onClick={() => setShowEducation(false)}>
           <div className="absolute inset-0 bg-black/80 backdrop-blur-sm" />
-          <div className="relative w-full max-w-md mx-auto rounded-2xl border border-border bg-[#0d0f13] p-5 shadow-2xl overflow-y-auto" style={{ maxHeight: "85vh" }} onClick={(e) => e.stopPropagation()}>
-            <button type="button" onClick={() => setShowEducation(false)} className="absolute top-3 right-3 text-muted hover:text-white text-lg leading-none">✕</button>
+          <div className="relative w-full max-w-md mx-auto rounded-2xl border border-border bg-[#0d0f13] p-4 sm:p-5 shadow-2xl overflow-y-auto max-h-[85vh] min-w-0" onClick={(e) => e.stopPropagation()}>
+            <button type="button" onClick={() => setShowEducation(false)} className="absolute top-3 right-3 min-h-[44px] min-w-[44px] flex items-center justify-center text-muted hover:text-white text-lg -mr-2">✕</button>
             <h3 className="text-base font-semibold text-brand mb-1">🎓 Command Center</h3>
             <p className="text-xs text-muted mb-4">Your 90-second daily routine.</p>
             <div className="space-y-3 text-sm">

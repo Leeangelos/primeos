@@ -122,16 +122,16 @@ export default function RolodexPage() {
 
   return (
     <div className="space-y-5">
-      <div className="dashboard-toolbar p-4 sm:p-5 space-y-3">
-        <div className="flex items-center justify-between gap-3">
+      <div className="dashboard-toolbar p-3 sm:p-5 space-y-3">
+        <div className="flex items-center justify-between gap-3 flex-wrap">
           <div className="flex items-center gap-2">
             <h1 className="text-lg font-semibold sm:text-2xl">Trusted Rolodex</h1>
-            <button type="button" onClick={() => setShowEducation(true)} className="inline-flex items-center justify-center h-5 w-5 rounded-full bg-muted/20 text-muted hover:bg-brand/20 hover:text-brand transition-colors text-[10px] font-bold">i</button>
+            <button type="button" onClick={() => setShowEducation(true)} className="inline-flex items-center justify-center min-h-[44px] min-w-[44px] rounded-full bg-muted/20 text-muted hover:bg-brand/20 hover:text-brand transition-colors text-xs font-bold" aria-label="Learn more">i</button>
           </div>
           <button
             type="button"
             onClick={() => { resetForm(); setShowForm(true); }}
-            className="rounded-lg border border-brand/50 bg-brand/15 px-4 py-2.5 text-sm font-semibold text-brand hover:bg-brand/25"
+            className="min-h-[44px] rounded-lg border border-brand/50 bg-brand/15 px-4 py-2.5 text-sm font-semibold text-brand hover:bg-brand/25"
           >
             + Add
           </button>
@@ -140,7 +140,7 @@ export default function RolodexPage() {
           <select
             value={filter}
             onChange={(e) => setFilter(e.target.value as Category)}
-            className="sm:hidden rounded-lg border border-border/50 bg-black/30 px-3 py-2 text-sm font-medium text-brand focus:border-brand/60 focus:ring-1 focus:ring-brand/40 focus:outline-none"
+            className="sm:hidden min-h-[44px] w-full max-w-[200px] rounded-lg border border-border/50 bg-black/30 px-3 py-2 text-sm font-medium text-brand focus:border-brand/60 focus:ring-1 focus:ring-brand/40 focus:outline-none"
           >
             {CATEGORIES.map((c) => (
               <option key={c.key} value={c.key}>{c.label}</option>
@@ -153,7 +153,7 @@ export default function RolodexPage() {
                 type="button"
                 onClick={() => setFilter(c.key)}
                 className={cn(
-                  "rounded-lg border px-3 py-2 text-sm font-medium transition-colors",
+                  "min-h-[44px] rounded-lg border px-3 py-2 text-sm font-medium transition-colors",
                   filter === c.key
                     ? "border-brand/50 bg-brand/15 text-brand"
                     : "border-border/50 bg-black/30 text-muted hover:border-border hover:bg-black/40"
@@ -198,7 +198,7 @@ export default function RolodexPage() {
                   {c.phone && (
                     <a
                       href={`tel:${c.phone}`}
-                      className="flex items-center gap-1.5 text-brand text-sm font-medium mt-1 active:opacity-70"
+                      className="flex items-center gap-1.5 min-h-[44px] py-2 text-brand text-sm font-medium mt-1 active:opacity-70"
                     >
                       📞 {c.phone}
                     </a>
@@ -222,7 +222,7 @@ export default function RolodexPage() {
                   <button
                     type="button"
                     onClick={() => startEdit(c)}
-                    className="text-xs text-muted hover:text-white px-2 py-1 rounded border border-border/30 hover:border-border/60"
+                    className="min-h-[44px] min-w-[44px] flex items-center justify-center text-xs text-muted hover:text-white px-3 py-2 rounded border border-border/30 hover:border-border/60"
                   >
                     Edit
                   </button>
@@ -230,7 +230,7 @@ export default function RolodexPage() {
                     type="button"
                     onClick={() => handleDelete(c.id)}
                     disabled={deleting === c.id}
-                    className="text-xs text-red-400 hover:text-red-300 px-2 py-1 rounded border border-red-500/20 hover:border-red-500/40 disabled:opacity-50"
+                    className="min-h-[44px] min-w-[44px] flex items-center justify-center text-xs text-red-400 hover:text-red-300 px-3 py-2 rounded border border-red-500/20 hover:border-red-500/40 disabled:opacity-50"
                   >
                     {deleting === c.id ? "..." : "Del"}
                   </button>
@@ -246,14 +246,13 @@ export default function RolodexPage() {
         <div className="fixed inset-0 z-[9999] flex items-center justify-center p-4" onClick={() => resetForm()}>
           <div className="absolute inset-0 bg-black/80 backdrop-blur-sm" />
           <div
-            className="relative w-full max-w-md rounded-2xl border border-border bg-[#0d0f13] p-5 shadow-2xl overflow-y-auto"
-            style={{ maxHeight: "85vh" }}
+            className="relative w-full max-w-md rounded-2xl border border-border bg-[#0d0f13] p-4 sm:p-5 shadow-2xl overflow-y-auto max-h-[85vh] min-w-0"
             onClick={(e) => e.stopPropagation()}
           >
             <button
               type="button"
               onClick={() => resetForm()}
-              className="absolute top-3 right-3 text-muted hover:text-white text-lg leading-none"
+              className="absolute top-3 right-3 min-h-[44px] min-w-[44px] flex items-center justify-center text-muted hover:text-white text-lg -mr-2"
               aria-label="Close"
             >
               ✕
@@ -353,8 +352,8 @@ export default function RolodexPage() {
       {showEducation && typeof document !== "undefined" && createPortal(
         <div className="fixed inset-0 z-[9999] flex items-center justify-center p-4" style={{ position: "fixed", top: 0, left: 0, right: 0, bottom: 0 }} onClick={() => setShowEducation(false)}>
           <div className="absolute inset-0 bg-black/80 backdrop-blur-sm" />
-          <div className="relative w-full max-w-md mx-auto rounded-2xl border border-border bg-[#0d0f13] p-5 shadow-2xl overflow-y-auto" style={{ maxHeight: "85vh" }} onClick={(e) => e.stopPropagation()}>
-            <button type="button" onClick={() => setShowEducation(false)} className="absolute top-3 right-3 text-muted hover:text-white text-lg leading-none">✕</button>
+          <div className="relative w-full max-w-md mx-auto rounded-2xl border border-border bg-[#0d0f13] p-4 sm:p-5 shadow-2xl overflow-y-auto max-h-[85vh] min-w-0" onClick={(e) => e.stopPropagation()}>
+            <button type="button" onClick={() => setShowEducation(false)} className="absolute top-3 right-3 min-h-[44px] min-w-[44px] flex items-center justify-center text-muted hover:text-white text-lg -mr-2" aria-label="Close">✕</button>
             <h3 className="text-base font-semibold text-brand mb-1">🎓 Owner-Controlled Vendor List</h3>
             <p className="text-xs text-muted mb-4">Why your contact list is a profit lever.</p>
             <div className="space-y-3 text-sm">

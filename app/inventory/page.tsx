@@ -117,18 +117,18 @@ export default function InventoryPage() {
 
   return (
     <div className="space-y-5">
-      <div className="dashboard-toolbar p-4 sm:p-5 space-y-3">
-        <div className="flex items-center justify-between gap-3">
+      <div className="dashboard-toolbar p-3 sm:p-5 space-y-3">
+        <div className="flex items-center justify-between gap-3 flex-wrap">
           <div className="flex items-center gap-2">
             <h1 className="text-lg font-semibold sm:text-2xl">Inventory</h1>
-            <button type="button" onClick={() => setShowEducation(true)} className="inline-flex items-center justify-center h-5 w-5 rounded-full bg-muted/20 text-muted hover:bg-brand/20 hover:text-brand transition-colors text-[10px] font-bold" aria-label="Learn more">i</button>
+            <button type="button" onClick={() => setShowEducation(true)} className="inline-flex items-center justify-center min-h-[44px] min-w-[44px] rounded-full bg-muted/20 text-muted hover:bg-brand/20 hover:text-brand transition-colors text-xs font-bold" aria-label="Learn more">i</button>
           </div>
           {mode === "history" ? (
-            <button type="button" onClick={startCount} disabled={items.length === 0} className="rounded-lg border border-brand/50 bg-brand/15 px-4 py-2.5 text-sm font-semibold text-brand hover:bg-brand/25 disabled:opacity-50">
+            <button type="button" onClick={startCount} disabled={items.length === 0} className="min-h-[44px] rounded-lg border border-brand/50 bg-brand/15 px-4 py-2.5 text-sm font-semibold text-brand hover:bg-brand/25 disabled:opacity-50">
               Start Count
             </button>
           ) : (
-            <button type="button" onClick={handleSave} disabled={saving || countedItems === 0} className="rounded-lg border border-emerald-500/50 bg-emerald-500/15 px-4 py-2.5 text-sm font-semibold text-emerald-400 hover:bg-emerald-500/25 disabled:opacity-50">
+            <button type="button" onClick={handleSave} disabled={saving || countedItems === 0} className="min-h-[44px] rounded-lg border border-emerald-500/50 bg-emerald-500/15 px-4 py-2.5 text-sm font-semibold text-emerald-400 hover:bg-emerald-500/25 disabled:opacity-50">
               {saving ? "Saving…" : `✓ Save (${countedItems} items)`}
             </button>
           )}
@@ -155,7 +155,7 @@ export default function InventoryPage() {
           {/* Category filter */}
           <div className="flex flex-wrap gap-1.5 justify-center">
             {CATEGORIES.map((c) => (
-              <button key={c.key} type="button" onClick={() => setFilter(c.key)} className={cn("rounded-lg border px-2.5 py-1.5 text-xs font-medium transition-colors", filter === c.key ? "border-brand/50 bg-brand/15 text-brand" : "border-border/30 bg-black/20 text-muted hover:text-white")}>{c.label}</button>
+              <button key={c.key} type="button" onClick={() => setFilter(c.key)} className={cn("min-h-[44px] rounded-lg border px-2.5 py-1.5 text-xs font-medium transition-colors", filter === c.key ? "border-brand/50 bg-brand/15 text-brand" : "border-border/30 bg-black/20 text-muted hover:text-white")}>{c.label}</button>
             ))}
           </div>
 
@@ -170,15 +170,15 @@ export default function InventoryPage() {
                     <div className="text-[10px] text-muted">${line.unit_cost.toFixed(2)} / {line.unit}</div>
                   </div>
                   <div className="flex items-center gap-2">
-                    <button type="button" onClick={() => updateQty(globalIdx, Math.max(0, line.qty - 1))} className="h-9 w-9 rounded-lg border border-border/50 bg-black/30 text-muted hover:text-white text-lg font-bold flex items-center justify-center">−</button>
+                    <button type="button" onClick={() => updateQty(globalIdx, Math.max(0, line.qty - 1))} className="min-h-[44px] min-w-[44px] rounded-lg border border-border/50 bg-black/30 text-muted hover:text-white text-lg font-bold flex items-center justify-center" aria-label="Decrease">−</button>
                     <input
                       type="number"
                       value={line.qty || ""}
                       onChange={(e) => updateQty(globalIdx, Number(e.target.value) || 0)}
-                      className="w-16 h-9 rounded-lg border border-border/50 bg-black/30 text-center text-sm font-bold text-white tabular-nums focus:border-brand/60 focus:ring-1 focus:ring-brand/40 focus:outline-none"
+                      className="w-16 min-h-[44px] rounded-lg border border-border/50 bg-black/30 text-center text-sm font-bold text-white tabular-nums focus:border-brand/60 focus:ring-1 focus:ring-brand/40 focus:outline-none"
                       placeholder="0"
                     />
-                    <button type="button" onClick={() => updateQty(globalIdx, line.qty + 1)} className="h-9 w-9 rounded-lg border border-border/50 bg-black/30 text-muted hover:text-white text-lg font-bold flex items-center justify-center">+</button>
+                    <button type="button" onClick={() => updateQty(globalIdx, line.qty + 1)} className="min-h-[44px] min-w-[44px] rounded-lg border border-border/50 bg-black/30 text-muted hover:text-white text-lg font-bold flex items-center justify-center" aria-label="Increase">+</button>
                   </div>
                   <div className="w-16 text-right">
                     <div className="text-xs font-bold tabular-nums text-muted">{line.qty > 0 ? `$${line.value.toFixed(2)}` : "—"}</div>
@@ -232,8 +232,8 @@ export default function InventoryPage() {
       {showEducation && typeof document !== "undefined" && createPortal(
         <div className="fixed inset-0 z-[9999] flex items-center justify-center p-4" style={{ position: "fixed", top: 0, left: 0, right: 0, bottom: 0 }} onClick={() => setShowEducation(false)}>
           <div className="absolute inset-0 bg-black/80 backdrop-blur-sm" />
-          <div className="relative w-full max-w-md mx-auto rounded-2xl border border-border bg-[#0d0f13] p-5 shadow-2xl overflow-y-auto" style={{ maxHeight: "85vh" }} onClick={(e) => e.stopPropagation()}>
-            <button type="button" onClick={() => setShowEducation(false)} className="absolute top-3 right-3 text-muted hover:text-white text-lg leading-none" aria-label="Close">✕</button>
+          <div className="relative w-full max-w-md mx-auto rounded-2xl border border-border bg-[#0d0f13] p-4 sm:p-5 shadow-2xl overflow-y-auto max-h-[85vh] min-w-0" onClick={(e) => e.stopPropagation()}>
+            <button type="button" onClick={() => setShowEducation(false)} className="absolute top-3 right-3 min-h-[44px] min-w-[44px] flex items-center justify-center text-muted hover:text-white text-lg -mr-2" aria-label="Close">✕</button>
             <h3 className="text-base font-semibold text-brand mb-1">🎓 Inventory Counts</h3>
             <p className="text-xs text-muted mb-4">Walk-in to wallet — know what you have and what it's worth.</p>
             <div className="space-y-3 text-sm">

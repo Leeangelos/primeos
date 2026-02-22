@@ -144,10 +144,10 @@ function MonthlyContent() {
 
   return (
     <div className="space-y-6">
-      <div className="dashboard-toolbar p-4 sm:p-5 space-y-3">
+      <div className="dashboard-toolbar p-3 sm:p-5 space-y-3">
         <div className="flex items-center gap-2">
           <h1 className="text-lg font-semibold sm:text-2xl">Monthly P&L Summary</h1>
-          <button type="button" onClick={() => setShowEducation(true)} className="inline-flex items-center justify-center h-5 w-5 rounded-full bg-muted/20 text-muted hover:bg-brand/20 hover:text-brand transition-colors text-[10px] font-bold">i</button>
+          <button type="button" onClick={() => setShowEducation(true)} className="inline-flex items-center justify-center min-h-[44px] min-w-[44px] rounded-full bg-muted/20 text-muted hover:bg-brand/20 hover:text-brand transition-colors text-xs font-bold" aria-label="Learn more">i</button>
         </div>
         <div className="flex flex-wrap gap-2">
           {monthOptions.map((opt, i) => (
@@ -155,7 +155,7 @@ function MonthlyContent() {
               key={opt.startDate}
               type="button"
               onClick={() => setSelectedMonth(i)}
-              className={`rounded-lg border px-3 py-2 text-sm font-medium transition-colors ${
+              className={`min-h-[44px] rounded-lg border px-3 py-2 text-sm font-medium transition-colors ${
                 selectedMonth === i
                   ? "border-brand/50 bg-brand/15 text-brand"
                   : "border-border/50 bg-black/30 text-muted hover:border-border hover:bg-black/40"
@@ -218,11 +218,11 @@ function MonthlyContent() {
       ) : (
         <>
           {orgTotals && orgPrime != null && (
-            <div className={`dashboard-scoreboard rounded-lg border p-5 text-center ${
+            <div className={`dashboard-scoreboard rounded-lg border p-3 sm:p-5 text-center ${
               orgPrime <= 55 ? "border-emerald-500/50 bg-emerald-500/10" : "border-red-500/50 bg-red-500/10"
             }`}>
               <div className="text-[10px] font-medium uppercase tracking-widest text-muted/70">Org PRIME %</div>
-              <div className={`mt-3 text-5xl font-black tabular-nums ${
+              <div className={`mt-3 text-3xl sm:text-5xl font-black tabular-nums ${
                 orgPrime <= 55 ? "text-emerald-300" : "text-red-300"
               }`}>
                 {orgPrime.toFixed(1)}%
@@ -237,7 +237,7 @@ function MonthlyContent() {
             {summaries.map((s) => (
               <div
                 key={s.slug}
-                className={`rounded-lg border p-5 ${getStoreColor(s.slug).border} ${getStoreColor(s.slug).bg}`}
+                className={`rounded-lg border p-3 sm:p-5 ${getStoreColor(s.slug).border} ${getStoreColor(s.slug).bg}`}
               >
                 <div className="flex items-center justify-between mb-4">
                   <div className="flex items-center gap-2">
@@ -293,8 +293,8 @@ function MonthlyContent() {
       {showEducation && typeof document !== "undefined" && createPortal(
         <div className="fixed inset-0 z-[9999] flex items-center justify-center p-4" style={{ position: "fixed", top: 0, left: 0, right: 0, bottom: 0 }} onClick={() => setShowEducation(false)}>
           <div className="absolute inset-0 bg-black/80 backdrop-blur-sm" />
-          <div className="relative w-full max-w-md mx-auto rounded-2xl border border-border bg-[#0d0f13] p-5 shadow-2xl overflow-y-auto" style={{ maxHeight: "85vh" }} onClick={(e) => e.stopPropagation()}>
-            <button type="button" onClick={() => setShowEducation(false)} className="absolute top-3 right-3 text-muted hover:text-white text-lg leading-none">✕</button>
+          <div className="relative w-full max-w-md mx-auto rounded-2xl border border-border bg-[#0d0f13] p-4 sm:p-5 shadow-2xl overflow-y-auto max-h-[85vh] min-w-0" onClick={(e) => e.stopPropagation()}>
+            <button type="button" onClick={() => setShowEducation(false)} className="absolute top-3 right-3 min-h-[44px] min-w-[44px] flex items-center justify-center text-muted hover:text-white text-lg -mr-2" aria-label="Close">✕</button>
             <h3 className="text-base font-semibold text-brand mb-1">🎓 Monthly P&L View</h3>
             <p className="text-xs text-muted mb-4">Track profitability over time. Spot seasonal patterns.</p>
             <div className="space-y-3 text-sm">
@@ -327,7 +327,7 @@ export default function MonthlyPage() {
   return (
     <Suspense fallback={
       <div className="space-y-4 animate-pulse">
-        <div className="dashboard-toolbar p-5"><div className="h-7 w-48 bg-muted/20 rounded" /></div>
+        <div className="dashboard-toolbar p-3 sm:p-5"><div className="h-7 w-48 bg-muted/20 rounded" /></div>
         <div className="h-32 bg-muted/20 rounded-lg" />
         <div className="h-48 bg-muted/20 rounded-lg" />
       </div>

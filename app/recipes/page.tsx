@@ -145,14 +145,14 @@ export default function RecipesPage() {
 
   return (
     <div className="space-y-5">
-      <div className="dashboard-toolbar p-4 sm:p-5 space-y-3">
-        <div className="flex items-center justify-between gap-3">
+      <div className="dashboard-toolbar p-3 sm:p-5 space-y-3">
+        <div className="flex items-center justify-between gap-3 flex-wrap">
           <div className="flex items-center gap-2">
             <h1 className="text-lg font-semibold sm:text-2xl">Recipe Cards</h1>
             <button
               type="button"
               onClick={() => setShowEducation(true)}
-              className="inline-flex items-center justify-center h-5 w-5 rounded-full bg-muted/20 text-muted hover:bg-brand/20 hover:text-brand transition-colors text-[10px] font-bold"
+              className="inline-flex items-center justify-center min-h-[44px] min-w-[44px] rounded-full bg-muted/20 text-muted hover:bg-brand/20 hover:text-brand transition-colors text-xs font-bold"
               aria-label="Learn more"
             >
               i
@@ -161,7 +161,7 @@ export default function RecipesPage() {
           <button
             type="button"
             onClick={() => { resetForm(); setShowForm(true); }}
-            className="rounded-lg border border-brand/50 bg-brand/15 px-4 py-2.5 text-sm font-semibold text-brand hover:bg-brand/25"
+            className="min-h-[44px] rounded-lg border border-brand/50 bg-brand/15 px-4 py-2.5 text-sm font-semibold text-brand hover:bg-brand/25"
           >
             + Add
           </button>
@@ -174,7 +174,7 @@ export default function RecipesPage() {
               type="button"
               onClick={() => setFilter(c.key)}
               className={cn(
-                "rounded-lg border px-2.5 py-1.5 text-xs font-medium transition-colors",
+                "min-h-[44px] rounded-lg border px-2.5 py-1.5 text-xs font-medium transition-colors",
                 filter === c.key
                   ? "border-brand/50 bg-brand/15 text-brand"
                   : "border-border/30 bg-black/20 text-muted hover:text-white"
@@ -211,7 +211,7 @@ export default function RecipesPage() {
                     {r.size && <span className="text-[10px] text-muted bg-muted/10 px-1.5 py-0.5 rounded">{r.size}</span>}
                     <span className="text-[10px] uppercase tracking-wider text-muted bg-muted/10 px-1.5 py-0.5 rounded">{r.category}</span>
                   </div>
-                  <div className="grid grid-cols-3 gap-3 mt-2">
+                  <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 mt-2">
                     <div>
                       <div className="text-[9px] uppercase text-muted">Cost</div>
                       <div className="text-sm font-bold tabular-nums">${r.theoretical_cost.toFixed(2)}</div>
@@ -228,14 +228,14 @@ export default function RecipesPage() {
                     </div>
                   </div>
                   {r.ingredients.length > 0 && (
-                    <div className="text-xs text-muted/60 mt-2">
+                    <div className="text-xs text-muted/60 mt-2 break-words">
                       {r.ingredients.map((i) => i.name).filter(Boolean).join(", ")}
                     </div>
                   )}
                 </div>
                 <div className="flex gap-2 flex-shrink-0">
-                  <button type="button" onClick={() => startEdit(r)} className="text-xs text-muted hover:text-white px-2 py-1 rounded border border-border/30 hover:border-border/60">Edit</button>
-                  <button type="button" onClick={() => handleDelete(r.id)} disabled={deleting === r.id} className="text-xs text-red-400 hover:text-red-300 px-2 py-1 rounded border border-red-500/20 hover:border-red-500/40 disabled:opacity-50">{deleting === r.id ? "..." : "Del"}</button>
+                  <button type="button" onClick={() => startEdit(r)} className="min-h-[44px] min-w-[44px] flex items-center justify-center text-xs text-muted hover:text-white px-3 py-2 rounded border border-border/30 hover:border-border/60">Edit</button>
+                  <button type="button" onClick={() => handleDelete(r.id)} disabled={deleting === r.id} className="min-h-[44px] min-w-[44px] flex items-center justify-center text-xs text-red-400 hover:text-red-300 px-3 py-2 rounded border border-red-500/20 hover:border-red-500/40 disabled:opacity-50">{deleting === r.id ? "..." : "Del"}</button>
                 </div>
               </div>
             </div>
@@ -252,7 +252,7 @@ export default function RecipesPage() {
             <h3 className="text-base font-semibold text-brand mb-4">{editing ? "Edit Recipe" : "New Recipe Card"}</h3>
 
             <div className="space-y-3">
-              <div className="grid grid-cols-2 gap-3">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 <div>
                   <label className="block text-xs text-muted mb-1">Name *</label>
                   <input type="text" value={fName} onChange={(e) => setFName(e.target.value)} placeholder='e.g. Pepperoni Pizza' className={inputCls} autoFocus />
@@ -270,7 +270,7 @@ export default function RecipesPage() {
                   </select>
                 </div>
               </div>
-              <div className="grid grid-cols-2 gap-3">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 <div>
                   <label className="block text-xs text-muted mb-1">Size</label>
                   <input type="text" value={fSize} onChange={(e) => setFSize(e.target.value)} placeholder='e.g. 16-inch' className={inputCls} />
@@ -311,7 +311,7 @@ export default function RecipesPage() {
 
               {/* Live cost preview */}
               <div className="rounded-lg border border-border/50 bg-black/40 p-3">
-                <div className="grid grid-cols-3 gap-3 text-center">
+                <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 text-center">
                   <div>
                     <div className="text-[9px] uppercase text-muted">Cost</div>
                     <div className="text-sm font-bold tabular-nums">${theoreticalCost.toFixed(2)}</div>

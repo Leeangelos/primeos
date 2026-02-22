@@ -30,7 +30,7 @@ export function AppNav() {
   const pathname = usePathname();
   const linkClass = (isActive: boolean) =>
     cn(
-      "rounded-lg px-3 py-2 text-sm font-medium transition-colors",
+      "rounded-lg px-3 py-2 text-sm font-medium transition-colors min-h-[44px] min-w-[44px] flex items-center justify-center",
       isActive
         ? "border border-brand/50 bg-brand/15 text-brand shadow-[0_0_8px_rgba(249,115,22,0.3)]"
         : "border border-border/30 bg-black/20 text-muted hover:text-white hover:border-border/50 hover:bg-black/30"
@@ -52,10 +52,10 @@ export function AppNav() {
   return (
     <nav aria-label="Main">
       <div
-        className="rounded-xl border border-brand/20 bg-black/30 p-2"
+        className="rounded-xl border border-brand/20 bg-black/30 p-2 overflow-hidden"
         style={{ boxShadow: "0 0 15px rgba(249,115,22,0.08), inset 0 0 15px rgba(249,115,22,0.03)" }}
       >
-        <div className="flex flex-wrap gap-1.5 justify-center">
+        <div className="flex flex-wrap gap-1.5 justify-center max-w-full">
           {tabs.map(renderLink)}
         </div>
       </div>

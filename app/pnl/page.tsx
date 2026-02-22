@@ -63,13 +63,13 @@ export default function PnlPage() {
 
   return (
     <div className="space-y-5">
-      <div className={`dashboard-toolbar p-4 sm:p-5 space-y-3 ${getStoreColor(store).glow}`}>
+      <div className={`dashboard-toolbar p-3 sm:p-5 space-y-3 ${getStoreColor(store).glow}`}>
         <h1 className="text-lg font-semibold sm:text-2xl">Live P&L Projection</h1>
         <p className="text-xs text-muted">Where you'll land this month based on current trends.</p>
         <select
           value={store}
           onChange={(e) => setStore(e.target.value as CockpitStoreSlug)}
-          className={`sm:hidden rounded-lg border-2 px-3 py-2 text-sm font-medium focus:outline-none ${getStoreColor(store).borderActive} ${getStoreColor(store).bgActive} ${getStoreColor(store).text}`}
+          className={`sm:hidden min-h-[44px] w-full max-w-[200px] rounded-lg border-2 px-3 py-2 text-sm font-medium focus:outline-none ${getStoreColor(store).borderActive} ${getStoreColor(store).bgActive} ${getStoreColor(store).text}`}
         >
           {COCKPIT_STORE_SLUGS.map((slug) => (
             <option key={slug} value={slug}>{COCKPIT_TARGETS[slug].name}</option>
@@ -103,7 +103,7 @@ export default function PnlPage() {
       ) : data ? (
         <>
           {/* Month + Progress */}
-          <div className="dashboard-surface rounded-lg border border-border p-5">
+          <div className="dashboard-surface rounded-lg border border-border p-3 sm:p-5">
             <div className="flex items-center justify-between mb-3">
               <div className="text-sm font-medium text-white">{data.monthLabel}</div>
               <div className="text-xs text-muted">{data.daysWithData} of {data.daysInMonth} days</div>
@@ -117,9 +117,9 @@ export default function PnlPage() {
           </div>
 
           {/* Projected Profit Hero */}
-          <div className={`dashboard-scoreboard rounded-lg border p-5 text-center ${profit >= 0 ? "border-emerald-500/50 bg-emerald-500/10" : "border-red-500/50 bg-red-500/10"}`}>
+          <div className={`dashboard-scoreboard rounded-lg border p-3 sm:p-5 text-center ${profit >= 0 ? "border-emerald-500/50 bg-emerald-500/10" : "border-red-500/50 bg-red-500/10"}`}>
             <div className="text-[10px] font-medium uppercase tracking-widest text-muted/70">Projected Monthly Profit</div>
-            <div className={`mt-3 text-5xl font-black tabular-nums ${profitColor}`}>
+            <div className={`mt-3 text-3xl sm:text-5xl font-black tabular-nums ${profitColor}`}>
               {formatDollars(profit)}
             </div>
             <div className="text-xs text-muted mt-2">
@@ -128,13 +128,13 @@ export default function PnlPage() {
           </div>
 
           {/* Projected Gross Profit Hero */}
-          <div className="dashboard-scoreboard rounded-lg border border-border/50 p-5 text-center">
-            <div className="text-[10px] font-medium uppercase tracking-widest text-muted/70 flex items-center justify-center gap-1.5">
+          <div className="dashboard-scoreboard rounded-lg border border-border/50 p-3 sm:p-5 text-center">
+            <div className="text-[10px] font-medium uppercase tracking-widest text-muted/70 flex items-center justify-center gap-1.5 flex-wrap">
               Projected Gross Profit
               <button
                 type="button"
                 onClick={() => setShowEducation("gp")}
-                className="inline-flex items-center justify-center h-4 w-4 rounded-full bg-muted/20 text-muted hover:bg-brand/20 hover:text-brand transition-colors text-[9px] font-bold"
+                className="inline-flex items-center justify-center min-h-[44px] min-w-[44px] rounded-full bg-muted/20 text-muted hover:bg-brand/20 hover:text-brand transition-colors text-xs font-bold"
                 aria-label="Learn more"
               >
                 i
@@ -155,7 +155,7 @@ export default function PnlPage() {
           </div>
 
           {/* P&L Breakdown */}
-          <div className="dashboard-surface rounded-lg border border-border p-5">
+          <div className="dashboard-surface rounded-lg border border-border p-3 sm:p-5">
             <h2 className="text-[10px] font-semibold uppercase tracking-wider text-muted mb-4">Projected Month-End</h2>
             <div className="space-y-3">
               <div className="flex items-center justify-between">
@@ -177,7 +177,7 @@ export default function PnlPage() {
                   <button
                     type="button"
                     onClick={() => setShowEducation("prime")}
-                    className="inline-flex items-center justify-center h-4 w-4 rounded-full bg-muted/20 text-muted hover:bg-brand/20 hover:text-brand transition-colors text-[9px] font-bold"
+                    className="inline-flex items-center justify-center min-h-[44px] min-w-[44px] rounded-full bg-muted/20 text-muted hover:bg-brand/20 hover:text-brand transition-colors text-xs font-bold"
                     aria-label="Learn more"
                   >
                     i
@@ -199,13 +199,13 @@ export default function PnlPage() {
           </div>
 
           {/* What-If */}
-          <div className="rounded-lg border border-brand/30 bg-brand/5 p-5">
+          <div className="rounded-lg border border-brand/30 bg-brand/5 p-3 sm:p-5">
             <h2 className="text-xs font-semibold text-brand mb-3 flex items-center gap-1.5">
               💡 What If PRIME Hit {data.whatIf.targetPrime}%?
               <button
                 type="button"
                 onClick={() => setShowEducation("whatif")}
-                className="inline-flex items-center justify-center h-4 w-4 rounded-full bg-muted/20 text-muted hover:bg-brand/20 hover:text-brand transition-colors text-[9px] font-bold"
+                className="inline-flex items-center justify-center min-h-[44px] min-w-[44px] rounded-full bg-muted/20 text-muted hover:bg-brand/20 hover:text-brand transition-colors text-xs font-bold"
                 aria-label="Learn more"
               >
                 i
@@ -227,7 +227,7 @@ export default function PnlPage() {
           </div>
 
           {/* Actual vs Projected */}
-          <div className="dashboard-surface rounded-lg border border-border p-5">
+          <div className="dashboard-surface rounded-lg border border-border p-3 sm:p-5">
             <h2 className="text-[10px] font-semibold uppercase tracking-wider text-muted mb-4">Actual So Far ({data.daysWithData} days)</h2>
             <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
               <div>
@@ -254,8 +254,8 @@ export default function PnlPage() {
       {showEducation && typeof document !== "undefined" && createPortal(
         <div className="fixed inset-0 z-[9999] flex items-center justify-center p-4" style={{ position: "fixed", top: 0, left: 0, right: 0, bottom: 0 }} onClick={() => setShowEducation(null)}>
           <div className="absolute inset-0 bg-black/80 backdrop-blur-sm" />
-          <div className="relative w-full max-w-md mx-auto rounded-2xl border border-border bg-[#0d0f13] p-5 shadow-2xl overflow-y-auto" style={{ maxHeight: "85vh" }} onClick={(e) => e.stopPropagation()}>
-            <button type="button" onClick={() => setShowEducation(null)} className="absolute top-3 right-3 text-muted hover:text-white text-lg leading-none" aria-label="Close">✕</button>
+          <div className="relative w-full max-w-md mx-auto rounded-2xl border border-border bg-[#0d0f13] p-4 sm:p-5 shadow-2xl overflow-y-auto max-h-[85vh] min-w-0" onClick={(e) => e.stopPropagation()}>
+            <button type="button" onClick={() => setShowEducation(null)} className="absolute top-3 right-3 min-h-[44px] min-w-[44px] flex items-center justify-center text-muted hover:text-white text-lg -mr-2" aria-label="Close">✕</button>
 
             {showEducation === "gp" && (
               <div>

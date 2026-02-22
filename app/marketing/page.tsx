@@ -87,26 +87,26 @@ export default function MarketingPage() {
 
   return (
     <div className="space-y-5">
-      <div className="dashboard-toolbar p-4 sm:p-5 space-y-3">
+      <div className="dashboard-toolbar p-3 sm:p-5 space-y-3">
         <div className="flex items-center gap-2">
           <h1 className="text-lg font-semibold sm:text-2xl">Ad Accountability</h1>
-          <button type="button" onClick={() => setShowEducation(true)} className="inline-flex items-center justify-center h-5 w-5 rounded-full bg-muted/20 text-muted hover:bg-brand/20 hover:text-brand transition-colors text-[10px] font-bold">i</button>
+          <button type="button" onClick={() => setShowEducation(true)} className="inline-flex items-center justify-center min-h-[44px] min-w-[44px] rounded-full bg-muted/20 text-muted hover:bg-brand/20 hover:text-brand transition-colors text-xs font-bold" aria-label="Learn more">i</button>
         </div>
         <p className="text-xs text-muted">Every dollar in. Every customer out. No guessing.</p>
 
         <div className="flex flex-wrap gap-1.5 justify-center">
-          <button type="button" onClick={() => setStore("all")} className={cn("rounded-lg border px-3 py-2 text-sm font-medium transition-colors", store === "all" ? "border-brand/50 bg-brand/15 text-brand" : "border-border/30 bg-black/20 text-muted hover:text-white")}>All Stores</button>
+          <button type="button" onClick={() => setStore("all")} className={cn("min-h-[44px] rounded-lg border px-3 py-2 text-sm font-medium transition-colors", store === "all" ? "border-brand/50 bg-brand/15 text-brand" : "border-border/30 bg-black/20 text-muted hover:text-white")}>All Stores</button>
           {COCKPIT_STORE_SLUGS.map((slug) => {
             const sc = getStoreColor(slug);
             return (
-              <button key={slug} type="button" onClick={() => setStore(slug)} className={cn("rounded-lg border px-3 py-2 text-sm font-medium transition-colors", store === slug ? `${sc.borderActive} ${sc.bgActive} ${sc.text}` : "border-border/30 bg-black/20 text-muted hover:text-white")}>{COCKPIT_TARGETS[slug].name}</button>
+              <button key={slug} type="button" onClick={() => setStore(slug)} className={cn("min-h-[44px] rounded-lg border px-3 py-2 text-sm font-medium transition-colors", store === slug ? `${sc.borderActive} ${sc.bgActive} ${sc.text}` : "border-border/30 bg-black/20 text-muted hover:text-white")}>{COCKPIT_TARGETS[slug].name}</button>
             );
           })}
         </div>
 
-        <div className="flex gap-2 justify-center">
+        <div className="flex flex-wrap gap-2 justify-center">
           {["all", "active", "completed"].map((s) => (
-            <button key={s} type="button" onClick={() => setStatusFilter(s as any)} className={cn("rounded-lg border px-2.5 py-1.5 text-xs font-medium capitalize", statusFilter === s ? "border-brand/50 bg-brand/15 text-brand" : "border-border/30 bg-black/20 text-muted")}>{s}</button>
+            <button key={s} type="button" onClick={() => setStatusFilter(s as any)} className={cn("min-h-[44px] rounded-lg border px-2.5 py-1.5 text-xs font-medium capitalize", statusFilter === s ? "border-brand/50 bg-brand/15 text-brand" : "border-border/30 bg-black/20 text-muted")}>{s}</button>
           ))}
         </div>
       </div>
@@ -120,9 +120,9 @@ export default function MarketingPage() {
       ) : (
         <>
           {/* Blended ROI Hero */}
-          <div className={cn("rounded-lg border p-5 text-center", blendedROI >= 3 ? "border-emerald-500/50 bg-emerald-500/10" : blendedROI >= 1 ? "border-amber-500/50 bg-amber-500/10" : "border-red-500/50 bg-red-500/10")}>
+          <div className={cn("rounded-lg border p-3 sm:p-5 text-center", blendedROI >= 3 ? "border-emerald-500/50 bg-emerald-500/10" : blendedROI >= 1 ? "border-amber-500/50 bg-amber-500/10" : "border-red-500/50 bg-red-500/10")}>
             <div className="text-[10px] font-medium uppercase tracking-widest text-muted/70">Blended Marketing ROI</div>
-            <div className={cn("mt-3 text-5xl font-black tabular-nums", blendedROI >= 3 ? "text-emerald-400" : blendedROI >= 1 ? "text-amber-400" : "text-red-400")}>
+            <div className={cn("mt-3 text-3xl sm:text-5xl font-black tabular-nums", blendedROI >= 3 ? "text-emerald-400" : blendedROI >= 1 ? "text-amber-400" : "text-red-400")}>
               {blendedROI.toFixed(1)}x
             </div>
             <div className="text-xs text-muted mt-2">
@@ -170,7 +170,7 @@ export default function MarketingPage() {
 
           {/* By Platform */}
           {Object.keys(byPlatform).length > 0 && (
-            <div className="dashboard-surface rounded-lg border border-border p-5">
+            <div className="dashboard-surface rounded-lg border border-border p-3 sm:p-5">
               <h2 className="text-[10px] font-semibold uppercase tracking-wider text-muted mb-3">ROI by Platform</h2>
               <div className="space-y-2">
                 {Object.entries(byPlatform).sort((a, b) => (b[1].spend > 0 ? b[1].revenue / b[1].spend : 0) - (a[1].spend > 0 ? a[1].revenue / a[1].spend : 0)).map(([platform, data]) => {
@@ -206,7 +206,7 @@ export default function MarketingPage() {
                     </div>
                     <span className={cn("text-[10px] uppercase font-bold px-2 py-0.5 rounded", c.status === "active" ? "bg-emerald-500/10 text-emerald-400" : "bg-muted/10 text-muted")}>{c.status}</span>
                   </div>
-                  <div className="grid grid-cols-4 gap-2 text-center">
+                  <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 text-center">
                     <div>
                       <div className="text-[9px] uppercase text-muted">Spend</div>
                       <div className="text-sm font-bold tabular-nums">${c.total_spend}</div>
@@ -240,8 +240,8 @@ export default function MarketingPage() {
       {showEducation && typeof document !== "undefined" && createPortal(
         <div className="fixed inset-0 z-[9999] flex items-center justify-center p-4" style={{ position: "fixed", top: 0, left: 0, right: 0, bottom: 0 }} onClick={() => setShowEducation(false)}>
           <div className="absolute inset-0 bg-black/80 backdrop-blur-sm" />
-          <div className="relative w-full max-w-md mx-auto rounded-2xl border border-border bg-[#0d0f13] p-5 shadow-2xl overflow-y-auto" style={{ maxHeight: "85vh" }} onClick={(e) => e.stopPropagation()}>
-            <button type="button" onClick={() => setShowEducation(false)} className="absolute top-3 right-3 text-muted hover:text-white text-lg leading-none" aria-label="Close">✕</button>
+          <div className="relative w-full max-w-md mx-auto rounded-2xl border border-border bg-[#0d0f13] p-4 sm:p-5 shadow-2xl overflow-y-auto max-h-[85vh] min-w-0" onClick={(e) => e.stopPropagation()}>
+            <button type="button" onClick={() => setShowEducation(false)} className="absolute top-3 right-3 min-h-[44px] min-w-[44px] flex items-center justify-center text-muted hover:text-white text-lg -mr-2" aria-label="Close">✕</button>
             <h3 className="text-base font-semibold text-brand mb-1">🎓 Ad Accountability</h3>
             <p className="text-xs text-muted mb-4">Every dollar in. Every customer out.</p>
             <div className="space-y-3 text-sm">

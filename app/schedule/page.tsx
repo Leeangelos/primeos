@@ -185,10 +185,10 @@ export default function SchedulePage() {
 
   return (
     <div className="space-y-5">
-      <div className="dashboard-toolbar p-4 sm:p-5 space-y-3">
+      <div className="dashboard-toolbar p-3 sm:p-5 space-y-3">
         <div className="flex items-center gap-2">
           <h1 className="text-lg font-semibold sm:text-2xl">Smart Schedule</h1>
-          <button type="button" onClick={() => setShowEducation(true)} className="inline-flex items-center justify-center h-5 w-5 rounded-full bg-muted/20 text-muted hover:bg-brand/20 hover:text-brand transition-colors text-[10px] font-bold">i</button>
+          <button type="button" onClick={() => setShowEducation(true)} className="inline-flex items-center justify-center min-h-[44px] min-w-[44px] rounded-full bg-muted/20 text-muted hover:bg-brand/20 hover:text-brand transition-colors text-xs font-bold" aria-label="Learn more">i</button>
         </div>
         <p className="text-xs text-muted">See the financial impact of every schedule before the week starts.</p>
 
@@ -196,21 +196,21 @@ export default function SchedulePage() {
           {COCKPIT_STORE_SLUGS.map((slug) => {
             const sc = getStoreColor(slug);
             return (
-              <button key={slug} type="button" onClick={() => setStore(slug)} className={cn("rounded-lg border px-3 py-2 text-sm font-medium transition-colors", store === slug ? `${sc.borderActive} ${sc.bgActive} ${sc.text}` : "border-border/30 bg-black/20 text-muted hover:text-white")}>{COCKPIT_TARGETS[slug].name}</button>
+              <button key={slug} type="button" onClick={() => setStore(slug)} className={cn("min-h-[44px] rounded-lg border px-3 py-2 text-sm font-medium transition-colors", store === slug ? `${sc.borderActive} ${sc.bgActive} ${sc.text}` : "border-border/30 bg-black/20 text-muted hover:text-white")}>{COCKPIT_TARGETS[slug].name}</button>
             );
           })}
         </div>
 
         <div className="flex flex-wrap items-center justify-center gap-2 sm:gap-3">
-          <button type="button" onClick={() => setWeekOffset((p: number) => p - 1)} className="rounded-lg border border-border/30 bg-black/20 px-2.5 py-1 text-sm text-muted hover:text-white">←</button>
-          <span className="text-xs text-muted">
+          <button type="button" onClick={() => setWeekOffset((p: number) => p - 1)} className="min-h-[44px] min-w-[44px] flex items-center justify-center rounded-lg border border-border/30 bg-black/20 text-sm text-muted hover:text-white" aria-label="Previous week">←</button>
+          <span className="text-xs text-muted min-h-[44px] flex items-center justify-center">
             Week of {new Date(weekOf + "T12:00:00Z").toLocaleDateString("en-US", { month: "short", day: "numeric" })} – {new Date(new Date(weekOf).getTime() + 6 * 86400000).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })}
           </span>
-          <button type="button" onClick={() => setWeekOffset((p: number) => p + 1)} className="rounded-lg border border-border/30 bg-black/20 px-2.5 py-1 text-sm text-muted hover:text-white">→</button>
-          <button type="button" onClick={handleCopyLastWeek} disabled={copyingWeek} className="rounded-lg border border-border/30 bg-black/20 px-2.5 py-1 text-sm text-muted hover:text-white disabled:opacity-50">
+          <button type="button" onClick={() => setWeekOffset((p: number) => p + 1)} className="min-h-[44px] min-w-[44px] flex items-center justify-center rounded-lg border border-border/30 bg-black/20 text-sm text-muted hover:text-white" aria-label="Next week">→</button>
+          <button type="button" onClick={handleCopyLastWeek} disabled={copyingWeek} className="min-h-[44px] rounded-lg border border-border/30 bg-black/20 px-2.5 py-1 text-sm text-muted hover:text-white disabled:opacity-50">
             {copyingWeek ? "Copying…" : "Copy Last Week"}
           </button>
-          <button type="button" onClick={openAddShift} className="rounded-lg border border-brand/50 bg-brand/15 px-3 py-1.5 text-sm font-medium text-brand hover:bg-brand/25">+ Add Shift</button>
+          <button type="button" onClick={openAddShift} className="min-h-[44px] rounded-lg border border-brand/50 bg-brand/15 px-3 py-1.5 text-sm font-medium text-brand hover:bg-brand/25">+ Add Shift</button>
         </div>
       </div>
 
@@ -223,9 +223,9 @@ export default function SchedulePage() {
       ) : l ? (
         <>
           {/* Hero: Projected Labor % */}
-          <div className={cn("rounded-lg border p-5 text-center", l.laborPct <= 21 ? "border-emerald-500/50 bg-emerald-500/10" : l.laborPct <= 24 ? "border-amber-500/50 bg-amber-500/10" : "border-red-500/50 bg-red-500/10")}>
+          <div className={cn("rounded-lg border p-3 sm:p-5 text-center", l.laborPct <= 21 ? "border-emerald-500/50 bg-emerald-500/10" : l.laborPct <= 24 ? "border-amber-500/50 bg-amber-500/10" : "border-red-500/50 bg-red-500/10")}>
             <div className="text-[10px] font-medium uppercase tracking-widest text-muted/70">Projected Weekly Labor %</div>
-            <div className={cn("mt-3 text-5xl font-black tabular-nums", l.laborPct <= 21 ? "text-emerald-400" : l.laborPct <= 24 ? "text-amber-400" : "text-red-400")}>
+            <div className={cn("mt-3 text-3xl sm:text-5xl font-black tabular-nums", l.laborPct <= 21 ? "text-emerald-400" : l.laborPct <= 24 ? "text-amber-400" : "text-red-400")}>
               {l.laborPct}%
             </div>
             <div className="text-xs text-muted mt-2">
@@ -270,7 +270,7 @@ export default function SchedulePage() {
                   <button
                     type="button"
                     onClick={() => setExpandedDay(isExpanded ? null : day.date)}
-                    className={cn("w-full text-left rounded-lg border p-3 transition-colors", hasData ? "border-border/50 bg-black/20 hover:border-brand/30" : "border-border/20 bg-black/5")}
+                    className={cn("w-full text-left rounded-lg border p-3 min-h-[44px] transition-colors", hasData ? "border-border/50 bg-black/20 hover:border-brand/30" : "border-border/20 bg-black/5")}
                   >
                     <div className="flex items-center justify-between">
                       <div className="flex items-center gap-3">
@@ -337,8 +337,8 @@ export default function SchedulePage() {
       {showAddShift && typeof document !== "undefined" && createPortal(
         <div className="fixed inset-0 z-[9999] flex items-center justify-center p-4" style={{ position: "fixed", top: 0, left: 0, right: 0, bottom: 0 }} onClick={() => setShowAddShift(false)}>
           <div className="absolute inset-0 bg-black/80 backdrop-blur-sm" />
-          <div className="relative w-full max-w-md rounded-2xl border border-border bg-[#0d0f13] p-5 shadow-2xl overflow-y-auto" style={{ maxHeight: "90vh" }} onClick={(e) => e.stopPropagation()}>
-            <button type="button" onClick={() => setShowAddShift(false)} className="absolute top-3 right-3 text-muted hover:text-white text-lg leading-none">✕</button>
+          <div className="relative w-full max-w-md rounded-2xl border border-border bg-[#0d0f13] p-4 sm:p-5 shadow-2xl overflow-y-auto max-h-[85vh] min-w-0" onClick={(e) => e.stopPropagation()}>
+            <button type="button" onClick={() => setShowAddShift(false)} className="absolute top-3 right-3 min-h-[44px] min-w-[44px] flex items-center justify-center text-muted hover:text-white text-lg -mr-2" aria-label="Close">✕</button>
             <h3 className="text-base font-semibold text-white mb-4">Add Shift</h3>
             <div className="space-y-3">
               <div>
@@ -383,8 +383,8 @@ export default function SchedulePage() {
       {editingShift && typeof document !== "undefined" && createPortal(
         <div className="fixed inset-0 z-[9999] flex items-center justify-center p-4" style={{ position: "fixed", top: 0, left: 0, right: 0, bottom: 0 }} onClick={() => setEditingShift(null)}>
           <div className="absolute inset-0 bg-black/80 backdrop-blur-sm" />
-          <div className="relative w-full max-w-md rounded-2xl border border-border bg-[#0d0f13] p-5 shadow-2xl overflow-y-auto" style={{ maxHeight: "90vh" }} onClick={(e) => e.stopPropagation()}>
-            <button type="button" onClick={() => setEditingShift(null)} className="absolute top-3 right-3 text-muted hover:text-white text-lg leading-none">✕</button>
+          <div className="relative w-full max-w-md rounded-2xl border border-border bg-[#0d0f13] p-4 sm:p-5 shadow-2xl overflow-y-auto max-h-[85vh] min-w-0" onClick={(e) => e.stopPropagation()}>
+            <button type="button" onClick={() => setEditingShift(null)} className="absolute top-3 right-3 min-h-[44px] min-w-[44px] flex items-center justify-center text-muted hover:text-white text-lg -mr-2" aria-label="Close">✕</button>
             <h3 className="text-base font-semibold text-white mb-4">Edit Shift</h3>
             <div className="space-y-3">
               <div>
@@ -431,8 +431,8 @@ export default function SchedulePage() {
       {showEducation && typeof document !== "undefined" && createPortal(
         <div className="fixed inset-0 z-[9999] flex items-center justify-center p-4" style={{ position: "fixed", top: 0, left: 0, right: 0, bottom: 0 }} onClick={() => setShowEducation(false)}>
           <div className="absolute inset-0 bg-black/80 backdrop-blur-sm" />
-          <div className="relative w-full max-w-md mx-auto rounded-2xl border border-border bg-[#0d0f13] p-5 shadow-2xl overflow-y-auto" style={{ maxHeight: "85vh" }} onClick={(e) => e.stopPropagation()}>
-            <button type="button" onClick={() => setShowEducation(false)} className="absolute top-3 right-3 text-muted hover:text-white text-lg leading-none">✕</button>
+          <div className="relative w-full max-w-md mx-auto rounded-2xl border border-border bg-[#0d0f13] p-4 sm:p-5 shadow-2xl overflow-y-auto max-h-[85vh] min-w-0" onClick={(e) => e.stopPropagation()}>
+            <button type="button" onClick={() => setShowEducation(false)} className="absolute top-3 right-3 min-h-[44px] min-w-[44px] flex items-center justify-center text-muted hover:text-white text-lg -mr-2" aria-label="Close">✕</button>
             <h3 className="text-base font-semibold text-brand mb-1">🎓 Smart Scheduling</h3>
             <p className="text-xs text-muted mb-4">Every shift is a financial decision.</p>
             <div className="space-y-3 text-sm">

@@ -53,9 +53,9 @@ function formatSlph(laborHoursNum: number | null, slph: number | null): string {
 }
 
 /** Primary KPI (PRIME): dominant, full-width */
-const KPI_PRIMARY_BASE = "dashboard-scoreboard p-6 transition-colors duration-200";
+const KPI_PRIMARY_BASE = "dashboard-scoreboard p-3 sm:p-6 transition-colors duration-200";
 /** Secondary KPIs (Labor, Food+Disposables, SLPH): subordinate, consistent */
-const KPI_SECONDARY_BASE = "dashboard-scoreboard p-4 transition-colors duration-200";
+const KPI_SECONDARY_BASE = "dashboard-scoreboard p-3 sm:p-4 transition-colors duration-200";
 
 /** Performance states: intentional accent (green / red / amber) */
 const STATUS_STYLES: Record<CockpitStatusLabel, string> = {
@@ -322,11 +322,11 @@ function DailyPageContent() {
     <>
       <div className="space-y-5">
       {/* Toolbar */}
-      <div className={`dashboard-toolbar p-4 sm:p-5 space-y-3 ${getStoreColor(storeId).glow}`}>
-        <div className="flex items-center justify-between gap-3">
+      <div className={`dashboard-toolbar p-3 sm:p-5 space-y-3 ${getStoreColor(storeId).glow}`}>
+        <div className="flex items-center justify-between gap-2 flex-wrap">
           <div className="flex items-center gap-2">
             <h1 className="text-lg font-semibold sm:text-2xl">Daily KPI Entry</h1>
-            <button type="button" onClick={() => setShowEducation("overview")} className="inline-flex items-center justify-center h-5 w-5 rounded-full bg-muted/20 text-muted hover:bg-brand/20 hover:text-brand transition-colors text-[10px] font-bold">i</button>
+            <button type="button" onClick={() => setShowEducation("overview")} className="inline-flex items-center justify-center min-h-[44px] min-w-[44px] rounded-full bg-muted/20 text-muted hover:bg-brand/20 hover:text-brand transition-colors text-xs font-bold" aria-label="Learn more">i</button>
           </div>
           <select
             value={storeId}
@@ -366,7 +366,7 @@ function DailyPageContent() {
           <button
             type="button"
             onClick={() => setBusinessDate(prevDay(businessDate))}
-            className="rounded-lg border border-border/50 bg-black/30 px-3 py-3 text-base font-medium text-muted hover:border-border hover:bg-black/40 hover:text-white active:bg-black/50"
+            className="rounded-lg border border-border/50 bg-black/30 min-h-[44px] min-w-[44px] flex items-center justify-center text-base font-medium text-muted hover:border-border hover:bg-black/40 hover:text-white active:bg-black/50"
             aria-label="Previous day"
           >
             ←
@@ -383,7 +383,7 @@ function DailyPageContent() {
           <button
             type="button"
             onClick={() => setBusinessDate(nextDay(businessDate))}
-            className="rounded-lg border border-border/50 bg-black/30 px-3 py-3 text-base font-medium text-muted hover:border-border hover:bg-black/40 hover:text-white active:bg-black/50"
+            className="rounded-lg border border-border/50 bg-black/30 min-h-[44px] min-w-[44px] flex items-center justify-center text-base font-medium text-muted hover:border-border hover:bg-black/40 hover:text-white active:bg-black/50"
             aria-label="Next day"
           >
             →
@@ -417,7 +417,7 @@ function DailyPageContent() {
                 <button
                   type="button"
                   onClick={() => setShowEducation("prime")}
-                  className="inline-flex items-center justify-center h-4 w-4 rounded-full bg-muted/20 text-muted hover:bg-brand/20 hover:text-brand transition-colors text-[9px] font-bold"
+                  className="inline-flex items-center justify-center min-h-[44px] min-w-[44px] rounded-full bg-muted/20 text-muted hover:bg-brand/20 hover:text-brand transition-colors text-xs font-bold"
                   aria-label="Learn more"
                 >
                   i
@@ -425,7 +425,7 @@ function DailyPageContent() {
               </div>
               <div
                 className={cn(
-                  "mt-4 sm:mt-8 text-7xl font-black tabular-nums tracking-tight sm:text-8xl leading-none",
+                  "mt-4 sm:mt-8 text-4xl sm:text-7xl font-black tabular-nums tracking-tight sm:text-8xl leading-none",
                   valueColor
                 )}
               >
@@ -438,7 +438,7 @@ function DailyPageContent() {
             </div>
           );
         })()}
-        <div className="grid grid-cols-1 gap-3 sm:grid-cols-4">
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
           {[scoreboardItems[1], scoreboardItems[3], scoreboardItems[2], scoreboardItems[4]].map(
             ({ label, value, target, status }) => {
               const valueColor =
@@ -463,7 +463,7 @@ function DailyPageContent() {
                     <button
                       type="button"
                       onClick={() => setShowEducation(label === "Labor %" ? "labor" : label === "Food+Disposables %" ? "food" : label === "SLPH" ? "slph" : "gp")}
-                      className="inline-flex items-center justify-center h-4 w-4 rounded-full bg-muted/20 text-muted hover:bg-brand/20 hover:text-brand transition-colors text-[9px] font-bold"
+                      className="inline-flex items-center justify-center min-h-[44px] min-w-[44px] rounded-full bg-muted/20 text-muted hover:bg-brand/20 hover:text-brand transition-colors text-xs font-bold"
                       aria-label="Learn more"
                     >
                       i
@@ -789,14 +789,13 @@ function DailyPageContent() {
         >
           <div className="absolute inset-0 bg-black/80 backdrop-blur-sm" />
           <div
-            className="relative w-full max-w-md mx-auto rounded-2xl border border-border bg-[#0d0f13] p-5 shadow-2xl overflow-y-auto"
-            style={{ maxHeight: "85vh" }}
+            className="relative w-full max-w-md mx-auto rounded-2xl border border-border bg-[#0d0f13] p-4 sm:p-5 shadow-2xl overflow-y-auto max-h-[85vh] min-w-0"
             onClick={(e) => e.stopPropagation()}
           >
             <button
               type="button"
               onClick={() => setShowEducation(null)}
-              className="absolute top-3 right-3 text-muted hover:text-white text-lg leading-none"
+              className="absolute top-3 right-3 min-h-[44px] min-w-[44px] flex items-center justify-center text-muted hover:text-white text-lg -mr-2"
               aria-label="Close"
             >
               ✕

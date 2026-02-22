@@ -57,10 +57,10 @@ function BillingContent() {
 
   return (
     <div className="space-y-5">
-      <div className="dashboard-toolbar p-4 sm:p-5 space-y-3">
+      <div className="dashboard-toolbar p-3 sm:p-5 space-y-3">
         <div className="flex items-center gap-2">
           <h1 className="text-lg font-semibold sm:text-2xl">Billing</h1>
-          <button type="button" onClick={() => setShowEducation(true)} className="inline-flex items-center justify-center h-5 w-5 rounded-full bg-muted/20 text-muted hover:bg-brand/20 hover:text-brand transition-colors text-[10px] font-bold">i</button>
+          <button type="button" onClick={() => setShowEducation(true)} className="inline-flex items-center justify-center min-h-[44px] min-w-[44px] rounded-full bg-muted/20 text-muted hover:bg-brand/20 hover:text-brand transition-colors text-xs font-bold" aria-label="Learn more">i</button>
         </div>
         <p className="text-xs text-muted">The 90-Day Pizza Profit System — Founding Operator Program</p>
       </div>
@@ -87,7 +87,7 @@ function BillingContent() {
       <div className="rounded-2xl border border-brand/30 bg-gradient-to-b from-brand/5 to-transparent p-6 space-y-5">
         <div className="text-center">
           <div className="text-[10px] uppercase tracking-widest text-brand/70 mb-2">Founding Operator Program</div>
-          <div className="text-4xl font-black text-white">$199<span className="text-lg font-medium text-muted">/mo per location</span></div>
+          <div className="text-3xl sm:text-4xl font-black text-white">$199<span className="text-base sm:text-lg font-medium text-muted">/mo per location</span></div>
           <div className="text-xs text-muted mt-1">First 25 operators only — rate locked forever</div>
         </div>
 
@@ -141,9 +141,9 @@ function BillingContent() {
         <div className="text-center space-y-3">
           <div className="text-[10px] uppercase text-muted tracking-wider">How many locations?</div>
           <div className="flex items-center justify-center gap-3">
-            <button type="button" onClick={() => setLocations(Math.max(1, locations - 1))} className="h-10 w-10 rounded-lg border border-border/50 bg-black/30 text-muted hover:text-white text-lg font-bold flex items-center justify-center">−</button>
+            <button type="button" onClick={() => setLocations(Math.max(1, locations - 1))} className="min-h-[44px] min-w-[44px] rounded-lg border border-border/50 bg-black/30 text-muted hover:text-white text-lg font-bold flex items-center justify-center" aria-label="Fewer locations">−</button>
             <div className="text-3xl font-black text-brand w-12 text-center tabular-nums">{locations}</div>
-            <button type="button" onClick={() => setLocations(Math.min(10, locations + 1))} className="h-10 w-10 rounded-lg border border-border/50 bg-black/30 text-muted hover:text-white text-lg font-bold flex items-center justify-center">+</button>
+            <button type="button" onClick={() => setLocations(Math.min(10, locations + 1))} className="min-h-[44px] min-w-[44px] rounded-lg border border-border/50 bg-black/30 text-muted hover:text-white text-lg font-bold flex items-center justify-center" aria-label="More locations">+</button>
           </div>
           <div className="text-sm text-muted">{locations} location{locations > 1 ? "s" : ""} × $199/mo = <span className="text-white font-bold">${monthlyTotal}/mo</span></div>
           <div className="text-xs text-emerald-400">You save ~${annualSavings}/mo in replaced tools</div>
@@ -155,7 +155,7 @@ function BillingContent() {
           onClick={handleCheckout}
           disabled={loading || setupLoading || !priceId}
           className={cn(
-            "w-full rounded-xl py-4 text-center text-lg font-bold transition-all",
+            "w-full min-h-[44px] rounded-xl py-4 text-center text-base sm:text-lg font-bold transition-all",
             loading || setupLoading
               ? "bg-muted/20 text-muted cursor-wait"
               : "bg-brand text-white hover:bg-brand/90 shadow-[0_0_30px_rgba(249,115,22,0.3)]"
@@ -169,8 +169,8 @@ function BillingContent() {
       {showEducation && typeof document !== "undefined" && createPortal(
         <div className="fixed inset-0 z-[9999] flex items-center justify-center p-4" style={{ position: "fixed", top: 0, left: 0, right: 0, bottom: 0 }} onClick={() => setShowEducation(false)}>
           <div className="absolute inset-0 bg-black/80 backdrop-blur-sm" />
-          <div className="relative w-full max-w-md mx-auto rounded-2xl border border-border bg-[#0d0f13] p-5 shadow-2xl overflow-y-auto" style={{ maxHeight: "85vh" }} onClick={(e) => e.stopPropagation()}>
-            <button type="button" onClick={() => setShowEducation(false)} className="absolute top-3 right-3 text-muted hover:text-white text-lg leading-none">✕</button>
+          <div className="relative w-full max-w-md mx-auto rounded-2xl border border-border bg-[#0d0f13] p-4 sm:p-5 shadow-2xl overflow-y-auto max-h-[85vh] min-w-0" onClick={(e) => e.stopPropagation()}>
+            <button type="button" onClick={() => setShowEducation(false)} className="absolute top-3 right-3 min-h-[44px] min-w-[44px] flex items-center justify-center text-muted hover:text-white text-lg -mr-2" aria-label="Close">✕</button>
             <h3 className="text-base font-semibold text-brand mb-1">🎓 What's Included & ROI</h3>
             <p className="text-xs text-muted mb-4">PrimeOS replaces spreadsheets and multiple tools. Here's the math.</p>
             <div className="space-y-3 text-sm">

@@ -47,7 +47,7 @@ export default function RootLayout({
             </div>
           </header>
 
-          <main className="glass glow rounded-2xl p-5">{children}</main>
+          <main className="glass glow rounded-2xl p-3 sm:p-5">{children}</main>
 
           <footer className="mt-6 text-xs text-muted">
             <span>Business cutoff: 4:00 AM ET</span>
