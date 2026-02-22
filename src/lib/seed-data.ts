@@ -389,7 +389,7 @@ export const SEED_TRUSTED_CONTACTS: SeedContact[] = [
   { id: "c4", name: "Portage County Health", category: "professional", phone: "(330) 555-0300", email: "inspections@portagecounty.org", notes: "Health inspections — all locations" },
   { id: "c5", name: "Angela Foster, CPA", category: "professional", phone: "(330) 555-0777", email: "afoster@fostercpa.com", notes: "Books and taxes" },
   { id: "c6", name: "State Farm - Lisa Park", category: "professional", phone: "(330) 555-0888", email: "lpark@statefarm.com", notes: "General liability & workers comp" },
-  { id: "c7", name: "FoodTec Support", category: "vendor", phone: "1-800-555-3632", email: "support@foodtec.com", notes: "POS and back office" },
+  { id: "c7", name: "POS Support", category: "vendor", phone: "1-800-555-3632", email: "support@pos.example.com", notes: "POS and back office" },
   { id: "c8", name: "Imperial Packaging", category: "vendor", phone: "(330) 555-0333", email: "orders@imperialpkg.com", notes: "Boxes and napkins" },
 ];
 
@@ -648,7 +648,7 @@ const seedNow = () => new Date().toISOString();
 
 export const SEED_TASKS: SeedTask[] = [
   { id: "seed-t1", store_id: "kent", title: "Cheese portioning audit", category: "prep", assigned_role: "manager", due_date: daysAgo(0), due_time: null, status: "pending", priority: "high", completed_by: null, completed_at: null, created_at: seedNow(), updated_at: seedNow(), is_recurring: false, recurrence: null, notes: null, created_by: null },
-  { id: "seed-t2", store_id: "kent", title: "Call FoodTec re: API", category: "custom", assigned_role: "manager", due_date: daysAgo(1), due_time: null, status: "pending", priority: "medium", completed_by: null, completed_at: null, created_at: seedNow(), updated_at: seedNow(), is_recurring: false, recurrence: null, notes: null, created_by: null },
+  { id: "seed-t2", store_id: "kent", title: "Call POS support re: API", category: "custom", assigned_role: "manager", due_date: daysAgo(1), due_time: null, status: "pending", priority: "medium", completed_by: null, completed_at: null, created_at: seedNow(), updated_at: seedNow(), is_recurring: false, recurrence: null, notes: null, created_by: null },
   { id: "seed-t3", store_id: "kent", title: "Update weekend schedule", category: "opening", assigned_role: "manager", due_date: daysAgo(0), due_time: "17:00", status: "pending", priority: "high", completed_by: null, completed_at: null, created_at: seedNow(), updated_at: seedNow(), is_recurring: false, recurrence: null, notes: null, created_by: null },
   { id: "seed-t4", store_id: "aurora", title: "Review Stow food cost", category: "custom", assigned_role: "manager", due_date: daysAgo(2), due_time: null, status: "pending", priority: "high", completed_by: null, completed_at: null, created_at: seedNow(), updated_at: seedNow(), is_recurring: false, recurrence: null, notes: null, created_by: null },
   { id: "seed-t5", store_id: "kent", title: "Order new pizza boxes", category: "prep", assigned_role: "cook", due_date: daysAgo(3), due_time: null, status: "pending", priority: "medium", completed_by: null, completed_at: null, created_at: seedNow(), updated_at: seedNow(), is_recurring: false, recurrence: null, notes: null, created_by: null },
@@ -682,7 +682,7 @@ export const SEED_CHAT_MESSAGES: SeedChatMessage[] = [
   { id: "seed-chat-2", store_id: "kent", channel: "general", sender_name: "Angelo", sender_role: null, message: "Good catch. What did they say?", is_pinned: false, is_announcement: false, created_at: seedChatTime(1, 8, 22) },
   { id: "seed-chat-3", store_id: "kent", channel: "general", sender_name: "Greg", sender_role: "manager", message: "Coming Thursday between 2-4.", is_pinned: false, is_announcement: false, created_at: seedChatTime(1, 8, 45) },
   { id: "seed-chat-4", store_id: "kent", channel: "general", sender_name: "Rosario", sender_role: "cook", message: "We're low on 16\" boxes — can someone add to the order?", is_pinned: false, is_announcement: false, created_at: seedChatTime(0, 10, 5) },
-  { id: "seed-chat-5", store_id: "kent", channel: "general", sender_name: "Greg", sender_role: "manager", message: "I'll add it to the FoodTec order today.", is_pinned: false, is_announcement: false, created_at: seedChatTime(0, 10, 18) },
+  { id: "seed-chat-5", store_id: "kent", channel: "general", sender_name: "Greg", sender_role: "manager", message: "I'll add it to the order today.", is_pinned: false, is_announcement: false, created_at: seedChatTime(0, 10, 18) },
   { id: "seed-chat-6", store_id: "kent", channel: "general", sender_name: "Angelo", sender_role: null, message: "Reminder: cheese portioning audit this week. Let's do it Thursday before lunch rush.", is_pinned: false, is_announcement: false, created_at: seedChatTime(0, 11, 0) },
   { id: "seed-chat-7", store_id: "kent", channel: "general", sender_name: "Rosario", sender_role: "cook", message: "Got it. I'll have the scale and spec sheet ready.", is_pinned: false, is_announcement: false, created_at: seedChatTime(0, 11, 12) },
   { id: "seed-chat-8", store_id: "kent", channel: "general", sender_name: "Greg", sender_role: "manager", message: "Anyone able to cover Saturday 2–8? Sarah asked for the day off.", is_pinned: false, is_announcement: false, created_at: seedChatTime(0, 14, 30) },

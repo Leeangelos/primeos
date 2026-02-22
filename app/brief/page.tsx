@@ -138,7 +138,7 @@ export default function BriefPage() {
   }
 
   return (
-    <div className="space-y-5 min-w-0 overflow-x-hidden pb-24">
+    <div className="space-y-5 min-w-0 overflow-x-hidden pb-28">
       <div className="dashboard-toolbar p-3 sm:p-5 space-y-3">
         <div className="flex items-center gap-2">
           <h1 className="text-lg font-semibold sm:text-2xl">Morning Brief</h1>

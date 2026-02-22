@@ -15,7 +15,7 @@ type MobilePageShellProps = {
 export function MobilePageShell({ title, subtitle, children }: MobilePageShellProps) {
   return (
     <div
-      className="min-h-screen bg-slate-900 overflow-y-auto px-4 pt-4 pb-24 scroll-smooth"
+      className="min-h-screen bg-slate-900 overflow-y-auto px-4 pt-4 pb-28 scroll-smooth"
       style={{ WebkitOverflowScrolling: "touch" }}
     >
       <header className="mb-4">

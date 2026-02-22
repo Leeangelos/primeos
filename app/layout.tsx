@@ -1,6 +1,7 @@
 import "./globals.css";
 import { AppNav } from "@/components/app-nav";
 import { BottomNav } from "@/src/components/layout/BottomNav";
+import { TierProvider } from "@/src/lib/tier-context";
 
 import type { Viewport, Metadata } from "next";
 
@@ -46,6 +47,7 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body className="min-h-screen bg-bg text-text">
+        <TierProvider>
         <div className="mx-auto max-w-6xl px-4 py-6">
           <header className="mb-6 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
             <div className="flex items-center gap-3">
@@ -64,14 +66,15 @@ export default function RootLayout({
             </div>
           </header>
 
-          <main className="glass glow rounded-2xl p-3 sm:p-5 pb-24">{children}</main>
+          <main className="glass glow rounded-2xl p-3 sm:p-5 pb-28">{children}</main>
 
-          <footer className="text-xs text-slate-500 text-center py-4 pb-24">
+          <footer className="text-xs text-slate-500 text-center py-4 pb-28">
             © 2026 Ambition & Legacy LLC. All rights reserved.
           </footer>
 
           <BottomNav />
         </div>
+        </TierProvider>
       </body>
     </html>
   );

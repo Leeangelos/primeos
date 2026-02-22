@@ -11,6 +11,7 @@ const tabs = [
   { href: "/rolodex", label: "Rolodex" },
   { href: "/brief", label: "Brief" },
   { href: "/pnl", label: "GP P&L" },
+  { href: "/actual-pnl", label: "Actual P&L" },
   { href: "/tasks", label: "Tasks" },
   { href: "/chat", label: "Chat" },
   { href: "/recipes", label: "Recipes" },

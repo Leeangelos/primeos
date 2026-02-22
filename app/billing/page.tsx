@@ -1,230 +1,193 @@
 "use client";
 
-import { Suspense, useState, useEffect } from "react";
-import { createPortal } from "react-dom";
-import { useSearchParams } from "next/navigation";
-import { cn } from "@/lib/utils";
+import { Sparkles, Check } from "lucide-react";
+import { useTier } from "@/src/lib/tier-context";
+import { getTierLabel } from "@/src/lib/tier-config";
 
-// Demo: always show Free Tier as current plan (monetization model demo)
-const CURRENT_PLAN = "free" as const; // "free" | "operator"
-const FREE_TIER_LABEL = "Free Tier (FoodTec)";
-const OPERATOR_PLAN_LABEL = "Operator Plan";
-
-// Demo invoice history (empty for free tier; show when we want to illustrate paid state)
-const SEED_INVOICES = [
-  { id: "inv1", date: "2025-02-01", amount: 199, status: "Paid", description: "Operator Plan — 1 location" },
-  { id: "inv2", date: "2025-01-01", amount: 199, status: "Paid", description: "Operator Plan — 1 location" },
-];
-
-function BillingContent() {
-  const searchParams = useSearchParams();
-  const success = searchParams.get("success");
-  const canceled = searchParams.get("canceled");
-
-  const [priceId, setPriceId] = useState<string | null>(null);
-  const [loading, setLoading] = useState(false);
-  const [setupLoading, setSetupLoading] = useState(true);
-  const [setupError, setSetupError] = useState(false); // Stripe not configured — show UI, stub checkout
-  const [locations, setLocations] = useState(1);
-  const [showEducation, setShowEducation] = useState(false);
-  const [checkoutError, setCheckoutError] = useState<string | null>(null);
-
-  useEffect(() => {
-    fetch("/api/billing/setup", { method: "POST" })
-      .then((r) => r.json())
-      .then((d) => {
-        if (d.ok) setPriceId(d.priceId);
-        else setSetupError(true);
-        setSetupLoading(false);
-      })
-      .catch(() => {
-        setSetupError(true);
-        setSetupLoading(false);
-      });
-  }, []);
-
-  async function handleCheckout() {
-    if (!priceId) {
-      setCheckoutError("Stripe is not configured. Contact sales to upgrade.");
-      return;
-    }
-    setCheckoutError(null);
-    setLoading(true);
-
-    const res = await fetch("/api/billing/checkout", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        priceId,
-        locationCount: locations,
-      }),
-    }).then((r) => r.json());
-
-    if (res.ok && res.url) {
-      window.location.href = res.url;
-    } else {
-      setCheckoutError(res.error || "Checkout failed");
-      setLoading(false);
-    }
-  }
-
-  const monthlyTotal = locations * 199;
-  const isFreeTier = CURRENT_PLAN === "free";
-  const invoices = isFreeTier ? [] : SEED_INVOICES;
-
+function FeatureRow({ text }: { text: string }) {
   return (
-    <div className="space-y-5">
-      <div className="dashboard-toolbar p-3 sm:p-5 space-y-3">
-        <div className="flex items-center gap-2 flex-wrap">
-          <h1 className="text-lg font-semibold sm:text-2xl">Billing</h1>
-          <button type="button" onClick={() => setShowEducation(true)} className="inline-flex items-center justify-center min-h-[44px] min-w-[44px] rounded-full bg-muted/20 text-muted hover:bg-brand/20 hover:text-brand transition-colors text-xs font-bold" aria-label="Learn more">i</button>
-        </div>
-        <p className="text-xs text-muted">Your plan, payment method, and invoice history.</p>
-      </div>
-
-      {success && (
-        <div className="rounded-lg border border-emerald-500/50 bg-emerald-500/10 p-5 text-center">
-          <div className="text-2xl mb-2">🎉</div>
-          <div className="text-lg font-bold text-emerald-400">Welcome to PrimeOS!</div>
-          <p className="text-xs text-muted mt-1">Your founding operator rate is locked forever. Let&apos;s make money.</p>
-        </div>
-      )}
-
-      {canceled && (
-        <div className="rounded-lg border border-amber-500/50 bg-amber-500/10 p-5 text-center">
-          <div className="text-sm text-amber-400">Checkout canceled. No charge. Come back when you&apos;re ready.</div>
-        </div>
-      )}
-
-      {/* 1. Current plan */}
-      <section className="rounded-xl border border-border bg-black/20 p-4">
-        <div className="text-[10px] uppercase text-muted tracking-wider mb-2">Current plan</div>
-        <div className="flex items-center justify-between flex-wrap gap-2">
-          <div>
-            <div className={cn("text-lg font-bold", isFreeTier ? "text-white" : "text-brand")}>
-              {isFreeTier ? FREE_TIER_LABEL : OPERATOR_PLAN_LABEL}
-            </div>
-            <p className="text-xs text-muted mt-0.5">
-              {isFreeTier
-                ? "Limited access via FoodTec. Upgrade for full PrimeOS: KPIs, brief, P&L, recipes, invoices, schedule, and more."
-                : "$199/mo per location. Full access. Founding rate locked."}
-            </p>
-          </div>
-          {isFreeTier && (
-            <span className="text-[10px] uppercase px-2 py-1 rounded border border-amber-500/40 text-amber-400 bg-amber-500/10">Free</span>
-          )}
-        </div>
-      </section>
-
-      {/* 2. Upgrade CTA (when on free tier) — what they get with upgrade */}
-      {isFreeTier && (
-        <section className="rounded-2xl border border-brand/30 bg-gradient-to-b from-brand/5 to-transparent p-4 sm:p-6 space-y-4">
-          <div className="text-center">
-            <div className="text-[10px] uppercase tracking-widest text-brand/70 mb-1">Upgrade to Operator Plan</div>
-            <div className="text-2xl sm:text-3xl font-black text-white">$199<span className="text-sm font-medium text-muted">/mo per location</span></div>
-            <p className="text-xs text-muted mt-1">Founding rate locked forever. 90-day money-back guarantee.</p>
-          </div>
-
-          <div className="space-y-2">
-            <div className="text-[10px] uppercase text-muted tracking-wider">What you get:</div>
-            <ul className="space-y-1.5 text-xs text-white/90">
-              <li className="flex items-start gap-2"><span className="text-emerald-400 shrink-0">✓</span> Daily KPIs, AI Morning Brief, GP P&L</li>
-              <li className="flex items-start gap-2"><span className="text-emerald-400 shrink-0">✓</span> Recipe cards, invoice scanner, inventory</li>
-              <li className="flex items-start gap-2"><span className="text-emerald-400 shrink-0">✓</span> Schedule, tasks, team chat, DoorDash view</li>
-              <li className="flex items-start gap-2"><span className="text-emerald-400 shrink-0">✓</span> Education on every metric, direct onboarding</li>
-            </ul>
-          </div>
-
-          <div className="flex items-center justify-center gap-3">
-            <button type="button" onClick={() => setLocations(Math.max(1, locations - 1))} className="min-h-[44px] min-w-[44px] rounded-lg border border-border/50 bg-black/30 text-muted hover:text-white text-lg font-bold flex items-center justify-center" aria-label="Fewer locations">−</button>
-            <span className="text-sm text-muted">{locations} location{locations > 1 ? "s" : ""} × $199</span>
-            <button type="button" onClick={() => setLocations(Math.min(10, locations + 1))} className="min-h-[44px] min-w-[44px] rounded-lg border border-border/50 bg-black/30 text-muted hover:text-white text-lg font-bold flex items-center justify-center" aria-label="More locations">+</button>
-          </div>
-
-          <button
-            type="button"
-            onClick={handleCheckout}
-            disabled={loading || setupLoading}
-            className={cn(
-              "w-full min-h-[44px] rounded-xl py-3 text-center text-base font-bold transition-all",
-              loading || setupLoading ? "bg-muted/20 text-muted cursor-wait" : "bg-brand text-white hover:bg-brand/90"
-            )}
-          >
-            {loading ? "Redirecting to checkout..." : setupLoading ? "Loading..." : priceId ? `Upgrade — $${monthlyTotal}/mo` : "Upgrade — Contact sales"}
-          </button>
-          {checkoutError && <p className="text-xs text-red-400 text-center">{checkoutError}</p>}
-          {setupError && !setupLoading && priceId === null && (
-            <p className="text-[10px] text-muted text-center">Stripe not configured in this environment. Upgrade flow is available when keys are set.</p>
-          )}
-        </section>
-      )}
-
-      {/* 3. Payment method */}
-      <section className="rounded-xl border border-border bg-black/20 p-4">
-        <div className="text-[10px] uppercase text-muted tracking-wider mb-2">Payment method</div>
-        {isFreeTier ? (
-          <p className="text-sm text-muted">No payment method on file. Add a payment method when you upgrade.</p>
-        ) : (
-          <div className="flex items-center justify-between flex-wrap gap-2">
-            <p className="text-sm text-white/90">Card on file (Stripe)</p>
-            <a href="#" className="text-xs text-brand hover:underline">Manage in Stripe portal</a>
-          </div>
-        )}
-      </section>
-
-      {/* 4. Invoice history */}
-      <section className="rounded-xl border border-border bg-black/20 p-4">
-        <div className="text-[10px] uppercase text-muted tracking-wider mb-3">Invoice history</div>
-        {invoices.length === 0 ? (
-          <p className="text-sm text-muted">No invoices yet. Invoices appear here after you subscribe.</p>
-        ) : (
-          <ul className="space-y-2">
-            {invoices.map((inv) => (
-              <li key={inv.id} className="flex items-center justify-between py-2 border-b border-border/30 last:border-0">
-                <div>
-                  <span className="text-sm text-white">{inv.description}</span>
-                  <span className="text-[10px] text-muted ml-2">{inv.date}</span>
-                </div>
-                <div className="flex items-center gap-2">
-                  <span className="text-sm font-medium tabular-nums">${inv.amount}</span>
-                  <span className="text-[10px] px-2 py-0.5 rounded bg-emerald-500/10 text-emerald-400 border border-emerald-500/30">{inv.status}</span>
-                </div>
-              </li>
-            ))}
-          </ul>
-        )}
-      </section>
-
-      {/* Education modal (inline) */}
-      {showEducation && typeof document !== "undefined" && createPortal(
-        <div className="fixed inset-0 z-[9999] flex items-center justify-center p-4" style={{ position: "fixed", top: 0, left: 0, right: 0, bottom: 0 }} onClick={() => setShowEducation(false)}>
-          <div className="absolute inset-0 bg-black/80 backdrop-blur-sm" />
-          <div className="relative w-full max-w-md mx-auto rounded-2xl border border-border bg-[#0d0f13] p-4 sm:p-5 shadow-2xl overflow-y-auto max-h-[85vh] min-w-0" onClick={(e) => e.stopPropagation()}>
-            <button type="button" onClick={() => setShowEducation(false)} className="absolute top-3 right-3 min-h-[44px] min-w-[44px] flex items-center justify-center text-muted hover:text-white text-lg -mr-2" aria-label="Close">✕</button>
-            <h3 className="text-base font-semibold text-brand mb-1">What&apos;s included & ROI</h3>
-            <p className="text-xs text-muted mb-4">PrimeOS replaces spreadsheets and multiple tools.</p>
-            <div className="space-y-3 text-sm">
-              <div>
-                <h4 className="font-medium text-white mb-1">What&apos;s included</h4>
-                <p className="text-muted text-xs leading-relaxed">Daily KPI entry, weekly cockpit, monthly P&L, GP P&L, morning brief (AI), sales reports, recipes & food cost, invoices, inventory, people, marketing, parties, schedule, tasks, chat, billing, DoorDash view, merch. One system. One login.</p>
-              </div>
-              <div>
-                <h4 className="font-medium text-white mb-1">ROI</h4>
-                <p className="text-muted text-xs leading-relaxed">Founding operator pricing is locked. If you save Margin Edge alone you&apos;re ahead in month one. The 90-day system is built so you see results in the first month.</p>
-              </div>
-            </div>
-          </div>
-        </div>,
-        document.body
-      )}
-    </div>
+    <li className="flex items-start gap-2">
+      <Check className="w-4 h-4 text-emerald-400 mt-0.5 flex-shrink-0" aria-hidden />
+      <span className="text-sm text-slate-300">{text}</span>
+    </li>
   );
 }
 
 export default function BillingPage() {
+  const { currentTier, setCurrentTier } = useTier();
   return (
-    <Suspense fallback={<div className="space-y-5 p-5"><div className="h-8 w-48 bg-muted/20 rounded animate-pulse" /></div>}>
-      <BillingContent />
-    </Suspense>
+    <div className="space-y-4 pb-28">
+      <div className="mb-2">
+        <h1 className="text-lg font-semibold sm:text-2xl text-white">Choose Your Plan</h1>
+        <p className="text-sm text-slate-400 mt-1">Every tier pays for itself in the first week.</p>
+      </div>
+
+      {/* Trial banner — demo: always show */}
+      <div className="bg-blue-950/30 rounded-xl border border-blue-800/50 p-4 mb-6">
+        <div className="flex items-center gap-2 mb-1">
+          <Sparkles className="w-4 h-4 text-blue-400" aria-hidden />
+          <span className="text-sm font-semibold text-blue-400">30-Day Free Trial Active</span>
+        </div>
+        <p className="text-sm text-slate-300">You have full access to everything. After your trial, choose the plan that fits.</p>
+        <p className="text-xs text-slate-500 mt-1">Trial ends March 24, 2026</p>
+      </div>
+
+      {/* Tier 1 — Free */}
+      <div className="bg-slate-800 rounded-xl border border-slate-700 p-5 mb-4">
+        <div className="flex justify-between items-start mb-3">
+          <div>
+            <h3 className="text-lg font-bold text-white">Free</h3>
+            <p className="text-xs text-slate-400">After 30-day trial</p>
+          </div>
+          <div className="text-right">
+            <span className="text-2xl font-bold text-white">$0</span>
+            <span className="text-xs text-slate-500">/mo</span>
+          </div>
+        </div>
+        <ul className="space-y-2 mb-4">
+          <FeatureRow text="Daily KPIs + Grading" />
+          <FeatureRow text="Weekly Cockpit" />
+          <FeatureRow text="Training Guide" />
+          <FeatureRow text="Education previews (upgrade for full playbooks)" />
+        </ul>
+        <button type="button" className="w-full py-3 rounded-xl bg-slate-700 text-slate-300 text-sm font-semibold">
+          Current Plan After Trial
+        </button>
+      </div>
+
+      {/* Tier 2 — Starter */}
+      <div className="bg-slate-800 rounded-xl border border-slate-700 p-5 mb-4">
+        <div className="flex justify-between items-start mb-3">
+          <div>
+            <h3 className="text-lg font-bold text-white">Starter</h3>
+            <p className="text-xs text-slate-400">For operators getting serious</p>
+          </div>
+          <div className="text-right">
+            <span className="text-2xl font-bold text-white">$79</span>
+            <span className="text-xs text-slate-500">/mo</span>
+          </div>
+        </div>
+        <ul className="space-y-2 mb-4">
+          <FeatureRow text="Everything in Free" />
+          <FeatureRow text="Morning Brief (AI)" />
+          <FeatureRow text="Full playbooks on all metrics" />
+          <FeatureRow text="GP P&L" />
+          <FeatureRow text="Smart Schedule" />
+        </ul>
+        <button type="button" className="w-full py-3 rounded-xl bg-blue-600 hover:bg-blue-500 text-white text-sm font-semibold transition-colors">
+          Upgrade to Starter
+        </button>
+      </div>
+
+      {/* Tier 3 — Operator (Most Popular) */}
+      <div className="bg-slate-800 rounded-xl border-2 border-blue-500 p-5 mb-4 relative">
+        <div className="absolute -top-3 left-1/2 -translate-x-1/2 bg-blue-500 text-white text-xs font-bold px-3 py-1 rounded-full">
+          MOST POPULAR
+        </div>
+        <div className="flex justify-between items-start mb-3 mt-1">
+          <div>
+            <h3 className="text-lg font-bold text-white">Operator</h3>
+            <p className="text-xs text-slate-400">The full daily toolkit</p>
+          </div>
+          <div className="text-right">
+            <span className="text-2xl font-bold text-white">$149</span>
+            <span className="text-xs text-slate-500">/mo</span>
+          </div>
+        </div>
+        <ul className="space-y-2 mb-4">
+          <FeatureRow text="Everything in Starter" />
+          <FeatureRow text="Recipes + Food Costing" />
+          <FeatureRow text="Inventory Tracking" />
+          <FeatureRow text="Invoice Scanner (AI OCR)" />
+          <FeatureRow text="Sales Report + Comparisons" />
+          <FeatureRow text="Actual P&L (CPA Upload)" />
+          <FeatureRow text="Task Manager" />
+          <FeatureRow text="Team Chat" />
+        </ul>
+        <button type="button" className="w-full py-3 rounded-xl bg-blue-600 hover:bg-blue-500 text-white text-sm font-semibold transition-colors">
+          Upgrade to Operator
+        </button>
+      </div>
+
+      {/* Tier 4 — Owner */}
+      <div className="bg-slate-800 rounded-xl border border-slate-700 p-5 mb-4">
+        <div className="flex justify-between items-start mb-3">
+          <div>
+            <h3 className="text-lg font-bold text-white">Owner</h3>
+            <p className="text-xs text-slate-400">Everything unlocked</p>
+          </div>
+          <div className="text-right">
+            <span className="text-2xl font-bold text-white">$249</span>
+            <span className="text-xs text-slate-500">/mo</span>
+          </div>
+        </div>
+        <ul className="space-y-2 mb-4">
+          <FeatureRow text="Everything in Operator" />
+          <FeatureRow text="People Economics + CAC/LTV" />
+          <FeatureRow text="Marketing ROI + ROAS" />
+          <FeatureRow text="DoorDash Economics" />
+          <FeatureRow text="Party Order Management" />
+          <FeatureRow text="Hiring Pipeline" />
+          <FeatureRow text="Local Intelligence" />
+          <FeatureRow text="Team Merch Store" />
+          <FeatureRow text="Trusted Rolodex" />
+        </ul>
+        <button type="button" className="w-full py-3 rounded-xl bg-blue-600 hover:bg-blue-500 text-white text-sm font-semibold transition-colors">
+          Upgrade to Owner
+        </button>
+      </div>
+
+      {/* Tier 5 — Enterprise */}
+      <div className="bg-slate-800 rounded-xl border border-slate-700 p-5 mb-4">
+        <div className="flex justify-between items-start mb-3">
+          <div>
+            <h3 className="text-lg font-bold text-white">Enterprise</h3>
+            <p className="text-xs text-slate-400">Multi-location groups + franchises</p>
+          </div>
+          <div className="text-right">
+            <span className="text-lg font-bold text-slate-400">Custom</span>
+          </div>
+        </div>
+        <ul className="space-y-2 mb-4">
+          <FeatureRow text="Everything in Owner" />
+          <FeatureRow text="Multi-location leaderboard" />
+          <FeatureRow text="Intelligence Platform + benchmarking" />
+          <FeatureRow text="Franchise toolkit" />
+          <FeatureRow text="Dedicated onboarding + support" />
+        </ul>
+        <button type="button" className="w-full py-3 rounded-xl bg-slate-700 hover:bg-slate-600 text-white text-sm font-semibold transition-colors">
+          Let&apos;s Talk
+        </button>
+      </div>
+
+      {/* Why Operators Upgrade */}
+      <div className="bg-slate-800 rounded-xl border border-slate-700 p-4 mt-2">
+        <h4 className="text-sm font-semibold text-slate-400 uppercase tracking-wide mb-3">Why Operators Upgrade</h4>
+        <p className="text-sm text-slate-300 leading-relaxed mb-3">
+          The average independent pizzeria wastes $18,000/year on food cost overruns they can&apos;t see. PrimeOS catches it in the first week. The Operator plan pays for itself before your second billing cycle.
+        </p>
+        <p className="text-sm text-slate-300 leading-relaxed">
+          Cancel anytime. No contracts. No setup fees. If PrimeOS doesn&apos;t save you more than it costs, you shouldn&apos;t be paying for it.
+        </p>
+      </div>
+
+      <div className="bg-slate-700/50 rounded-xl p-4 mt-6 mb-4">
+        <p className="text-xs text-slate-500 uppercase tracking-wide mb-2">Demo: Switch Tier</p>
+        <div className="flex flex-wrap gap-2">
+          {["free", "starter", "operator", "owner", "enterprise"].map((tier) => (
+            <button
+              key={tier}
+              type="button"
+              onClick={() => setCurrentTier(tier)}
+              className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-colors ${
+                currentTier === tier ? "bg-blue-600 text-white" : "bg-slate-700 text-slate-400"
+              }`}
+            >
+              {getTierLabel(tier)}
+            </button>
+          ))}
+        </div>
+      </div>
+    </div>
   );
 }

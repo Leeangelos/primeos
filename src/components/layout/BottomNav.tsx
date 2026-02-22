@@ -7,16 +7,27 @@ import {
   LayoutDashboard,
   ClipboardList,
   Sparkles,
-  TrendingUp,
+  GraduationCap,
   Menu,
+  Lock,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { getRequiredTier } from "@/src/lib/tier-config";
+import { useTier } from "@/src/lib/tier-context";
+import { UpgradeModal } from "@/src/components/layout/UpgradeModal";
+
+function hasAccess(route: string, userTier: string): boolean {
+  const tierOrder = ["free", "starter", "operator", "owner", "enterprise"];
+  const userTierIndex = tierOrder.indexOf(userTier);
+  const requiredTierIndex = tierOrder.indexOf(getRequiredTier(route));
+  return userTierIndex >= requiredTierIndex;
+}
 
 const MAIN_TABS = [
   { href: "/", label: "Home", Icon: LayoutDashboard },
   { href: "/daily", label: "Daily", Icon: ClipboardList },
   { href: "/brief", label: "Brief", Icon: Sparkles },
-  { href: "/sales", label: "Sales", Icon: TrendingUp },
+  { href: "/training", label: "Guide", Icon: GraduationCap },
 ] as const;
 
 const MORE_SECTIONS: { title: string; links: { href: string; label: string }[] }[] = [
@@ -33,6 +44,7 @@ const MORE_SECTIONS: { title: string; links: { href: string; label: string }[] }
     title: "Financial",
     links: [
       { href: "/pnl", label: "GP P&L" },
+      { href: "/actual-pnl", label: "Actual P&L" },
       { href: "/sales", label: "Sales Report" },
       { href: "/doordash", label: "DoorDash Economics" },
       { href: "/billing", label: "Billing" },
@@ -68,9 +80,15 @@ const MORE_SECTIONS: { title: string; links: { href: string; label: string }[] }
 
 export function BottomNav() {
   const pathname = usePathname();
+  const { currentTier } = useTier();
   const [moreOpen, setMoreOpen] = useState(false);
+  const [upgradeModal, setUpgradeModal] = useState<{ requiredTier: string; pageName: string } | null>(null);
 
   const closeMore = useCallback(() => setMoreOpen(false), []);
+
+  const openUpgrade = useCallback((requiredTier: string, pageName: string) => {
+    setUpgradeModal({ requiredTier, pageName });
+  }, []);
 
   useEffect(() => {
     if (!moreOpen) return;
@@ -89,12 +107,45 @@ export function BottomNav() {
         className="fixed bottom-0 left-0 right-0 z-50 bg-slate-900/95 backdrop-blur-sm border-t border-slate-700 pb-[env(safe-area-inset-bottom)]"
         aria-label="Bottom navigation"
       >
+        {currentTier === "owner" && (
+          <Link
+            href="/billing"
+            className="block w-full bg-blue-950/80 backdrop-blur-sm border-t border-blue-900/50 px-4 py-1.5 text-center"
+          >
+            <span className="text-xs text-blue-400">30-day free trial · Full access · </span>
+            <span className="text-xs text-blue-300 font-medium underline">Choose plan</span>
+          </Link>
+        )}
         <div className="flex justify-around items-center h-16 min-h-[64px]">
           {MAIN_TABS.map(({ href, label, Icon }) => {
             const isActive =
               href === "/"
                 ? pathname === "/"
                 : pathname === href || pathname.startsWith(href + "/");
+            const canAccess = hasAccess(href, currentTier);
+            const isBriefLocked = href === "/brief" && !canAccess;
+
+            if (isBriefLocked) {
+              return (
+                <button
+                  key={href}
+                  type="button"
+                  onClick={() => openUpgrade("starter", "Morning Brief")}
+                  className={cn(
+                    "flex flex-col items-center justify-center gap-0.5 min-w-[44px] min-h-[44px] flex-1 max-w-[80px] transition-colors relative",
+                    "text-slate-500"
+                  )}
+                  aria-label={`${label} (upgrade required)`}
+                >
+                  <span className="relative inline-block">
+                    <Icon className="w-5 h-5 shrink-0" aria-hidden />
+                    <Lock className="absolute -bottom-0.5 -right-0.5 w-3 h-3 text-slate-500" aria-hidden />
+                  </span>
+                  <span className="text-[10px] font-medium whitespace-nowrap leading-tight">{label}</span>
+                </button>
+              );
+            }
+
             return (
               <Link
                 key={href}
@@ -106,9 +157,7 @@ export function BottomNav() {
                 aria-current={isActive ? "page" : undefined}
               >
                 <Icon className="w-5 h-5 shrink-0" aria-hidden />
-                <span className="text-[10px] font-medium whitespace-nowrap leading-tight">
-                  {label}
-                </span>
+                <span className="text-[10px] font-medium whitespace-nowrap leading-tight">{label}</span>
               </Link>
             );
           })}
@@ -169,6 +218,29 @@ export function BottomNav() {
                     {section.links.map(({ href, label }) => {
                       const isActive =
                         pathname === href || pathname.startsWith(href + "/");
+                      const required = getRequiredTier(href);
+                      const canAccess = hasAccess(href, currentTier);
+
+                      if (!canAccess) {
+                        return (
+                          <li key={href}>
+                            <button
+                              type="button"
+                              onClick={() => {
+                                openUpgrade(required, label);
+                              }}
+                              className={cn(
+                                "flex items-center min-h-[44px] px-3 py-2 rounded-lg text-sm font-medium transition-colors w-full text-left",
+                                "text-slate-500 hover:bg-slate-700"
+                              )}
+                            >
+                              <Lock className="w-3.5 h-3.5 text-slate-500 flex-shrink-0 mr-2" aria-hidden />
+                              {label}
+                            </button>
+                          </li>
+                        );
+                      }
+
                       return (
                         <li key={href}>
                           <Link
@@ -193,6 +265,13 @@ export function BottomNav() {
           </div>
         </div>
       )}
+
+      <UpgradeModal
+        isOpen={upgradeModal != null}
+        onClose={() => setUpgradeModal(null)}
+        requiredTier={upgradeModal?.requiredTier ?? "starter"}
+        pageName={upgradeModal?.pageName ?? ""}
+      />
     </>
   );
 }

@@ -266,4 +266,43 @@ export const EDUCATION_CONTENT: Record<string, EducationEntry> = {
       "Track what you keep (after all fees, packaging, and ads) — that's the number that pays the bills",
     ],
   },
+
+  gp_vs_net_profit: {
+    title: "GP vs Net Profit",
+    whatItMeans:
+      "Your GP P&L shows what you control daily — food, labor, disposables. Your Actual P&L shows everything — rent, insurance, utilities, loans, marketing, miscellaneous. The gap between them is your fixed cost burden. Most operators track GP but never see the full picture until tax season. By then it's too late to fix.",
+    whenRedPlaybook: [
+      "List every fixed cost line item and its percentage of revenue — rent, insurance, utilities, loan payments, marketing, misc",
+      "Compare occupancy (rent ÷ revenue) to the 6% target — if you're at 8%, you need to grow sales or renegotiate",
+      "Shop insurance annually — get 3 quotes every renewal. Most operators overpay by 15-20% because they auto-renew",
+      "Audit utilities — LED lighting, programmable thermostats, and fixing the walk-in door seal can cut 10-15%",
+      "Review loan terms — refinancing at even 1% lower rate saves thousands per year on a $200K note",
+    ],
+  },
+
+  occupancy_pct: {
+    title: "Occupancy % (Rent)",
+    whatItMeans:
+      "Rent ÷ Total Revenue × 100. What percentage of every dollar you make goes to your landlord. Target: ≤6% of revenue. At 8% on $40,000/month revenue, you're paying $3,200 for a space that should cost $2,400 at your sales volume — or you need to grow revenue to $53,333/month to bring occupancy down to 6%.",
+    whenRedPlaybook: [
+      "Calculate your break-even occupancy: current rent ÷ 0.06 = the monthly revenue you need to hit 6%",
+      "If the gap is more than 15% above current sales, renegotiate rent before trying to grow into it",
+      "Negotiate at lease renewal — come with your P&L showing the occupancy burden. Landlords prefer a stable tenant at lower rent over vacancy",
+      "Consider if your space is right-sized — paying for square footage you don't use is dead money",
+      "Factor in CAM charges, property tax pass-throughs, and percentage rent clauses — your 'real' occupancy cost may be higher than base rent",
+    ],
+  },
+
+  net_profit: {
+    title: "Net Profit",
+    whatItMeans:
+      "What's actually left after every single expense is paid — food, labor, disposables, rent, insurance, utilities, loans, marketing, everything. This is your real take-home before taxes and owner distributions. Most independent pizzerias operate at 5-12% net profit. Below 5% and you're one bad month from trouble.",
+    whenRedPlaybook: [
+      "Identify the biggest gap: is it GP (variable costs) or fixed costs dragging you down?",
+      "If GP is healthy but net is low, your fixed cost structure is the problem — focus on the occupancy, insurance, and utilities playbooks",
+      "If GP is also weak, fix variable costs first — they respond faster. Food cost and labor improvements show up in days, not months",
+      "Calculate your monthly break-even: total fixed costs ÷ GP margin % = minimum monthly revenue needed",
+      "Build a 90-day improvement plan: target 1 point improvement in GP per month while holding fixed costs flat",
+    ],
+  },
 };

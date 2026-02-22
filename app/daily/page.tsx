@@ -336,7 +336,7 @@ function DailyPageContent() {
 
   return (
     <>
-      <div className="space-y-5 min-w-0 overflow-x-hidden pb-24">
+      <div className="space-y-5 min-w-0 overflow-x-hidden pb-28">
       {/* Toolbar */}
       <div className={`dashboard-toolbar p-3 sm:p-5 space-y-3 ${getStoreColor(storeId).glow}`}>
         <div className="flex items-center justify-between gap-2 flex-wrap">
