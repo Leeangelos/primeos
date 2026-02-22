@@ -370,12 +370,12 @@ export const SEED_PARTY_ORDERS: SeedPartyOrder[] = [
 
 // ============ MORNING BRIEF (by store) ============
 export const SEED_MORNING_BRIEF =
-  "Good morning. Yesterday Kent did $5,420 on 287 transactions. Food cost came in at 30.8% — green. Labor was 23.1% — green. Your cheese portioning audit last week is working: food cost is down 2.1 points from the spike on the 12th. Heads up: Saturday is the Kent State homecoming game. Last three home game Saturdays averaged $6,800. Consider prepping 20% extra dough and calling in Marcus for a double. One flag: Stow's food cost has been yellow for 3 straight days. Might be time to check their portioning.";
+  "Good morning. Yesterday Kent did $5,420 on 287 transactions. Food cost came in at 30.8% — green. Labor was 23.1% — green. Your cheese portioning audit last week is working: food cost is down 2.1 points from the spike on the 12th. PRIME came in at 53.9% — well under the 55% target. Average ticket $18.89, up from $18.20 last week — your upsell training is paying off. One flag: Aurora's food cost has been yellow for 3 straight days at 32.8%. Might be time to check their portioning on 16-inch pies.";
 
 /** Per-store seed briefs for demo. Keys: kent, aurora, lindseys. Use "all" → kent. */
 export const SEED_MORNING_BRIEF_BY_STORE: Record<string, string> = {
   kent:
-    "Good morning. Yesterday Kent did $5,420 on 287 transactions. Food cost came in at 30.8% — green. Labor was 23.1% — green. Your cheese portioning audit last week is working: food cost is down 2.1 points from the spike on the 12th. Heads up: Saturday is the Kent State homecoming game. Last three home game Saturdays averaged $6,800. Consider prepping 20% extra dough and calling in Marcus for a double. One flag: Stow's food cost has been yellow for 3 straight days. Might be time to check their portioning.",
+    "Good morning. Yesterday Kent did $5,420 on 287 transactions. Food cost came in at 30.8% — green. Labor was 23.1% — green. Your cheese portioning audit last week is working: food cost is down 2.1 points from the spike on the 12th. PRIME came in at 53.9% — well under the 55% target. Average ticket $18.89, up from $18.20 last week — your upsell training is paying off. One flag: Aurora's food cost has been yellow for 3 straight days at 32.8%. Might be time to check their portioning on 16-inch pies.",
   aurora:
     "Good morning. Yesterday Stow did $3,640 on 198 transactions. Food cost came in at 32.8% — yellow, third day in a row above 32%. Labor was 22.4% — green. This food cost trend needs attention before it goes red. Recommended: run a portioning check on 16-inch cheese pies this shift — that's where Kent found their overage last week. Average ticket was $18.38, up slightly from last week. Schedule looks good for the weekend — no changes needed.",
   lindseys:
