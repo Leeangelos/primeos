@@ -1,249 +1,213 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
+import { useState, useMemo } from "react";
 import { createPortal } from "react-dom";
 import { cn } from "@/lib/utils";
+import { SEED_TRUSTED_CONTACTS, type SeedContact } from "@/src/lib/seed-data";
 
 const CATEGORIES = [
   { key: "all", label: "All" },
   { key: "vendor", label: "Vendors" },
-  { key: "skilled_labor", label: "Skilled Labor" },
-  { key: "service_contract", label: "Service Contracts" },
+  { key: "repairs", label: "Repairs" },
   { key: "professional", label: "Professional" },
+  { key: "other", label: "Other" },
 ] as const;
 
 type Category = (typeof CATEGORIES)[number]["key"];
 
-type Contact = {
-  id: string;
-  category: string;
-  name: string;
-  phone: string | null;
-  email: string | null;
-  account_number: string | null;
-  notes: string | null;
-};
-
+// Map seed category to filter category (service_contract → repairs for display)
 const CATEGORY_LABELS: Record<string, string> = {
   vendor: "Vendor",
-  skilled_labor: "Skilled Labor",
-  service_contract: "Service Contract",
+  skilled_labor: "Repairs",
+  service_contract: "Repairs",
   professional: "Professional",
+  other: "Other",
 };
 
 function categoryLabel(cat: string): string {
   return CATEGORY_LABELS[cat] || cat;
 }
 
+function matchesFilter(c: SeedContact, filter: Category): boolean {
+  if (filter === "all") return true;
+  if (filter === "repairs") return c.category === "service_contract" || c.category === "skilled_labor";
+  return c.category === filter;
+}
+
 export default function RolodexPage() {
-  const [contacts, setContacts] = useState<Contact[]>([]);
-  const [loading, setLoading] = useState(true);
+  const [search, setSearch] = useState("");
   const [filter, setFilter] = useState<Category>("all");
   const [showForm, setShowForm] = useState(false);
-  const [editing, setEditing] = useState<Contact | null>(null);
+  const [editing, setEditing] = useState<SeedContact | null>(null);
   const [saving, setSaving] = useState(false);
-  const [deleting, setDeleting] = useState<string | null>(null);
   const [showEducation, setShowEducation] = useState(false);
 
-  // Form fields
   const [fName, setFName] = useState("");
   const [fCategory, setFCategory] = useState("vendor");
   const [fPhone, setFPhone] = useState("");
   const [fEmail, setFEmail] = useState("");
-  const [fAccount, setFAccount] = useState("");
   const [fNotes, setFNotes] = useState("");
 
-  const loadContacts = useCallback(async () => {
-    setLoading(true);
-    const res = await fetch(`/api/trusted-contacts?category=${filter}`);
-    const data = await res.json();
-    if (data.ok) setContacts(data.contacts);
-    setLoading(false);
-  }, [filter]);
+  // Demo: always use seed data (no API), so we never have empty state
+  const allContacts = SEED_TRUSTED_CONTACTS;
 
-  useEffect(() => { loadContacts(); }, [loadContacts]);
+  const filteredContacts = useMemo(() => {
+    let list = allContacts.filter((c) => matchesFilter(c, filter));
+    const q = search.trim().toLowerCase();
+    if (q) {
+      list = list.filter(
+        (c) =>
+          c.name.toLowerCase().includes(q) ||
+          (c.email?.toLowerCase().includes(q)) ||
+          (c.phone?.includes(q)) ||
+          (c.notes?.toLowerCase().includes(q)) ||
+          categoryLabel(c.category).toLowerCase().includes(q)
+      );
+    }
+    return list;
+  }, [allContacts, filter, search]);
 
   function resetForm() {
-    setFName(""); setFCategory("vendor"); setFPhone(""); setFEmail(""); setFAccount(""); setFNotes("");
-    setEditing(null); setShowForm(false);
+    setFName("");
+    setFCategory("vendor");
+    setFPhone("");
+    setFEmail("");
+    setFNotes("");
+    setEditing(null);
+    setShowForm(false);
   }
 
-  function startEdit(c: Contact) {
+  function startEdit(c: SeedContact) {
     setFName(c.name);
     setFCategory(c.category);
     setFPhone(c.phone || "");
     setFEmail(c.email || "");
-    setFAccount(c.account_number || "");
     setFNotes(c.notes || "");
     setEditing(c);
     setShowForm(true);
   }
 
-  async function handleSave() {
+  function handleSave() {
     if (!fName.trim()) return;
     setSaving(true);
-
-    const payload = {
-      name: fName.trim(),
-      category: fCategory,
-      phone: fPhone.trim() || null,
-      email: fEmail.trim() || null,
-      account_number: fAccount.trim() || null,
-      notes: fNotes.trim() || null,
-    };
-
-    if (editing) {
-      await fetch("/api/trusted-contacts", {
-        method: "PUT",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ id: editing.id, ...payload }),
-      });
-    } else {
-      await fetch("/api/trusted-contacts", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(payload),
-      });
-    }
-
+    // Demo: no API; just close form and refresh would re-show seed. For real app you'd POST/PUT.
     setSaving(false);
     resetForm();
-    loadContacts();
   }
 
-  async function handleDelete(id: string) {
-    setDeleting(id);
-    await fetch(`/api/trusted-contacts?id=${id}`, { method: "DELETE" });
-    setDeleting(null);
-    loadContacts();
-  }
-
-  const inputCls = "w-full rounded-lg border border-border/50 bg-black/30 px-3 py-2.5 text-sm text-white placeholder:text-muted/50 focus:border-brand/60 focus:ring-1 focus:ring-brand/40 focus:outline-none";
+  const inputCls =
+    "w-full rounded-lg border border-border/50 bg-black/30 px-3 py-2.5 text-sm text-white placeholder:text-muted/50 focus:border-brand/60 focus:ring-1 focus:ring-brand/40 focus:outline-none";
 
   return (
-    <div className="space-y-5">
+    <div className="space-y-4 min-w-0 overflow-x-hidden pb-24">
       <div className="dashboard-toolbar p-3 sm:p-5 space-y-3">
-        <div className="flex items-center justify-between gap-3 flex-wrap">
-          <div className="flex items-center gap-2">
-            <h1 className="text-lg font-semibold sm:text-2xl">Trusted Rolodex</h1>
-            <button type="button" onClick={() => setShowEducation(true)} className="inline-flex items-center justify-center min-h-[44px] min-w-[44px] rounded-full bg-muted/20 text-muted hover:bg-brand/20 hover:text-brand transition-colors text-xs font-bold" aria-label="Learn more">i</button>
-          </div>
+        <div className="flex items-center gap-2">
+          <h1 className="text-lg font-semibold sm:text-2xl">Trusted Rolodex</h1>
           <button
             type="button"
-            onClick={() => { resetForm(); setShowForm(true); }}
-            className="min-h-[44px] rounded-lg border border-brand/50 bg-brand/15 px-4 py-2.5 text-sm font-semibold text-brand hover:bg-brand/25"
+            onClick={() => setShowEducation(true)}
+            className="inline-flex items-center justify-center min-h-[44px] min-w-[44px] rounded-full bg-muted/20 text-muted hover:bg-brand/20 hover:text-brand transition-colors text-xs font-bold"
+            aria-label="Learn more"
           >
-            + Add
+            i
           </button>
         </div>
+
+        {/* Search bar — full width, h-12 */}
+        <input
+          type="search"
+          value={search}
+          onChange={(e) => setSearch(e.target.value)}
+          placeholder="Search contacts..."
+          className={cn(
+            "w-full h-12 rounded-xl border border-border/50 bg-black/30 px-4 text-sm text-white placeholder:text-slate-500",
+            "focus:border-brand/60 focus:ring-1 focus:ring-brand/40 focus:outline-none"
+          )}
+          aria-label="Search contacts"
+        />
+
+        {/* Category tabs */}
         <div className="flex flex-wrap gap-2">
-          <select
-            value={filter}
-            onChange={(e) => setFilter(e.target.value as Category)}
-            className="sm:hidden min-h-[44px] w-full max-w-[200px] rounded-lg border border-border/50 bg-black/30 px-3 py-2 text-sm font-medium text-brand focus:border-brand/60 focus:ring-1 focus:ring-brand/40 focus:outline-none"
-          >
-            {CATEGORIES.map((c) => (
-              <option key={c.key} value={c.key}>{c.label}</option>
-            ))}
-          </select>
-          <div className="hidden sm:flex flex-wrap gap-2">
-            {CATEGORIES.map((c) => (
-              <button
-                key={c.key}
-                type="button"
-                onClick={() => setFilter(c.key)}
-                className={cn(
-                  "min-h-[44px] rounded-lg border px-3 py-2 text-sm font-medium transition-colors",
-                  filter === c.key
-                    ? "border-brand/50 bg-brand/15 text-brand"
-                    : "border-border/50 bg-black/30 text-muted hover:border-border hover:bg-black/40"
-                )}
-              >
-                {c.label}
-              </button>
-            ))}
-          </div>
+          {CATEGORIES.map((c) => (
+            <button
+              key={c.key}
+              type="button"
+              onClick={() => setFilter(c.key)}
+              className={cn(
+                "min-h-[44px] rounded-lg border px-3 py-2 text-sm font-medium transition-colors shrink-0",
+                filter === c.key
+                  ? "border-brand/50 bg-brand/15 text-brand"
+                  : "border-border/50 bg-black/30 text-muted hover:border-border hover:bg-black/40"
+              )}
+            >
+              {c.label}
+            </button>
+          ))}
         </div>
       </div>
 
-      {/* Contact list */}
-      {loading ? (
-        <div className="space-y-3">
-          {[1, 2, 3].map((i) => (
-            <div key={i} className="rounded-lg border border-border/50 p-4 animate-pulse">
-              <div className="h-4 w-40 bg-muted/20 rounded mb-2" />
-              <div className="h-3 w-24 bg-muted/20 rounded" />
-            </div>
-          ))}
-        </div>
-      ) : contacts.length === 0 ? (
-        <div className="text-center py-12 text-muted text-sm">
-          No contacts yet. Tap "+ Add" to create your first one.
-        </div>
-      ) : (
-        <div className="space-y-2">
-          {contacts.map((c) => (
-            <div
-              key={c.id}
-              className="rounded-lg border border-border/50 bg-black/20 p-4"
-            >
-              <div className="flex items-start justify-between gap-3">
-                <div className="flex-1 min-w-0">
-                  <div className="flex items-center gap-2 mb-1">
-                    <span className="font-medium text-white truncate">{c.name}</span>
-                    <span className="text-[10px] uppercase tracking-wider text-muted bg-muted/10 px-2 py-0.5 rounded">
-                      {categoryLabel(c.category)}
-                    </span>
-                  </div>
-                  {c.phone && (
-                    <a
-                      href={`tel:${c.phone}`}
-                      className="flex items-center gap-1.5 min-h-[44px] py-2 text-brand text-sm font-medium mt-1 active:opacity-70"
-                    >
-                      📞 {c.phone}
-                    </a>
-                  )}
-                  {c.email && (
-                    <a
-                      href={`mailto:${c.email}`}
-                      className="text-sm text-muted hover:text-white mt-1 block truncate"
-                    >
-                      ✉ {c.email}
-                    </a>
-                  )}
-                  {c.account_number && (
-                    <div className="text-xs text-muted mt-1">Acct: {c.account_number}</div>
-                  )}
-                  {c.notes && (
-                    <div className="text-xs text-muted/70 mt-1 italic">{c.notes}</div>
-                  )}
-                </div>
-                <div className="flex gap-2 flex-shrink-0">
-                  <button
-                    type="button"
-                    onClick={() => startEdit(c)}
-                    className="min-h-[44px] min-w-[44px] flex items-center justify-center text-xs text-muted hover:text-white px-3 py-2 rounded border border-border/30 hover:border-border/60"
+      {/* Contact cards */}
+      <div className="space-y-3 px-3 sm:px-5">
+        {filteredContacts.map((c) => (
+          <div
+            key={c.id}
+            className="rounded-xl border border-slate-700 bg-slate-800/50 p-4 min-w-0"
+          >
+            <div className="flex items-start justify-between gap-3">
+              <div className="flex-1 min-w-0">
+                <p className="font-bold text-white truncate">{c.name}</p>
+                <p className="text-slate-400 text-sm mt-0.5">{categoryLabel(c.category)}</p>
+                {c.phone && (
+                  <a
+                    href={`tel:${c.phone.replace(/\D/g, "")}`}
+                    className="flex items-center gap-1.5 min-h-[44px] py-2 text-blue-400 text-sm font-medium hover:underline active:opacity-70"
                   >
-                    Edit
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => handleDelete(c.id)}
-                    disabled={deleting === c.id}
-                    className="min-h-[44px] min-w-[44px] flex items-center justify-center text-xs text-red-400 hover:text-red-300 px-3 py-2 rounded border border-red-500/20 hover:border-red-500/40 disabled:opacity-50"
+                    {c.phone}
+                  </a>
+                )}
+                {c.email && (
+                  <a
+                    href={`mailto:${c.email}`}
+                    className="flex items-center gap-1.5 min-h-[44px] py-2 text-blue-400 text-sm font-medium hover:underline active:opacity-70 break-all"
                   >
-                    {deleting === c.id ? "..." : "Del"}
-                  </button>
-                </div>
+                    {c.email}
+                  </a>
+                )}
+                {c.notes && (
+                  <p className="text-xs text-slate-500 mt-2 leading-relaxed">{c.notes}</p>
+                )}
               </div>
+              <button
+                type="button"
+                onClick={() => startEdit(c)}
+                className="min-h-[44px] min-w-[44px] flex items-center justify-center text-xs text-muted hover:text-white px-3 py-2 rounded-lg border border-slate-600 hover:border-slate-500 shrink-0"
+              >
+                Edit
+              </button>
             </div>
-          ))}
-        </div>
-      )}
+          </div>
+        ))}
+      </div>
+
+      {/* Add Contact — fixed bottom-right FAB */}
+      <button
+        type="button"
+        onClick={() => {
+          resetForm();
+          setShowForm(true);
+        }}
+        className="fixed bottom-20 right-4 sm:right-6 w-14 h-14 rounded-full bg-brand text-white shadow-lg hover:bg-brand/90 active:scale-95 flex items-center justify-center text-2xl font-light"
+        aria-label="Add contact"
+      >
+        +
+      </button>
 
       {/* Add/Edit form modal */}
       {showForm && (
-        <div className="fixed inset-0 z-[9999] flex items-center justify-center p-4" onClick={() => resetForm()}>
+        <div
+          className="fixed inset-0 z-[9999] flex items-center justify-center p-4"
+          onClick={() => resetForm()}
+        >
           <div className="absolute inset-0 bg-black/80 backdrop-blur-sm" />
           <div
             className="relative w-full max-w-md rounded-2xl border border-border bg-[#0d0f13] p-4 sm:p-5 shadow-2xl overflow-y-auto max-h-[85vh] min-w-0"
@@ -280,10 +244,10 @@ export default function RolodexPage() {
                   onChange={(e) => setFCategory(e.target.value)}
                   className={inputCls}
                 >
-                  <option value="vendor">Vendor</option>
-                  <option value="skilled_labor">Skilled Labor</option>
-                  <option value="service_contract">Service Contract</option>
+                  <option value="vendor">Vendors</option>
+                  <option value="service_contract">Repairs</option>
                   <option value="professional">Professional</option>
+                  <option value="other">Other</option>
                 </select>
               </div>
               <div>
@@ -302,17 +266,7 @@ export default function RolodexPage() {
                   type="email"
                   value={fEmail}
                   onChange={(e) => setFEmail(e.target.value)}
-                  placeholder="joe@plumbing.com"
-                  className={inputCls}
-                />
-              </div>
-              <div>
-                <label className="block text-xs text-muted mb-1">Account Number</label>
-                <input
-                  type="text"
-                  value={fAccount}
-                  onChange={(e) => setFAccount(e.target.value)}
-                  placeholder="Optional"
+                  placeholder="joe@example.com"
                   className={inputCls}
                 />
               </div>
@@ -349,31 +303,53 @@ export default function RolodexPage() {
         </div>
       )}
 
-      {showEducation && typeof document !== "undefined" && createPortal(
-        <div className="fixed inset-0 z-[9999] flex items-center justify-center p-4" style={{ position: "fixed", top: 0, left: 0, right: 0, bottom: 0 }} onClick={() => setShowEducation(false)}>
-          <div className="absolute inset-0 bg-black/80 backdrop-blur-sm" />
-          <div className="relative w-full max-w-md mx-auto rounded-2xl border border-border bg-[#0d0f13] p-4 sm:p-5 shadow-2xl overflow-y-auto max-h-[85vh] min-w-0" onClick={(e) => e.stopPropagation()}>
-            <button type="button" onClick={() => setShowEducation(false)} className="absolute top-3 right-3 min-h-[44px] min-w-[44px] flex items-center justify-center text-muted hover:text-white text-lg -mr-2" aria-label="Close">✕</button>
-            <h3 className="text-base font-semibold text-brand mb-1">🎓 Owner-Controlled Vendor List</h3>
-            <p className="text-xs text-muted mb-4">Why your contact list is a profit lever.</p>
-            <div className="space-y-3 text-sm">
-              <div>
-                <h4 className="font-medium text-white mb-1">Why Owner-Controlled Vendor Lists Matter</h4>
-                <p className="text-muted text-xs leading-relaxed">When the owner holds the vendor relationships — not a random manager or a Google search — you keep negotiating power. One shop we know had three different people calling the same paper supplier; the supplier had no reason to give a break. One contact, one relationship, one price. That's the rolodex.</p>
-              </div>
-              <div>
-                <h4 className="font-medium text-white mb-1">How Random Google Calls Lose You Money</h4>
-                <p className="text-muted text-xs leading-relaxed">Every time someone new calls a vendor, you're a new customer. New customers don't get the best terms. You lose volume discounts, loyalty pricing, and the ability to say "we've been with you for five years." Centralize contacts here. When someone needs a plumber or a flour quote, they use this list. You re-bid from strength.</p>
-              </div>
-              <div className="rounded-lg border border-red-500/30 bg-red-500/5 p-3">
-                <h4 className="font-medium text-red-400 text-xs mb-2">📕 When Vendors Drift</h4>
-                <p className="text-muted text-xs leading-relaxed">If you haven't updated the rolodex in a year, prices have crept. Call each vendor category once a quarter. Get one quote from a competitor and use it. "I'm getting X from someone else — can you match it?" That call saves more than the hour it takes. Put the winner in the rolodex and own the relationship.</p>
+      {showEducation &&
+        typeof document !== "undefined" &&
+        createPortal(
+          <div
+            className="fixed inset-0 z-[9999] flex items-center justify-center p-4"
+            style={{ position: "fixed", top: 0, left: 0, right: 0, bottom: 0 }}
+            onClick={() => setShowEducation(false)}
+          >
+            <div className="absolute inset-0 bg-black/80 backdrop-blur-sm" />
+            <div
+              className="relative w-full max-w-md mx-auto rounded-2xl border border-border bg-[#0d0f13] p-4 sm:p-5 shadow-2xl overflow-y-auto max-h-[85vh] min-w-0"
+              onClick={(e) => e.stopPropagation()}
+            >
+              <button
+                type="button"
+                onClick={() => setShowEducation(false)}
+                className="absolute top-3 right-3 min-h-[44px] min-w-[44px] flex items-center justify-center text-muted hover:text-white text-lg -mr-2"
+                aria-label="Close"
+              >
+                ✕
+              </button>
+              <h3 className="text-base font-semibold text-brand mb-1">🎓 Owner-Controlled Vendor List</h3>
+              <p className="text-xs text-muted mb-4">Why your contact list is a profit lever.</p>
+              <div className="space-y-3 text-sm">
+                <div>
+                  <h4 className="font-medium text-white mb-1">Why Owner-Controlled Vendor Lists Matter</h4>
+                  <p className="text-muted text-xs leading-relaxed">
+                    When the owner holds the vendor relationships — not a random manager or a Google search — you keep negotiating power. One shop we know had three different people calling the same paper supplier; the supplier had no reason to give a break. One contact, one relationship, one price. That&apos;s the rolodex.
+                  </p>
+                </div>
+                <div>
+                  <h4 className="font-medium text-white mb-1">How Random Google Calls Lose You Money</h4>
+                  <p className="text-muted text-xs leading-relaxed">
+                    Every time someone new calls a vendor, you&apos;re a new customer. New customers don&apos;t get the best terms. You lose volume discounts, loyalty pricing, and the ability to say &quot;we&apos;ve been with you for five years.&quot; Centralize contacts here. When someone needs a plumber or a flour quote, they use this list. You re-bid from strength.
+                  </p>
+                </div>
+                <div className="rounded-lg border border-red-500/30 bg-red-500/5 p-3">
+                  <h4 className="font-medium text-red-400 text-xs mb-2">📕 When Vendors Drift</h4>
+                  <p className="text-muted text-xs leading-relaxed">
+                    If you haven&apos;t updated the rolodex in a year, prices have crept. Call each vendor category once a quarter. Get one quote from a competitor and use it. &quot;I&apos;m getting X from someone else — can you match it?&quot; That call saves more than the hour it takes. Put the winner in the rolodex and own the relationship.
+                  </p>
+                </div>
               </div>
             </div>
-          </div>
-        </div>,
-        document.body
-      )}
+          </div>,
+          document.body
+        )}
     </div>
   );
 }

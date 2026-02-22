@@ -10,7 +10,7 @@ const tabs = [
   { href: "/monthly", label: "Monthly" },
   { href: "/rolodex", label: "Rolodex" },
   { href: "/brief", label: "Brief" },
-  { href: "/pnl", label: "P&L" },
+  { href: "/pnl", label: "GP P&L" },
   { href: "/tasks", label: "Tasks" },
   { href: "/chat", label: "Chat" },
   { href: "/recipes", label: "Recipes" },

@@ -1,6 +1,6 @@
 "use client";
 
-import { Suspense, useState, useEffect } from "react";
+import { Suspense, useMemo, useState, useEffect } from "react";
 import { createPortal } from "react-dom";
 import { useSearchParams } from "next/navigation";
 import Link from "next/link";
@@ -14,9 +14,12 @@ import {
   ResponsiveContainer,
   ReferenceLine,
 } from "recharts";
-import { getWeekStart } from "@/lib/weekly-cockpit";
+import { getWeekEnd, getWeekStart } from "@/lib/weekly-cockpit";
 import { COCKPIT_STORE_SLUGS, COCKPIT_TARGETS, type CockpitStoreSlug } from "@/lib/cockpit-config";
 import { getStoreColor } from "@/lib/store-colors";
+import { COLORS, getGradeColor } from "@/src/lib/design-tokens";
+import { EducationInfoIcon } from "@/src/components/education/InfoIcon";
+import { SEED_WEEKLY_COCKPIT } from "@/src/lib/seed-data";
 
 /** Store slug for daily drill-down; daily page uses cockpit slugs (kent, aurora, lindseys). */
 function toDailyStoreSlug(store: "all" | CockpitStoreSlug): CockpitStoreSlug {
@@ -139,6 +142,120 @@ function WeeklyPageContent() {
     return d.toISOString().slice(0, 10);
   })();
 
+  const storeForSeed = store === "all" ? "kent" : store;
+  const { thisWeekSeed, lastWeekSeed, comparisonKpis } = useMemo(() => {
+    const weeks = SEED_WEEKLY_COCKPIT.filter((r) => r.store_id === storeForSeed)
+      .slice()
+      .sort((a, b) => b.week_start.localeCompare(a.week_start));
+    const thisW = weeks.find((w) => w.week_start === weekStart) ?? weeks[0] ?? null;
+    const lastW = weeks.find((w) => w.week_start === prevMonday) ?? weeks[1] ?? null;
+    if (!thisW || !lastW) {
+      return { thisWeekSeed: null, lastWeekSeed: null, comparisonKpis: [] };
+    }
+    const targets = COCKPIT_TARGETS[store === "all" ? "kent" : store];
+    const fmtPct = (n: number) => `${n.toFixed(1)}%`;
+    const fmtDollars = (n: number) => `$${n.toLocaleString("en-US", { maximumFractionDigits: 0 })}`;
+    const change = (curr: number, prev: number) => (prev === 0 ? 0 : Math.round(((curr - prev) / prev) * 1000) / 10);
+    const gradeClass = (value: number, target: number, lowerIsBetter: boolean): string => {
+      const hex = getGradeColor(value, target, lowerIsBetter ? "lower_is_better" : "higher_is_better");
+      if (hex === COLORS.grade.green) return "text-emerald-400";
+      if (hex === COLORS.grade.yellow) return "text-amber-400";
+      if (hex === COLORS.grade.red) return "text-red-400";
+      return "text-slate-300";
+    };
+    const changeColor = (pct: number, improvementWhenPositive: boolean) => {
+      if (pct === 0) return "text-slate-400";
+      const good = improvementWhenPositive ? pct > 0 : pct < 0;
+      return good ? "text-emerald-400" : "text-red-400";
+    };
+    const arrow = (pct: number) => (pct > 0 ? "↑" : pct < 0 ? "↓" : "→");
+    const avgTicketThis = thisW.transactions > 0 ? thisW.sales / thisW.transactions : 0;
+    const avgTicketLast = lastW.transactions > 0 ? lastW.sales / lastW.transactions : 0;
+    const kpis: { label: string; key: string; thisWeek: string; lastWeek: string; changePct: number; changeArrow: string; gradeColor: string; changeColor: string }[] = [
+      {
+        label: "Total Sales",
+        key: "daily_sales",
+        thisWeek: fmtDollars(thisW.sales),
+        lastWeek: fmtDollars(lastW.sales),
+        changePct: change(thisW.sales, lastW.sales),
+        changeArrow: arrow(change(thisW.sales, lastW.sales)),
+        gradeColor: "text-slate-300",
+        changeColor: changeColor(change(thisW.sales, lastW.sales), true),
+      },
+      {
+        label: "Avg Daily Sales",
+        key: "daily_sales",
+        thisWeek: fmtDollars(thisW.sales / 7),
+        lastWeek: fmtDollars(lastW.sales / 7),
+        changePct: change(thisW.sales, lastW.sales),
+        changeArrow: arrow(change(thisW.sales, lastW.sales)),
+        gradeColor: "text-slate-300",
+        changeColor: changeColor(change(thisW.sales, lastW.sales), true),
+      },
+      {
+        label: "Food Cost %",
+        key: "food_cost",
+        thisWeek: fmtPct(thisW.food_disp_pct),
+        lastWeek: fmtPct(lastW.food_disp_pct),
+        changePct: change(thisW.food_disp_pct, lastW.food_disp_pct),
+        changeArrow: arrow(change(thisW.food_disp_pct, lastW.food_disp_pct)),
+        gradeColor: gradeClass(thisW.food_disp_pct, 31, true),
+        changeColor: changeColor(change(thisW.food_disp_pct, lastW.food_disp_pct), false),
+      },
+      {
+        label: "Labor %",
+        key: "labor_pct",
+        thisWeek: fmtPct(thisW.labor_pct),
+        lastWeek: fmtPct(lastW.labor_pct),
+        changePct: change(thisW.labor_pct, lastW.labor_pct),
+        changeArrow: arrow(change(thisW.labor_pct, lastW.labor_pct)),
+        gradeColor: gradeClass(thisW.labor_pct, targets.laborMax, true),
+        changeColor: changeColor(change(thisW.labor_pct, lastW.labor_pct), false),
+      },
+      {
+        label: "PRIME %",
+        key: "prime_cost",
+        thisWeek: fmtPct(thisW.prime_pct),
+        lastWeek: fmtPct(lastW.prime_pct),
+        changePct: change(thisW.prime_pct, lastW.prime_pct),
+        changeArrow: arrow(change(thisW.prime_pct, lastW.prime_pct)),
+        gradeColor: gradeClass(thisW.prime_pct, targets.primeMax, true),
+        changeColor: changeColor(change(thisW.prime_pct, lastW.prime_pct), false),
+      },
+      {
+        label: "SLPH",
+        key: "slph",
+        thisWeek: thisW.slph.toFixed(0),
+        lastWeek: lastW.slph.toFixed(0),
+        changePct: change(thisW.slph, lastW.slph),
+        changeArrow: arrow(change(thisW.slph, lastW.slph)),
+        gradeColor: gradeClass(thisW.slph, targets.slphMin, false),
+        changeColor: changeColor(change(thisW.slph, lastW.slph), true),
+      },
+      {
+        label: "Avg Ticket",
+        key: "ticket_avg",
+        thisWeek: avgTicketThis > 0 ? `$${avgTicketThis.toFixed(2)}` : "—",
+        lastWeek: avgTicketLast > 0 ? `$${avgTicketLast.toFixed(2)}` : "—",
+        changePct: avgTicketLast > 0 ? change(avgTicketThis, avgTicketLast) : 0,
+        changeArrow: avgTicketLast > 0 ? arrow(change(avgTicketThis, avgTicketLast)) : "→",
+        gradeColor: "text-slate-300",
+        changeColor: avgTicketLast > 0 ? changeColor(change(avgTicketThis, avgTicketLast), true) : "text-slate-400",
+      },
+      {
+        label: "Transaction Count",
+        key: "daily_sales",
+        thisWeek: thisW.transactions.toLocaleString(),
+        lastWeek: lastW.transactions.toLocaleString(),
+        changePct: change(thisW.transactions, lastW.transactions),
+        changeArrow: arrow(change(thisW.transactions, lastW.transactions)),
+        gradeColor: "text-slate-300",
+        changeColor: changeColor(change(thisW.transactions, lastW.transactions), true),
+      },
+    ];
+    return { thisWeekSeed: thisW, lastWeekSeed: lastW, comparisonKpis: kpis };
+  }, [weekStart, prevMonday, store, storeForSeed]);
+
   return (
     <div className="space-y-6">
       <div className={`dashboard-toolbar p-3 sm:p-5 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between ${store !== "all" ? getStoreColor(store).glow : ""}`}>
@@ -166,33 +283,62 @@ function WeeklyPageContent() {
               ))}
             </select>
           </div>
-          <div className="flex items-center gap-2">
-            <span className="text-sm text-muted">Week of:</span>
-            <div className="flex items-center gap-1 rounded border border-border bg-panel p-1">
-              <button
-                type="button"
-                onClick={() => setWeekStart(prevMonday)}
-                className="rounded px-2 py-1 text-sm hover:bg-white/10"
-              >
-                ←
-              </button>
-              <input
-                type="date"
-                value={weekStart}
-                onChange={(e) => setWeekStart(getWeekStart(e.target.value))}
-                className="dashboard-input w-36 border-0 bg-transparent px-2 py-1 text-sm focus:outline-none"
-              />
-              <button
-                type="button"
-                onClick={() => setWeekStart(nextMonday)}
-                className="rounded px-2 py-1 text-sm hover:bg-white/10"
-              >
-                →
-              </button>
+          <div className="flex items-center gap-2 min-w-0">
+            <button
+              type="button"
+              onClick={() => setWeekStart(prevMonday)}
+              className="rounded-lg border border-border/50 bg-black/30 min-h-[44px] min-w-[44px] flex items-center justify-center text-muted hover:bg-black/40 hover:text-white shrink-0"
+              aria-label="Previous week"
+            >
+              ←
+            </button>
+            <div className="flex-1 text-center min-w-0">
+              <div className="text-sm font-medium text-white">
+                Week of {new Date(weekStart + "T12:00:00Z").toLocaleDateString("en-US", { month: "short", day: "numeric" })}
+                –{new Date(getWeekEnd(weekStart) + "T12:00:00Z").toLocaleDateString("en-US", { month: "short", day: "numeric" })}
+              </div>
             </div>
+            <button
+              type="button"
+              onClick={() => setWeekStart(nextMonday)}
+              className="rounded-lg border border-border/50 bg-black/30 min-h-[44px] min-w-[44px] flex items-center justify-center text-muted hover:bg-black/40 hover:text-white shrink-0"
+              aria-label="Next week"
+            >
+              →
+            </button>
           </div>
         </div>
       </div>
+
+      {comparisonKpis.length > 0 && (
+        <section className="min-w-0 overflow-x-hidden pb-4">
+          <h2 className="text-sm font-semibold text-slate-400 uppercase tracking-wide mb-3">This Week vs Last Week</h2>
+          {comparisonKpis.map((kpi) => (
+            <div key={kpi.label} className="bg-slate-800 rounded-xl p-4 border border-slate-700 mb-3 min-w-0">
+              <div className="flex items-center justify-between mb-2">
+                <span className="text-sm font-semibold text-white">{kpi.label}</span>
+                <EducationInfoIcon metricKey={kpi.key} />
+              </div>
+              <div className="grid grid-cols-3 gap-2 text-center">
+                <div>
+                  <div className="text-xs text-slate-500">This Week</div>
+                  <div className={`text-lg font-bold ${kpi.gradeColor}`}>{kpi.thisWeek}</div>
+                </div>
+                <div>
+                  <div className="text-xs text-slate-500">Last Week</div>
+                  <div className="text-lg font-bold text-slate-300">{kpi.lastWeek}</div>
+                </div>
+                <div>
+                  <div className="text-xs text-slate-500">Change</div>
+                  <div className={`text-lg font-bold ${kpi.changeColor}`}>
+                    {kpi.changeArrow} {kpi.changePct > 0 ? "+" : ""}{kpi.changePct}%
+                  </div>
+                </div>
+              </div>
+            </div>
+          ))}
+        </section>
+      )}
 
       {loading && (
         <div className="dashboard-surface rounded-lg border border-border bg-panel/50 p-8 text-center text-muted">

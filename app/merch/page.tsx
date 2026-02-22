@@ -3,7 +3,9 @@
 import { Suspense, useState, useEffect, useCallback } from "react";
 import { createPortal } from "react-dom";
 import { useSearchParams } from "next/navigation";
+import { Shirt } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { SEED_MERCH } from "@/src/lib/seed-data";
 
 type MerchItem = {
   id: string;
@@ -45,7 +47,11 @@ function MerchContent() {
   const loadItems = useCallback(async () => {
     setLoading(true);
     const res = await fetch(`/api/merch?brand=${brand}`).then((r) => r.json());
-    if (res.ok) setItems(res.items);
+    if (res.ok && Array.isArray(res.items) && res.items.length > 0) {
+      setItems(res.items);
+    } else {
+      setItems(SEED_MERCH);
+    }
     setLoading(false);
   }, [brand]);
 
@@ -234,41 +240,47 @@ function MerchContent() {
             </div>
           )}
 
-          {/* Individual items */}
+          {/* Individual items — single column on mobile, image placeholder + name, price, sizes, Order */}
           {filtered.filter((i) => i.category !== "package").length > 0 && (
             <>
               <div className="text-[10px] uppercase text-muted tracking-wider px-1 mt-4">Individual Items</div>
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 {filtered.filter((i) => i.category !== "package").map((item) => {
                   const isLindseys = item.brand === "lindseys";
                   return (
-                    <div key={item.id} className={cn("rounded-lg border p-4 space-y-3", isLindseys ? "border-purple-500/30 bg-purple-500/5" : "border-orange-500/30 bg-orange-500/5")}>
-                      <div className="flex items-start justify-between">
-                        <div>
-                          <div className="flex items-center gap-2 mb-1">
-                            <span className={cn("text-[9px] uppercase font-bold px-2 py-0.5 rounded", isLindseys ? "bg-purple-500/15 text-purple-400" : "bg-orange-500/15 text-orange-400")}>{isLindseys ? "Lindsey's" : "LeeAngelo's"}</span>
-                            {item.category === "gear" && <span className="text-[9px] uppercase font-bold px-2 py-0.5 rounded bg-muted/15 text-muted">Gear</span>}
-                          </div>
-                          <h3 className="text-sm font-bold text-white">{item.name}</h3>
-                          {item.description && <p className="text-[11px] text-muted mt-1 leading-relaxed">{item.description}</p>}
-                        </div>
-                        <div className="text-lg font-black tabular-nums text-white">${item.price}</div>
+                    <div key={item.id} className={cn("rounded-xl border overflow-hidden", isLindseys ? "border-purple-500/30 bg-purple-500/5" : "border-orange-500/30 bg-orange-500/5")}>
+                      <div className="aspect-square bg-black/40 flex items-center justify-center">
+                        <Shirt className="w-16 h-16 text-muted/50" aria-hidden />
                       </div>
-                      <div className="flex items-center gap-2">
-                        {item.sizes.length > 1 ? (
-                          <select
-                            value={selectedSizes[item.id] || item.sizes[0]}
-                            onChange={(e) => setSelectedSizes({ ...selectedSizes, [item.id]: e.target.value })}
-                            className="rounded-lg border border-border/50 bg-black/30 text-white text-xs px-2 py-1.5 flex-1"
-                          >
-                            {item.sizes.map((s) => (
-                              <option key={s} value={s}>{s}</option>
-                            ))}
-                          </select>
-                        ) : (
-                          <span className="text-xs text-muted flex-1">{item.sizes[0] || "One Size"}</span>
-                        )}
-                        <button type="button" onClick={() => addToCart(item)} className={cn("rounded-lg border px-4 py-1.5 text-xs font-bold transition-colors", isLindseys ? "border-purple-500/50 bg-purple-500/15 text-purple-400 hover:bg-purple-500/25" : "border-orange-500/50 bg-orange-500/15 text-orange-400 hover:bg-orange-500/25")}>Add to Cart</button>
+                      <div className="p-4 space-y-3">
+                        <div className="flex items-start justify-between gap-2">
+                          <div>
+                            <div className="flex items-center gap-2 mb-1">
+                              <span className={cn("text-[9px] uppercase font-bold px-2 py-0.5 rounded", isLindseys ? "bg-purple-500/15 text-purple-400" : "bg-orange-500/15 text-orange-400")}>{isLindseys ? "Lindsey's" : "LeeAngelo's"}</span>
+                              {item.category === "gear" && <span className="text-[9px] uppercase font-bold px-2 py-0.5 rounded bg-muted/15 text-muted">Gear</span>}
+                            </div>
+                            <h3 className="text-sm font-bold text-white">{item.name}</h3>
+                            {item.description && <p className="text-[11px] text-muted mt-1 leading-relaxed line-clamp-2">{item.description}</p>}
+                          </div>
+                          <div className="text-lg font-black tabular-nums text-white shrink-0">${item.price}</div>
+                        </div>
+                        <div className="text-[10px] text-muted">Sizes: {item.sizes.join(", ")}</div>
+                        <div className="flex items-center gap-2">
+                          {item.sizes.length > 1 ? (
+                            <select
+                              value={selectedSizes[item.id] || item.sizes[0]}
+                              onChange={(e) => setSelectedSizes({ ...selectedSizes, [item.id]: e.target.value })}
+                              className="rounded-lg border border-border/50 bg-black/30 text-white text-xs px-2 py-2 flex-1 min-h-[44px]"
+                            >
+                              {item.sizes.map((s) => (
+                                <option key={s} value={s}>{s}</option>
+                              ))}
+                            </select>
+                          ) : (
+                            <span className="text-xs text-muted flex-1 py-2">{item.sizes[0] || "One Size"}</span>
+                          )}
+                          <button type="button" onClick={() => addToCart(item)} className={cn("rounded-lg border px-4 py-2 min-h-[44px] text-sm font-bold transition-colors shrink-0", isLindseys ? "border-purple-500/50 bg-purple-500 text-white hover:bg-purple-600" : "border-orange-500/50 bg-orange-500 text-white hover:bg-orange-600")}>Order</button>
+                        </div>
                       </div>
                     </div>
                   );

@@ -2,6 +2,7 @@
 
 import { Suspense, useState, useMemo, useEffect } from "react";
 import { createPortal } from "react-dom";
+import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import {
   COCKPIT_STORE_SLUGS,
@@ -15,6 +16,9 @@ import {
 } from "@/lib/cockpit-config";
 import { getStoreColor } from "@/lib/store-colors";
 import { cn } from "@/lib/utils";
+import { getGradeBg, getGradeColor } from "@/src/lib/design-tokens";
+import { EducationInfoIcon } from "@/src/components/education/InfoIcon";
+import { SEED_DAILY_KPIS } from "@/src/lib/seed-data";
 
 function todayYYYYMMDD(): string {
   const t = new Date();
@@ -69,6 +73,13 @@ const STATUS_NEUTRAL = "border-border/50 bg-panel/80 text-muted";
 
 function statusToLabel(s: CockpitStatusLabel): string {
   return s === "on_track" ? "On Track" : s === "over" ? "Over" : "Under";
+}
+
+/** Badge class for FC/LB: green, yellow, or red (lower is better). */
+function getRecentEntryBadgeClass(pct: number, target: number): string {
+  if (pct <= target) return "bg-emerald-900/50 text-emerald-400";
+  if (pct <= target + 2) return "bg-amber-900/50 text-amber-400";
+  return "bg-red-900/50 text-red-400";
 }
 
 function InlineStatus({
@@ -315,12 +326,17 @@ function DailyPageContent() {
     },
   ];
 
+  const recentEntries = useMemo(() => {
+    const forStore = SEED_DAILY_KPIS.filter((r) => r.store_id === storeId);
+    return forStore.slice(-7).reverse();
+  }, [storeId]);
+
   const inputCls =
-    "mt-1 w-full dashboard-input px-4 py-3 text-base font-medium tabular-nums placeholder:text-muted focus:border-brand/60 focus:ring-1 focus:ring-brand/40 focus:outline-none";
+    "mt-1 w-full min-h-[48px] h-12 px-4 text-lg font-medium tabular-nums placeholder:text-muted focus:border-brand/60 focus:ring-1 focus:ring-brand/40 focus:outline-none rounded-lg border border-border/50 bg-black/30 text-white dashboard-input";
 
   return (
     <>
-      <div className="space-y-5">
+      <div className="space-y-5 min-w-0 overflow-x-hidden pb-24">
       {/* Toolbar */}
       <div className={`dashboard-toolbar p-3 sm:p-5 space-y-3 ${getStoreColor(storeId).glow}`}>
         <div className="flex items-center justify-between gap-2 flex-wrap">
@@ -362,28 +378,25 @@ function DailyPageContent() {
             ))}
           </div>
         </div>
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-2 min-w-0">
           <button
             type="button"
             onClick={() => setBusinessDate(prevDay(businessDate))}
-            className="rounded-lg border border-border/50 bg-black/30 min-h-[44px] min-w-[44px] flex items-center justify-center text-base font-medium text-muted hover:border-border hover:bg-black/40 hover:text-white active:bg-black/50"
+            className="rounded-lg border border-border/50 bg-black/30 min-h-[44px] min-w-[44px] flex items-center justify-center text-base font-medium text-muted hover:border-border hover:bg-black/40 hover:text-white active:bg-black/50 shrink-0"
             aria-label="Previous day"
           >
             ←
           </button>
-          <div className="flex-1 text-center">
-            <label className="block text-[10px] uppercase tracking-wider text-muted/70 mb-0.5">Business Date</label>
-            <input
-              type="date"
-              value={businessDate}
-              onChange={(e) => setBusinessDate(e.target.value)}
-              className="w-full dashboard-input px-3 py-2.5 text-center text-sm font-medium focus:border-brand/60 focus:ring-1 focus:ring-brand/40 focus:outline-none"
-            />
+          <div className="flex-1 text-center min-w-0">
+            <div className="text-[10px] uppercase tracking-wider text-muted/70 mb-0.5">Business Date</div>
+            <div className="text-sm font-medium text-white">
+              {new Date(businessDate + "T12:00:00Z").toLocaleDateString("en-US", { weekday: "short", month: "short", day: "numeric", year: "numeric" })}
+            </div>
           </div>
           <button
             type="button"
             onClick={() => setBusinessDate(nextDay(businessDate))}
-            className="rounded-lg border border-border/50 bg-black/30 min-h-[44px] min-w-[44px] flex items-center justify-center text-base font-medium text-muted hover:border-border hover:bg-black/40 hover:text-white active:bg-black/50"
+            className="rounded-lg border border-border/50 bg-black/30 min-h-[44px] min-w-[44px] flex items-center justify-center text-base font-medium text-muted hover:border-border hover:bg-black/40 hover:text-white active:bg-black/50 shrink-0"
             aria-label="Next day"
           >
             →
@@ -520,233 +533,253 @@ function DailyPageContent() {
       )}
 
       {/* Control layer */}
-      <div className="border-t border-border/40 pt-10">
-        <div className="dashboard-surface p-5 space-y-4">
+      <div className="border-t border-border/40 pt-6 min-w-0">
+        <div className="dashboard-surface p-4 sm:p-5 space-y-5 max-w-full overflow-x-hidden">
           <h2 className="text-sm font-medium text-muted">Enter numbers</h2>
-          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-            <label className="block">
-              <span className="block text-sm text-muted">Net Sales ($)</span>
+          <div className="grid grid-cols-1 gap-4 max-w-full min-w-0">
+            <label className="block min-w-0">
+              <div className="flex items-center gap-2">
+                <span className="text-sm text-slate-400">Total Sales ($)</span>
+                <EducationInfoIcon metricKey="daily_sales" />
+              </div>
               <input
                 type="number"
                 inputMode="decimal"
-                placeholder="0"
+                placeholder="e.g., 5420.00"
                 value={netSales}
                 onChange={(e) => setNetSales(e.target.value)}
                 className={cn(inputCls, netSalesInvalid && "border-red-500/60")}
               />
             </label>
 
-            <label className="block">
-              <span className="block text-sm text-muted">Labor Cost ($)</span>
-              <input
-                type="number"
-                inputMode="decimal"
-                placeholder="0"
-                value={laborCost}
-                onChange={(e) => setLaborCost(e.target.value)}
-                className={inputCls}
-              />
-              <InlineStatus
-                label="Labor %"
-                value={formatPct(computed.laborPct)}
-                target={
-                  targets.laborMin != null
-                    ? `${targets.laborMin}–${targets.laborMax}%`
-                    : `≤${targets.laborMax}%`
-                }
-                status={laborStatus}
-              />
-            </label>
-
-            <label className="block">
-              <span className="block text-sm text-muted">Labor hours</span>
-              <input
-                type="number"
-                inputMode="decimal"
-                placeholder="0"
-                value={laborHours}
-                onChange={(e) => setLaborHours(e.target.value)}
-                className={inputCls}
-              />
-              <InlineStatus
-                label="SLPH"
-                value={formatSlph(lh, computed.slph)}
-                target={`${targets.slphMin}+`}
-                status={slphStatus}
-              />
-            </label>
-
-            <label className="block">
-              <span className="block text-sm text-muted">Scheduled Hours (optional)</span>
-              <input
-                type="number"
-                inputMode="decimal"
-                placeholder="—"
-                value={scheduledHours}
-                onChange={(e) => setScheduledHours(e.target.value)}
-                className={inputCls}
-              />
-              <div className="mt-1 dashboard-pill px-3 py-2 text-xs text-muted">
-                Scheduled vs Actual = {computed.scheduledVsActual != null ? formatNum(computed.scheduledVsActual) : "—"} hrs
+            <label className="block min-w-0">
+              <div className="flex items-center gap-2">
+                <span className="text-sm text-slate-400">Total Food Purchases ($)</span>
+                <EducationInfoIcon metricKey="food_cost" />
               </div>
-            </label>
-
-            <label className="block">
-              <span className="block text-sm text-muted">Food Cost ($)</span>
               <input
                 type="number"
                 inputMode="decimal"
-                placeholder="0"
+                placeholder="e.g., 1670.00"
                 value={foodCost}
                 onChange={(e) => setFoodCost(e.target.value)}
                 className={inputCls}
               />
             </label>
 
-            <label className="block">
-              <span className="block text-sm text-muted">Disposables Cost ($)</span>
+            <label className="block min-w-0">
+              <div className="flex items-center gap-2">
+                <span className="text-sm text-slate-400">Total Labor Cost ($)</span>
+                <EducationInfoIcon metricKey="labor_pct" />
+              </div>
               <input
                 type="number"
                 inputMode="decimal"
-                placeholder="0"
+                placeholder="e.g., 1252.00"
+                value={laborCost}
+                onChange={(e) => setLaborCost(e.target.value)}
+                className={inputCls}
+              />
+            </label>
+
+            <label className="block min-w-0">
+              <div className="flex items-center gap-2">
+                <span className="text-sm text-slate-400">Total Disposables ($)</span>
+                <EducationInfoIcon metricKey="prime_cost" />
+              </div>
+              <input
+                type="number"
+                inputMode="decimal"
+                placeholder="e.g., 190.00"
                 value={disposablesCost}
                 onChange={(e) => setDisposablesCost(e.target.value)}
                 className={inputCls}
               />
-              <div className="mt-1 dashboard-pill px-3 py-2 text-xs text-muted">
-                Food+Disposables % = {formatPct(computed.foodDispPct)}
-              </div>
             </label>
 
-            <div className="col-span-full dashboard-pill flex items-center gap-2 px-4 py-3 sm:col-span-2">
-              <span className="text-sm text-muted">PRIME ($):</span>
-              <span className="text-sm font-medium tabular-nums">{formatNum(computed.primeDollars)}</span>
-              <span className="text-xs text-muted">(Labor + Food + Disposables)</span>
-            </div>
-
-            <label className="block">
-              <span className="block text-sm text-muted">Voids ($)</span>
+            <label className="block min-w-0">
+              <div className="flex items-center gap-2">
+                <span className="text-sm text-slate-400">Transaction Count</span>
+                <EducationInfoIcon metricKey="ticket_avg" />
+              </div>
               <input
                 type="number"
                 inputMode="decimal"
-                placeholder="0"
-                value={voidAmount}
-                onChange={(e) => setVoidAmount(e.target.value)}
-                className={inputCls}
-              />
-              <div className="mt-1 dashboard-pill px-3 py-2 text-xs text-muted">
-                Void % = {formatPct(computed.voidPct)}
-              </div>
-            </label>
-
-            <label className="block">
-              <span className="block text-sm text-muted">Waste ($)</span>
-              <input
-                type="number"
-                inputMode="decimal"
-                placeholder="0"
-                value={waste}
-                onChange={(e) => setWaste(e.target.value)}
-                className={inputCls}
-              />
-              <div className="mt-1 dashboard-pill px-3 py-2 text-xs text-muted">
-                Waste % = {formatPct(computed.wastePct)}
-              </div>
-            </label>
-
-            <label className="block">
-              <span className="block text-sm text-muted">Customers (tickets)</span>
-              <input
-                type="number"
-                inputMode="decimal"
-                placeholder="0"
+                placeholder="e.g., 287"
                 value={tickets}
                 onChange={(e) => setTickets(e.target.value)}
                 className={inputCls}
               />
-              <div className="mt-1 dashboard-pill px-3 py-2 text-xs text-muted">
-                AOV ($) = {tix != null && tix > 0 ? formatNum(computed.aov) : "—"}
-              </div>
-              <div className="mt-1 dashboard-pill px-3 py-2 text-xs text-muted">
-                Avg Ticket = {formatNum(computed.avgTicket)}
-              </div>
             </label>
 
-            <label className="block">
-              <span className="block text-sm text-muted">Avg Bump Time (min) (optional)</span>
+            <label className="block min-w-0">
+              <div className="flex items-center gap-2">
+                <span className="text-sm text-slate-400">Total Hours Worked</span>
+                <EducationInfoIcon metricKey="slph" />
+              </div>
               <input
                 type="number"
                 inputMode="decimal"
-                placeholder="—"
-                value={bumpTimeMinutes}
-                onChange={(e) => setBumpTimeMinutes(e.target.value)}
+                placeholder="e.g., 86.5"
+                value={laborHours}
+                onChange={(e) => setLaborHours(e.target.value)}
                 className={inputCls}
-              />
-            </label>
-
-            <label className="block sm:col-span-2">
-              <span className="block text-sm text-muted">Notes (optional)</span>
-              <textarea
-                placeholder="Optional notes"
-                value={notes}
-                onChange={(e) => setNotes(e.target.value)}
-                rows={2}
-                className={cn(inputCls, "resize-y min-h-[4rem]")}
               />
             </label>
           </div>
 
-          <div className="flex flex-wrap items-center gap-3 pt-2">
-            <button
-              type="button"
-              onClick={async () => {
-                if (!canSave) return;
-                setSaveStatus("saving");
-                try {
-                  const res = await fetch("/api/daily-kpi", {
-                    method: "POST",
-                    headers: { "Content-Type": "application/json" },
-                    body: JSON.stringify({
-                      store: storeId,
-                      business_date: businessDate,
-                      net_sales: num(netSales) ?? 0,
-                      labor_dollars: num(laborCost) ?? 0,
-                      labor_hours: num(laborHours) ?? 0,
-                      food_dollars: num(foodCost) ?? 0,
-                      disposables_dollars: num(disposablesCost) ?? 0,
-                      voids_dollars: num(voidAmount) ?? 0,
-                      waste_dollars: num(waste) ?? 0,
-                      customers: num(tickets) ?? 0,
-                      notes: notes.trim() || null,
-                      scheduled_hours: num(scheduledHours) ?? undefined,
-                      bump_time_minutes: num(bumpTimeMinutes) ?? undefined,
-                    }),
-                  });
-                  const data = await res.json();
-                  if (data.ok) {
-                    setSaveStatus("saved");
-                    setTimeout(() => setSaveStatus("idle"), 2000);
-                  } else {
-                    setSaveStatus("error");
-                  }
-                } catch {
+          <button
+            type="button"
+            onClick={async () => {
+              if (!canSave) return;
+              setSaveStatus("saving");
+              try {
+                const res = await fetch("/api/daily-kpi", {
+                  method: "POST",
+                  headers: { "Content-Type": "application/json" },
+                  body: JSON.stringify({
+                    store: storeId,
+                    business_date: businessDate,
+                    net_sales: num(netSales) ?? 0,
+                    labor_dollars: num(laborCost) ?? 0,
+                    labor_hours: num(laborHours) ?? 0,
+                    food_dollars: num(foodCost) ?? 0,
+                    disposables_dollars: num(disposablesCost) ?? 0,
+                    voids_dollars: num(voidAmount) ?? 0,
+                    waste_dollars: num(waste) ?? 0,
+                    customers: num(tickets) ?? 0,
+                    notes: notes.trim() || null,
+                    scheduled_hours: num(scheduledHours) ?? undefined,
+                    bump_time_minutes: num(bumpTimeMinutes) ?? undefined,
+                  }),
+                });
+                const data = await res.json();
+                if (data.ok) {
+                  setSaveStatus("saved");
+                  setEntry(data.entry ?? null);
+                  setTimeout(() => setSaveStatus("idle"), 2000);
+                } else {
                   setSaveStatus("error");
                 }
-              }}
-              disabled={saveStatus === "saving" || !canSave}
-              className={cn(
-                "rounded-lg border px-5 py-3 text-sm font-semibold transition-all duration-200",
-                saveStatus === "saved"
-                  ? "border-emerald-500/50 bg-emerald-500/15 text-emerald-400"
-                  : "border-brand/50 bg-brand/15 text-brand hover:bg-brand/25",
-                "disabled:opacity-50"
-              )}
-            >
-              {saveStatus === "saving" ? "Saving…" : saveStatus === "saved" ? "✓ Saved" : "Save"}
-            </button>
-            {saveStatus === "error" && (
-              <span className="text-sm text-red-400">Error saving — try again</span>
-            )}
+              } catch {
+                setSaveStatus("error");
+              }
+            }}
+            disabled={saveStatus === "saving" || !canSave}
+            className="w-full min-h-[48px] h-12 rounded-xl font-semibold text-white bg-blue-600 hover:bg-blue-500 active:bg-blue-700 transition-colors disabled:opacity-50 disabled:pointer-events-none"
+          >
+            {saveStatus === "saving" ? "Saving…" : saveStatus === "saved" ? "✓ Saved" : "Calculate & Save"}
+          </button>
+
+          {(entry || (ns != null && ns > 0 && computed.primePct != null)) && (
+            <div className="bg-slate-800/80 rounded-xl p-4 border border-slate-700 space-y-3 min-w-0">
+              <h3 className="text-sm font-semibold text-slate-400 uppercase tracking-wide">Calculated grades</h3>
+              {[
+                {
+                  label: "Food Cost %",
+                  value: ns != null && ns > 0 && fc != null ? formatPct((fc / ns) * 100) : "—",
+                  target: "28–31%",
+                  gradeKey: "food_cost",
+                  valueNum: ns != null && ns > 0 && fc != null ? (fc / ns) * 100 : null,
+                  direction: "lower_is_better" as const,
+                  targetNum: 31,
+                },
+                {
+                  label: "Labor %",
+                  value: formatPct(computed.laborPct),
+                  target: targets.laborMin != null ? `${targets.laborMin}–${targets.laborMax}%` : `≤${targets.laborMax}%`,
+                  gradeKey: "labor_pct",
+                  valueNum: computed.laborPct,
+                  direction: "lower_is_better" as const,
+                  targetNum: targets.laborMax,
+                },
+                {
+                  label: "PRIME %",
+                  value: formatPct(computed.primePct),
+                  target: `≤${targets.primeMax}%`,
+                  gradeKey: "prime_cost",
+                  valueNum: computed.primePct,
+                  direction: "lower_is_better" as const,
+                  targetNum: targets.primeMax,
+                },
+                {
+                  label: "SLPH",
+                  value: formatSlph(lh, computed.slph),
+                  target: `${targets.slphMin}+`,
+                  gradeKey: "slph",
+                  valueNum: computed.slph,
+                  direction: "higher_is_better" as const,
+                  targetNum: targets.slphMin,
+                },
+                {
+                  label: "Avg Ticket",
+                  value: computed.avgTicket != null ? `$${computed.avgTicket.toFixed(2)}` : "—",
+                  target: "—",
+                  gradeKey: "ticket_avg",
+                  valueNum: computed.avgTicket,
+                  direction: "higher_is_better" as const,
+                  targetNum: null,
+                },
+              ].map(({ label, value, target, gradeKey, valueNum, direction, targetNum }) => (
+                <div key={gradeKey} className="flex items-center justify-between gap-2 py-2 border-b border-slate-700/80 last:border-0 min-w-0">
+                  <div className="flex items-center gap-2 min-w-0">
+                    <span className="text-sm text-slate-300">{label}</span>
+                    <EducationInfoIcon metricKey={gradeKey} />
+                  </div>
+                  <div className="flex items-center gap-2 shrink-0">
+                    <span className="text-sm font-medium tabular-nums text-white">{value}</span>
+                    {valueNum != null && targetNum != null && (
+                      <span
+                        className={cn("rounded px-2 py-0.5 text-xs font-medium", getGradeBg(valueNum, targetNum, direction))}
+                        style={{ color: getGradeColor(valueNum, targetNum, direction) }}
+                      >
+                        {direction === "lower_is_better"
+                          ? valueNum <= targetNum
+                            ? "On track"
+                            : valueNum <= targetNum + 2
+                              ? "Caution"
+                              : "Over"
+                          : valueNum >= targetNum
+                            ? "On track"
+                            : valueNum >= targetNum - 2
+                              ? "Caution"
+                              : "Under"}
+                      </span>
+                    )}
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+
+          <details className="dashboard-surface rounded-lg border border-border/50 overflow-hidden">
+            <summary className="p-3 text-sm text-muted cursor-pointer select-none">Optional: Voids, Waste, Scheduled Hours, Notes</summary>
+            <div className="px-3 pb-3 pt-1 space-y-3 border-t border-border/40">
+              <label className="block min-w-0">
+                <span className="block text-sm text-slate-400">Voids ($)</span>
+                <input type="number" inputMode="decimal" placeholder="e.g., 0" value={voidAmount} onChange={(e) => setVoidAmount(e.target.value)} className={inputCls} />
+              </label>
+              <label className="block min-w-0">
+                <span className="block text-sm text-slate-400">Waste ($)</span>
+                <input type="number" inputMode="decimal" placeholder="e.g., 0" value={waste} onChange={(e) => setWaste(e.target.value)} className={inputCls} />
+              </label>
+              <label className="block min-w-0">
+                <span className="block text-sm text-slate-400">Scheduled Hours</span>
+                <input type="number" inputMode="decimal" placeholder="—" value={scheduledHours} onChange={(e) => setScheduledHours(e.target.value)} className={inputCls} />
+              </label>
+              <label className="block min-w-0">
+                <span className="block text-sm text-slate-400">Avg Bump Time (min)</span>
+                <input type="number" inputMode="decimal" placeholder="—" value={bumpTimeMinutes} onChange={(e) => setBumpTimeMinutes(e.target.value)} className={inputCls} />
+              </label>
+              <label className="block min-w-0">
+                <span className="block text-sm text-slate-400">Notes</span>
+                <textarea placeholder="Optional notes" value={notes} onChange={(e) => setNotes(e.target.value)} rows={2} className={cn(inputCls, "resize-y min-h-[4rem] h-auto py-3")} />
+              </label>
+            </div>
+          </details>
+
+          <div className="flex flex-wrap items-center gap-3 pt-2">
+            {saveStatus === "error" && <span className="text-sm text-red-400">Error saving — try again</span>}
             {saveStatus === "idle" && entry && !acknowledged && (
               <button
                 type="button"
@@ -759,14 +792,12 @@ function DailyPageContent() {
                       body: JSON.stringify({ store: storeId, business_date: businessDate }),
                     });
                     const data = await res.json();
-                    if (data.ok) {
-                      setAcknowledged(data.acknowledged_at);
-                    }
+                    if (data.ok) setAcknowledged(data.acknowledged_at);
                   } catch {}
                   setAckLoading(false);
                 }}
                 disabled={ackLoading}
-                className="rounded-lg border border-emerald-500/50 bg-emerald-500/15 px-5 py-3 text-sm font-semibold text-emerald-400 hover:bg-emerald-500/25 disabled:opacity-50"
+                className="rounded-lg border border-emerald-500/50 bg-emerald-500/15 px-5 py-3 text-sm font-semibold text-emerald-400 hover:bg-emerald-500/25 disabled:opacity-50 min-h-[44px]"
               >
                 {ackLoading ? "..." : "✓ Acknowledge"}
               </button>
@@ -777,6 +808,38 @@ function DailyPageContent() {
               </div>
             )}
           </div>
+
+          {recentEntries.length > 0 && (
+            <div className="pt-6 border-t border-slate-700/80 min-w-0">
+              <h3 className="text-sm font-semibold text-slate-400 uppercase tracking-wide mb-3">Recent Entries</h3>
+              <div className="rounded-xl border border-slate-700 overflow-hidden bg-slate-800/50">
+                {recentEntries.map((row) => (
+                  <Link
+                    key={row.date}
+                    href={`/daily?store=${encodeURIComponent(storeId)}&date=${encodeURIComponent(row.date)}`}
+                    className="flex items-center justify-between py-3 px-4 border-b border-slate-700 last:border-b-0 active:bg-slate-700/50 transition-colors min-w-0"
+                  >
+                    <div className="min-w-0">
+                      <div className="text-sm text-white font-medium">
+                        {new Date(row.date + "T12:00:00Z").toLocaleDateString("en-US", { weekday: "short", month: "short", day: "numeric" })}
+                      </div>
+                      <div className="text-xs text-slate-400">
+                        ${row.sales.toLocaleString("en-US", { maximumFractionDigits: 0 })} · {row.transactions} tickets
+                      </div>
+                    </div>
+                    <div className="flex items-center gap-3 shrink-0">
+                      <span className={cn("text-xs font-medium px-2 py-0.5 rounded-full", getRecentEntryBadgeClass(row.food_cost_pct, 31))}>
+                        FC {row.food_cost_pct.toFixed(1)}%
+                      </span>
+                      <span className={cn("text-xs font-medium px-2 py-0.5 rounded-full", getRecentEntryBadgeClass(row.labor_pct, 22))}>
+                        LB {row.labor_pct.toFixed(1)}%
+                      </span>
+                    </div>
+                  </Link>
+                ))}
+              </div>
+            </div>
+          )}
         </div>
       </div>
       </div>

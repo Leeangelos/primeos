@@ -2,6 +2,9 @@
 
 import { useState, useEffect, useCallback } from "react";
 import { createPortal } from "react-dom";
+import { EducationInfoIcon } from "@/src/components/education/InfoIcon";
+import { EDUCATION_CONTENT } from "@/src/lib/education-content";
+import { SEED_TASKS } from "@/src/lib/seed-data";
 import { COCKPIT_STORE_SLUGS, COCKPIT_TARGETS, type CockpitStoreSlug } from "@/lib/cockpit-config";
 import { getStoreColor } from "@/lib/store-colors";
 import { cn } from "@/lib/utils";
@@ -78,7 +81,6 @@ export default function TasksPage() {
   const [category, setCategory] = useState<typeof CATEGORIES[number]["key"]>("all");
   const [tasks, setTasks] = useState<Task[]>([]);
   const [loading, setLoading] = useState(true);
-  const [showEducation, setShowEducation] = useState(false);
   const [completeTarget, setCompleteTarget] = useState<{ task: Task; name: string } | null>(null);
   const [completeName, setCompleteName] = useState("");
   const [showAddTask, setShowAddTask] = useState(false);
@@ -89,6 +91,7 @@ export default function TasksPage() {
   const [addPriority, setAddPriority] = useState<Task["priority"]>("medium");
   const [addNotes, setAddNotes] = useState("");
   const [saving, setSaving] = useState(false);
+  const [playbookOpen, setPlaybookOpen] = useState(true);
 
   const loadTasks = useCallback(async () => {
     setLoading(true);
@@ -96,7 +99,12 @@ export default function TasksPage() {
     if (category !== "all") params.set("category", category);
     const res = await fetch(`/api/tasks?${params}`);
     const data = await res.json();
-    if (data.ok) setTasks(data.tasks ?? []);
+    if (data.ok && Array.isArray(data.tasks) && data.tasks.length > 0) {
+      setTasks(data.tasks);
+    } else {
+      const byStore = SEED_TASKS.filter((t) => t.store_id === store);
+      setTasks(category === "all" ? byStore : byStore.filter((t) => t.category === category));
+    }
     setLoading(false);
   }, [store, date, category]);
 
@@ -163,9 +171,9 @@ export default function TasksPage() {
   return (
     <div className="space-y-5">
       <div className="dashboard-toolbar p-3 sm:p-5 space-y-3">
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-2 flex-wrap">
           <h1 className="text-lg font-semibold sm:text-2xl">Task Manager</h1>
-          <button type="button" onClick={() => setShowEducation(true)} className="inline-flex items-center justify-center min-h-[44px] min-w-[44px] rounded-full bg-muted/20 text-muted hover:bg-brand/20 hover:text-brand transition-colors text-xs font-bold" aria-label="Learn more">i</button>
+          <EducationInfoIcon metricKey="task_management" />
         </div>
         <p className="text-xs text-muted">Daily opening, closing, prep, and cleaning. Check off when done.</p>
 
@@ -262,6 +270,7 @@ export default function TasksPage() {
                   <div className={cn("font-medium text-sm", isCompleted && "line-through text-muted")}>{task.title}</div>
                   <div className="flex flex-wrap items-center gap-2 mt-1">
                     <span className="text-[10px] uppercase px-2 py-0.5 rounded border border-border/30 text-muted">{ROLES[task.assigned_role] ?? task.assigned_role}</span>
+                    <span className="text-[10px] text-muted">{formatDate(task.due_date)}</span>
                     <span className={cn("text-[10px] uppercase px-2 py-0.5 rounded border", PRIORITY_STYLE[task.priority] ?? PRIORITY_STYLE.medium)}>{task.priority}</span>
                     {task.due_time && <span className="text-[10px] text-muted">{task.due_time}</span>}
                     {isCompleted && task.completed_by && <span className="text-[10px] text-emerald-400/80">by {task.completed_by}</span>}
@@ -272,6 +281,34 @@ export default function TasksPage() {
           })}
         </div>
       )}
+
+      {/* Layer 3 playbook card — visible, collapsible */}
+      {(() => {
+        const entry = EDUCATION_CONTENT.task_management;
+        if (!entry) return null;
+        return (
+          <div className="rounded-lg border border-red-500/30 bg-red-500/5 overflow-hidden">
+            <button
+              type="button"
+              onClick={() => setPlaybookOpen((o) => !o)}
+              className="w-full flex items-center justify-between gap-2 px-4 py-3 text-left bg-red-500/10 border-b border-red-500/20"
+            >
+              <h3 className="text-sm font-semibold text-red-400/95">When Tasks Are Slipping — Operator Playbook</h3>
+              <span className="text-red-400/80 shrink-0" aria-hidden>{playbookOpen ? "▼" : "▶"}</span>
+            </button>
+            {playbookOpen && (
+              <ul className="p-4 space-y-2 text-sm text-muted leading-relaxed">
+                {entry.whenRedPlaybook.map((step, i) => (
+                  <li key={i} className="flex gap-2">
+                    <span className="text-red-400/70 shrink-0">{i + 1}.</span>
+                    <span>{step}</span>
+                  </li>
+                ))}
+              </ul>
+            )}
+          </div>
+        );
+      })()}
 
       {/* Complete-task modal */}
       {completeTarget && typeof document !== "undefined" && createPortal(
@@ -348,12 +385,11 @@ export default function TasksPage() {
         document.body
       )}
 
-      {/* Education modal */}
-      {showEducation && typeof document !== "undefined" && createPortal(
-        <div className="fixed inset-0 z-[9999] flex items-center justify-center p-4" style={{ position: "fixed", top: 0, left: 0, right: 0, bottom: 0 }} onClick={() => setShowEducation(false)}>
+      {false && typeof document !== "undefined" && createPortal(
+        <div className="fixed inset-0 z-[9999] flex items-center justify-center p-4" style={{ position: "fixed", top: 0, left: 0, right: 0, bottom: 0 }} onClick={() => {}}>
           <div className="absolute inset-0 bg-black/80 backdrop-blur-sm" />
           <div className="relative w-full max-w-md mx-auto rounded-2xl border border-border bg-[#0d0f13] p-4 sm:p-5 shadow-2xl overflow-y-auto max-h-[85vh] min-w-0" onClick={(e) => e.stopPropagation()}>
-            <button type="button" onClick={() => setShowEducation(false)} className="absolute top-3 right-3 min-h-[44px] min-w-[44px] flex items-center justify-center text-muted hover:text-white text-lg -mr-2" aria-label="Close">✕</button>
+            <button type="button" onClick={() => {}} className="absolute top-3 right-3 min-h-[44px] min-w-[44px] flex items-center justify-center text-muted hover:text-white text-lg -mr-2" aria-label="Close">✕</button>
             <h3 className="text-base font-semibold text-brand mb-1">🎓 Task Accountability</h3>
             <p className="text-xs text-muted mb-4">Why task tracking reduces operational errors.</p>
             <div className="space-y-3 text-sm">

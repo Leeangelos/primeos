@@ -1,19 +1,36 @@
 import "./globals.css";
 import { AppNav } from "@/components/app-nav";
+import { BottomNav } from "@/src/components/layout/BottomNav";
 
-import type { Viewport } from "next";
+import type { Viewport, Metadata } from "next";
 
 export const viewport: Viewport = {
   width: "device-width",
   initialScale: 1,
   maximumScale: 1,
   userScalable: false,
+  viewportFit: "cover",
+  themeColor: "#0f172a",
 };
 
-export const metadata = {
-  title: "PrimeOS",
-  description: "The 90-Day Pizza Profit System",
+const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || "https://primeos.app";
+
+export const metadata: Metadata = {
+  title: "PrimeOS — The Operating System for Pizza",
+  description: "One app. Every number. Plain English. 90 seconds a day.",
   manifest: "/manifest.json",
+  openGraph: {
+    title: "PrimeOS — The Operating System for Pizza",
+    description: "One app. Every number. Plain English. 90 seconds a day.",
+    type: "website",
+    url: siteUrl,
+    siteName: "PrimeOS",
+  },
+  twitter: {
+    card: "summary",
+    title: "PrimeOS — The Operating System for Pizza",
+    description: "One app. Every number. Plain English. 90 seconds a day.",
+  },
   appleWebApp: {
     capable: true,
     statusBarStyle: "black-translucent" as const,
@@ -43,15 +60,17 @@ export default function RootLayout({
 
             <div className="flex items-center gap-4">
               <AppNav />
-              <span className="text-sm text-muted hidden sm:inline">Internal • Manual Entry • v0</span>
+              <span className="text-sm text-muted hidden sm:inline">Internal • Manual Entry</span>
             </div>
           </header>
 
-          <main className="glass glow rounded-2xl p-3 sm:p-5">{children}</main>
+          <main className="glass glow rounded-2xl p-3 sm:p-5 pb-24">{children}</main>
 
-          <footer className="mt-6 text-xs text-muted">
-            <span>Business cutoff: 4:00 AM ET</span>
+          <footer className="text-xs text-slate-500 text-center py-4 pb-24">
+            © 2026 Ambition & Legacy LLC. All rights reserved.
           </footer>
+
+          <BottomNav />
         </div>
       </body>
     </html>

@@ -1,172 +1,344 @@
 "use client";
 
-import { useState, useEffect } from "react";
-import { createPortal } from "react-dom";
-import { COCKPIT_STORE_SLUGS, COCKPIT_TARGETS, type CockpitStoreSlug } from "@/lib/cockpit-config";
-import { getStoreColor } from "@/lib/store-colors";
+import { useMemo, useState } from "react";
+import {
+  BarChart,
+  Bar,
+  XAxis,
+  YAxis,
+  Tooltip,
+  ResponsiveContainer,
+  Cell,
+} from "recharts";
 import { cn } from "@/lib/utils";
+import { EducationInfoIcon } from "@/src/components/education/InfoIcon";
+import {
+  SEED_DAILY_KPIS,
+  SEED_SALES_CHANNEL_PCT,
+} from "@/src/lib/seed-data";
 
-type DayRow = {
-  day: string;
-  thisWeek: number;
-  lastWeek: number;
-  lastWeekPct: number | null;
-  lastYear: number;
-  lastYearPct: number | null;
-};
+type PeriodKey = "this_week" | "last_week" | "this_month" | "custom";
 
-type ReportData = {
-  weekOf: string;
-  daily: DayRow[];
-  totals: { thisWeek: number; lastWeek: number; lastWeekPct: number | null; lastYear: number; lastYearPct: number | null };
-  periodToDate: { thisYear: number; lastYear: number; changePct: number | null };
-  yearToDate: { thisYear: number; lastYear: number; changePct: number | null };
-};
+function getMondayBefore(dateStr: string): string {
+  const d = new Date(dateStr + "T12:00:00Z");
+  const day = d.getUTCDay();
+  const diff = day === 0 ? 6 : day - 1;
+  d.setUTCDate(d.getUTCDate() - diff);
+  return d.toISOString().slice(0, 10);
+}
+
+function getPeriodRange(key: PeriodKey): { start: string; end: string; label: string } {
+  const now = new Date();
+  const today = now.toISOString().slice(0, 10);
+  const yesterday = new Date(now);
+  yesterday.setDate(yesterday.getDate() - 1);
+  const yesterdayStr = yesterday.toISOString().slice(0, 10);
+
+  if (key === "this_week") {
+    const mon = getMondayBefore(today);
+    return { start: mon, end: yesterdayStr, label: "This Week" };
+  }
+  if (key === "last_week") {
+    const thisMon = getMondayBefore(today);
+    const monDate = new Date(thisMon + "T12:00:00Z");
+    monDate.setUTCDate(monDate.getUTCDate() - 7);
+    const lastMon = monDate.toISOString().slice(0, 10);
+    const lastSun = new Date(monDate);
+    lastSun.setUTCDate(lastSun.getUTCDate() + 6);
+    const lastSunStr = lastSun.toISOString().slice(0, 10);
+    return { start: lastMon, end: lastSunStr, label: "Last Week" };
+  }
+  if (key === "this_month") {
+    const y = now.getFullYear();
+    const m = now.getMonth();
+    const first = `${y}-${String(m + 1).padStart(2, "0")}-01`;
+    return { start: first, end: yesterdayStr, label: "This Month" };
+  }
+  // custom = last 7 days
+  const end = new Date(now);
+  end.setDate(end.getDate() - 1);
+  const start = new Date(end);
+  start.setDate(start.getDate() - 6);
+  return {
+    start: start.toISOString().slice(0, 10),
+    end: end.toISOString().slice(0, 10),
+    label: "Last 7 Days",
+  };
+}
+
+function getComparisonRange(key: PeriodKey): { start: string; end: string; label: string } | null {
+  if (key === "this_week") return getPeriodRange("last_week");
+  if (key === "last_week") {
+    const r = getPeriodRange("last_week");
+    const mon = new Date(r.start + "T12:00:00Z");
+    mon.setUTCDate(mon.getUTCDate() - 7);
+    const end = new Date(mon);
+    end.setUTCDate(end.getUTCDate() + 6);
+    return {
+      start: mon.toISOString().slice(0, 10),
+      end: end.toISOString().slice(0, 10),
+      label: "Prior Week",
+    };
+  }
+  if (key === "this_month") {
+    const now = new Date();
+    const y = now.getFullYear();
+    const m = now.getMonth() - 1;
+    const lastMonth = m < 0 ? 11 : m;
+    const lastYear = m < 0 ? y - 1 : y;
+    const first = `${lastYear}-${String(lastMonth + 1).padStart(2, "0")}-01`;
+    const lastDay = new Date(lastYear, lastMonth + 1, 0).getDate();
+    const end = `${lastYear}-${String(lastMonth + 1).padStart(2, "0")}-${String(lastDay).padStart(2, "0")}`;
+    return { start: first, end, label: "Last Month" };
+  }
+  // custom: compare to the 7 days before the current custom range
+  const r = getPeriodRange("custom");
+  const rangeStart = new Date(r.start + "T12:00:00Z");
+  const compEnd = new Date(rangeStart);
+  compEnd.setUTCDate(compEnd.getUTCDate() - 1);
+  const compStart = new Date(compEnd);
+  compStart.setUTCDate(compStart.getUTCDate() - 6);
+  return {
+    start: compStart.toISOString().slice(0, 10),
+    end: compEnd.toISOString().slice(0, 10),
+    label: "Prior 7 Days",
+  };
+}
 
 function fmt(n: number): string {
-  return "$" + n.toLocaleString();
+  return "$" + n.toLocaleString("en-US", { maximumFractionDigits: 0 });
 }
 
-function PctBadge({ pct }: { pct: number | null }) {
-  if (pct == null) return <span className="text-muted">—</span>;
-  const color = pct > 0 ? "text-emerald-400" : pct < 0 ? "text-red-400" : "text-muted";
-  return <span className={cn("text-xs font-semibold tabular-nums", color)}>{pct > 0 ? "+" : ""}{pct}% {pct > 0 ? "↑" : pct < 0 ? "↓" : ""}</span>;
-}
+const PERIODS: { key: PeriodKey; label: string }[] = [
+  { key: "this_week", label: "This Week" },
+  { key: "last_week", label: "Last Week" },
+  { key: "this_month", label: "This Month" },
+  { key: "custom", label: "Custom" },
+];
+
+const CHANNEL_LABELS: Record<string, string> = {
+  dine_in: "Dine-in",
+  pickup: "Pickup",
+  delivery: "Delivery",
+  doordash: "DoorDash",
+};
 
 export default function SalesPage() {
-  const [store, setStore] = useState<CockpitStoreSlug | "all">("all");
-  const [data, setData] = useState<ReportData | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [showEducation, setShowEducation] = useState(false);
+  const [period, setPeriod] = useState<PeriodKey>("this_week");
 
-  useEffect(() => {
-    let cancelled = false;
-    setLoading(true);
+  const { start, end, label } = useMemo(() => getPeriodRange(period), [period]);
 
-    fetch(`/api/sales-report?store=${store}`)
-      .then((r) => r.json())
-      .then((d) => {
-        if (cancelled) return;
-        if (d.ok) setData(d);
-        setLoading(false);
-      })
-      .catch(() => { if (!cancelled) setLoading(false); });
+  const dailyRows = useMemo(() => {
+    return SEED_DAILY_KPIS.filter(
+      (r) => r.date >= start && r.date <= end && r.store_id === "kent"
+    ).sort((a, b) => a.date.localeCompare(b.date));
+  }, [start, end]);
 
-    return () => { cancelled = true; };
-  }, [store]);
+  const totalSales = useMemo(() => dailyRows.reduce((s, r) => s + r.sales, 0), [dailyRows]);
+  const dayCount = dailyRows.length;
+  const avgDaily = dayCount > 0 ? Math.round(totalSales / dayCount) : 0;
+  const bestDay = dailyRows.length
+    ? dailyRows.reduce((best, r) => (r.sales > best.sales ? r : best), dailyRows[0])
+    : null;
+  const worstDay = dailyRows.length
+    ? dailyRows.reduce((worst, r) => (r.sales < worst.sales ? r : worst), dailyRows[0])
+    : null;
 
-  const weekLabel = data?.weekOf
-    ? new Date(data.weekOf + "T12:00:00Z").toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })
-    : "";
+  const comparisonRange = useMemo(() => getComparisonRange(period), [period]);
+  const comparisonRows = useMemo(() => {
+    if (!comparisonRange) return [];
+    return SEED_DAILY_KPIS.filter(
+      (r) =>
+        r.date >= comparisonRange.start &&
+        r.date <= comparisonRange.end &&
+        r.store_id === "kent"
+    );
+  }, [comparisonRange]);
+  const comparisonTotal = useMemo(
+    () => comparisonRows.reduce((s, r) => s + r.sales, 0),
+    [comparisonRows]
+  );
+  const changePct =
+    comparisonTotal > 0 && totalSales > 0
+      ? Math.round(((totalSales - comparisonTotal) / comparisonTotal) * 1000) / 10
+      : null;
+
+  const chartData = useMemo(
+    () =>
+      dailyRows.map((r) => ({
+        date: r.date,
+        label: new Date(r.date + "T12:00:00Z").toLocaleDateString("en-US", {
+          weekday: "short",
+          month: "numeric",
+          day: "numeric",
+        }),
+        sales: r.sales,
+      })),
+    [dailyRows]
+  );
+
+  const channelBreakdown = useMemo(() => {
+    if (totalSales <= 0) return [];
+    return Object.entries(SEED_SALES_CHANNEL_PCT).map(([key, pct]) => ({
+      channel: CHANNEL_LABELS[key] || key,
+      pct,
+      amount: Math.round((totalSales * pct) / 100),
+    }));
+  }, [totalSales]);
 
   return (
-    <div className="space-y-5">
+    <div className="space-y-4 min-w-0 overflow-x-hidden pb-24">
       <div className="dashboard-toolbar p-3 sm:p-5 space-y-3">
         <div className="flex items-center gap-2">
           <h1 className="text-lg font-semibold sm:text-2xl">Sales Report</h1>
-          <button type="button" onClick={() => setShowEducation(true)} className="inline-flex items-center justify-center min-h-[44px] min-w-[44px] rounded-full bg-muted/20 text-muted hover:bg-brand/20 hover:text-brand transition-colors text-xs font-bold" aria-label="Learn more">i</button>
+          <EducationInfoIcon metricKey="daily_sales" />
         </div>
-        <p className="text-xs text-muted">Week of {weekLabel || "..."} — This Week vs Last Week vs Last Year</p>
-        <div className="flex flex-wrap gap-1.5 justify-center">
-          <button type="button" onClick={() => setStore("all")} className={cn("min-h-[44px] rounded-lg border px-3 py-2 text-sm font-medium transition-colors", store === "all" ? "border-brand/50 bg-brand/15 text-brand" : "border-border/30 bg-black/20 text-muted hover:text-white")}>All Stores</button>
-          {COCKPIT_STORE_SLUGS.map((slug) => {
-            const sc = getStoreColor(slug);
-            return (
-              <button key={slug} type="button" onClick={() => setStore(slug)} className={cn("min-h-[44px] rounded-lg border px-3 py-2 text-sm font-medium transition-colors", store === slug ? `${sc.borderActive} ${sc.bgActive} ${sc.text}` : "border-border/30 bg-black/20 text-muted hover:text-white")}>{COCKPIT_TARGETS[slug].name}</button>
-            );
-          })}
+        <p className="text-xs text-muted">Daily sales and comparison by period.</p>
+
+        {/* Date range selector */}
+        <div className="flex flex-wrap gap-2">
+          {PERIODS.map((p) => (
+            <button
+              key={p.key}
+              type="button"
+              onClick={() => setPeriod(p.key)}
+              className={cn(
+                "min-h-[44px] rounded-lg border px-3 py-2 text-sm font-medium transition-colors shrink-0",
+                period === p.key
+                  ? "border-brand/50 bg-brand/15 text-brand"
+                  : "border-border/50 bg-black/30 text-muted hover:border-border hover:bg-black/40"
+              )}
+            >
+              {p.label}
+            </button>
+          ))}
         </div>
       </div>
 
-      {loading ? (
-        <div className="space-y-3 animate-pulse">
-          {[1,2,3,4,5,6,7].map((i) => (
-            <div key={i} className="rounded-lg border border-border/50 p-3 flex justify-between">
-              <div className="h-4 w-12 bg-muted/20 rounded" />
-              <div className="h-4 w-16 bg-muted/20 rounded" />
+      {/* Summary card: Total Sales, Avg Daily, Best Day, Worst Day */}
+      <div className="px-3 sm:px-5">
+        <div className="rounded-xl border border-slate-700 bg-slate-800/50 p-4 min-w-0">
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <div className="flex items-center gap-1.5 text-slate-400 text-xs uppercase tracking-wide mb-1">
+                Total Sales
+                <EducationInfoIcon metricKey="daily_sales" />
+              </div>
+              <div className="text-xl font-bold text-white tabular-nums">{fmt(totalSales)}</div>
             </div>
-          ))}
+            <div>
+              <div className="text-slate-400 text-xs uppercase tracking-wide mb-1">Avg Daily</div>
+              <div className="text-xl font-bold text-white tabular-nums">{fmt(avgDaily)}</div>
+            </div>
+            <div>
+              <div className="text-slate-400 text-xs uppercase tracking-wide mb-1">Best Day</div>
+              <div className="text-lg font-semibold text-emerald-400 tabular-nums">
+                {bestDay
+                  ? `${new Date(bestDay.date + "T12:00:00Z").toLocaleDateString("en-US", { weekday: "short" })} ${fmt(bestDay.sales)}`
+                  : "—"}
+              </div>
+            </div>
+            <div>
+              <div className="text-slate-400 text-xs uppercase tracking-wide mb-1">Worst Day</div>
+              <div className="text-lg font-semibold text-slate-300 tabular-nums">
+                {worstDay
+                  ? `${new Date(worstDay.date + "T12:00:00Z").toLocaleDateString("en-US", { weekday: "short" })} ${fmt(worstDay.sales)}`
+                  : "—"}
+              </div>
+            </div>
+          </div>
         </div>
-      ) : data ? (
-        <>
-          <div className="dashboard-surface rounded-lg border border-border overflow-hidden">
-            <div className="grid grid-cols-4 gap-0 text-[10px] font-semibold uppercase tracking-wider text-muted bg-black/40 px-4 py-2.5">
-              <div></div>
-              <div className="text-center">This Week</div>
-              <div className="text-center">Last Week</div>
-              <div className="text-center">Last Year</div>
-            </div>
-            {data.daily.map((row, idx) => (
-              <div key={row.day} className={cn("grid grid-cols-4 gap-0 min-w-[320px] px-4 py-3 items-center", idx % 2 === 0 ? "bg-black/10" : "bg-black/20")}>
-                <div className="text-sm font-medium text-white">{row.day}</div>
-                <div className="text-center">
-                  <div className="text-sm font-bold tabular-nums">{row.thisWeek > 0 ? fmt(row.thisWeek) : "—"}</div>
-                </div>
-                <div className="text-center">
-                  <div className="text-sm tabular-nums text-muted">{row.lastWeek > 0 ? fmt(row.lastWeek) : "—"}</div>
-                  {row.lastWeekPct != null && row.thisWeek > 0 && <div><PctBadge pct={row.lastWeekPct} /></div>}
-                </div>
-                <div className="text-center">
-                  <div className="text-sm tabular-nums text-muted">{row.lastYear > 0 ? fmt(row.lastYear) : "—"}</div>
-                  {row.lastYearPct != null && row.thisWeek > 0 && <div><PctBadge pct={row.lastYearPct} /></div>}
-                </div>
-              </div>
-            ))}
-            <div className="grid grid-cols-4 gap-0 min-w-[320px] px-4 py-3 items-center bg-brand/5 border-t border-brand/20">
-              <div className="text-sm font-bold text-brand">Total</div>
-              <div className="text-center"><div className="text-sm font-black tabular-nums text-brand">{fmt(data.totals.thisWeek)}</div></div>
-              <div className="text-center"><div className="text-sm font-bold tabular-nums text-muted">{fmt(data.totals.lastWeek)}</div><PctBadge pct={data.totals.lastWeekPct} /></div>
-              <div className="text-center"><div className="text-sm font-bold tabular-nums text-muted">{fmt(data.totals.lastYear)}</div><PctBadge pct={data.totals.lastYearPct} /></div>
-            </div>
-          </div>
+      </div>
 
-          <div className="grid grid-cols-2 gap-3">
-            <div className="dashboard-surface rounded-lg border border-border p-4">
-              <div className="text-[10px] font-semibold uppercase tracking-wider text-muted mb-3">Period To Date</div>
-              <div className="grid grid-cols-2 gap-2">
-                <div><div className="text-[9px] uppercase text-muted">This Year</div><div className="text-lg font-bold tabular-nums">{fmt(data.periodToDate.thisYear)}</div></div>
-                <div><div className="text-[9px] uppercase text-muted">Last Year</div><div className="text-lg font-bold tabular-nums text-muted">{fmt(data.periodToDate.lastYear)}</div></div>
-              </div>
-              <div className="mt-2"><PctBadge pct={data.periodToDate.changePct} /></div>
-            </div>
-            <div className="dashboard-surface rounded-lg border border-border p-4">
-              <div className="text-[10px] font-semibold uppercase tracking-wider text-muted mb-3">Year To Date</div>
-              <div className="grid grid-cols-2 gap-2">
-                <div><div className="text-[9px] uppercase text-muted">This Year</div><div className="text-lg font-bold tabular-nums">{fmt(data.yearToDate.thisYear)}</div></div>
-                <div><div className="text-[9px] uppercase text-muted">Last Year</div><div className="text-lg font-bold tabular-nums text-muted">{fmt(data.yearToDate.lastYear)}</div></div>
-              </div>
-              <div className="mt-2"><PctBadge pct={data.yearToDate.changePct} /></div>
-            </div>
+      {/* Comparison: vs Last Week / vs Same Period Last Month */}
+      {comparisonRange && changePct != null && (
+        <div className="px-3 sm:px-5">
+          <div className="rounded-xl border border-slate-700 bg-slate-800/50 px-4 py-3 min-w-0 flex items-center justify-between gap-2">
+            <span className="text-sm text-slate-400">
+              vs {comparisonRange.label}
+            </span>
+            <span
+              className={cn(
+                "text-sm font-semibold tabular-nums",
+                changePct > 0 ? "text-emerald-400" : changePct < 0 ? "text-red-400" : "text-slate-400"
+              )}
+            >
+              {changePct > 0 ? "+" : ""}
+              {changePct}%
+            </span>
           </div>
-        </>
-      ) : (
-        <div className="text-center py-12 text-muted text-sm">No data available.</div>
+        </div>
       )}
 
-      {showEducation && typeof document !== "undefined" && createPortal(
-        <div className="fixed inset-0 z-[9999] flex items-center justify-center p-4" style={{ position: "fixed", top: 0, left: 0, right: 0, bottom: 0 }} onClick={() => setShowEducation(false)}>
-          <div className="absolute inset-0 bg-black/80 backdrop-blur-sm" />
-          <div className="relative w-full max-w-md mx-auto rounded-2xl border border-border bg-[#0d0f13] p-4 sm:p-5 shadow-2xl overflow-y-auto max-h-[85vh] min-w-0" onClick={(e) => e.stopPropagation()}>
-            <button type="button" onClick={() => setShowEducation(false)} className="absolute top-3 right-3 min-h-[44px] min-w-[44px] flex items-center justify-center text-muted hover:text-white text-lg -mr-2" aria-label="Close">✕</button>
-            <h3 className="text-base font-semibold text-brand mb-1">🎓 This Week vs Last Week vs Last Year</h3>
-            <p className="text-xs text-muted mb-4">How to read trends and seasonal patterns.</p>
-            <div className="space-y-3 text-sm">
-              <div>
-                <h4 className="font-medium text-white mb-1">How to Read the Report</h4>
-                <p className="text-muted text-xs leading-relaxed">Day by day you see this week's sales next to last week and last year. Green up arrows = you're ahead. Red down = you're behind. One slow day isn't a trend. A whole week down 10% vs last year is. Same for period-to-date and year-to-date. This is your "are we growing or shrinking?" view.</p>
-              </div>
-              <div>
-                <h4 className="font-medium text-white mb-1">What Seasonal Patterns Mean</h4>
-                <p className="text-muted text-xs leading-relaxed">Pizza does more in football season, holidays, and back-to-school. So compare apples to apples: this September to last September. If you're flat year-over-year in a growth month, something's wrong — marketing, operations, or competition. If you're up 5% in a slow month, you're gaining share. Use this report to see the pattern, not just the number.</p>
-              </div>
-              <div className="rounded-lg border border-red-500/30 bg-red-500/5 p-3">
-                <h4 className="font-medium text-red-400 text-xs mb-2">📕 When the Week Goes Red</h4>
-                <p className="text-muted text-xs leading-relaxed">A bad week happens. Two bad weeks in a row = dig in. Check labor (did you overstaff?), food (waste or price creep?), and traffic (did something change — road work, a new competitor?). Don't wait for the month to close. Fix the trend now or you'll give back a month of profit in one bad quarter.</p>
-              </div>
-            </div>
+      {/* Bar chart — daily sales */}
+      <div className="px-3 sm:px-5">
+        <div className="rounded-xl border border-slate-700 bg-slate-800/50 p-4 min-w-0">
+          <h2 className="text-xs font-semibold uppercase tracking-wider text-slate-400 mb-3">
+            Daily Sales — {label}
+          </h2>
+          <div className="w-full h-[280px] min-h-[200px]">
+            <ResponsiveContainer width="100%" height="100%">
+              <BarChart
+                data={chartData}
+                margin={{ top: 8, right: 8, left: 8, bottom: 8 }}
+              >
+                <XAxis
+                  dataKey="label"
+                  tick={{ fontSize: 10, fill: "#94a3b8" }}
+                  interval={0}
+                />
+                <YAxis
+                  tick={{ fontSize: 10, fill: "#94a3b8" }}
+                  tickFormatter={(v) => (v >= 1000 ? `$${v / 1000}k` : `$${v}`)}
+                  width={36}
+                />
+                <Tooltip
+                  contentStyle={{
+                    backgroundColor: "#1e293b",
+                    border: "1px solid #334155",
+                    borderRadius: "8px",
+                    padding: "8px 12px",
+                    fontSize: "12px",
+                  }}
+                  labelStyle={{ color: "#94a3b8", marginBottom: "4px" }}
+                  formatter={(value: number | undefined) => [value != null ? fmt(value) : "—", "Sales"]}
+                  labelFormatter={(_, payload) =>
+                    payload?.[0]?.payload?.date ?? ""
+                  }
+                />
+                <Bar dataKey="sales" radius={[4, 4, 0, 0]}>
+                  {chartData.map((_, i) => (
+                    <Cell key={i} fill="rgb(59, 130, 246)" />
+                  ))}
+                </Bar>
+              </BarChart>
+            </ResponsiveContainer>
           </div>
-        </div>,
-        document.body
+        </div>
+      </div>
+
+      {/* Breakdown by order type */}
+      {channelBreakdown.length > 0 && (
+        <div className="px-3 sm:px-5">
+          <div className="rounded-xl border border-slate-700 bg-slate-800/50 p-4 min-w-0">
+            <h2 className="text-xs font-semibold uppercase tracking-wider text-slate-400 mb-3">
+              By order type
+            </h2>
+            <ul className="space-y-2">
+              {channelBreakdown.map((row) => (
+                <li
+                  key={row.channel}
+                  className="flex justify-between items-center text-sm"
+                >
+                  <span className="text-slate-300">{row.channel}</span>
+                  <span className="text-white font-medium tabular-nums">
+                    {fmt(row.amount)} <span className="text-slate-500 font-normal">({row.pct}%)</span>
+                  </span>
+                </li>
+              ))}
+            </ul>
+          </div>
+        </div>
       )}
     </div>
   );

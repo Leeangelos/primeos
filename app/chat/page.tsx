@@ -2,6 +2,9 @@
 
 import { useState, useEffect, useCallback } from "react";
 import { createPortal } from "react-dom";
+import { EducationInfoIcon } from "@/src/components/education/InfoIcon";
+import { EDUCATION_CONTENT } from "@/src/lib/education-content";
+import { SEED_CHAT_MESSAGES } from "@/src/lib/seed-data";
 import { COCKPIT_STORE_SLUGS, COCKPIT_TARGETS, type CockpitStoreSlug } from "@/lib/cockpit-config";
 import { getStoreColor } from "@/lib/store-colors";
 import { cn } from "@/lib/utils";
@@ -40,16 +43,20 @@ export default function ChatPage() {
   const [messages, setMessages] = useState<Message[]>([]);
   const [counts, setCounts] = useState<Record<string, number>>({ general: 0, announcements: 0, "shift-swap": 0, "managers-only": 0 });
   const [loading, setLoading] = useState(true);
-  const [showEducation, setShowEducation] = useState(false);
   const [senderName, setSenderName] = useState("");
   const [newMessage, setNewMessage] = useState("");
   const [sending, setSending] = useState(false);
+  const [playbookOpen, setPlaybookOpen] = useState(true);
 
   const loadMessages = useCallback(async () => {
     setLoading(true);
     const res = await fetch(`/api/chat?store=${store}&channel=${channel}&limit=50`);
     const data = await res.json();
-    if (data.ok) setMessages(data.messages ?? []);
+    if (data.ok && Array.isArray(data.messages) && data.messages.length > 0) {
+      setMessages(data.messages);
+    } else {
+      setMessages(SEED_CHAT_MESSAGES.filter((m) => m.channel === channel));
+    }
     setLoading(false);
   }, [store, channel]);
 
@@ -91,9 +98,9 @@ export default function ChatPage() {
   return (
     <div className="space-y-5">
       <div className="dashboard-toolbar p-3 sm:p-5 space-y-3">
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-2 flex-wrap">
           <h1 className="text-lg font-semibold sm:text-2xl">Team Chat</h1>
-          <button type="button" onClick={() => setShowEducation(true)} className="inline-flex items-center justify-center min-h-[44px] min-w-[44px] rounded-full bg-muted/20 text-muted hover:bg-brand/20 hover:text-brand transition-colors text-xs font-bold" aria-label="Learn more">i</button>
+          <EducationInfoIcon metricKey="team_communication" />
         </div>
         <p className="text-xs text-muted">In-app communication by store and channel. No personal numbers, searchable, organized.</p>
 
@@ -195,12 +202,39 @@ export default function ChatPage() {
         )}
       </div>
 
-      {/* Education modal */}
-      {showEducation && typeof document !== "undefined" && createPortal(
-        <div className="fixed inset-0 z-[9999] flex items-center justify-center p-4" style={{ position: "fixed", top: 0, left: 0, right: 0, bottom: 0 }} onClick={() => setShowEducation(false)}>
+      {/* Layer 3 playbook card — visible, collapsible */}
+      {(() => {
+        const entry = EDUCATION_CONTENT.team_communication;
+        if (!entry) return null;
+        return (
+          <div className="rounded-lg border border-red-500/30 bg-red-500/5 overflow-hidden">
+            <button
+              type="button"
+              onClick={() => setPlaybookOpen((o) => !o)}
+              className="w-full flex items-center justify-between gap-2 px-4 py-3 text-left bg-red-500/10 border-b border-red-500/20"
+            >
+              <h3 className="text-sm font-semibold text-red-400/95">When Communication Breaks Down — Operator Playbook</h3>
+              <span className="text-red-400/80 shrink-0" aria-hidden>{playbookOpen ? "▼" : "▶"}</span>
+            </button>
+            {playbookOpen && (
+              <ul className="p-4 space-y-2 text-sm text-muted leading-relaxed">
+                {entry.whenRedPlaybook.map((step, i) => (
+                  <li key={i} className="flex gap-2">
+                    <span className="text-red-400/70 shrink-0">{i + 1}.</span>
+                    <span>{step}</span>
+                  </li>
+                ))}
+              </ul>
+            )}
+          </div>
+        );
+      })()}
+
+      {false && typeof document !== "undefined" && createPortal(
+        <div className="fixed inset-0 z-[9999] flex items-center justify-center p-4" style={{ position: "fixed", top: 0, left: 0, right: 0, bottom: 0 }} onClick={() => {}}>
           <div className="absolute inset-0 bg-black/80 backdrop-blur-sm" />
           <div className="relative w-full max-w-md mx-auto rounded-2xl border border-border bg-[#0d0f13] p-4 sm:p-5 shadow-2xl overflow-y-auto max-h-[85vh] min-w-0" onClick={(e) => e.stopPropagation()}>
-            <button type="button" onClick={() => setShowEducation(false)} className="absolute top-3 right-3 min-h-[44px] min-w-[44px] flex items-center justify-center text-muted hover:text-white text-lg -mr-2" aria-label="Close">✕</button>
+            <button type="button" onClick={() => {}} className="absolute top-3 right-3 min-h-[44px] min-w-[44px] flex items-center justify-center text-muted hover:text-white text-lg -mr-2" aria-label="Close">✕</button>
             <h3 className="text-base font-semibold text-brand mb-1">🎓 In-App Communication</h3>
             <p className="text-xs text-muted mb-4">Why team chat beats group texts.</p>
             <div className="space-y-3 text-sm">

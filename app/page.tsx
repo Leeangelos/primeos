@@ -1,10 +1,19 @@
 "use client";
 
 import Link from "next/link";
-import { useState, useEffect } from "react";
+import { useMemo, useState, useEffect } from "react";
 import { createPortal } from "react-dom";
-import { COCKPIT_STORE_SLUGS, COCKPIT_TARGETS, type CockpitStoreSlug } from "@/lib/cockpit-config";
-import { getStoreColor } from "@/lib/store-colors";
+import { BarChart3, Calendar, Check, ChevronDown, ChevronRight, ClipboardList, MapPin, Sparkles, TriangleAlert } from "lucide-react";
+import { Area, AreaChart, ReferenceLine, ResponsiveContainer } from "recharts";
+import { COLORS, getGradeColor } from "@/src/lib/design-tokens";
+import { EducationInfoIcon } from "@/src/components/education/InfoIcon";
+import { SEED_DAILY_KPIS, SEED_MORNING_BRIEF, SEED_STORES } from "@/src/lib/seed-data";
+
+function firstSentences(text: string, count: number): string {
+  const parts = text.split(/(?<=[.!?])\s+/);
+  const slice = parts.slice(0, count);
+  return slice.length ? slice.join(" ").trim() : text;
+}
 
 function todayYYYYMMDD(): string {
   const t = new Date();
@@ -14,63 +23,215 @@ function todayYYYYMMDD(): string {
   return `${y}-${m}-${d}`;
 }
 
-type StoreSnapshot = {
-  slug: CockpitStoreSlug;
-  name: string;
-  primePct: number | null;
-  laborPct: number | null;
-  slph: number | null;
-  status: "on_track" | "over" | null;
-  acknowledged?: boolean;
+function yesterdayYYYYMMDD(): string {
+  const t = new Date();
+  t.setDate(t.getDate() - 1);
+  return t.toISOString().slice(0, 10);
+}
+
+type KpiSnapshot = {
+  sales: number;
+  foodCostPct: number;
+  laborPct: number;
+  primePct: number;
+  isYesterday: boolean;
 };
 
+const KENT_DAILY_TARGET = 5200;
+const FOOD_COST_TARGET = 31;
+const LABOR_TARGET = 22;
+const PRIME_TARGET = 55;
+const FOOD_COST_RED = 33;
+const LABOR_RED = 24;
+const PRIME_RED = 58;
+
+type RedAlert = { key: string; label: string; message: string };
+
+type StoreSlug = "kent" | "aurora" | "lindseys" | "all";
+
+const STORE_OPTIONS: { slug: StoreSlug; name: string }[] = [
+  ...SEED_STORES.map((s) => ({ slug: s.slug as StoreSlug, name: s.name })),
+  { slug: "all", name: "All Locations" },
+];
+
+function getStoreLabel(slug: StoreSlug): string {
+  if (slug === "all") return "All Locations";
+  return SEED_STORES.find((s) => s.slug === slug)?.name ?? slug;
+}
+
+/** For API/seed: use single store slug; "all" → kent for demo combined view. */
+function storeSlugForFetch(slug: StoreSlug): string {
+  return slug === "all" ? "kent" : slug;
+}
+
 export default function HomePage() {
-  const [snapshots, setSnapshots] = useState<StoreSnapshot[]>([]);
+  const [selectedStore, setSelectedStore] = useState<StoreSlug>("kent");
+  const [showStoreSheet, setShowStoreSheet] = useState(false);
+  const [kpi, setKpi] = useState<KpiSnapshot | null>(null);
   const [loading, setLoading] = useState(true);
+  const [usedSeedData, setUsedSeedData] = useState(false);
   const [showEducation, setShowEducation] = useState(false);
   const today = todayYYYYMMDD();
+  const yesterday = yesterdayYYYYMMDD();
 
   useEffect(() => {
     let cancelled = false;
+    const store = storeSlugForFetch(selectedStore);
     async function load() {
-      const results: StoreSnapshot[] = [];
-      for (const slug of COCKPIT_STORE_SLUGS) {
-        try {
-          const res = await fetch(`/api/daily-kpi?store=${slug}&date=${today}`);
-          const data = await res.json();
-          const targets = COCKPIT_TARGETS[slug];
-          if (data.ok && data.entry) {
-            const e = data.entry;
-            const ns = e.net_sales ?? 0;
-            const lc = e.labor_dollars ?? 0;
-            const fc = e.food_dollars ?? 0;
-            const dc = e.disposables_dollars ?? 0;
-            const lh = e.labor_hours ?? 0;
-            const primeDollars = lc + fc + dc;
-            const primePct = ns > 0 ? (primeDollars / ns) * 100 : null;
-            const laborPct = ns > 0 ? (lc / ns) * 100 : null;
-            const slph = lh > 0 ? ns / lh : null;
-            const status = primePct != null ? (primePct <= targets.primeMax ? "on_track" : "over") : null;
-            const acknowledged = !!(e as { acknowledged_at?: unknown }).acknowledged_at;
-            results.push({ slug, name: targets.name, primePct, laborPct, slph, status, acknowledged });
-          } else {
-            results.push({ slug, name: targets.name, primePct: null, laborPct: null, slph: null, status: null });
-          }
-        } catch {
-          results.push({ slug, name: COCKPIT_TARGETS[slug].name, primePct: null, laborPct: null, slph: null, status: null });
+      try {
+        const res = await fetch(`/api/daily-kpi?store=${store}&date=${today}`);
+        const data = await res.json();
+        if (!cancelled && data.ok && data.entry) {
+          const e = data.entry;
+          const ns = e.net_sales ?? 0;
+          const lc = e.labor_dollars ?? 0;
+          const fc = e.food_dollars ?? 0;
+          const dc = e.disposables_dollars ?? 0;
+          const primeDollars = lc + fc + dc;
+          const primePct = ns > 0 ? (primeDollars / ns) * 100 : 0;
+          const laborPct = ns > 0 ? (lc / ns) * 100 : 0;
+          const foodCostPct = ns > 0 ? (fc / ns) * 100 : 0;
+          setKpi({
+            sales: ns,
+            foodCostPct,
+            laborPct,
+            primePct,
+            isYesterday: false,
+          });
+          setLoading(false);
+          return;
         }
+        const resY = await fetch(`/api/daily-kpi?store=kent&date=${yesterday}`);
+        const dataY = await resY.json();
+        if (!cancelled && dataY.ok && dataY.entry) {
+          setUsedSeedData(false);
+          const e = dataY.entry;
+          const ns = e.net_sales ?? 0;
+          const lc = e.labor_dollars ?? 0;
+          const fc = e.food_dollars ?? 0;
+          const dc = e.disposables_dollars ?? 0;
+          const primeDollars = lc + fc + dc;
+          const primePct = ns > 0 ? (primeDollars / ns) * 100 : 0;
+          const laborPct = ns > 0 ? (lc / ns) * 100 : 0;
+          const foodCostPct = ns > 0 ? (fc / ns) * 100 : 0;
+          setKpi({
+            sales: ns,
+            foodCostPct,
+            laborPct,
+            primePct,
+            isYesterday: true,
+          });
+          setLoading(false);
+          return;
+        }
+      } catch {
+        // fall through to seed
       }
       if (!cancelled) {
-        setSnapshots(results);
+        setUsedSeedData(true);
+        const seedForStore = SEED_DAILY_KPIS.filter((r) => r.store_id === store);
+        const todayRow = seedForStore.find((r) => r.date === today);
+        const yesterdayRow = seedForStore.find((r) => r.date === yesterday);
+        const row = todayRow ?? yesterdayRow ?? seedForStore[0];
+        if (row) {
+          setKpi({
+            sales: row.sales,
+            foodCostPct: row.food_cost_pct,
+            laborPct: row.labor_pct,
+            primePct: row.prime_pct,
+            isYesterday: !todayRow,
+          });
+        } else {
+          setKpi(null);
+        }
         setLoading(false);
       }
     }
     load();
     return () => { cancelled = true; };
-  }, [today]);
+  }, [today, yesterday, selectedStore]);
+
+  const dailyTargetSales = useMemo(() => {
+    if (selectedStore === "all") return SEED_STORES.find((s) => s.slug === "kent")?.avgDailySales ?? KENT_DAILY_TARGET;
+    return SEED_STORES.find((s) => s.slug === selectedStore)?.avgDailySales ?? KENT_DAILY_TARGET;
+  }, [selectedStore]);
+
+  const { last7Days, salesTrendPct, foodCostAvg, foodCostGrade } = useMemo(() => {
+    const store = storeSlugForFetch(selectedStore);
+    const forStore = SEED_DAILY_KPIS.filter((r) => r.store_id === store);
+    const last7 = forStore.slice(-7).map((r) => ({ date: r.date, sales: r.sales, foodCost: r.food_cost_pct }));
+    const prev7 = forStore.slice(-14, -7);
+    const thisSum = last7.reduce((s, d) => s + d.sales, 0);
+    const prevSum = prev7.reduce((s, r) => s + r.sales, 0);
+    const salesTrendPct = prevSum > 0 ? Math.round(((thisSum - prevSum) / prevSum) * 1000) / 10 : 0;
+    const foodCostAvg = last7.length > 0 ? Math.round((last7.reduce((s, d) => s + d.foodCost, 0) / last7.length) * 10) / 10 : 0;
+    const foodCostGrade = foodCostAvg <= 31 ? "green" : foodCostAvg <= 33 ? "yellow" : "red";
+    return { last7Days: last7, salesTrendPct, foodCostAvg, foodCostGrade };
+  }, [selectedStore]);
+
+  const storeLabel = selectedStore === "all" ? "All" : getStoreLabel(selectedStore);
+
+  const redMetrics = useMemo((): RedAlert[] => {
+    const list: RedAlert[] = [];
+    if (kpi) {
+      if (getGradeColor(kpi.foodCostPct, FOOD_COST_RED, "lower_is_better") === COLORS.grade.red) {
+        list.push({
+          key: "food_cost",
+          label: `Food Cost (${storeLabel})`,
+          message: `Food cost at ${kpi.foodCostPct.toFixed(1)}% — above 33% target. Tap for playbook.`,
+        });
+      }
+      if (getGradeColor(kpi.laborPct, LABOR_RED, "lower_is_better") === COLORS.grade.red) {
+        list.push({
+          key: "labor_pct",
+          label: `Labor % (${storeLabel})`,
+          message: `Labor at ${kpi.laborPct.toFixed(1)}% — above 24% target. Tap for playbook.`,
+        });
+      }
+      if (getGradeColor(kpi.primePct, PRIME_RED, "lower_is_better") === COLORS.grade.red) {
+        list.push({
+          key: "prime_cost",
+          label: `PRIME % (${storeLabel})`,
+          message: `PRIME at ${kpi.primePct.toFixed(1)}% — above 58% target. Tap for playbook.`,
+        });
+      }
+      if (getGradeColor(kpi.sales / 100, dailyTargetSales / 100, "higher_is_better") === COLORS.grade.red) {
+        list.push({
+          key: "daily_sales",
+          label: `Today's Sales (${storeLabel})`,
+          message: `Sales at $${kpi.sales.toLocaleString()} — below target. Tap for playbook.`,
+        });
+      }
+    }
+    if (usedSeedData) {
+      list.push({
+        key: "food_cost",
+        label: "Food Cost (Stow)",
+        message: "Stow food cost at 32.8% for 3 consecutive days. Approaching red. Tap for playbook.",
+      });
+    }
+    return list;
+  }, [kpi, usedSeedData, dailyTargetSales, storeLabel]);
+
+  const trendArrow = salesTrendPct >= 0 ? "↑" : "↓";
 
   return (
     <div className="space-y-6">
+      <div className="flex items-center gap-2 mb-4">
+        <button
+          type="button"
+          onClick={() => setShowStoreSheet(true)}
+          className="flex items-center gap-2 bg-slate-800 rounded-lg px-3 py-2 border border-slate-700 text-sm text-white min-h-[44px] max-w-[200px] min-w-0"
+          aria-haspopup="listbox"
+          aria-expanded={showStoreSheet}
+          aria-label={`Store: ${getStoreLabel(selectedStore)}. Select location.`}
+        >
+          <MapPin className="w-4 h-4 text-blue-400 shrink-0" aria-hidden />
+          <span className="truncate">{getStoreLabel(selectedStore)}</span>
+          <ChevronDown className="w-4 h-4 text-slate-400 shrink-0" aria-hidden />
+        </button>
+      </div>
+
       <div className="flex items-start justify-between gap-4">
         <div>
           <div className="flex items-center gap-2">
@@ -84,44 +245,202 @@ export default function HomePage() {
       </div>
 
       {loading ? (
-        <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
-          {COCKPIT_STORE_SLUGS.map((slug) => (
-            <div key={slug} className="dashboard-scoreboard rounded-lg border border-border/50 p-5 animate-pulse">
-              <div className="h-3 w-24 bg-muted/20 rounded mb-3" />
-              <div className="h-10 w-20 bg-muted/20 rounded" />
+        <div className="grid grid-cols-2 gap-3 min-w-0">
+          {[1, 2, 3, 4].map((i) => (
+            <div key={i} className="bg-slate-800 rounded-xl p-4 border border-slate-700 animate-pulse min-w-0">
+              <div className="h-3 w-16 bg-slate-600 rounded mb-2" />
+              <div className="h-8 w-20 bg-slate-600 rounded" />
+              <div className="h-3 w-24 bg-slate-600 rounded mt-2" />
             </div>
           ))}
         </div>
+      ) : kpi ? (
+        <div className="grid grid-cols-2 gap-3 min-w-0">
+          <div className="bg-slate-800 rounded-xl p-4 border border-slate-700 min-w-0">
+            <div className="flex items-center justify-between mb-1">
+              <span className="text-xs text-slate-400 uppercase tracking-wide">Today&apos;s Sales</span>
+              <EducationInfoIcon metricKey="daily_sales" />
+            </div>
+            <div className="text-2xl font-bold tabular-nums" style={{ color: getGradeColor(kpi.sales / 100, dailyTargetSales / 100, "higher_is_better") }}>
+              ${kpi.sales.toLocaleString("en-US", { maximumFractionDigits: 0 })}
+            </div>
+            <div className="text-xs text-slate-500">
+              Target: ${(dailyTargetSales / 1000).toFixed(1)}K/day{kpi.isYesterday ? " (Yesterday)" : ""}
+            </div>
+          </div>
+          <div className="bg-slate-800 rounded-xl p-4 border border-slate-700 min-w-0">
+            <div className="flex items-center justify-between mb-1">
+              <span className="text-xs text-slate-400 uppercase tracking-wide">Food Cost</span>
+              <EducationInfoIcon metricKey="food_cost" />
+            </div>
+            <div className="text-2xl font-bold tabular-nums" style={{ color: getGradeColor(kpi.foodCostPct, FOOD_COST_TARGET, "lower_is_better") }}>
+              {kpi.foodCostPct.toFixed(1)}%
+            </div>
+            <div className="text-xs text-slate-500">Target: 28–31%{kpi.isYesterday ? " (Yesterday)" : ""}</div>
+          </div>
+          <div className="bg-slate-800 rounded-xl p-4 border border-slate-700 min-w-0">
+            <div className="flex items-center justify-between mb-1">
+              <span className="text-xs text-slate-400 uppercase tracking-wide">Labor %</span>
+              <EducationInfoIcon metricKey="labor_pct" />
+            </div>
+            <div className="text-2xl font-bold tabular-nums" style={{ color: getGradeColor(kpi.laborPct, LABOR_TARGET, "lower_is_better") }}>
+              {kpi.laborPct.toFixed(1)}%
+            </div>
+            <div className="text-xs text-slate-500">Target: 19–22%{kpi.isYesterday ? " (Yesterday)" : ""}</div>
+          </div>
+          <div className="bg-slate-800 rounded-xl p-4 border border-slate-700 min-w-0">
+            <div className="flex items-center justify-between mb-1">
+              <span className="text-xs text-slate-400 uppercase tracking-wide">PRIME %</span>
+              <EducationInfoIcon metricKey="prime_cost" />
+            </div>
+            <div className="text-2xl font-bold tabular-nums" style={{ color: getGradeColor(kpi.primePct, PRIME_TARGET, "lower_is_better") }}>
+              {kpi.primePct.toFixed(1)}%
+            </div>
+            <div className="text-xs text-slate-500">Target: ≤55%{kpi.isYesterday ? " (Yesterday)" : ""}</div>
+          </div>
+        </div>
       ) : (
-        <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
-          {snapshots.map((s) => (
-            <Link key={s.slug} href={`/daily?store=${s.slug}&date=${today}`} className="block">
-              <div
-                className={`rounded-lg border p-4 transition-colors active:bg-black/40 ${getStoreColor(s.slug).border} ${getStoreColor(s.slug).bg} ${getStoreColor(s.slug).glow}`}
-              >
-                <div className="flex items-center gap-2">
-                  <div className={`h-2.5 w-2.5 rounded-full ${getStoreColor(s.slug).dot}`} />
-                  <span className="font-medium text-white">{s.name}</span>
-                  {s.acknowledged && <span className="text-emerald-400 text-xs">✓</span>}
-                </div>
-                <div
-                  className={`mt-2 text-3xl sm:text-4xl font-black tabular-nums ${
-                    s.status === "on_track"
-                      ? "text-emerald-300"
-                      : s.status === "over"
-                        ? "text-red-300"
-                        : "text-white"
-                  }`}
-                >
-                  {s.primePct != null ? `${s.primePct.toFixed(1)}%` : "—"}
-                </div>
-                <div className="text-[10px] uppercase tracking-wider text-muted/70 mt-1">PRIME %</div>
-                <div className="mt-3 flex gap-4 text-xs text-muted">
-                  <span>Labor: {s.laborPct != null ? `${s.laborPct.toFixed(1)}%` : "—"}</span>
-                  <span>SLPH: {s.slph != null ? s.slph.toFixed(0) : "—"}</span>
-                </div>
-              </div>
+        <div className="grid grid-cols-2 gap-3 min-w-0">
+          <div className="bg-slate-800 rounded-xl p-4 border border-slate-700 min-w-0">
+            <div className="flex items-center justify-between mb-1">
+              <span className="text-xs text-slate-400 uppercase tracking-wide">Today&apos;s Sales</span>
+              <EducationInfoIcon metricKey="daily_sales" />
+            </div>
+            <div className="text-2xl font-bold text-slate-500">—</div>
+            <div className="text-xs text-slate-500">Target: ${(dailyTargetSales / 1000).toFixed(1)}K/day</div>
+          </div>
+          <div className="bg-slate-800 rounded-xl p-4 border border-slate-700 min-w-0">
+            <div className="flex items-center justify-between mb-1">
+              <span className="text-xs text-slate-400 uppercase tracking-wide">Food Cost</span>
+              <EducationInfoIcon metricKey="food_cost" />
+            </div>
+            <div className="text-2xl font-bold text-slate-500">—</div>
+            <div className="text-xs text-slate-500">Target: 28–31%</div>
+          </div>
+          <div className="bg-slate-800 rounded-xl p-4 border border-slate-700 min-w-0">
+            <div className="flex items-center justify-between mb-1">
+              <span className="text-xs text-slate-400 uppercase tracking-wide">Labor %</span>
+              <EducationInfoIcon metricKey="labor_pct" />
+            </div>
+            <div className="text-2xl font-bold text-slate-500">—</div>
+            <div className="text-xs text-slate-500">Target: 19–22%</div>
+          </div>
+          <div className="bg-slate-800 rounded-xl p-4 border border-slate-700 min-w-0">
+            <div className="flex items-center justify-between mb-1">
+              <span className="text-xs text-slate-400 uppercase tracking-wide">PRIME %</span>
+              <EducationInfoIcon metricKey="prime_cost" />
+            </div>
+            <div className="text-2xl font-bold text-slate-500">—</div>
+            <div className="text-xs text-slate-500">Target: ≤55%</div>
+          </div>
+        </div>
+      )}
+
+      <div className="bg-slate-800 rounded-xl p-4 border border-slate-700 min-w-0">
+        <h3 className="text-sm font-semibold text-slate-400 uppercase tracking-wide mb-3">7-Day Trend</h3>
+        <div className="grid grid-cols-2 gap-4 min-w-0">
+          <div className="min-w-0">
+            <div className="text-xs text-slate-500 mb-1">Sales</div>
+            <div className="w-full h-[60px] min-h-[60px]">
+              <ResponsiveContainer width="100%" height={60}>
+                <AreaChart data={last7Days} margin={{ top: 4, right: 4, bottom: 4, left: 4 }}>
+                  <defs>
+                    <linearGradient id="salesFill" x1="0" y1="0" x2="0" y2="1">
+                      <stop offset="0%" stopColor="#3b82f6" stopOpacity={0.2} />
+                      <stop offset="100%" stopColor="#3b82f6" stopOpacity={0} />
+                    </linearGradient>
+                  </defs>
+                  <Area type="monotone" dataKey="sales" stroke="#3b82f6" fill="url(#salesFill)" strokeWidth={2} dot={false} isAnimationActive={false} />
+                </AreaChart>
+              </ResponsiveContainer>
+            </div>
+            <div className="text-xs text-slate-400 mt-1">
+              {trendArrow} {salesTrendPct}% vs last week
+            </div>
+          </div>
+          <div className="min-w-0">
+            <div className="text-xs text-slate-500 mb-1">Food Cost</div>
+            <div className="w-full h-[60px] min-h-[60px]">
+              <ResponsiveContainer width="100%" height={60}>
+                <AreaChart data={last7Days} margin={{ top: 4, right: 4, bottom: 4, left: 4 }}>
+                  <defs>
+                    <linearGradient id="foodCostFill" x1="0" y1="0" x2="0" y2="1">
+                      <stop offset="0%" stopColor="#22c55e" stopOpacity={0.2} />
+                      <stop offset="100%" stopColor="#22c55e" stopOpacity={0} />
+                    </linearGradient>
+                  </defs>
+                  <ReferenceLine y={33} stroke="#ef4444" strokeDasharray="3 3" strokeWidth={1} />
+                  <Area type="monotone" dataKey="foodCost" stroke="#22c55e" fill="url(#foodCostFill)" strokeWidth={2} dot={false} isAnimationActive={false} />
+                </AreaChart>
+              </ResponsiveContainer>
+            </div>
+            <div className="text-xs text-slate-400 mt-1">
+              Avg: {foodCostAvg}% ({foodCostGrade})
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div className="bg-slate-800 rounded-xl p-4 border border-slate-700 min-w-0">
+        <div className="flex items-center justify-between mb-2">
+          <div className="flex items-center gap-2">
+            <Sparkles className="w-4 h-4 text-blue-400 shrink-0" aria-hidden />
+            <h3 className="text-sm font-semibold text-slate-400 uppercase tracking-wide">Morning Brief</h3>
+          </div>
+          <span className="text-xs text-slate-500 shrink-0">
+            Today, {new Date(today + "T12:00:00Z").toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })}
+          </span>
+        </div>
+        {SEED_MORNING_BRIEF ? (
+          <>
+            <p className="text-sm text-slate-300 leading-relaxed line-clamp-3">
+              {firstSentences(SEED_MORNING_BRIEF, 3)}
+            </p>
+            <Link href="/brief" className="inline-flex items-center gap-1 text-sm text-blue-400 hover:text-blue-300 mt-3">
+              Read full brief <ChevronRight className="w-4 h-4 shrink-0" aria-hidden />
             </Link>
+          </>
+        ) : (
+          <>
+            <p className="text-sm text-slate-300 leading-relaxed">
+              Your morning brief generates after daily KPIs are entered. Enter today&apos;s numbers to unlock.
+            </p>
+            <Link href="/daily" className="inline-flex items-center gap-1 text-sm text-blue-400 hover:text-blue-300 mt-3">
+              Enter daily numbers <ChevronRight className="w-4 h-4 shrink-0" aria-hidden />
+            </Link>
+          </>
+        )}
+      </div>
+
+      <div className="grid grid-cols-3 gap-3 min-w-0">
+        <Link href="/daily" className="bg-slate-800 rounded-xl p-3 border border-slate-700 flex flex-col items-center justify-center gap-2 min-h-[44px] active:bg-slate-700 transition-colors min-w-[44px]">
+          <ClipboardList className="w-6 h-6 text-blue-400 shrink-0" aria-hidden />
+          <span className="text-xs text-slate-300 text-center leading-tight">Enter Today&apos;s Numbers</span>
+        </Link>
+        <Link href="/weekly" className="bg-slate-800 rounded-xl p-3 border border-slate-700 flex flex-col items-center justify-center gap-2 min-h-[44px] active:bg-slate-700 transition-colors min-w-[44px]">
+          <BarChart3 className="w-6 h-6 text-emerald-400 shrink-0" aria-hidden />
+          <span className="text-xs text-slate-300 text-center leading-tight">Weekly Cockpit</span>
+        </Link>
+        <Link href="/schedule" className="bg-slate-800 rounded-xl p-3 border border-slate-700 flex flex-col items-center justify-center gap-2 min-h-[44px] active:bg-slate-700 transition-colors min-w-[44px]">
+          <Calendar className="w-6 h-6 text-amber-400 shrink-0" aria-hidden />
+          <span className="text-xs text-slate-300 text-center leading-tight">This Week&apos;s Schedule</span>
+        </Link>
+      </div>
+
+      {redMetrics.length > 0 && (
+        <div className="bg-red-950/30 rounded-xl p-4 border border-red-900/50 min-w-0">
+          <div className="flex items-center gap-2 mb-3">
+            <TriangleAlert className="w-4 h-4 text-red-400 shrink-0" aria-hidden />
+            <h3 className="text-sm font-semibold text-red-400 uppercase tracking-wide">Needs Attention</h3>
+          </div>
+          {redMetrics.map((metric) => (
+            <div key={`${metric.key}-${metric.label}`} className="flex items-center justify-between py-2 border-b border-red-900/30 last:border-0">
+              <div className="min-w-0">
+                <div className="text-sm text-white font-medium">{metric.label}</div>
+                <div className="text-xs text-red-300">{metric.message}</div>
+              </div>
+              <EducationInfoIcon metricKey={metric.key} />
+            </div>
           ))}
         </div>
       )}
@@ -140,6 +459,33 @@ export default function HomePage() {
           </div>
         </Link>
       </div>
+
+      {showStoreSheet && typeof document !== "undefined" && createPortal(
+        <div className="fixed inset-0 z-[9999] flex items-end justify-center" aria-modal="true" role="dialog" aria-label="Select location">
+          <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={() => setShowStoreSheet(false)} aria-hidden="true" />
+          <div className="relative w-full max-w-md bg-slate-800 rounded-t-2xl border-t border-x border-slate-700 shadow-2xl overflow-hidden max-h-[85vh] min-w-0" onClick={(e) => e.stopPropagation()}>
+            <div className="sticky top-0 flex items-center justify-between p-4 border-b border-slate-700 bg-slate-800">
+              <h3 className="text-sm font-semibold text-slate-400 uppercase tracking-wide">Location</h3>
+              <button type="button" onClick={() => setShowStoreSheet(false)} className="min-h-[44px] min-w-[44px] flex items-center justify-center text-slate-400 hover:text-white" aria-label="Close">✕</button>
+            </div>
+            <ul className="py-2" role="listbox">
+              {STORE_OPTIONS.map((opt) => (
+                <li key={opt.slug} role="option" aria-selected={selectedStore === opt.slug}>
+                  <button
+                    type="button"
+                    onClick={() => { setSelectedStore(opt.slug); setShowStoreSheet(false); }}
+                    className="w-full flex items-center justify-between gap-3 px-4 py-3 text-left text-sm text-white hover:bg-slate-700/50 min-h-[44px]"
+                  >
+                    <span>{opt.name}</span>
+                    {selectedStore === opt.slug && <Check className="w-5 h-5 text-blue-400 shrink-0" aria-hidden />}
+                  </button>
+                </li>
+              ))}
+            </ul>
+          </div>
+        </div>,
+        document.body
+      )}
 
       {showEducation && typeof document !== "undefined" && createPortal(
         <div className="fixed inset-0 z-[9999] flex items-center justify-center p-4" style={{ position: "fixed", top: 0, left: 0, right: 0, bottom: 0 }} onClick={() => setShowEducation(false)}>
