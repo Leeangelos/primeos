@@ -3,9 +3,18 @@
 import React, { useState, useEffect } from "react";
 import { createPortal } from "react-dom";
 import Link from "next/link";
-import { COCKPIT_STORE_SLUGS, COCKPIT_TARGETS } from "@/lib/cockpit-config";
+import { Sparkles, ClipboardList, ChevronRight } from "lucide-react";
+import { COCKPIT_STORE_SLUGS, COCKPIT_TARGETS, type CockpitStoreSlug } from "@/lib/cockpit-config";
 import { getStoreColor } from "@/lib/store-colors";
-import { SEED_MORNING_BRIEF } from "@/src/lib/seed-data";
+import { cn } from "@/lib/utils";
+import { SEED_MORNING_BRIEF_BY_STORE } from "@/src/lib/seed-data";
+
+type BriefStore = "all" | CockpitStoreSlug;
+
+const BRIEF_STORE_OPTIONS: { value: BriefStore; label: string }[] = [
+  { value: "all", label: "All Locations" },
+  ...COCKPIT_STORE_SLUGS.map((s) => ({ value: s as BriefStore, label: COCKPIT_TARGETS[s].name })),
+];
 
 function todayYYYYMMDD(): string {
   const t = new Date();
@@ -85,16 +94,26 @@ type StoreMetrics = {
   slph: number | null;
 };
 
+function getSeedBriefForStore(store: BriefStore): string | null {
+  const key = store === "all" ? "kent" : store;
+  return SEED_MORNING_BRIEF_BY_STORE[key] ?? null;
+}
+
 export default function BriefPage() {
-  const [date, setDate] = useState(todayYYYYMMDD);
+  const today = todayYYYYMMDD();
+  const yesterday = prevDay(today);
+  const [date, setDate] = useState(yesterday);
+  const [store, setStore] = useState<BriefStore>("kent");
   const [brief, setBrief] = useState<string | null>(null);
   const [storeData, setStoreData] = useState<Record<string, StoreMetrics | null>>({});
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [showEducation, setShowEducation] = useState(false);
 
-  const today = todayYYYYMMDD();
-  const yesterday = prevDay(today);
+  const briefDate = (() => {
+    const d = new Date(date + "T12:00:00Z");
+    return d.toLocaleDateString("en-US", { weekday: "long", year: "numeric", month: "long", day: "numeric" });
+  })();
 
   async function loadBrief(d: string) {
     setLoading(true);
@@ -110,19 +129,18 @@ export default function BriefPage() {
         setBrief(data.brief);
         setStoreData(data.storeData || {});
       } else {
-        if (d === today || d === yesterday) {
-          setBrief(SEED_MORNING_BRIEF);
+        const seed = getSeedBriefForStore(store);
+        if (seed) {
+          setBrief(seed);
           setStoreData({});
         } else {
           setBrief(null);
         }
       }
     } catch {
-      if (d === today || d === yesterday) {
-        setBrief(SEED_MORNING_BRIEF);
-      } else {
-        setError("Network error — check your connection");
-      }
+      const seed = getSeedBriefForStore(store);
+      if (seed) setBrief(seed);
+      else setError("Network error — check your connection");
     }
 
     setLoading(false);
@@ -130,7 +148,7 @@ export default function BriefPage() {
 
   useEffect(() => {
     loadBrief(date);
-  }, [date]);
+  }, [date, store]);
 
   function pctColor(val: number | null, redAbove: number): string {
     if (val == null) return "text-muted";
@@ -144,7 +162,48 @@ export default function BriefPage() {
           <h1 className="text-lg font-semibold sm:text-2xl">Morning Brief</h1>
           <button type="button" onClick={() => setShowEducation(true)} className="inline-flex items-center justify-center min-h-[44px] min-w-[44px] rounded-full bg-muted/20 text-muted hover:bg-brand/20 hover:text-brand transition-colors text-xs font-bold" aria-label="Learn more">i</button>
         </div>
-        <p className="text-xs text-muted">AI-generated summary of yesterday's operations.</p>
+        <p className="text-xs text-muted">AI-generated summary of yesterday&apos;s operations.</p>
+
+        {/* Store selector */}
+        <div className="flex flex-wrap items-center gap-2">
+          <span className="text-xs text-slate-500 uppercase tracking-wide shrink-0">Store</span>
+          <select
+            value={store}
+            onChange={(e) => setStore(e.target.value as BriefStore)}
+            className={cn(
+              "flex-1 min-w-0 max-w-[240px] flex items-center gap-2 rounded-lg border px-3 py-2.5 text-sm font-medium bg-black/30 border-slate-600 text-white focus:outline-none focus:ring-2 focus:ring-brand/50",
+              store !== "all" && getStoreColor(store).borderActive,
+              store !== "all" && getStoreColor(store).bgActive,
+              store !== "all" && getStoreColor(store).text
+            )}
+          >
+            {BRIEF_STORE_OPTIONS.map((opt) => (
+              <option key={opt.value} value={opt.value}>
+                {opt.label}
+              </option>
+            ))}
+          </select>
+          <div className="hidden sm:flex items-center gap-1.5 flex-wrap">
+            {BRIEF_STORE_OPTIONS.map((opt) => (
+              <button
+                key={opt.value}
+                type="button"
+                onClick={() => setStore(opt.value)}
+                className={cn(
+                  "rounded-lg border px-3 py-2 text-sm font-medium transition-colors",
+                  store === opt.value
+                    ? opt.value === "all"
+                      ? "border-brand/50 bg-brand/15 text-brand"
+                      : cn(getStoreColor(opt.value as CockpitStoreSlug).borderActive, getStoreColor(opt.value as CockpitStoreSlug).bgActive, getStoreColor(opt.value as CockpitStoreSlug).text)
+                    : "border-border/50 bg-black/20 text-muted hover:text-white"
+                )}
+              >
+                {opt.label}
+              </button>
+            ))}
+          </div>
+        </div>
+
         <div className="flex items-center gap-2 min-w-0">
           <button
             type="button"
@@ -201,7 +260,16 @@ export default function BriefPage() {
       ) : brief ? (
         <>
           <div className="dashboard-surface rounded-xl border border-slate-700 bg-slate-800/50 p-4 sm:p-5 min-w-0">
-            <div className="text-sm text-slate-400 mb-4">{formatDateLong(date)}</div>
+            <div className="flex items-center justify-between mb-4">
+              <div>
+                <h2 className="text-xs text-slate-500 uppercase tracking-wide">Morning Brief</h2>
+                <p className="text-sm text-slate-400">{briefDate}</p>
+              </div>
+              <div className="flex items-center gap-1 text-xs text-slate-500">
+                <Sparkles className="w-3.5 h-3.5" aria-hidden />
+                <span>AI Generated</span>
+              </div>
+            </div>
             <div className="text-sm leading-relaxed text-slate-200 break-words">
               {briefToParagraphs(brief).map((para, i) => (
                 <p key={i} className="mb-4 last:mb-0">
@@ -209,9 +277,7 @@ export default function BriefPage() {
                 </p>
               ))}
             </div>
-            <div className="mt-6 pt-4 border-t border-slate-700 text-xs text-slate-500">
-              Brief generated at 6:00 AM from yesterday&apos;s data.
-            </div>
+            <p className="text-xs text-slate-500 mt-4">Brief generated at 6:00 AM from yesterday&apos;s data.</p>
           </div>
 
           {Object.keys(storeData).length > 0 && (
@@ -273,15 +339,15 @@ export default function BriefPage() {
           )}
         </>
       ) : (
-        <div className="dashboard-surface rounded-xl border border-slate-700 bg-slate-800/50 p-4 sm:p-5 min-w-0">
-          <p className="text-sm text-slate-300 leading-relaxed mb-4">
-            Your morning brief generates after daily KPIs are entered. Enter yesterday&apos;s numbers to unlock the AI summary.
-          </p>
+        <div className="bg-slate-800 rounded-xl border border-slate-700 p-6 text-center">
+          <ClipboardList className="w-10 h-10 text-slate-600 mx-auto mb-3" aria-hidden />
+          <p className="text-sm text-slate-400 mb-1">No data yet for this date.</p>
+          <p className="text-sm text-slate-500 mb-4">Enter yesterday&apos;s numbers on the Daily page first.</p>
           <Link
             href="/daily"
-            className="inline-flex items-center justify-center min-h-[44px] px-4 rounded-xl font-semibold text-white bg-blue-600 hover:bg-blue-500 active:bg-blue-700 transition-colors"
+            className="inline-flex items-center gap-1 text-sm text-blue-400 hover:text-blue-300"
           >
-            Enter daily KPIs
+            Go to Daily KPIs <ChevronRight className="w-4 h-4" aria-hidden />
           </Link>
         </div>
       )}

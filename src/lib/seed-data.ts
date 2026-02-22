@@ -368,9 +368,19 @@ export const SEED_PARTY_ORDERS: SeedPartyOrder[] = [
   { id: "p6", customer_name: "Corporate Catering - Acme Corp", party_date: daysAgo(20), party_time: "12:00", guest_count: 80, items: [{ name: "16\" Cheese", qty: 20, price: 14.99 }, { name: "16\" Pepperoni", qty: 15, price: 17.99 }, { name: "16\" Supreme", qty: 10, price: 21.99 }, { name: "Wings 12pc", qty: 20, price: 12.99 }, { name: "House Salad", qty: 25, price: 4.99 }, { name: "2-Liter Soda", qty: 25, price: 3.49 }], subtotal: 1198.80, tax: 95.90, total: 1294.70, deposit_paid: 1294.70, status: "completed", store_id: "kent" },
 ];
 
-// ============ MORNING BRIEF (today) ============
+// ============ MORNING BRIEF (by store) ============
 export const SEED_MORNING_BRIEF =
   "Good morning. Yesterday Kent did $5,420 on 287 transactions. Food cost came in at 30.8% — green. Labor was 23.1% — green. Your cheese portioning audit last week is working: food cost is down 2.1 points from the spike on the 12th. Heads up: Saturday is the Kent State homecoming game. Last three home game Saturdays averaged $6,800. Consider prepping 20% extra dough and calling in Marcus for a double. One flag: Stow's food cost has been yellow for 3 straight days. Might be time to check their portioning.";
+
+/** Per-store seed briefs for demo. Keys: kent, aurora, lindseys. Use "all" → kent. */
+export const SEED_MORNING_BRIEF_BY_STORE: Record<string, string> = {
+  kent:
+    "Good morning. Yesterday Kent did $5,420 on 287 transactions. Food cost came in at 30.8% — green. Labor was 23.1% — green. Your cheese portioning audit last week is working: food cost is down 2.1 points from the spike on the 12th. Heads up: Saturday is the Kent State homecoming game. Last three home game Saturdays averaged $6,800. Consider prepping 20% extra dough and calling in Marcus for a double. One flag: Stow's food cost has been yellow for 3 straight days. Might be time to check their portioning.",
+  aurora:
+    "Good morning. Yesterday Stow did $3,640 on 198 transactions. Food cost came in at 32.8% — yellow, third day in a row above 32%. Labor was 22.4% — green. This food cost trend needs attention before it goes red. Recommended: run a portioning check on 16-inch cheese pies this shift — that's where Kent found their overage last week. Average ticket was $18.38, up slightly from last week. Schedule looks good for the weekend — no changes needed.",
+  lindseys:
+    "Good morning. Yesterday Ravenna did $2,580 on 142 transactions. Food cost came in at 29.4% — green. Labor was 21.8% — green. PRIME at 55.2% — just inside target. Solid day. Delivery mix was 38% of orders, highest this week — consider whether a dedicated driver shift makes sense on Thursdays going forward. No red flags. Keep it steady.",
+};
 
 // ============ TRUSTED CONTACTS (8) ============
 export type SeedContact = {
