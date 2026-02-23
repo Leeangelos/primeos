@@ -1,13 +1,21 @@
 {
-  "name": "PrimeOS",
+  "name": "PrimeOS — The Operating System for Pizza",
   "short_name": "PrimeOS",
-  "description": "One app, every number, plain English, 90 seconds a day.",
+  "description": "One app. Every number. Plain English. 90 seconds a day.",
   "start_url": "/",
   "display": "standalone",
   "background_color": "#0f172a",
   "theme_color": "#0f172a",
   "icons": [
-    { "src": "/icon-192.png", "sizes": "192x192", "type": "image/png" },
-    { "src": "/icon-512.png", "sizes": "512x512", "type": "image/png" }
+    {
+      "src": "/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png"
+    },
+    {
+      "src": "/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png"
+    }
   ]
 }

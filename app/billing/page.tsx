@@ -294,6 +294,26 @@ export default function BillingPage() {
           >
             Reset Consent
           </button>
+          <button
+            type="button"
+            onClick={() => {
+              localStorage.removeItem("primeos-notification-prompt-dismissed");
+              window.location.reload();
+            }}
+            className="px-3 py-1.5 rounded-lg text-xs font-medium bg-slate-700 text-slate-400"
+          >
+            Reset Notifications
+          </button>
+          <button
+            type="button"
+            onClick={() => {
+              localStorage.removeItem("primeos-a2hs-dismissed");
+              window.location.reload();
+            }}
+            className="px-3 py-1.5 rounded-lg text-xs font-medium bg-slate-700 text-slate-400"
+          >
+            Reset A2HS
+          </button>
         </div>
       </div>
 

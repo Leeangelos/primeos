@@ -6,6 +6,7 @@ import { createPortal } from "react-dom";
 import { BarChart3, Calendar, Check, ChevronDown, ChevronRight, ClipboardList, MapPin, Sparkles, TriangleAlert } from "lucide-react";
 import { Area, AreaChart, ReferenceLine, ResponsiveContainer } from "recharts";
 import { COLORS, getGradeColor } from "@/src/lib/design-tokens";
+import { useRedAlert } from "@/src/lib/useRedAlert";
 import { EducationInfoIcon } from "@/src/components/education/InfoIcon";
 import { formatPct } from "@/src/lib/formatters";
 import { SEED_DAILY_KPIS, SEED_MORNING_BRIEF, SEED_STORES } from "@/src/lib/seed-data";
@@ -171,6 +172,18 @@ export default function HomePage() {
   }, [selectedStore]);
 
   const storeLabel = selectedStore === "all" ? "All" : getStoreLabel(selectedStore);
+
+  const heroGrades = useMemo((): string[] => {
+    if (!kpi) return [];
+    const toGrade = (hex: string) =>
+      hex === COLORS.grade.red ? "red" : hex === COLORS.grade.yellow ? "yellow" : "green";
+    return [
+      toGrade(getGradeColor(kpi.foodCostPct, FOOD_COST_RED, "lower_is_better")),
+      toGrade(getGradeColor(kpi.laborPct, LABOR_RED, "lower_is_better")),
+      toGrade(getGradeColor(kpi.primePct, PRIME_RED, "lower_is_better")),
+    ];
+  }, [kpi]);
+  useRedAlert(heroGrades);
 
   const redMetrics = useMemo((): RedAlert[] => {
     const list: RedAlert[] = [];

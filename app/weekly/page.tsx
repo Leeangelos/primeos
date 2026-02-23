@@ -1,6 +1,6 @@
 "use client";
 
-import { Suspense, useMemo, useState, useEffect } from "react";
+import { Suspense, useMemo, useState, useEffect, useRef } from "react";
 import { createPortal } from "react-dom";
 import { useSearchParams } from "next/navigation";
 import Link from "next/link";
@@ -18,8 +18,10 @@ import { getWeekEnd, getWeekStart } from "@/lib/weekly-cockpit";
 import { COCKPIT_STORE_SLUGS, COCKPIT_TARGETS, type CockpitStoreSlug } from "@/lib/cockpit-config";
 import { getStoreColor } from "@/lib/store-colors";
 import { COLORS, getGradeColor } from "@/src/lib/design-tokens";
+import { useRedAlert } from "@/src/lib/useRedAlert";
 import { EducationInfoIcon } from "@/src/components/education/InfoIcon";
 import { ExportButton } from "@/src/components/ui/ExportButton";
+import { ShareButton } from "@/src/components/ui/ShareButton";
 import { formatPct } from "@/src/lib/formatters";
 import { SEED_WEEKLY_COCKPIT } from "@/src/lib/seed-data";
 
@@ -258,6 +260,18 @@ function WeeklyPageContent() {
     return { thisWeekSeed: thisW, lastWeekSeed: lastW, comparisonKpis: kpis };
   }, [weekStart, prevMonday, store, storeForSeed]);
 
+  const weeklyGrades = useMemo((): string[] => {
+    const foodKpi = comparisonKpis.find((k) => k.label === "Food Cost %");
+    const laborKpi = comparisonKpis.find((k) => k.label === "Labor %");
+    const primeKpi = comparisonKpis.find((k) => k.label === "PRIME %");
+    const toGrade = (kpi: { gradeColor: string } | undefined) =>
+      !kpi ? "green" : kpi.gradeColor.includes("red") ? "red" : kpi.gradeColor.includes("amber") ? "yellow" : "green";
+    return [toGrade(foodKpi), toGrade(laborKpi), toGrade(primeKpi)];
+  }, [comparisonKpis]);
+  useRedAlert(weeklyGrades);
+
+  const shareRef = useRef<HTMLDivElement>(null);
+
   return (
     <div className="space-y-6">
       <div className={`dashboard-toolbar p-3 sm:p-5 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between ${store !== "all" ? getStoreColor(store).glow : ""}`}>
@@ -266,6 +280,7 @@ function WeeklyPageContent() {
             <h1 className="text-xl sm:text-2xl font-semibold">Weekly Cockpit</h1>
             <button type="button" onClick={() => setShowEducation("overview")} className="inline-flex items-center justify-center min-h-[44px] min-w-[44px] rounded-full bg-muted/20 text-muted hover:bg-brand/20 hover:text-brand transition-colors text-xs font-bold" aria-label="Learn more">i</button>
             <ExportButton pageName="Weekly Cockpit" />
+            <ShareButton targetRef={shareRef} title="Weekly Cockpit" fileName="primeos-weekly-cockpit" />
           </div>
           <p className="mt-1 text-sm text-muted">
             Tap any day to edit. Tap a store card to drill in.
@@ -313,6 +328,7 @@ function WeeklyPageContent() {
         </div>
       </div>
 
+      <div ref={shareRef}>
       {comparisonKpis.length > 0 && (
         <section className="min-w-0 overflow-x-hidden pb-4">
           <h2 className="text-sm font-semibold text-slate-400 uppercase tracking-wide mb-3">This Week vs Last Week</h2>
@@ -342,6 +358,7 @@ function WeeklyPageContent() {
           ))}
         </section>
       )}
+      </div>
 
       {loading && (
         <div className="dashboard-surface rounded-lg border border-border bg-panel/50 p-8 text-center text-muted">

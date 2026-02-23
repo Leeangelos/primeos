@@ -3,7 +3,10 @@ import Link from "next/link";
 import { AppNav } from "@/components/app-nav";
 import { BottomNav } from "@/src/components/layout/BottomNav";
 import { ConsentBanner } from "@/src/components/legal/ConsentBanner";
+import { AddToHomeScreenPrompt } from "@/src/components/legal/AddToHomeScreen";
+import { NotificationPrompt } from "@/src/components/legal/NotificationPrompt";
 import { TOSGate } from "@/src/components/legal/TOSGate";
+import { ThemeProvider } from "@/src/lib/theme-context";
 import { TierProvider } from "@/src/lib/tier-context";
 
 import type { Viewport, Metadata } from "next";
@@ -52,29 +55,33 @@ export default function RootLayout({
   children: React.ReactNode;
 }) {
   return (
-    <html lang="en">
+    <html lang="en" className="dark-mode">
       <body className="min-h-screen bg-bg text-text">
-        <TierProvider>
-          <TOSGate>
-            <div className="mx-auto max-w-6xl px-4 py-4">
-              <AppNav />
+        <ThemeProvider>
+          <TierProvider>
+            <TOSGate>
+              <div className="mx-auto max-w-6xl px-4 py-4">
+                <AppNav />
+                <NotificationPrompt />
+                <AddToHomeScreenPrompt />
 
-              <main className="glass glow rounded-2xl p-3 sm:p-5 pb-28 mt-4">{children}</main>
+                <main className="glass glow rounded-2xl p-3 sm:p-5 pb-28 mt-4">{children}</main>
 
-              <footer className="text-center py-4 pb-28">
-                <p className="text-xs text-slate-500">© 2026 Ambition & Legacy LLC. All rights reserved.</p>
-                <div className="flex justify-center gap-3 mt-1">
-                  <Link href="/terms" className="text-xs text-slate-600 hover:text-slate-400">Terms of Service</Link>
-                  <span className="text-xs text-slate-700">·</span>
-                  <Link href="/privacy" className="text-xs text-slate-600 hover:text-slate-400">Privacy Policy</Link>
-                </div>
-              </footer>
+                <footer className="text-center py-4 pb-28">
+                  <p className="text-xs text-slate-500">© 2026 Ambition & Legacy LLC. All rights reserved.</p>
+                  <div className="flex justify-center gap-3 mt-1">
+                    <Link href="/terms" className="text-xs text-slate-600 hover:text-slate-400">Terms of Service</Link>
+                    <span className="text-xs text-slate-700">·</span>
+                    <Link href="/privacy" className="text-xs text-slate-600 hover:text-slate-400">Privacy Policy</Link>
+                  </div>
+                </footer>
 
-              <ConsentBanner />
-              <BottomNav />
-            </div>
-          </TOSGate>
-        </TierProvider>
+                <ConsentBanner />
+                <BottomNav />
+              </div>
+            </TOSGate>
+          </TierProvider>
+        </ThemeProvider>
       </body>
     </html>
   );

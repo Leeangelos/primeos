@@ -146,3 +146,55 @@ body {
 .animate-slide-up {
   animation: slide-up 0.3s ease-out;
 }
+
+/* Dark mode (default) */
+.dark-mode {
+  --bg-primary: #0f172a;
+  --bg-card: #1e293b;
+  --bg-input: #334155;
+  --border-primary: #334155;
+  --border-card: #334155;
+  --text-primary: #ffffff;
+  --text-secondary: #94a3b8;
+  --text-muted: #64748b;
+  --text-dim: #475569;
+}
+
+/* Light mode */
+.light-mode {
+  --bg-primary: #f8fafc;
+  --bg-card: #ffffff;
+  --bg-input: #f1f5f9;
+  --border-primary: #e2e8f0;
+  --border-card: #e2e8f0;
+  --text-primary: #0f172a;
+  --text-secondary: #475569;
+  --text-muted: #64748b;
+  --text-dim: #94a3b8;
+}
+
+/* Override Tailwind classes in light mode */
+.light-mode .bg-slate-900 { background-color: var(--bg-primary) !important; }
+.light-mode .bg-slate-800 { background-color: var(--bg-card) !important; }
+.light-mode .bg-slate-800\/50 { background-color: rgba(255,255,255,0.5) !important; }
+.light-mode .bg-slate-700 { background-color: #f1f5f9 !important; }
+.light-mode .bg-slate-700\/50 { background-color: rgba(241,245,249,0.5) !important; }
+
+.light-mode .border-slate-700 { border-color: var(--border-card) !important; }
+.light-mode .border-slate-700\/50 { border-color: rgba(226,232,240,0.5) !important; }
+.light-mode .border-slate-800 { border-color: var(--border-primary) !important; }
+.light-mode .border-slate-600 { border-color: #cbd5e1 !important; }
+
+.light-mode .text-white { color: var(--text-primary) !important; }
+.light-mode .text-slate-300 { color: #334155 !important; }
+.light-mode .text-slate-400 { color: var(--text-secondary) !important; }
+.light-mode .text-slate-500 { color: var(--text-muted) !important; }
+.light-mode .text-slate-600 { color: var(--text-dim) !important; }
+
+/* Keep accent colors unchanged in light mode */
+/* text-emerald-400, text-red-400, text-blue-400, text-amber-400, text-[#E65100] stay as-is */
+
+/* Shadows for light mode */
+.light-mode .shadow-lg { box-shadow: 0 10px 15px -3px rgba(0,0,0,0.08), 0 4px 6px -4px rgba(0,0,0,0.04) !important; }
+.light-mode .shadow-black\/30 { --tw-shadow-color: rgba(0,0,0,0.08) !important; }
+.light-mode .shadow-black\/20 { --tw-shadow-color: rgba(0,0,0,0.04) !important; }

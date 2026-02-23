@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useMemo, useState, useRef } from "react";
 import {
   COCKPIT_STORE_SLUGS,
   COCKPIT_TARGETS,
@@ -9,6 +9,7 @@ import {
 import { getStoreColor } from "@/lib/store-colors";
 import { EducationInfoIcon } from "@/src/components/education/InfoIcon";
 import { ExportButton } from "@/src/components/ui/ExportButton";
+import { ShareButton } from "@/src/components/ui/ShareButton";
 import { formatPct as formatPctShared, formatDollars as formatDollarsBase } from "@/src/lib/formatters";
 import { SEED_DAILY_KPIS } from "@/src/lib/seed-data";
 
@@ -74,6 +75,7 @@ function pctToGrade(pct: number, targetMax: number): "green" | "yellow" | "red" 
 
 export default function PnlPage() {
   const [storeFilter, setStoreFilter] = useState<"all" | CockpitStoreSlug>("kent");
+  const shareRef = useRef<HTMLDivElement>(null);
 
   const { startDate, endDate, label: mtdLabel } = useMemo(() => getMTDRange(), []);
 
@@ -116,6 +118,7 @@ export default function PnlPage() {
         <div className="flex items-center justify-between gap-2 flex-wrap">
           <h1 className="text-lg font-semibold sm:text-2xl">GP P&L — Gross Profit</h1>
           <ExportButton pageName="GP P&L" />
+          <ShareButton targetRef={shareRef} title="GP P&L" fileName="primeos-gp-pnl" />
         </div>
         <p className="text-xs text-muted">Month-to-date rolling view. What you control daily.</p>
         <div className="flex flex-wrap gap-2">
@@ -139,6 +142,7 @@ export default function PnlPage() {
         </p>
       </div>
 
+      <div ref={shareRef}>
       <div className="bg-slate-800 rounded-xl border border-slate-700 overflow-hidden min-w-0">
         <div className="flex justify-between items-center p-4 border-b border-slate-700">
           <h3 className="text-sm font-semibold text-white">{mtdLabel} MTD</h3>
@@ -209,6 +213,7 @@ export default function PnlPage() {
             </div>
           </div>
         </div>
+      </div>
       </div>
     </div>
   );

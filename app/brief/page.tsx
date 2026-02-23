@@ -3,11 +3,12 @@
 import React, { useState, useEffect } from "react";
 import { createPortal } from "react-dom";
 import Link from "next/link";
-import { Sparkles, ClipboardList, ChevronRight } from "lucide-react";
+import { Sparkles, ClipboardList, ChevronRight, Volume2, VolumeX } from "lucide-react";
 import { COCKPIT_STORE_SLUGS, COCKPIT_TARGETS, type CockpitStoreSlug } from "@/lib/cockpit-config";
 import { getStoreColor } from "@/lib/store-colors";
 import { cn } from "@/lib/utils";
 import { formatPct } from "@/src/lib/formatters";
+import { useRedAlert } from "@/src/lib/useRedAlert";
 import { SEED_MORNING_BRIEF_BY_STORE } from "@/src/lib/seed-data";
 
 type BriefStore = "all" | CockpitStoreSlug;
@@ -110,6 +111,7 @@ export default function BriefPage() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [showEducation, setShowEducation] = useState(false);
+  const [isReading, setIsReading] = useState(false);
 
   const briefDate = (() => {
     const d = new Date(date + "T12:00:00Z");
@@ -150,6 +152,45 @@ export default function BriefPage() {
   useEffect(() => {
     loadBrief(date);
   }, [date, store]);
+
+  useEffect(() => {
+    return () => {
+      window.speechSynthesis.cancel();
+    };
+  }, []);
+
+  const briefHasRed =
+    (brief?.toLowerCase().includes("— red") ?? false) ||
+    (brief?.toLowerCase().includes("yellow for 3 straight") ?? false);
+  useRedAlert(briefHasRed ? ["red"] : []);
+
+  function handleReadAloud() {
+    if (isReading) {
+      window.speechSynthesis.cancel();
+      setIsReading(false);
+      return;
+    }
+    const briefText = brief ? briefToParagraphs(brief).join(". ") : "";
+    if (!briefText || !window.speechSynthesis) return;
+
+    const utterance = new SpeechSynthesisUtterance(briefText);
+    utterance.rate = 0.95;
+    utterance.pitch = 1.0;
+    utterance.lang = "en-US";
+
+    const voices = window.speechSynthesis.getVoices();
+    const preferred =
+      voices.find((v) => v.name.includes("Samantha")) ||
+      voices.find((v) => v.name.includes("Google US English")) ||
+      voices.find((v) => v.lang === "en-US" && v.localService);
+    if (preferred) utterance.voice = preferred;
+
+    utterance.onend = () => setIsReading(false);
+    utterance.onerror = () => setIsReading(false);
+
+    setIsReading(true);
+    window.speechSynthesis.speak(utterance);
+  }
 
   function pctColor(val: number | null, redAbove: number): string {
     if (val == null) return "text-muted";
@@ -266,11 +307,44 @@ export default function BriefPage() {
                 <h2 className="text-xs text-slate-500 uppercase tracking-wide">Morning Brief</h2>
                 <p className="text-sm text-slate-400">{briefDate}</p>
               </div>
-              <div className="flex items-center gap-1 text-xs text-slate-500">
-                <Sparkles className="w-3.5 h-3.5" aria-hidden />
-                <span>AI Generated</span>
+              <div className="flex items-center gap-2">
+                <button
+                  type="button"
+                  onClick={handleReadAloud}
+                  className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg border text-xs font-medium transition-colors ${
+                    isReading
+                      ? "bg-red-600/20 border-red-700/50 text-red-400 hover:bg-red-600/30"
+                      : "bg-slate-800 border-slate-700 text-slate-400 hover:text-slate-300"
+                  }`}
+                >
+                  {isReading ? (
+                    <>
+                      <VolumeX className="w-3.5 h-3.5" />
+                      <span>Stop</span>
+                    </>
+                  ) : (
+                    <>
+                      <Volume2 className="w-3.5 h-3.5" />
+                      <span>Read Aloud</span>
+                    </>
+                  )}
+                </button>
+                <div className="flex items-center gap-1 text-xs text-slate-500">
+                  <Sparkles className="w-3.5 h-3.5" aria-hidden />
+                  <span>AI Generated</span>
+                </div>
               </div>
             </div>
+            {isReading && (
+              <div className="flex items-center gap-2 mt-3 mb-1">
+                <div className="flex gap-1">
+                  <div className="w-1.5 h-1.5 rounded-full bg-blue-400 animate-pulse" />
+                  <div className="w-1.5 h-1.5 rounded-full bg-blue-400 animate-pulse" style={{ animationDelay: "0.2s" }} />
+                  <div className="w-1.5 h-1.5 rounded-full bg-blue-400 animate-pulse" style={{ animationDelay: "0.4s" }} />
+                </div>
+                <span className="text-xs text-blue-400">Reading aloud...</span>
+              </div>
+            )}
             <div className="text-sm leading-relaxed text-slate-200 break-words">
               {briefToParagraphs(brief).map((para, i) => (
                 <p key={i} className="mb-4 last:mb-0">
