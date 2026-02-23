@@ -867,7 +867,7 @@ function DailyPageContent() {
             {showEducation === "overview" && (
               <div>
                 <h3 className="text-base font-semibold text-brand mb-1">🎓 Daily KPIs & PRIME %</h3>
-                <p className="text-xs text-muted mb-4">What you enter, what it means, and what to do when numbers go red.</p>
+                <p className="text-xs text-muted mb-4">What you enter, what it means, and what to consider when numbers go red.</p>
                 <div className="space-y-3 text-sm">
                   <div>
                     <h4 className="font-medium text-white mb-1">What Daily KPIs Are</h4>
@@ -879,7 +879,7 @@ function DailyPageContent() {
                   </div>
                   <div>
                     <h4 className="font-medium text-white mb-1">Red Playbooks in Short</h4>
-                    <p className="text-muted text-xs leading-relaxed"><strong>Food cost red:</strong> Check portioning, waste, and last invoice — someone raised a price. <strong>Labor red:</strong> Trim overlap, cut a shift, or fix scheduling. <strong>Voids red:</strong> Train on the POS; comps and walkouts add up. <strong>Waste red:</strong> Prep to par, check dates, and fix the line. Tap each metric's (i) for the full playbook.</p>
+                    <p className="text-muted text-xs leading-relaxed"><strong>Food cost red:</strong> Consider checking portioning, waste, and the last invoice — someone may have raised a price. <strong>Labor red:</strong> Consider trimming overlap, adjusting a shift, or reviewing scheduling. <strong>Voids red:</strong> Many operators start by reviewing POS process; comps and walkouts add up. <strong>Waste red:</strong> Consider prepping to par, checking dates, and reviewing the line. Tap each metric's (i) for the full playbook.</p>
                   </div>
                 </div>
               </div>
@@ -900,11 +900,11 @@ function DailyPageContent() {
                   <div className="rounded-lg border border-red-500/30 bg-red-500/5 p-3">
                     <h4 className="font-medium text-red-400 text-xs mb-2">📕 When PRIME Goes RED</h4>
                     <ol className="space-y-1.5 text-muted text-xs list-decimal list-inside leading-relaxed">
-                      <li>Check last 3 vendor deliveries for price increases.</li>
-                      <li>Weigh 10 cheese portions on 16" pies vs recipe spec.</li>
-                      <li>Run 48-hour waste log — track everything thrown away.</li>
-                      <li>Compare scheduled vs actual clock-in/out times.</li>
-                      <li>Check shift overlaps — closer/driver overlap = $15-20/day wasted.</li>
+                      <li>Consider checking last 3 vendor deliveries for price increases.</li>
+                      <li>Consider weighing 10 cheese portions on 16" pies vs recipe spec.</li>
+                      <li>Consider running a 48-hour waste log — track everything thrown away.</li>
+                      <li>Consider comparing scheduled vs actual clock-in/out times.</li>
+                      <li>Consider checking shift overlaps — closer/driver overlap can be $15-20/day wasted.</li>
                     </ol>
                   </div>
                 </div>
@@ -927,11 +927,11 @@ function DailyPageContent() {
                   <div className="rounded-lg border border-red-500/30 bg-red-500/5 p-3">
                     <h4 className="font-medium text-red-400 text-xs mb-2">📕 When Labor Goes RED (&gt; 24%)</h4>
                     <ol className="space-y-1.5 text-muted text-xs list-decimal list-inside leading-relaxed">
-                      <li>Compare scheduled hours to actual clock-in/out. Look for early ins and late outs.</li>
-                      <li>Check shift overlaps — closer/late driver overlap is most common ($15-20/day wasted).</li>
-                      <li>Review SLPH. Below 65 means too many people for the volume.</li>
-                      <li>Check last 4 of same weekday — pattern or one-off? Patterns need restructuring.</li>
-                      <li>Review overtime — anyone over 40hrs costs 1.5x. Redistribute may be cheaper.</li>
+                      <li>Consider comparing scheduled hours to actual clock-in/out. Look for early ins and late outs.</li>
+                      <li>Consider checking shift overlaps — closer/late driver overlap is most common ($15-20/day wasted).</li>
+                      <li>Consider reviewing SLPH. Below 65 often means too many people for the volume.</li>
+                      <li>Consider checking last 4 of same weekday — pattern or one-off? Patterns often need restructuring.</li>
+                      <li>Consider reviewing overtime — anyone over 40hrs costs 1.5x. Redistributing may be cheaper.</li>
                     </ol>
                   </div>
                 </div>
@@ -954,11 +954,11 @@ function DailyPageContent() {
                   <div className="rounded-lg border border-red-500/30 bg-red-500/5 p-3">
                     <h4 className="font-medium text-red-400 text-xs mb-2">📕 When Food Cost Goes RED (&gt; 33%)</h4>
                     <ol className="space-y-1.5 text-muted text-xs list-decimal list-inside leading-relaxed">
-                      <li>Check last 3 vendor deliveries for price increases vs previous invoices.</li>
-                      <li>Observe prep line. Weigh 10 cheese portions on 16" pies vs recipe spec.</li>
-                      <li>Run 48-hour waste log. Track everything thrown away with a reason.</li>
-                      <li>Compare theoretical cost (recipe) vs actual (purchases ÷ units sold) on top 5 items.</li>
-                      <li>Check for vendor substitutions — distributors sometimes sub higher-cost items.</li>
+                      <li>Consider checking last 3 vendor deliveries for price increases vs previous invoices.</li>
+                      <li>Consider observing the prep line. Consider weighing 10 cheese portions on 16" pies vs recipe spec.</li>
+                      <li>Consider running a 48-hour waste log. Track everything thrown away with a reason.</li>
+                      <li>Consider comparing theoretical cost (recipe) vs actual (purchases ÷ units sold) on top 5 items.</li>
+                      <li>Consider checking for vendor substitutions — distributors sometimes sub higher-cost items.</li>
                     </ol>
                   </div>
                 </div>
@@ -981,11 +981,11 @@ function DailyPageContent() {
                   <div className="rounded-lg border border-red-500/30 bg-red-500/5 p-3">
                     <h4 className="font-medium text-red-400 text-xs mb-2">📕 When SLPH Goes RED (&lt; 65)</h4>
                     <ol className="space-y-1.5 text-muted text-xs list-decimal list-inside leading-relaxed">
-                      <li>Calculate: Total Sales ÷ Total Labor Hours. Below 65 = low productivity.</li>
-                      <li>Check if slow day or overstaffed. If sales were normal, you scheduled too many people.</li>
-                      <li>Review each position — did you need both a mid-shift AND a closer?</li>
+                      <li>Consider calculating: Total Sales ÷ Total Labor Hours. Below 65 = low productivity.</li>
+                      <li>Consider checking if it was a slow day or overstaffed. If sales were normal, you may have scheduled too many people.</li>
+                      <li>Consider reviewing each position — did you need both a mid-shift AND a closer?</li>
                       <li>Cross-reference with customer traffic patterns from POS data.</li>
-                      <li>Build an SLPH target by day-of-week. Mon/Tue may need different staffing than Fri/Sat.</li>
+                      <li>Consider building an SLPH target by day-of-week. Mon/Tue may need different staffing than Fri/Sat.</li>
                     </ol>
                   </div>
                 </div>
@@ -1008,10 +1008,10 @@ function DailyPageContent() {
                   <div className="rounded-lg border border-red-500/30 bg-red-500/5 p-3">
                     <h4 className="font-medium text-red-400 text-xs mb-2">📕 When Voids Go RED (&gt; 3%)</h4>
                     <ol className="space-y-1.5 text-muted text-xs list-decimal list-inside leading-relaxed">
-                      <li>Pull void report by employee. Is one person responsible for most voids?</li>
-                      <li>Check void timing — end of shift voids are a red flag.</li>
-                      <li>Review reasons — "wrong order" repeatedly = order-taking training issue.</li>
-                      <li>Compare voids by day — certain shifts may need more supervision.</li>
+                      <li>Consider pulling void report by employee. Is one person responsible for most voids?</li>
+                      <li>Consider checking void timing — end of shift voids are a red flag.</li>
+                      <li>Consider reviewing reasons — "wrong order" repeatedly can indicate an order-taking training issue.</li>
+                      <li>Consider comparing voids by day — certain shifts may need more supervision.</li>
                       <li>Manager comps are voids too. Track who's giving away food and why.</li>
                     </ol>
                   </div>
@@ -1035,11 +1035,11 @@ function DailyPageContent() {
                   <div className="rounded-lg border border-red-500/30 bg-red-500/5 p-3">
                     <h4 className="font-medium text-red-400 text-xs mb-2">📕 When GP Goes RED (&lt; 40%)</h4>
                     <ol className="space-y-1.5 text-muted text-xs list-decimal list-inside leading-relaxed">
-                      <li>GP is the inverse of PRIME — fix PRIME and GP fixes itself.</li>
-                      <li>Check which component is dragging PRIME up: labor, food, or disposables.</li>
-                      <li>Run the PRIME playbook for whichever component is over target.</li>
-                      <li>Review pricing — when was your last menu price increase?</li>
-                      <li>Calculate: every 1% GP improvement on $100K/month = $1,000/month more to the bottom line.</li>
+                      <li>GP is the inverse of PRIME — addressing PRIME is usually the fastest way to lift GP.</li>
+                      <li>Consider checking which component is dragging PRIME up: labor, food, or disposables.</li>
+                      <li>Consider running the PRIME playbook for whichever component is over target.</li>
+                      <li>Consider reviewing pricing — when was your last menu price increase?</li>
+                      <li>Consider calculating: every 1% GP improvement on $100K/month = $1,000/month more to the bottom line.</li>
                     </ol>
                   </div>
                 </div>
@@ -1062,10 +1062,10 @@ function DailyPageContent() {
                   <div className="rounded-lg border border-red-500/30 bg-red-500/5 p-3">
                     <h4 className="font-medium text-red-400 text-xs mb-2">📕 When Waste Goes RED (&gt; 2.5%)</h4>
                     <ol className="space-y-1.5 text-muted text-xs list-decimal list-inside leading-relaxed">
-                      <li>Run a 48-hour waste log. Write down every item thrown away with a reason.</li>
-                      <li>Check prep quantities vs actual sales. Are you prepping Saturday amounts on Tuesday?</li>
-                      <li>Review walk-in organization — FIFO (first in, first out) prevents expiration.</li>
-                      <li>Check dough waste — overproofed dough is the #1 waste item in pizza shops.</li>
+                      <li>Consider running a 48-hour waste log. Write down every item thrown away with a reason.</li>
+                      <li>Consider checking prep quantities vs actual sales. Are you prepping Saturday amounts on Tuesday?</li>
+                      <li>Consider reviewing walk-in organization — FIFO (first in, first out) prevents expiration.</li>
+                      <li>Consider checking dough waste — overproofed dough is the #1 waste item in pizza shops.</li>
                       <li>Employee meals and untracked giveaways count as waste. Track them.</li>
                     </ol>
                   </div>

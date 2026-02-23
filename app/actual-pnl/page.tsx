@@ -74,11 +74,11 @@ const MONTHS = [
 ];
 
 const NET_PROFIT_PLAYBOOK = [
-  "Identify the biggest gap: is GP (variable costs) down, or are fixed costs up? Fix the bigger problem first.",
-  "If GP is healthy but net is low, your fixed cost structure is the problem. Run the occupancy, insurance, and utilities playbooks.",
-  "If GP is also weak, fix variable costs first. Food cost and labor improvements show up in days. Fixed cost savings take months to negotiate.",
-  "Calculate your monthly break-even: total fixed costs ÷ GP margin %. Example: $28,720 ÷ 0.45 = $63,822 minimum monthly revenue.",
-  "Build a 90-day plan: target 1 point improvement in GP margin per month while holding fixed costs flat. At $148K revenue, 1 point = $1,482/month straight to the bottom line.",
+  "Consider identifying the biggest gap: is GP (variable costs) down, or are fixed costs up? Focus on the bigger problem first.",
+  "If GP is healthy but net is low, your fixed cost structure is the problem. Consider running the occupancy, insurance, and utilities playbooks.",
+  "If GP is also weak, many operators find it helpful to address variable costs first. Food cost and labor improvements show up in days. Fixed cost savings take months to renegotiate.",
+  "Consider calculating your monthly break-even: total fixed costs ÷ GP margin %. Example: $28,720 ÷ 0.45 = $63,822 minimum monthly revenue.",
+  "Consider building a 90-day plan: target 1 point improvement in GP margin per month while holding fixed costs flat. At $148K revenue, 1 point = $1,482/month straight to the bottom line.",
 ];
 
 export default function ActualPnlPage() {
@@ -327,14 +327,14 @@ export default function ActualPnlPage() {
                 actual="1.9%"
                 target="1.5–2.5%"
                 status="green"
-                detail="$2,800/mo. Shop 3 quotes at next renewal."
+                detail="$2,800/mo. Consider shopping insurance at the next renewal (3 quotes is a solid baseline)."
               />
               <BenchmarkRow
                 label="Utilities"
                 actual="3.5%"
                 target="3–5%"
                 status="green"
-                detail="$5,190/mo. Check walk-in seals, LED lighting, thermostat schedule."
+                detail="$5,190/mo. Consider checking walk-in seals, LED lighting, and thermostat schedule."
               />
               <BenchmarkRow
                 label="Total Fixed"

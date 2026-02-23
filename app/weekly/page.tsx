@@ -763,11 +763,11 @@ function WeeklyPageContent() {
                 <div className="space-y-3 text-sm">
                   <div>
                     <h4 className="font-medium text-white mb-1">Weekly Trends Matter More Than Daily Spikes</h4>
-                    <p className="text-muted text-xs leading-relaxed">One bad Tuesday doesn't mean the model is broken. One great Friday doesn't mean you're winning. The weekly cockpit rolls up the whole week so you see the real trend. If PRIME is red for the week, you're leaving $500–$2K on the table. Fix it before the month closes.</p>
+                <p className="text-muted text-xs leading-relaxed">One bad Tuesday doesn't mean the model is broken. One great Friday doesn't mean you're winning. The weekly cockpit rolls up the whole week so you see the real trend. If PRIME is red for the week, you're leaving $500–$2K on the table. Consider addressing it before the month closes.</p>
                   </div>
                   <div>
                     <h4 className="font-medium text-white mb-1">How to Read the Cockpit</h4>
-                    <p className="text-muted text-xs leading-relaxed">Top number is Weekly PRIME %. Below that you see labor %, food+disposables %, and SLPH by store. Green = on target. Red = over. Tap any metric's (i) for the full playbook. Use the store filter to see one location or all. Tap a day to open daily entry and fix the numbers that drove the week red.</p>
+                <p className="text-muted text-xs leading-relaxed">Top number is Weekly PRIME %. Below that you see labor %, food+disposables %, and SLPH by store. Green = on target. Red = over. Tap any metric's (i) for the full playbook. Use the store filter to see one location or all. Tap a day to open daily entry and review the numbers that drove the week red.</p>
                   </div>
                   <div>
                     <h4 className="font-medium text-white mb-1">What PRIME Grading Means</h4>

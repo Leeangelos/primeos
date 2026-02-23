@@ -173,7 +173,7 @@ export default function BillingPage() {
 
       <div className="bg-slate-700/50 rounded-xl p-4 mt-6 mb-4">
         <p className="text-xs text-slate-500 uppercase tracking-wide mb-2">Demo: Switch Tier</p>
-        <div className="flex flex-wrap gap-2">
+        <div className="flex flex-wrap gap-2 items-center">
           {["free", "starter", "operator", "owner", "enterprise"].map((tier) => (
             <button
               key={tier}
@@ -186,6 +186,27 @@ export default function BillingPage() {
               {getTierLabel(tier)}
             </button>
           ))}
+          <button
+            type="button"
+            onClick={() => {
+              localStorage.removeItem("primeos-tos-accepted");
+              localStorage.removeItem("primeos-tos-accepted-at");
+              window.location.reload();
+            }}
+            className="px-3 py-1.5 rounded-lg text-xs font-medium bg-slate-700 text-slate-400"
+          >
+            Reset TOS
+          </button>
+          <button
+            type="button"
+            onClick={() => {
+              localStorage.removeItem("primeos-consent-dismissed");
+              window.location.reload();
+            }}
+            className="px-3 py-1.5 rounded-lg text-xs font-medium bg-slate-700 text-slate-400"
+          >
+            Reset Consent
+          </button>
         </div>
       </div>
     </div>

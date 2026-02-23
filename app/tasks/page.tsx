@@ -175,7 +175,7 @@ export default function TasksPage() {
           <h1 className="text-lg font-semibold sm:text-2xl">Task Manager</h1>
           <EducationInfoIcon metricKey="task_management" />
         </div>
-        <p className="text-xs text-muted">Daily opening, closing, prep, and cleaning. Check off when done.</p>
+        <p className="text-xs text-muted">Daily opening, closing, prep, and cleaning. Mark complete when done.</p>
 
         <div className="flex flex-wrap gap-1.5 justify-center">
           {COCKPIT_STORE_SLUGS.map((slug) => {

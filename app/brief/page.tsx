@@ -362,7 +362,7 @@ export default function BriefPage() {
             <div className="space-y-3 text-sm">
               <div>
                 <h4 className="font-medium text-white mb-1">Why a Brief Beats Raw Numbers</h4>
-                <p className="text-muted text-xs leading-relaxed">Most owners see sales and labor on a spreadsheet and don't know what to do. The brief turns yesterday's data into plain English: "Kent was over on labor; Aurora's food cost spiked." One read and you know where to look. Operators who read the brief every morning fix problems in days, not months. That's $500–$2K back in your pocket per month when you act fast.</p>
+                <p className="text-muted text-xs leading-relaxed">Most owners see sales and labor on a spreadsheet and don't know what to do. The brief turns yesterday's data into plain English: "Kent was over on labor; Aurora's food cost spiked." One read and you know where to look. Operators who read the brief every morning address problems in days, not months. That's $500–$2K back in your pocket per month when you act fast.</p>
               </div>
               <div>
                 <h4 className="font-medium text-white mb-1">How AI Analyzes Your Numbers Overnight</h4>
@@ -370,7 +370,7 @@ export default function BriefPage() {
               </div>
               <div className="rounded-lg border border-red-500/30 bg-red-500/5 p-3">
                 <h4 className="font-medium text-red-400 text-xs mb-2">📕 When the Brief Says You're Over</h4>
-                <p className="text-muted text-xs leading-relaxed">If the brief calls out labor or food, don't ignore it. Same-day: trim a shift, check portioning, look at the last invoice. One red day is a signal. A week of red in the brief means you're leaving real money on the table. Use the brief to decide what to fix first — then go fix it.</p>
+                <p className="text-muted text-xs leading-relaxed">If the brief calls out labor or food, it may help to avoid ignoring it. Same-day options often include trimming a shift, checking portioning, and looking at the last invoice. One red day is a signal. A week of red in the brief means you're leaving real money on the table. Use the brief to decide what to address first — then follow through.</p>
               </div>
             </div>
           </div>

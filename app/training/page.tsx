@@ -61,10 +61,10 @@ export default function TrainingPage() {
           PrimeOS is the operating system for independent pizzeria operators. One app, every number, plain English, 90 seconds a day.
         </p>
         <p className="mb-3">
-          Built by an operator with 14 years behind the line — not by a software company guessing what you need. Every screen shows your numbers, teaches what they mean, and tells you exactly what to do when something goes red.
+          Built by an operator with 14 years behind the line — not by a software company guessing what you need. Every screen shows your numbers, teaches what they mean, and offers practical playbooks to consider when something goes red.
         </p>
         <p className="mb-0">
-          Your daily routine: Open the app. Enter your numbers. Read your grade. Check for red. Follow the playbook. That&apos;s it. 90 seconds. Then go run your shop.
+          Your daily routine: Open the app. Enter your numbers. Read your grade. Look for red. Use the playbook when needed. That&apos;s it. 90 seconds — then get back to running your shop.
         </p>
       </CollapsibleSection>
 
@@ -84,7 +84,7 @@ export default function TrainingPage() {
         <div className="bg-slate-700/50 rounded-lg p-3 mb-0">
           <div className="font-medium text-white mb-1">Layer 3 — The Playbook:</div>
           <p className="mb-0">
-            When a number goes red, PrimeOS doesn&apos;t just tell you it&apos;s bad — it tells you what to do. Step-by-step. Pizza-specific. Written by someone who&apos;s actually fixed these problems at 11pm on a Friday. Every red number has a playbook. Every playbook has been tested in a real pizzeria.
+            When a number goes red, PrimeOS doesn&apos;t just tell you it&apos;s bad — it outlines what operators typically check next. Step-by-step. Pizza-specific. Written by someone who&apos;s actually worked through these problems at 11pm on a Friday. Every red number has a playbook. Every playbook has been tested in a real pizzeria.
           </p>
         </div>
       </CollapsibleSection>
@@ -93,7 +93,7 @@ export default function TrainingPage() {
         <div className="flex gap-3 mb-3">
           <span className="shrink-0 w-6 h-6 rounded-full bg-blue-500/30 text-blue-400 flex items-center justify-center text-xs font-semibold">1</span>
           <p className="mb-0">
-            Open PrimeOS. Check your Morning Brief — AI already read yesterday&apos;s numbers and wrote you a summary.
+            Open PrimeOS. Consider checking your Morning Brief — AI already read yesterday&apos;s numbers and wrote you a summary.
           </p>
         </div>
         <div className="flex gap-3 mb-3">
@@ -111,13 +111,13 @@ export default function TrainingPage() {
         <div className="flex gap-3 mb-3">
           <span className="shrink-0 w-6 h-6 rounded-full bg-blue-500/30 text-blue-400 flex items-center justify-center text-xs font-semibold">4</span>
           <p className="mb-0">
-            Check for red. If everything is green, you&apos;re done. Go run your shop.
+            Look for red. If everything is green, you&apos;re done — get back to running your shop.
           </p>
         </div>
         <div className="flex gap-3 mb-0">
           <span className="shrink-0 w-6 h-6 rounded-full bg-blue-500/30 text-blue-400 flex items-center justify-center text-xs font-semibold">5</span>
           <p className="mb-0">
-            If something is red, tap it. Read the playbook. Follow the steps. The fix is usually one specific thing — a portioning issue, an overtime shift, a vendor price hike.
+            If something is red, tap it. Read the playbook. Work through the steps. A common approach is one specific lever — a portioning issue, an overtime shift, a vendor price hike.
           </p>
         </div>
         <p className="mt-3 mb-0">
@@ -210,51 +210,51 @@ export default function TrainingPage() {
           <div>
             <h4 className="font-medium text-red-400/90 mb-2">When Food Cost Goes RED (&gt;33%)</h4>
             <ol className="list-decimal list-inside space-y-1">
-              <li>Check last 3 vendor deliveries for price increases</li>
-              <li>Weigh 10 cheese portions on 16-inch pies vs recipe spec</li>
-              <li>Run 48-hour waste log</li>
-              <li>Compare theoretical vs actual on top 5 items</li>
-              <li>Check for vendor substitutions</li>
+              <li>Consider checking last 3 vendor deliveries for price increases</li>
+              <li>Consider weighing 10 cheese portions on 16-inch pies vs recipe spec</li>
+              <li>Consider running a 48-hour waste log</li>
+              <li>Consider comparing theoretical vs actual on top 5 items</li>
+              <li>Consider checking for vendor substitutions</li>
             </ol>
           </div>
           <div>
             <h4 className="font-medium text-red-400/90 mb-2">When Labor Goes RED (&gt;24%)</h4>
             <ol className="list-decimal list-inside space-y-1">
-              <li>Compare scheduled vs actual clock-in/out</li>
-              <li>Check shift overlaps</li>
-              <li>Review SLPH — below $55 = overstaffed</li>
-              <li>Check last 4 same weekdays — pattern or one-off?</li>
-              <li>Review overtime — one OT shift can blow the whole week</li>
+              <li>Consider comparing scheduled vs actual clock-in/out</li>
+              <li>Consider checking shift overlaps</li>
+              <li>Consider reviewing SLPH — below $55 = overstaffed</li>
+              <li>Consider checking last 4 same weekdays — pattern or one-off?</li>
+              <li>Consider reviewing overtime — one OT shift can blow the whole week</li>
             </ol>
           </div>
           <div>
             <h4 className="font-medium text-red-400/90 mb-2">When PRIME Goes RED (&gt;58%)</h4>
             <ol className="list-decimal list-inside space-y-1">
-              <li>Identify which component is driving it — food or labor</li>
-              <li>If both are yellow, the combination pushes PRIME red — fix the worse one first</li>
-              <li>Check disposables — cups, boxes, bags add up fast if uncontrolled</li>
-              <li>Run the food cost playbook AND labor playbook simultaneously</li>
-              <li>Set a 7-day checkpoint to verify PRIME is trending back</li>
+              <li>Consider identifying which component is driving it — food or labor</li>
+              <li>If both are yellow, the combination pushes PRIME red — many operators address the worse one first</li>
+              <li>Consider checking disposables — cups, boxes, bags add up fast if uncontrolled</li>
+              <li>Consider running the food cost playbook AND labor playbook in parallel</li>
+              <li>Consider setting a 7-day checkpoint to verify PRIME is trending back</li>
             </ol>
           </div>
           <div>
             <h4 className="font-medium text-red-400/90 mb-2">When Churn Goes RED (&gt;25% quarterly)</h4>
             <ol className="list-decimal list-inside space-y-1">
-              <li>Pull exit reasons for last 90 days</li>
-              <li>Compare churn by location — is one store worse?</li>
-              <li>Review scheduling fairness — are some people getting all the bad shifts?</li>
-              <li>Calculate the cost: number of exits × $3,500 average replacement cost. Show managers that number.</li>
-              <li>Implement 30-day check-ins with every new hire — most quits happen in the first 30 days</li>
+              <li>Consider pulling exit reasons for last 90 days</li>
+              <li>Consider comparing churn by location — is one store worse?</li>
+              <li>Consider reviewing scheduling fairness — are some people getting all the bad shifts?</li>
+              <li>Consider calculating the cost: number of exits × $3,500 average replacement cost. Show managers that number.</li>
+              <li>Consider implementing 30-day check-ins with every new hire — most quits happen in the first 30 days</li>
             </ol>
           </div>
           <div>
             <h4 className="font-medium text-red-400/90 mb-2">When ROAS Goes RED (&lt;2x)</h4>
             <ol className="list-decimal list-inside space-y-1">
-              <li>Check targeting — are you reaching the right zip codes?</li>
-              <li>Check creative — when did you last update the ad image or offer?</li>
-              <li>Check attribution — are orders coming from the ad but not being tracked?</li>
-              <li>Compare cost per acquisition across platforms — kill the worst performer</li>
-              <li>Test a referral program instead — existing customers convert 3x better than cold ads</li>
+              <li>Consider checking targeting — are you reaching the right zip codes?</li>
+              <li>Consider checking creative — when did you last update the ad image or offer?</li>
+              <li>Consider checking attribution — are orders coming from the ad but not being tracked?</li>
+              <li>Consider comparing cost per acquisition across platforms — consider pausing the worst performer</li>
+              <li>Consider testing a referral program instead — existing customers convert 3x better than cold ads</li>
             </ol>
           </div>
         </div>
@@ -268,7 +268,7 @@ export default function TrainingPage() {
           Green change = improving. Red change = getting worse. The direction matters more than the absolute number — a food cost of 31% that was 34% last week is a win, even though 31% is still yellow.
         </p>
         <p className="mb-0">
-          Focus on the red arrows first. If food cost went up and labor went up, check if it was the same day — a big sales day can push both up temporarily. Look at the 4-week trend before panicking about one week.
+          Consider focusing on the red arrows first. If food cost went up and labor went up, consider checking if it was the same day — a big sales day can push both up temporarily. Look at the 4-week trend before reacting to one week.
         </p>
       </CollapsibleSection>
 
@@ -306,7 +306,7 @@ export default function TrainingPage() {
           The Brief pulls from your daily KPIs, weekly trends, employee data, and local events (coming soon). It&apos;s like having a business partner who reviewed everything before you woke up.
         </p>
         <p className="mb-0">
-          What to do with it: Read it with your coffee. If it flags something red, go to that page and follow the playbook. If everything is green, you just saved yourself 20 minutes of spreadsheet scanning.
+          How to use it: Read it with your coffee. If it flags something red, consider going to that page and using the playbook. If everything is green, you just saved yourself 20 minutes of spreadsheet scanning.
         </p>
       </CollapsibleSection>
 
