@@ -7,12 +7,12 @@ export const TIERS = {
   free: {
     name: "Free",
     price: 0,
-    routes: ["/", "/daily", "/weekly", "/training", "/billing"],
+    routes: ["/", "/daily", "/weekly", "/monthly", "/training", "/billing"],
   },
   starter: {
     name: "Starter",
     price: 79,
-    routes: ["/", "/daily", "/weekly", "/training", "/billing", "/brief", "/pnl", "/schedule"],
+    routes: ["/", "/daily", "/weekly", "/monthly", "/training", "/billing", "/brief", "/pnl", "/schedule"],
   },
   operator: {
     name: "Operator",
@@ -21,6 +21,7 @@ export const TIERS = {
       "/",
       "/daily",
       "/weekly",
+      "/monthly",
       "/training",
       "/billing",
       "/brief",
@@ -42,6 +43,7 @@ export const TIERS = {
       "/",
       "/daily",
       "/weekly",
+      "/monthly",
       "/training",
       "/billing",
       "/brief",
