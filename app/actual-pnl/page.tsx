@@ -3,6 +3,8 @@
 import { useState, useRef, useEffect, useMemo } from "react";
 import { FileUp, Camera, Image, FileText, FileSpreadsheet, ChevronDown } from "lucide-react";
 import { EducationInfoIcon } from "@/src/components/education/InfoIcon";
+import { ExportButton } from "@/src/components/ui/ExportButton";
+import { formatPct, formatDollars } from "@/src/lib/formatters";
 import { cn } from "@/lib/utils";
 
 const STORAGE_KEY_MONTHS = "primeos-actual-pnl-months";
@@ -50,14 +52,6 @@ function getMonthlyPnlData(monthKey: string) {
     repairs: base.repairs,
     misc: base.misc,
   };
-}
-
-function formatDollars(n: number): string {
-  return "$" + n.toLocaleString("en-US", { maximumFractionDigits: 0 });
-}
-
-function formatPct(n: number): string {
-  return n.toFixed(1) + "%";
 }
 
 function LineItem({
@@ -241,10 +235,13 @@ export default function ActualPnlPage() {
 
   return (
     <div className="space-y-4 pb-28">
-      <div className="flex items-center gap-2 flex-wrap">
-        <h1 className="text-lg font-semibold sm:text-2xl text-white">Actual P&L</h1>
-        <FileSpreadsheet className="w-6 h-6 text-slate-500 shrink-0" aria-hidden />
-        <EducationInfoIcon metricKey="gp_vs_net_profit" />
+      <div className="flex items-center justify-between gap-2 flex-wrap">
+        <div className="flex items-center gap-2">
+          <h1 className="text-lg font-semibold sm:text-2xl text-white">Actual P&L</h1>
+          <FileSpreadsheet className="w-6 h-6 text-slate-500 shrink-0" aria-hidden />
+          <EducationInfoIcon metricKey="gp_vs_net_profit" />
+        </div>
+        <ExportButton pageName="Actual P&L" />
       </div>
       <p className="text-sm text-slate-400">Upload your CPA&apos;s monthly financials. See your real net profit.</p>
 

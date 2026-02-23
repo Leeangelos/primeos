@@ -11,6 +11,7 @@ import {
   Legend,
 } from "recharts";
 import { EducationInfoIcon } from "@/src/components/education/InfoIcon";
+import { formatPct, formatDollars } from "@/src/lib/formatters";
 import { SEED_DOORDASH } from "@/src/lib/seed-data";
 import { cn } from "@/lib/utils";
 
@@ -25,6 +26,8 @@ export default function DoorDashPage() {
   const totalCommission = data.reduce((s, d) => s + d.commission_dollars, 0);
   const effectiveCommissionPct = totalRevenue > 0 ? (totalCommission / totalRevenue) * 100 : 0;
   const netRevenue = data.reduce((s, d) => s + d.net_revenue, 0);
+  const commissionPct = totalRevenue > 0 ? (totalCommission / totalRevenue) * 100 : 0;
+  const netPct = totalRevenue > 0 ? (netRevenue / totalRevenue) * 100 : 0;
 
   const commissionGrade = effectiveCommissionPct < 20 ? "green" : effectiveCommissionPct <= 25 ? "yellow" : "red";
 
@@ -56,14 +59,18 @@ export default function DoorDashPage() {
               DoorDash Revenue
               <EducationInfoIcon metricKey="doordash_effective_commission" size="sm" />
             </div>
-            <div className="text-xl font-bold tabular-nums text-emerald-400">{fmt(totalRevenue)}</div>
+            <div className="text-sm text-emerald-400 font-medium">
+              {formatDollars(totalRevenue)} <span className="text-xs text-slate-500 font-normal">({formatPct(100)})</span>
+            </div>
           </div>
           <div>
             <div className="text-[9px] uppercase text-muted flex items-center gap-1">
               Commission Paid
               <EducationInfoIcon metricKey="doordash_effective_commission" size="sm" />
             </div>
-            <div className="text-xl font-bold tabular-nums text-red-400">−{fmt(totalCommission)}</div>
+            <div className="text-sm text-red-400 font-medium">
+              {formatDollars(totalCommission)} <span className="text-xs text-slate-500 font-normal">({formatPct(commissionPct)})</span>
+            </div>
           </div>
           <div>
             <div className="text-[9px] uppercase text-muted flex items-center gap-1">
@@ -78,7 +85,7 @@ export default function DoorDashPage() {
                 commissionGrade === "red" && "text-red-400"
               )}
             >
-              {effectiveCommissionPct.toFixed(1)}%
+              {formatPct(effectiveCommissionPct)}
             </div>
             <div className="text-[10px] text-muted mt-0.5">
               {commissionGrade === "green" && "Strong (<20%)"}
@@ -91,7 +98,9 @@ export default function DoorDashPage() {
               Net Revenue
               <EducationInfoIcon metricKey="doordash_effective_commission" size="sm" />
             </div>
-            <div className="text-xl font-bold tabular-nums text-emerald-400">{fmt(netRevenue)}</div>
+            <div className="text-sm text-emerald-400 font-medium">
+              {formatDollars(netRevenue)} <span className="text-xs text-slate-500 font-normal">({formatPct(netPct)})</span>
+            </div>
           </div>
         </div>
       </div>
@@ -110,7 +119,12 @@ export default function DoorDashPage() {
                 contentStyle={{ backgroundColor: "#1e293b", border: "1px solid #334155", borderRadius: "8px", padding: "8px 12px", fontSize: "12px" }}
                 labelStyle={{ color: "#94a3b8", marginBottom: "4px" }}
                 labelFormatter={(_, payload) => payload?.[0]?.payload?.date ?? ""}
-                formatter={(value: number | undefined, name?: string) => [value != null ? fmt(value) : "—", name === "revenue" ? "Revenue" : "Commission"]}
+                formatter={(value: number | undefined, name?: string) => {
+                  const pct = totalRevenue > 0 && value != null ? (value / totalRevenue) * 100 : null;
+                  const label = name === "revenue" ? "Revenue" : "Commission";
+                  const text = value != null ? `${formatDollars(value)} (${pct != null ? formatPct(pct) : "—"})` : "—";
+                  return [text, label];
+                }}
               />
               <Legend formatter={(v) => (v === "revenue" ? "Revenue" : "Commission")} />
               <Bar dataKey="revenue" name="revenue" fill="rgb(34 197 94)" radius={[4, 4, 0, 0]} />

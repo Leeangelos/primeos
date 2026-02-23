@@ -8,16 +8,17 @@ import {
 } from "@/lib/cockpit-config";
 import { getStoreColor } from "@/lib/store-colors";
 import { EducationInfoIcon } from "@/src/components/education/InfoIcon";
+import { ExportButton } from "@/src/components/ui/ExportButton";
+import { formatPct as formatPctShared, formatDollars as formatDollarsBase } from "@/src/lib/formatters";
 import { SEED_DAILY_KPIS } from "@/src/lib/seed-data";
 
 function formatPct(n: number | null): string {
   if (n == null || Number.isNaN(n)) return "—";
-  return `${n.toFixed(1)}%`;
+  return formatPctShared(n);
 }
-
 function formatDollars(n: number | null): string {
   if (n == null || Number.isNaN(n)) return "—";
-  return `$${n.toLocaleString("en-US", { minimumFractionDigits: 0, maximumFractionDigits: 0 })}`;
+  return formatDollarsBase(n);
 }
 
 function getMTDRange(): { startDate: string; endDate: string; label: string } {
@@ -112,7 +113,10 @@ export default function PnlPage() {
   return (
     <div className="space-y-6 min-w-0 overflow-x-hidden pb-28">
       <div className={`dashboard-toolbar p-3 sm:p-5 space-y-3 ${getStoreColor(storeFilter === "all" ? "kent" : storeFilter).glow}`}>
-        <h1 className="text-lg font-semibold sm:text-2xl">GP P&L — Gross Profit</h1>
+        <div className="flex items-center justify-between gap-2 flex-wrap">
+          <h1 className="text-lg font-semibold sm:text-2xl">GP P&L — Gross Profit</h1>
+          <ExportButton pageName="GP P&L" />
+        </div>
         <p className="text-xs text-muted">Month-to-date rolling view. What you control daily.</p>
         <div className="flex flex-wrap gap-2">
           <select

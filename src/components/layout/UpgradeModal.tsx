@@ -25,7 +25,7 @@ function getTierFeatureHighlights(tierKey: string): string[] {
         "People Economics + CAC/LTV tracking",
         "Marketing ROI + ROAS",
         "DoorDash Economics",
-        "Hiring Pipeline + Party Orders",
+        "Hiring Pipeline + Catering & Large Orders",
       ];
     case "enterprise":
       return [

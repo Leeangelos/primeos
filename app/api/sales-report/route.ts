@@ -118,9 +118,9 @@ export async function GET(req: NextRequest) {
       day,
       thisWeek: Math.round(tw),
       lastWeek: Math.round(lw),
-      lastWeekPct: lw > 0 ? +(((tw - lw) / lw) * 100).toFixed(0) : null,
+      lastWeekPct: lw > 0 ? +(((tw - lw) / lw) * 100).toFixed(1) : null,
       lastYear: Math.round(ly),
-      lastYearPct: ly > 0 ? +(((tw - ly) / ly) * 100).toFixed(0) : null,
+      lastYearPct: ly > 0 ? +(((tw - ly) / ly) * 100).toFixed(1) : null,
     };
   });
 
@@ -136,19 +136,19 @@ export async function GET(req: NextRequest) {
     totals: {
       thisWeek: Math.round(twTotal),
       lastWeek: Math.round(lwTotal),
-      lastWeekPct: lwTotal > 0 ? +(((twTotal - lwTotal) / lwTotal) * 100).toFixed(0) : null,
+      lastWeekPct: lwTotal > 0 ? +(((twTotal - lwTotal) / lwTotal) * 100).toFixed(1) : null,
       lastYear: Math.round(lyTotal),
-      lastYearPct: lyTotal > 0 ? +(((twTotal - lyTotal) / lyTotal) * 100).toFixed(0) : null,
+      lastYearPct: lyTotal > 0 ? +(((twTotal - lyTotal) / lyTotal) * 100).toFixed(1) : null,
     },
     periodToDate: {
       thisYear: Math.round(ptdTotal),
       lastYear: Math.round(lyPtdTotal),
-      changePct: lyPtdTotal > 0 ? +(((ptdTotal - lyPtdTotal) / lyPtdTotal) * 100).toFixed(0) : null,
+      changePct: lyPtdTotal > 0 ? +(((ptdTotal - lyPtdTotal) / lyPtdTotal) * 100).toFixed(1) : null,
     },
     yearToDate: {
       thisYear: Math.round(ytdTotal),
       lastYear: Math.round(lyYtdTotal),
-      changePct: lyYtdTotal > 0 ? +(((ytdTotal - lyYtdTotal) / lyYtdTotal) * 100).toFixed(0) : null,
+      changePct: lyYtdTotal > 0 ? +(((ytdTotal - lyYtdTotal) / lyYtdTotal) * 100).toFixed(1) : null,
     },
   });
 }

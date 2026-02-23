@@ -334,13 +334,14 @@ export type SeedMarketingCampaign = {
   orders: number;
   revenue: number;
   roas: number;
+  offer: string;
 };
 
 export const SEED_MARKETING_CAMPAIGNS: SeedMarketingCampaign[] = [
-  { id: "m1", name: "Game Day Special", platform: "facebook", spend: 320, impressions: 85000, clicks: 1200, orders: 48, revenue: 1840, roas: 5.75 },
-  { id: "m2", name: "Google Local Ads", platform: "google", spend: 280, impressions: 42000, clicks: 980, orders: 62, revenue: 1980, roas: 7.07 },
-  { id: "m3", name: "DoorDash Promotion", platform: "doordash", spend: 150, impressions: 0, clicks: 0, orders: 85, revenue: 2120, roas: 14.13 },
-  { id: "m4", name: "Referral Program", platform: "referral", spend: 200, impressions: 0, clicks: 0, orders: 32, revenue: 960, roas: 4.8 },
+  { id: "m1", name: "Game Day Special", platform: "facebook", spend: 320, impressions: 85000, clicks: 1200, orders: 48, revenue: 1840, roas: 5.75, offer: "Game Day Special — Large 1-Topping Pizza $10.99. Targeted to 44240, 44260 zip codes. Image: pizza on game day table with team colors." },
+  { id: "m2", name: "Google Local Ads", platform: "google", spend: 280, impressions: 42000, clicks: 980, orders: 62, revenue: 1980, roas: 7.07, offer: "Search ads for 'pizza near me' and 'pizza delivery Kent OH'. Rotating headlines: Best Pizza in Kent, Fresh Made Daily, Order Online Now." },
+  { id: "m3", name: "DoorDash Promotion", platform: "doordash", spend: 150, impressions: 0, clicks: 0, orders: 85, revenue: 2120, roas: 14.13, offer: "DoorDash-funded promotion: Free delivery on orders $25+. Co-funded 50/50 with DoorDash for 2 weeks." },
+  { id: "m4", name: "Referral Program", platform: "referral", spend: 200, impressions: 0, clicks: 0, orders: 32, revenue: 960, roas: 4.8, offer: "Refer a friend, both get $5 off next order. Tracked via unique referral codes. Promoted on receipts and in-store signage." },
 ];
 
 // ============ PARTY ORDERS (6) ============
@@ -419,7 +420,7 @@ export type SeedInvoice = {
   invoice_date: string | null;
   total: number;
   line_items: SeedInvoiceLineItem[];
-  status: "Processed" | "Pending";
+  status: "Processed" | "Pending" | "failed";
   created_at: string;
 };
 
@@ -538,6 +539,16 @@ export const SEED_INVOICES: SeedInvoice[] = [
       { product: "Gloves M", qty: 4, unit: "box", unit_price: 1.50, extended_price: 6.00 },
       { product: "Deli sheets", qty: 2, unit: "case", unit_price: 2.00, extended_price: 4.00 },
     ],
+  },
+  {
+    id: "inv6",
+    vendor_name: "Unknown",
+    invoice_number: null,
+    invoice_date: daysAgo(2),
+    total: 0,
+    status: "failed",
+    created_at: new Date(Date.now() - 2 * 86400000).toISOString(),
+    line_items: [],
   },
 ];
 export type SeedShift = {
@@ -710,15 +721,18 @@ function seedChatTime(dayOffset: number, hour: number, min: number): string {
   return d.toISOString();
 }
 
+// Chronological order: oldest first (yesterday 9am, then today 6:45 → 12:45)
 export const SEED_CHAT_MESSAGES: SeedChatMessage[] = [
-  { id: "seed-chat-1", store_id: "kent", channel: "general", sender_name: "Greg", sender_role: "manager", message: "Walk-in temp was at 42 this morning, called repair guy.", is_pinned: false, is_announcement: false, created_at: seedChatTime(1, 7, 15) },
-  { id: "seed-chat-2", store_id: "kent", channel: "general", sender_name: "Angelo", sender_role: null, message: "Good catch. What did they say?", is_pinned: false, is_announcement: false, created_at: seedChatTime(1, 8, 22) },
-  { id: "seed-chat-3", store_id: "kent", channel: "general", sender_name: "Greg", sender_role: "manager", message: "Coming Thursday between 2-4.", is_pinned: false, is_announcement: false, created_at: seedChatTime(1, 8, 45) },
-  { id: "seed-chat-4", store_id: "kent", channel: "general", sender_name: "Rosario", sender_role: "cook", message: "We're low on 16\" boxes — can someone add to the order?", is_pinned: false, is_announcement: false, created_at: seedChatTime(0, 10, 5) },
-  { id: "seed-chat-5", store_id: "kent", channel: "general", sender_name: "Greg", sender_role: "manager", message: "I'll add it to the order today.", is_pinned: false, is_announcement: false, created_at: seedChatTime(0, 10, 18) },
-  { id: "seed-chat-6", store_id: "kent", channel: "general", sender_name: "Angelo", sender_role: null, message: "Reminder: cheese portioning audit this week. Let's do it Thursday before lunch rush.", is_pinned: false, is_announcement: false, created_at: seedChatTime(0, 11, 0) },
-  { id: "seed-chat-7", store_id: "kent", channel: "general", sender_name: "Rosario", sender_role: "cook", message: "Got it. I'll have the scale and spec sheet ready.", is_pinned: false, is_announcement: false, created_at: seedChatTime(0, 11, 12) },
-  { id: "seed-chat-8", store_id: "kent", channel: "general", sender_name: "Greg", sender_role: "manager", message: "Anyone able to cover Saturday 2–8? Sarah asked for the day off.", is_pinned: false, is_announcement: false, created_at: seedChatTime(0, 14, 30) },
-  { id: "seed-chat-9", store_id: "kent", channel: "general", sender_name: "Rosario", sender_role: "cook", message: "I can do 2-6 if that helps.", is_pinned: false, is_announcement: false, created_at: seedChatTime(0, 14, 55) },
-  { id: "seed-chat-10", store_id: "kent", channel: "general", sender_name: "Greg", sender_role: "manager", message: "That works, thanks. I'll update the schedule.", is_pinned: false, is_announcement: false, created_at: seedChatTime(0, 15, 5) },
+  { id: "msg8", store_id: "kent", channel: "general", sender_name: "LeeAnn", sender_role: "admin", message: "Payroll is done for this week. Direct deposits go out Thursday. Let me know if anyone had overtime issues.", is_pinned: false, is_announcement: false, created_at: seedChatTime(1, 9, 0) },
+  { id: "msg9", store_id: "kent", channel: "general", sender_name: "Angelo", sender_role: "owner", message: "Thanks LeeAnn. Greg — did Marcus end up going over 40 hours this week?", is_pinned: false, is_announcement: false, created_at: seedChatTime(1, 9, 15) },
+  { id: "msg10", store_id: "kent", channel: "general", sender_name: "Greg", sender_role: "manager", message: "He hit 41.5. I adjusted the schedule for next week so he stays under.", is_pinned: false, is_announcement: false, created_at: seedChatTime(1, 9, 30) },
+  { id: "msg11", store_id: "kent", channel: "general", sender_name: "Angelo", sender_role: "owner", message: "Perfect. Rosario — Aurora food cost came in at 32.8 again yesterday. Can you run a portioning check on the 16-inch pies today?", is_pinned: false, is_announcement: false, created_at: seedChatTime(0, 6, 45) },
+  { id: "msg1", store_id: "kent", channel: "general", sender_name: "Greg", sender_role: "manager", message: "Walk-in temp was reading 42 this morning. Called the repair guy.", is_pinned: false, is_announcement: false, created_at: seedChatTime(0, 7, 15) },
+  { id: "msg2", store_id: "kent", channel: "general", sender_name: "Angelo", sender_role: "owner", message: "Good catch. What did they say?", is_pinned: false, is_announcement: false, created_at: seedChatTime(0, 7, 22) },
+  { id: "msg3", store_id: "kent", channel: "general", sender_name: "Greg", sender_role: "manager", message: "Coming Thursday between 2-4. Said it might just be the door seal.", is_pinned: false, is_announcement: false, created_at: seedChatTime(0, 7, 35) },
+  { id: "msg4", store_id: "kent", channel: "general", sender_name: "Angelo", sender_role: "owner", message: "Keep an eye on it tonight. If it goes above 44 move the cheese to the small reach-in.", is_pinned: false, is_announcement: false, created_at: seedChatTime(0, 7, 42) },
+  { id: "msg12", store_id: "kent", channel: "general", sender_name: "Rosario", sender_role: "manager", message: "On it. I think it might be the new guy overloading cheese. I'll weigh 10 pies this shift and report back.", is_pinned: false, is_announcement: false, created_at: seedChatTime(0, 8, 10) },
+  { id: "msg5", store_id: "kent", channel: "general", sender_name: "Rosario", sender_role: "manager", message: "Kent just got slammed. 28 orders in the last 45 min. Called Marcus in early.", is_pinned: false, is_announcement: false, created_at: seedChatTime(0, 12, 30) },
+  { id: "msg6", store_id: "kent", channel: "general", sender_name: "Angelo", sender_role: "owner", message: "Nice. How's the make line holding up?", is_pinned: false, is_announcement: false, created_at: seedChatTime(0, 12, 38) },
+  { id: "msg7", store_id: "kent", channel: "general", sender_name: "Rosario", sender_role: "manager", message: "Solid. Miguel is keeping up. Might need extra cheese prepped for tomorrow if this keeps up.", is_pinned: false, is_announcement: false, created_at: seedChatTime(0, 12, 45) },
 ];

@@ -4,6 +4,8 @@ import { useMemo } from "react";
 import { cn } from "@/lib/utils";
 import { COCKPIT_TARGETS, type CockpitStoreSlug } from "@/lib/cockpit-config";
 import { EducationInfoIcon } from "@/src/components/education/InfoIcon";
+import { ExportButton } from "@/src/components/ui/ExportButton";
+import { formatPct } from "@/src/lib/formatters";
 import { SEED_EMPLOYEES, type SeedEmployee } from "@/src/lib/seed-data";
 
 const ROLES: Record<string, string> = {
@@ -71,14 +73,32 @@ export default function PeoplePage() {
     return Math.round(active.reduce((s, e) => s + e.tenure_months, 0) / active.length);
   }, [employees]);
 
+  const payRates = useMemo(() => {
+    const managers = employees.filter((e) => e.role === "manager");
+    const kitchen = employees.filter((e) => e.role === "cook" || e.role === "cashier");
+    const drivers = employees.filter((e) => e.role === "driver");
+    const avg = (arr: SeedEmployee[]) =>
+      arr.length === 0 ? 0 : arr.reduce((s, e) => s + e.pay_rate, 0) / arr.length;
+    const blended = employees.length === 0 ? 0 : employees.reduce((s, e) => s + e.pay_rate, 0) / employees.length;
+    return {
+      managerAvg: avg(managers).toFixed(2),
+      kitchenAvg: avg(kitchen).toFixed(2),
+      driverAvg: avg(drivers).toFixed(2),
+      blendedAvg: blended.toFixed(2),
+    };
+  }, [employees]);
+
   const churnColor = churnGrade(QUARTERLY_CHURN_RATE) === "green" ? "text-emerald-400" : churnGrade(QUARTERLY_CHURN_RATE) === "yellow" ? "text-amber-400" : "text-red-400";
 
   return (
     <div className="space-y-4 min-w-0 overflow-x-hidden pb-28">
       <div className="dashboard-toolbar p-3 sm:p-5 space-y-3">
-        <div className="flex items-center gap-2">
-          <h1 className="text-lg font-semibold sm:text-2xl">People Economics</h1>
-          <EducationInfoIcon metricKey="employee_cac" />
+        <div className="flex items-center justify-between gap-2 flex-wrap">
+          <div className="flex items-center gap-2">
+            <h1 className="text-lg font-semibold sm:text-2xl">People Economics</h1>
+            <EducationInfoIcon metricKey="employee_cac" />
+          </div>
+          <ExportButton pageName="People Economics" />
         </div>
         <p className="text-xs text-muted">
           Turnover cost, CAC, tenure, and churn. 12 seed employees.
@@ -109,7 +129,7 @@ export default function PeoplePage() {
                 <EducationInfoIcon metricKey="churn_rate" />
               </div>
               <div className={cn("text-xl font-bold tabular-nums", churnColor)}>
-                {QUARTERLY_CHURN_RATE}%
+                {formatPct(QUARTERLY_CHURN_RATE)}
               </div>
             </div>
             <div>
@@ -121,6 +141,20 @@ export default function PeoplePage() {
                 ${CAC_SPENT_THIS_QUARTER.toLocaleString()}
               </div>
             </div>
+          </div>
+        </div>
+        <div className="bg-slate-800 rounded-xl border border-slate-700 p-4 mt-3">
+          <div className="flex items-center justify-between mb-2">
+            <h3 className="text-xs text-slate-500 uppercase tracking-wide">Pay Rates</h3>
+            <EducationInfoIcon metricKey="employee_cac" size="sm" />
+          </div>
+          <div className="text-lg font-bold text-white mb-2">
+            ${payRates.blendedAvg}/hr <span className="text-xs text-slate-400 font-normal">blended average</span>
+          </div>
+          <div className="flex flex-wrap gap-x-4 gap-y-1 text-xs text-slate-400">
+            <span>Managers: ${payRates.managerAvg}/hr</span>
+            <span>Kitchen: ${payRates.kitchenAvg}/hr</span>
+            <span>Drivers: ${payRates.driverAvg}/hr</span>
           </div>
         </div>
       </div>
@@ -165,9 +199,31 @@ export default function PeoplePage() {
                   <span className="text-slate-500">Tenure:</span> {tenureLabel(emp.tenure_months)}
                 </span>
               </div>
+              <div className="flex gap-4 mt-2 pt-2 border-t border-slate-700/50">
+                <div>
+                  <div className="text-xs text-slate-500">Annual Gross</div>
+                  <div className="text-sm text-red-400 font-medium">
+                    ${(emp.pay_rate * emp.hours_per_week * 52).toLocaleString("en-US", { maximumFractionDigits: 0 })}
+                  </div>
+                </div>
+                <div>
+                  <div className="text-xs text-slate-500">Lifetime Gross</div>
+                  <div className="text-sm text-red-400 font-medium">
+                    ${(emp.pay_rate * emp.hours_per_week * (emp.tenure_months * 52 / 12)).toLocaleString("en-US", { maximumFractionDigits: 0 })}
+                  </div>
+                </div>
+              </div>
             </div>
           );
         })}
+      </div>
+
+      <div className="px-3 sm:px-5">
+        <div className="bg-slate-800/50 rounded-xl border border-slate-700/50 p-3 mt-4">
+          <p className="text-xs text-slate-500 text-center">
+            Employee financial details are visible to Owner tier only.
+          </p>
+        </div>
       </div>
     </div>
   );

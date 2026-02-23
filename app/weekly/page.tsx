@@ -19,6 +19,8 @@ import { COCKPIT_STORE_SLUGS, COCKPIT_TARGETS, type CockpitStoreSlug } from "@/l
 import { getStoreColor } from "@/lib/store-colors";
 import { COLORS, getGradeColor } from "@/src/lib/design-tokens";
 import { EducationInfoIcon } from "@/src/components/education/InfoIcon";
+import { ExportButton } from "@/src/components/ui/ExportButton";
+import { formatPct } from "@/src/lib/formatters";
 import { SEED_WEEKLY_COCKPIT } from "@/src/lib/seed-data";
 
 /** Store slug for daily drill-down; daily page uses cockpit slugs (kent, aurora, lindseys). */
@@ -153,7 +155,7 @@ function WeeklyPageContent() {
       return { thisWeekSeed: null, lastWeekSeed: null, comparisonKpis: [] };
     }
     const targets = COCKPIT_TARGETS[store === "all" ? "kent" : store];
-    const fmtPct = (n: number) => `${n.toFixed(1)}%`;
+    const fmtPct = (n: number) => formatPct(n);
     const fmtDollars = (n: number) => `$${n.toLocaleString("en-US", { maximumFractionDigits: 0 })}`;
     const change = (curr: number, prev: number) => (prev === 0 ? 0 : Math.round(((curr - prev) / prev) * 1000) / 10);
     const gradeClass = (value: number, target: number, lowerIsBetter: boolean): string => {
@@ -263,6 +265,7 @@ function WeeklyPageContent() {
           <div className="flex items-center gap-2">
             <h1 className="text-xl sm:text-2xl font-semibold">Weekly Cockpit</h1>
             <button type="button" onClick={() => setShowEducation("overview")} className="inline-flex items-center justify-center min-h-[44px] min-w-[44px] rounded-full bg-muted/20 text-muted hover:bg-brand/20 hover:text-brand transition-colors text-xs font-bold" aria-label="Learn more">i</button>
+            <ExportButton pageName="Weekly Cockpit" />
           </div>
           <p className="mt-1 text-sm text-muted">
             Tap any day to edit. Tap a store card to drill in.
@@ -331,7 +334,7 @@ function WeeklyPageContent() {
                 <div>
                   <div className="text-xs text-slate-500">Change</div>
                   <div className={`text-lg font-bold ${kpi.changeColor}`}>
-                    {kpi.changeArrow} {kpi.changePct > 0 ? "+" : ""}{kpi.changePct}%
+                    {kpi.changeArrow} {(kpi.changePct > 0 ? "+" : "") + formatPct(kpi.changePct)}
                   </div>
                 </div>
               </div>
@@ -373,7 +376,7 @@ function WeeklyPageContent() {
               <div className="mt-2 flex flex-wrap items-baseline gap-4">
                 <span className="text-3xl sm:text-4xl font-bold tabular-nums">
                   {data.hero.weekly_prime_pct != null
-                    ? `${data.hero.weekly_prime_pct.toFixed(1)}%`
+                    ? formatPct(data.hero.weekly_prime_pct)
                     : "—"}
                 </span>
                 <span className="text-sm text-muted">
@@ -392,13 +395,13 @@ function WeeklyPageContent() {
                   <span className="text-sm">
                     Variance vs target:{" "}
                     {data.hero.variance_pct >= 0 ? "+" : ""}
-                    {data.hero.variance_pct.toFixed(1)}%
+                    {formatPct(data.hero.variance_pct)}
                   </span>
                 )}
                 {data.hero.wow_delta_pct != null && (
                   <span className="text-sm">
                     WoW: {data.hero.wow_delta_pct >= 0 ? "+" : ""}
-                    {data.hero.wow_delta_pct.toFixed(1)}%
+                    {formatPct(data.hero.wow_delta_pct)}
                   </span>
                 )}
               </div>
@@ -444,7 +447,7 @@ function WeeklyPageContent() {
                       }}
                       labelStyle={{ color: "#9ca3af", fontSize: "11px", marginBottom: "4px" }}
                       itemStyle={{ color: "#fff", padding: "2px 0" }}
-                      formatter={(v: number | undefined) => [v != null ? `${v.toFixed(1)}%` : "—", "PRIME %"]}
+                      formatter={(v: number | undefined) => [v != null ? formatPct(v) : "—", "PRIME %"]}
                       labelFormatter={(_, payload) =>
                         payload?.[0]?.payload?.date ?? ""
                       }
@@ -477,7 +480,7 @@ function WeeklyPageContent() {
                     {new Date(d.date + "T12:00:00Z").toLocaleDateString("en-US", {
                       weekday: "short",
                     })}{" "}
-                    {d.prime_pct != null ? `${d.prime_pct.toFixed(1)}%` : "—"}
+                    {d.prime_pct != null ? formatPct(d.prime_pct) : "—"}
                   </Link>
                 ))}
               </div>
@@ -506,14 +509,14 @@ function WeeklyPageContent() {
                   </div>
                   <div className="text-xl font-bold tabular-nums">
                     {data.secondary.labor_pct != null
-                      ? `${data.secondary.labor_pct.toFixed(1)}%`
+                      ? formatPct(data.secondary.labor_pct)
                       : "—"}
                   </div>
                   <div className="text-xs text-muted">
                     Target: {data.secondary.labor_target} •{" "}
                     {data.secondary.labor_status}
                     {data.secondary.labor_wow != null &&
-                      ` • WoW ${data.secondary.labor_wow >= 0 ? "+" : ""}${data.secondary.labor_wow.toFixed(1)}%`}
+                      ` • WoW ${data.secondary.labor_wow >= 0 ? "+" : ""}${formatPct(data.secondary.labor_wow)}`}
                   </div>
                 </div>
                 <div className="rounded border border-border/50 bg-black/20 p-3">
@@ -530,14 +533,14 @@ function WeeklyPageContent() {
                   </div>
                   <div className="text-xl font-bold tabular-nums">
                     {data.secondary.food_disp_pct != null
-                      ? `${data.secondary.food_disp_pct.toFixed(1)}%`
+                      ? formatPct(data.secondary.food_disp_pct)
                       : "—"}
                   </div>
                   <div className="text-xs text-muted">
                     Target: {data.secondary.food_disp_target} •{" "}
                     {data.secondary.food_disp_status}
                     {data.secondary.food_disp_wow != null &&
-                      ` • WoW ${data.secondary.food_disp_wow >= 0 ? "+" : ""}${data.secondary.food_disp_wow.toFixed(1)}%`}
+                      ` • WoW ${data.secondary.food_disp_wow >= 0 ? "+" : ""}${formatPct(data.secondary.food_disp_wow)}`}
                   </div>
                 </div>
                 <div className="rounded border border-border/50 bg-black/20 p-3">
@@ -675,9 +678,9 @@ function WeeklyPageContent() {
                               <span className="font-medium">{row.name}</span>
                             </div>
                           </td>
-                          <td className="py-2 pr-4 tabular-nums">{row.weekly_prime_pct != null ? `${row.weekly_prime_pct.toFixed(1)}%` : "—"}</td>
-                          <td className="py-2 pr-4 tabular-nums">{row.weekly_labor_pct != null ? `${row.weekly_labor_pct.toFixed(1)}%` : "—"}</td>
-                          <td className="py-2 pr-4 tabular-nums">{row.weekly_food_disposables_pct != null ? `${row.weekly_food_disposables_pct.toFixed(1)}%` : "—"}</td>
+                          <td className="py-2 pr-4 tabular-nums">{row.weekly_prime_pct != null ? formatPct(row.weekly_prime_pct) : "—"}</td>
+                          <td className="py-2 pr-4 tabular-nums">{row.weekly_labor_pct != null ? formatPct(row.weekly_labor_pct) : "—"}</td>
+                          <td className="py-2 pr-4 tabular-nums">{row.weekly_food_disposables_pct != null ? formatPct(row.weekly_food_disposables_pct) : "—"}</td>
                           <td className="py-2 pr-4 tabular-nums">{row.weekly_slph != null ? row.weekly_slph.toFixed(0) : "—"}</td>
                           <td className="py-2">
                             <span className={row.status === "on_track" ? "text-emerald-500" : "text-red-500"}>
@@ -716,15 +719,15 @@ function WeeklyPageContent() {
                       <div className="grid grid-cols-2 gap-2 text-sm">
                         <div>
                           <div className="text-[10px] uppercase text-muted">PRIME %</div>
-                          <div className="text-lg font-bold tabular-nums">{row.weekly_prime_pct != null ? `${row.weekly_prime_pct.toFixed(1)}%` : "—"}</div>
+                          <div className="text-lg font-bold tabular-nums">{row.weekly_prime_pct != null ? formatPct(row.weekly_prime_pct) : "—"}</div>
                         </div>
                         <div>
                           <div className="text-[10px] uppercase text-muted">Labor %</div>
-                          <div className="text-lg font-bold tabular-nums">{row.weekly_labor_pct != null ? `${row.weekly_labor_pct.toFixed(1)}%` : "—"}</div>
+                          <div className="text-lg font-bold tabular-nums">{row.weekly_labor_pct != null ? formatPct(row.weekly_labor_pct) : "—"}</div>
                         </div>
                         <div>
                           <div className="text-[10px] uppercase text-muted">Food+Disp %</div>
-                          <div className="text-lg font-bold tabular-nums">{row.weekly_food_disposables_pct != null ? `${row.weekly_food_disposables_pct.toFixed(1)}%` : "—"}</div>
+                          <div className="text-lg font-bold tabular-nums">{row.weekly_food_disposables_pct != null ? formatPct(row.weekly_food_disposables_pct) : "—"}</div>
                         </div>
                         <div>
                           <div className="text-[10px] uppercase text-muted">SLPH</div>

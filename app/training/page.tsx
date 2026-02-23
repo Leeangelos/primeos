@@ -56,7 +56,65 @@ export default function TrainingPage() {
         <p className="text-sm text-slate-400 mt-1">Everything you need to run your numbers in 90 seconds a day.</p>
       </div>
 
-      <CollapsibleSection title="Welcome to PrimeOS" defaultOpen>
+      <CollapsibleSection title="Add PrimeOS to Your Phone" defaultOpen={true}>
+        <p className="text-sm text-slate-300 leading-relaxed mb-4">
+          PrimeOS works best when it&apos;s one tap away on your home screen — just like any other app. No app store needed.
+        </p>
+
+        <div className="bg-slate-700/50 rounded-lg p-4 mb-3">
+          <div className="flex items-center gap-2 mb-2">
+            <span className="text-base">🍎</span>
+            <h4 className="text-sm font-semibold text-white">iPhone (iOS Safari)</h4>
+          </div>
+          <ol className="space-y-2 text-sm text-slate-300 ml-1">
+            <li className="flex items-start gap-2">
+              <span className="text-xs text-slate-500 font-mono mt-0.5">1.</span>
+              <span>Open <span className="text-white font-medium">primeos-nine.vercel.app</span> in Safari (not Chrome)</span>
+            </li>
+            <li className="flex items-start gap-2">
+              <span className="text-xs text-slate-500 font-mono mt-0.5">2.</span>
+              <span>Tap the <span className="text-white font-medium">Share button</span> (square with arrow at the bottom of the screen)</span>
+            </li>
+            <li className="flex items-start gap-2">
+              <span className="text-xs text-slate-500 font-mono mt-0.5">3.</span>
+              <span>Scroll down and tap <span className="text-white font-medium">Add to Home Screen</span></span>
+            </li>
+            <li className="flex items-start gap-2">
+              <span className="text-xs text-slate-500 font-mono mt-0.5">4.</span>
+              <span>Tap <span className="text-white font-medium">Add</span> in the top right</span>
+            </li>
+          </ol>
+          <p className="text-xs text-slate-500 mt-2">PrimeOS will appear on your home screen with the pizza icon. Opens full screen, no browser bar.</p>
+        </div>
+
+        <div className="bg-slate-700/50 rounded-lg p-4">
+          <div className="flex items-center gap-2 mb-2">
+            <span className="text-base">🤖</span>
+            <h4 className="text-sm font-semibold text-white">Android (Chrome)</h4>
+          </div>
+          <ol className="space-y-2 text-sm text-slate-300 ml-1">
+            <li className="flex items-start gap-2">
+              <span className="text-xs text-slate-500 font-mono mt-0.5">1.</span>
+              <span>Open <span className="text-white font-medium">primeos-nine.vercel.app</span> in Chrome</span>
+            </li>
+            <li className="flex items-start gap-2">
+              <span className="text-xs text-slate-500 font-mono mt-0.5">2.</span>
+              <span>Tap the <span className="text-white font-medium">three-dot menu</span> (top right)</span>
+            </li>
+            <li className="flex items-start gap-2">
+              <span className="text-xs text-slate-500 font-mono mt-0.5">3.</span>
+              <span>Tap <span className="text-white font-medium">Add to Home screen</span></span>
+            </li>
+            <li className="flex items-start gap-2">
+              <span className="text-xs text-slate-500 font-mono mt-0.5">4.</span>
+              <span>Tap <span className="text-white font-medium">Add</span></span>
+            </li>
+          </ol>
+          <p className="text-xs text-slate-500 mt-2">PrimeOS will appear on your home screen. Opens like a native app.</p>
+        </div>
+      </CollapsibleSection>
+
+      <CollapsibleSection title="Welcome to PrimeOS" defaultOpen={false}>
         <p className="mb-3">
           PrimeOS is the operating system for independent pizzeria operators. One app, every number, plain English, 90 seconds a day.
         </p>

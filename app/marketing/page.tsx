@@ -1,8 +1,10 @@
 "use client";
 
-import { useMemo } from "react";
+import { useState, useMemo } from "react";
+import { ChevronDown } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { EducationInfoIcon } from "@/src/components/education/InfoIcon";
+import { formatPct } from "@/src/lib/formatters";
 import { SEED_MARKETING_CAMPAIGNS, type SeedMarketingCampaign } from "@/src/lib/seed-data";
 
 const PLATFORMS: Record<string, string> = {
@@ -29,8 +31,12 @@ function fmtDollars(n: number): string {
   return "$" + n.toLocaleString("en-US", { maximumFractionDigits: 0 });
 }
 
+type DateRange = "daily" | "weekly" | "monthly" | "custom";
+
 export default function MarketingPage() {
   const campaigns = SEED_MARKETING_CAMPAIGNS;
+  const [expandedCampaign, setExpandedCampaign] = useState<string | null>(null);
+  const [range, setRange] = useState<DateRange>("monthly");
 
   const summary = useMemo(() => {
     const totalSpend = campaigns.reduce((s, c) => s + c.spend, 0);
@@ -49,6 +55,16 @@ export default function MarketingPage() {
         <p className="text-xs text-muted">
           Every dollar in. Every dollar out. ROAS by campaign.
         </p>
+
+        <div className="flex bg-slate-800 rounded-lg p-0.5 border border-slate-700 mb-4">
+          <button type="button" onClick={() => setRange("daily")} className={cn("px-3 py-1.5 rounded-md text-xs font-medium transition-colors", range === "daily" ? "bg-slate-700 text-white" : "text-slate-400")}>Daily</button>
+          <button type="button" onClick={() => setRange("weekly")} className={cn("px-3 py-1.5 rounded-md text-xs font-medium transition-colors", range === "weekly" ? "bg-slate-700 text-white" : "text-slate-400")}>Weekly</button>
+          <button type="button" onClick={() => setRange("monthly")} className={cn("px-3 py-1.5 rounded-md text-xs font-medium transition-colors", range === "monthly" ? "bg-slate-700 text-white" : "text-slate-400")}>Monthly</button>
+          <button type="button" onClick={() => setRange("custom")} className={cn("px-3 py-1.5 rounded-md text-xs font-medium transition-colors", range === "custom" ? "bg-slate-700 text-white" : "text-slate-400")}>Custom</button>
+        </div>
+        {range === "custom" && (
+          <p className="text-xs text-slate-400 mb-3">Showing: Feb 1 – Feb 22, 2026</p>
+        )}
       </div>
 
       {/* Summary at top */}
@@ -101,31 +117,80 @@ export default function MarketingPage() {
             key={c.id}
             className="rounded-xl border border-slate-700 bg-slate-800/50 p-4 min-w-0"
           >
-            <div className="flex items-start justify-between gap-2">
-              <div className="min-w-0">
-                <p className="font-bold text-white truncate">{c.name}</p>
-                <p className="text-slate-400 text-sm mt-0.5">
-                  {PLATFORMS[c.platform] || c.platform}
-                </p>
+            <button
+              type="button"
+              onClick={() => setExpandedCampaign(expandedCampaign === c.id ? null : c.id)}
+              className="w-full text-left"
+            >
+              <div className="flex items-start justify-between gap-2">
+                <div className="min-w-0">
+                  <p className="font-bold text-white truncate">{c.name}</p>
+                  <p className="text-slate-400 text-sm mt-0.5">
+                    {PLATFORMS[c.platform] || c.platform}
+                  </p>
+                </div>
+                <div className="flex items-center gap-2 shrink-0">
+                  <span
+                    className={cn(
+                      "text-xs font-semibold tabular-nums px-2.5 py-1 rounded-lg border",
+                      roasClass(c.roas)
+                    )}
+                  >
+                    {c.roas.toFixed(1)}x ROAS
+                  </span>
+                  <ChevronDown className={cn("w-4 h-4 text-slate-400 transition-transform", expandedCampaign === c.id ? "rotate-180" : "")} />
+                </div>
               </div>
-              <span
-                className={cn(
-                  "shrink-0 text-xs font-semibold tabular-nums px-2.5 py-1 rounded-lg border",
-                  roasClass(c.roas)
-                )}
-              >
-                {c.roas.toFixed(1)}x ROAS
-              </span>
-            </div>
-            <div className="mt-3 flex flex-wrap gap-x-4 gap-y-2 text-sm">
-              <span className="text-slate-300">
-                <span className="text-slate-500">Spend:</span> {fmtDollars(c.spend)}
-              </span>
-              <span className="text-slate-300">
-                <span className="text-slate-500">Revenue attributed:</span>{" "}
-                <span className="text-emerald-400 font-medium">{fmtDollars(c.revenue)}</span>
-              </span>
-            </div>
+              <div className="mt-3 flex flex-wrap gap-x-4 gap-y-2 text-sm">
+                <span className="text-slate-300">
+                  <span className="text-slate-500">Spend:</span> {fmtDollars(c.spend)}
+                </span>
+                <span className="text-slate-300">
+                  <span className="text-slate-500">Revenue attributed:</span>{" "}
+                  <span className="text-emerald-400 font-medium">{fmtDollars(c.revenue)}</span>
+                </span>
+              </div>
+            </button>
+            {expandedCampaign === c.id && (
+              <div className="mt-3 pt-3 border-t border-slate-700 space-y-3">
+                <div className="grid grid-cols-2 gap-3">
+                  <div>
+                    <div className="text-xs text-slate-500">Impressions</div>
+                    <div className="text-sm text-white font-medium">{c.impressions.toLocaleString()}</div>
+                  </div>
+                  <div>
+                    <div className="text-xs text-slate-500">Clicks</div>
+                    <div className="text-sm text-white font-medium">{c.clicks.toLocaleString()}</div>
+                  </div>
+                  <div>
+                    <div className="text-xs text-slate-500">Click Rate</div>
+                    <div className="text-sm text-white font-medium">
+                      {c.impressions > 0 ? formatPct((c.clicks / c.impressions) * 100) : "—"}
+                    </div>
+                  </div>
+                  <div>
+                    <div className="text-xs text-slate-500">Cost per Click</div>
+                    <div className="text-sm text-white font-medium">
+                      {c.clicks > 0 ? `$${(c.spend / c.clicks).toFixed(2)}` : "—"}
+                    </div>
+                  </div>
+                  <div>
+                    <div className="text-xs text-slate-500">Orders Attributed</div>
+                    <div className="text-sm text-white font-medium">{c.orders}</div>
+                  </div>
+                  <div>
+                    <div className="text-xs text-slate-500">Cost per Order</div>
+                    <div className="text-sm text-white font-medium">
+                      {c.orders > 0 ? `$${(c.spend / c.orders).toFixed(2)}` : "—"}
+                    </div>
+                  </div>
+                </div>
+                <div>
+                  <div className="text-xs text-slate-500 mb-1">Offer / Creative</div>
+                  <p className="text-sm text-slate-300">{c.offer}</p>
+                </div>
+              </div>
+            )}
           </div>
         ))}
       </div>

@@ -134,7 +134,7 @@ async function seed() {
     }
   }
 
-  console.log(`\nDone. ${parties.length} party orders seeded.`);
+  console.log(`\nDone. ${parties.length} catering and large orders seeded.`);
 }
 
 seed();

@@ -7,6 +7,7 @@ import { Sparkles, ClipboardList, ChevronRight } from "lucide-react";
 import { COCKPIT_STORE_SLUGS, COCKPIT_TARGETS, type CockpitStoreSlug } from "@/lib/cockpit-config";
 import { getStoreColor } from "@/lib/store-colors";
 import { cn } from "@/lib/utils";
+import { formatPct } from "@/src/lib/formatters";
 import { SEED_MORNING_BRIEF_BY_STORE } from "@/src/lib/seed-data";
 
 type BriefStore = "all" | CockpitStoreSlug;
@@ -310,19 +311,19 @@ export default function BriefPage() {
                       <div>
                         <div className="text-[9px] uppercase text-muted">PRIME</div>
                         <div className={`text-sm font-bold tabular-nums ${pctColor(metrics.primePct, 55)}`}>
-                          {metrics.primePct != null ? `${metrics.primePct}%` : "—"}
+                          {metrics.primePct != null ? formatPct(metrics.primePct) : "—"}
                         </div>
                       </div>
                       <div>
                         <div className="text-[9px] uppercase text-muted">Labor</div>
                         <div className={`text-sm font-bold tabular-nums ${pctColor(metrics.laborPct, 24)}`}>
-                          {metrics.laborPct != null ? `${metrics.laborPct}%` : "—"}
+                          {metrics.laborPct != null ? formatPct(metrics.laborPct) : "—"}
                         </div>
                       </div>
                       <div>
                         <div className="text-[9px] uppercase text-muted">Food</div>
                         <div className={`text-sm font-bold tabular-nums ${pctColor(metrics.foodPct, 33)}`}>
-                          {metrics.foodPct != null ? `${metrics.foodPct}%` : "—"}
+                          {metrics.foodPct != null ? formatPct(metrics.foodPct) : "—"}
                         </div>
                       </div>
                       <div>

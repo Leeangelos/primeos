@@ -1,9 +1,20 @@
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
+import { MapPin, ChevronDown, Check } from "lucide-react";
 import { EducationInfoIcon } from "@/src/components/education/InfoIcon";
-import { SEED_SCHEDULE, SEED_DAILY_KPIS, SEED_EMPLOYEES, type SeedShift } from "@/src/lib/seed-data";
+import { SEED_SCHEDULE, SEED_DAILY_KPIS, SEED_EMPLOYEES, SEED_STORES, type SeedShift } from "@/src/lib/seed-data";
 import { cn } from "@/lib/utils";
+
+type StoreSlug = "kent" | "aurora" | "lindseys" | "all";
+const STORE_OPTIONS: { slug: StoreSlug; name: string }[] = [
+  ...SEED_STORES.map((s) => ({ slug: s.slug as StoreSlug, name: s.name })),
+  { slug: "all", name: "All Locations" },
+];
+function getStoreLabel(slug: StoreSlug): string {
+  if (slug === "all") return "All Locations";
+  return SEED_STORES.find((s) => s.slug === slug)?.name ?? slug;
+}
 
 const DAY_NAMES = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
 
@@ -103,6 +114,7 @@ type ShiftModalProps = {
   errors: Partial<Record<keyof ShiftForm, string>>;
   employees: { id: string; name: string; role: string }[];
   weekDates: string[];
+  isValid: boolean;
   onClose: () => void;
   onChange: (field: keyof ShiftForm, value: string) => void;
   onSave: () => void;
@@ -116,6 +128,7 @@ function ShiftModal({
   errors,
   employees,
   weekDates,
+  isValid,
   onClose,
   onChange,
   onSave,
@@ -134,142 +147,154 @@ function ShiftModal({
         aria-hidden="true"
       />
       <div
-        className="fixed bottom-0 left-0 right-0 z-50 bg-slate-800 rounded-t-2xl border-t border-slate-700 p-6 pb-[calc(1.5rem+env(safe-area-inset-bottom))] animate-slide-up max-h-[85vh] overflow-y-auto"
+        className="fixed bottom-0 left-0 right-0 z-50 bg-slate-800 rounded-t-2xl border-t border-slate-700 animate-slide-up max-h-[85vh] flex flex-col"
         role="dialog"
         aria-labelledby="shift-modal-title"
       >
-        <div className="w-10 h-1 bg-slate-600 rounded-full mx-auto mb-5" aria-hidden />
-        <h3 id="shift-modal-title" className="text-lg font-bold text-white text-center mb-4">
-          {isEdit ? "Edit Shift" : "Add Shift"}
-        </h3>
+        <div className="flex-shrink-0 p-4">
+          <div className="w-10 h-1 bg-slate-600 rounded-full mx-auto mb-3" aria-hidden />
+          <h3 id="shift-modal-title" className="text-lg font-bold text-white text-center mb-3">
+            {isEdit ? "Edit Shift" : "Add Shift"}
+          </h3>
+        </div>
+        <div className="flex-1 min-h-0 overflow-y-auto px-4 pb-8">
+          <div className="space-y-2">
+            {/* Employee + Role: 2 columns */}
+            <div className="grid grid-cols-2 gap-2">
+              <div>
+                <label className="block text-xs font-medium text-slate-400 mb-1">Employee</label>
+                <select
+                  value={form.employee_id}
+                  onChange={(e) => onChange("employee_id", e.target.value)}
+                  className="w-full h-10 min-h-[40px] rounded-lg bg-slate-700 border border-slate-600 text-white px-2 text-xs focus:outline-none focus:ring-2 focus:ring-brand"
+                  aria-invalid={!!errors.employee_id}
+                >
+                  <option value="">Select</option>
+                  {employees.map((e) => (
+                    <option key={e.id} value={e.id}>
+                      {e.name} — {roleLabel(e.role)}
+                    </option>
+                  ))}
+                </select>
+                {errors.employee_id && (
+                  <p className="text-red-400 text-[10px] mt-0.5">{errors.employee_id}</p>
+                )}
+              </div>
+              <div>
+                <label className="block text-xs font-medium text-slate-400 mb-1">Role</label>
+                <select
+                  value={form.role}
+                  onChange={(e) => onChange("role", e.target.value as FormRole)}
+                  className="w-full h-10 min-h-[40px] rounded-lg bg-slate-700 border border-slate-600 text-white px-2 text-xs focus:outline-none focus:ring-2 focus:ring-brand"
+                >
+                  {FORM_ROLES.map((r) => (
+                    <option key={r.value} value={r.value}>
+                      {r.label}
+                    </option>
+                  ))}
+                </select>
+              </div>
+            </div>
 
-        <div className="space-y-4">
-          {/* Employee */}
-          <div>
-            <label className="block text-xs font-medium text-slate-400 mb-1.5">Employee</label>
-            <select
-              value={form.employee_id}
-              onChange={(e) => onChange("employee_id", e.target.value)}
-              className="w-full h-12 min-h-[48px] rounded-xl bg-slate-700 border border-slate-600 text-white px-3 text-sm focus:outline-none focus:ring-2 focus:ring-brand"
-              aria-invalid={!!errors.employee_id}
-            >
-              <option value="">Select employee</option>
-              {employees.map((e) => (
-                <option key={e.id} value={e.id}>
-                  {e.name} — {roleLabel(e.role)}
-                </option>
-              ))}
-            </select>
-            {errors.employee_id && (
-              <p className="text-red-400 text-xs mt-1">{errors.employee_id}</p>
-            )}
-          </div>
+            {/* Date: full width */}
+            <div>
+              <label className="block text-xs font-medium text-slate-400 mb-1">Date</label>
+              <select
+                value={form.date}
+                onChange={(e) => onChange("date", e.target.value)}
+                className="w-full h-10 min-h-[40px] rounded-lg bg-slate-700 border border-slate-600 text-white px-2 text-xs focus:outline-none focus:ring-2 focus:ring-brand"
+                aria-invalid={!!errors.date}
+              >
+                {weekDates.map((d) => (
+                  <option key={d} value={d}>
+                    {new Date(d + "T12:00:00Z").toLocaleDateString("en-US", {
+                      weekday: "short",
+                      month: "short",
+                      day: "numeric",
+                    })}
+                  </option>
+                ))}
+              </select>
+              {errors.date && (
+                <p className="text-red-400 text-[10px] mt-0.5">{errors.date}</p>
+              )}
+            </div>
 
-          {/* Date */}
-          <div>
-            <label className="block text-xs font-medium text-slate-400 mb-1.5">Date</label>
-            <select
-              value={form.date}
-              onChange={(e) => onChange("date", e.target.value)}
-              className="w-full h-12 min-h-[48px] rounded-xl bg-slate-700 border border-slate-600 text-white px-3 text-sm focus:outline-none focus:ring-2 focus:ring-brand"
-              aria-invalid={!!errors.date}
-            >
-              {weekDates.map((d) => (
-                <option key={d} value={d}>
-                  {new Date(d + "T12:00:00Z").toLocaleDateString("en-US", {
-                    weekday: "short",
-                    month: "short",
-                    day: "numeric",
-                  })}
-                </option>
-              ))}
-            </select>
-            {errors.date && (
-              <p className="text-red-400 text-xs mt-1">{errors.date}</p>
-            )}
-          </div>
-
-          {/* Start time */}
-          <div>
-            <label className="block text-xs font-medium text-slate-400 mb-1.5">Start time</label>
-            <select
-              value={form.start_time}
-              onChange={(e) => {
-                onChange("start_time", e.target.value);
-                if (form.end_time && e.target.value >= form.end_time) {
-                  onChange("end_time", "");
-                }
-              }}
-              className="w-full h-12 min-h-[48px] rounded-xl bg-slate-700 border border-slate-600 text-white px-3 text-sm focus:outline-none focus:ring-2 focus:ring-brand"
-              aria-invalid={!!errors.start_time}
-            >
-              <option value="">Select start time</option>
-              {TIME_OPTIONS.map((t) => (
-                <option key={t} value={t}>
-                  {formatTimeOption(t)}
-                </option>
-              ))}
-            </select>
-            {errors.start_time && (
-              <p className="text-red-400 text-xs mt-1">{errors.start_time}</p>
-            )}
-          </div>
-
-          {/* End time */}
-          <div>
-            <label className="block text-xs font-medium text-slate-400 mb-1.5">End time</label>
-            <select
-              value={form.end_time}
-              onChange={(e) => onChange("end_time", e.target.value)}
-              className="w-full h-12 min-h-[48px] rounded-xl bg-slate-700 border border-slate-600 text-white px-3 text-sm focus:outline-none focus:ring-2 focus:ring-brand"
-              aria-invalid={!!errors.end_time}
-            >
-              <option value="">Select end time</option>
-              {(form.start_time ? endTimeOptions : TIME_OPTIONS).map((t) => (
-                <option key={t} value={t}>
-                  {formatTimeOption(t)}
-                </option>
-              ))}
-            </select>
-            {errors.end_time && (
-              <p className="text-red-400 text-xs mt-1">{errors.end_time}</p>
-            )}
-          </div>
-
-          {/* Role */}
-          <div>
-            <label className="block text-xs font-medium text-slate-400 mb-1.5">Role</label>
-            <select
-              value={form.role}
-              onChange={(e) => onChange("role", e.target.value as FormRole)}
-              className="w-full h-12 min-h-[48px] rounded-xl bg-slate-700 border border-slate-600 text-white px-3 text-sm focus:outline-none focus:ring-2 focus:ring-brand"
-            >
-              {FORM_ROLES.map((r) => (
-                <option key={r.value} value={r.value}>
-                  {r.label}
-                </option>
-              ))}
-            </select>
+            {/* Start time + End time: 2 columns */}
+            <div className="grid grid-cols-2 gap-2">
+              <div>
+                <label className="block text-xs font-medium text-slate-400 mb-1">Start time</label>
+                <select
+                  value={form.start_time}
+                  onChange={(e) => {
+                    onChange("start_time", e.target.value);
+                    if (form.end_time && e.target.value >= form.end_time) {
+                      onChange("end_time", "");
+                    }
+                  }}
+                  className="w-full h-10 min-h-[40px] rounded-lg bg-slate-700 border border-slate-600 text-white px-2 text-xs focus:outline-none focus:ring-2 focus:ring-brand"
+                  aria-invalid={!!errors.start_time}
+                >
+                  <option value="">Start</option>
+                  {TIME_OPTIONS.map((t) => (
+                    <option key={t} value={t}>
+                      {formatTimeOption(t)}
+                    </option>
+                  ))}
+                </select>
+                {errors.start_time && (
+                  <p className="text-red-400 text-[10px] mt-0.5">{errors.start_time}</p>
+                )}
+              </div>
+              <div>
+                <label className="block text-xs font-medium text-slate-400 mb-1">End time</label>
+                <select
+                  value={form.end_time}
+                  onChange={(e) => onChange("end_time", e.target.value)}
+                  className="w-full h-10 min-h-[40px] rounded-lg bg-slate-700 border border-slate-600 text-white px-2 text-xs focus:outline-none focus:ring-2 focus:ring-brand"
+                  aria-invalid={!!errors.end_time}
+                >
+                  <option value="">End</option>
+                  {(form.start_time ? endTimeOptions : TIME_OPTIONS).map((t) => (
+                    <option key={t} value={t}>
+                      {formatTimeOption(t)}
+                    </option>
+                  ))}
+                </select>
+                {errors.end_time && (
+                  <p className="text-red-400 text-[10px] mt-0.5">{errors.end_time}</p>
+                )}
+              </div>
+            </div>
           </div>
         </div>
-
-        <div className="mt-6 space-y-3">
-          <button
-            type="button"
-            onClick={onSave}
-            className="w-full h-12 rounded-xl bg-blue-600 hover:bg-blue-500 text-white font-semibold text-sm transition-colors"
-          >
-            {isEdit ? "Save Changes" : "Save Shift"}
-          </button>
-          {isEdit && onDelete && (
-            <button
-              type="button"
-              onClick={onDelete}
-              className="w-full h-12 rounded-xl bg-red-600/20 text-red-400 border border-red-800 hover:bg-red-600/30 font-semibold text-sm transition-colors"
-            >
-              Delete Shift
-            </button>
-          )}
+        <div className="flex-shrink-0 p-4 pt-2 pb-[calc(0.75rem+env(safe-area-inset-bottom))] border-t border-slate-700/80">
+            <div className="grid grid-cols-2 gap-2">
+              <button
+                type="button"
+                onClick={onClose}
+                className="py-3 rounded-xl bg-slate-700 text-slate-300 text-sm font-semibold"
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                onClick={onSave}
+                disabled={!isValid}
+                className="py-3 rounded-xl bg-blue-600 hover:bg-blue-500 text-white text-sm font-semibold disabled:bg-slate-700 disabled:text-slate-500 transition-colors"
+              >
+                {isEdit ? "Save Changes" : "Save Shift"}
+              </button>
+            </div>
+            {isEdit && onDelete && (
+              <button
+                type="button"
+                onClick={onDelete}
+                className="w-full mt-2 py-3 rounded-xl bg-red-600/20 text-red-400 border border-red-800 hover:bg-red-600/30 font-semibold text-sm transition-colors"
+              >
+                Delete Shift
+              </button>
+            )}
         </div>
       </div>
     </>
@@ -291,24 +316,34 @@ export default function SchedulePage() {
   const [form, setForm] = useState<ShiftForm>(emptyForm);
   const [formErrors, setFormErrors] = useState<Partial<Record<keyof ShiftForm, string>>>({});
   const [highlightedShiftId, setHighlightedShiftId] = useState<string | null>(null);
+  const [selectedStore, setSelectedStore] = useState<StoreSlug>("kent");
+  const [storeOpen, setStoreOpen] = useState(false);
+  const [view, setView] = useState<"week" | "day">("week");
+  const [dayIndex, setDayIndex] = useState(0);
 
   const employeeMap = Object.fromEntries(SEED_EMPLOYEES.map((e) => [e.id, e]));
   const kpiByDate = Object.fromEntries(SEED_DAILY_KPIS.map((k) => [k.date, k]));
 
-  const activeEmployees = SEED_EMPLOYEES.filter((e) => e.status === "active").map((e) => ({
-    id: e.id,
-    name: e.name,
-    role: e.role,
-  }));
+  const activeEmployees = SEED_EMPLOYEES.filter((e) => e.status === "active")
+    .filter((e) => selectedStore === "all" || e.store_id === selectedStore)
+    .map((e) => ({ id: e.id, name: e.name, role: e.role }));
+
+  const shiftsForStore =
+    selectedStore === "all"
+      ? shifts
+      : shifts.filter((s) => employeeMap[s.employee_id]?.store_id === selectedStore);
 
   const shiftsByDate: Record<string, (SeedShift & { name: string; hours: number })[]> = {};
   weekDates.forEach((d) => (shiftsByDate[d] = []));
-  shifts.forEach((s) => {
+  shiftsForStore.forEach((s) => {
     if (!shiftsByDate[s.date]) return;
     const name = employeeMap[s.employee_id]?.name ?? "Unknown";
     const hours = shiftHours(s.start_time, s.end_time);
     shiftsByDate[s.date].push({ ...s, name, hours });
   });
+
+  const selectedStoreName = getStoreLabel(selectedStore);
+  const currentDayDate = weekDates[dayIndex];
 
   useEffect(() => {
     if (!highlightedShiftId) return;
@@ -425,13 +460,180 @@ export default function SchedulePage() {
           <EducationInfoIcon metricKey="slph" />
         </div>
         <p className="text-xs text-muted">Week view. Total hours, labor cost, and projected SLPH by day.</p>
+      </div>
 
+      {/* Store selector */}
+      <div className="relative mb-4 px-3 sm:px-5">
+        <button
+          type="button"
+          onClick={() => setStoreOpen((o) => !o)}
+          className="flex items-center gap-2 bg-slate-800 rounded-lg px-3 py-2 border border-slate-700 text-sm text-white min-h-[44px] w-full sm:w-auto"
+          aria-haspopup="listbox"
+          aria-expanded={storeOpen}
+          aria-label={`Store: ${selectedStoreName}. Select location.`}
+        >
+          <MapPin className="w-4 h-4 text-blue-400 shrink-0" aria-hidden />
+          <span className="truncate">{selectedStoreName}</span>
+          <ChevronDown className={cn("w-4 h-4 text-slate-400 shrink-0 transition-transform", storeOpen && "rotate-180")} aria-hidden />
+        </button>
+        {storeOpen && (
+          <>
+            <div className="fixed inset-0 z-30" aria-hidden="true" onClick={() => setStoreOpen(false)} />
+            <div className="absolute top-full left-3 right-3 sm:left-0 sm:right-auto mt-1 z-40 w-64 bg-slate-800 rounded-xl border border-slate-700 shadow-lg shadow-black/30 overflow-hidden">
+              {STORE_OPTIONS.map((opt) => (
+                <button
+                  key={opt.slug}
+                  type="button"
+                  onClick={() => {
+                    setSelectedStore(opt.slug);
+                    setStoreOpen(false);
+                  }}
+                  className={cn(
+                    "w-full flex items-center justify-between px-4 py-3 text-sm hover:bg-slate-700/50 transition-colors",
+                    selectedStore === opt.slug ? "text-blue-400" : "text-slate-300"
+                  )}
+                >
+                  <span>{opt.name}</span>
+                  {selectedStore === opt.slug && <Check className="w-4 h-4 text-blue-400 shrink-0" aria-hidden />}
+                </button>
+              ))}
+            </div>
+          </>
+        )}
+      </div>
+
+      {/* Week / Day toggle + week label */}
+      <div className="flex flex-wrap items-center gap-3 px-3 sm:px-5">
+        <div className="flex bg-slate-800 rounded-lg p-0.5 border border-slate-700">
+          <button
+            type="button"
+            onClick={() => setView("week")}
+            className={cn(
+              "px-4 py-1.5 rounded-md text-xs font-medium transition-colors",
+              view === "week" ? "bg-slate-700 text-white" : "text-slate-400"
+            )}
+          >
+            Week
+          </button>
+          <button
+            type="button"
+            onClick={() => setView("day")}
+            className={cn(
+              "px-4 py-1.5 rounded-md text-xs font-medium transition-colors",
+              view === "day" ? "bg-slate-700 text-white" : "text-slate-400"
+            )}
+          >
+            Day
+          </button>
+        </div>
         <p className="text-xs text-muted">
           Week of {new Date(weekDates[0] + "T12:00:00Z").toLocaleDateString("en-US", { month: "short", day: "numeric" })} –{" "}
           {new Date(weekDates[6] + "T12:00:00Z").toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })}
         </p>
       </div>
 
+      {view === "day" ? (
+        /* Day view: single day with prev/next */
+        <div className="space-y-4 px-3 sm:px-5">
+          <div className="flex items-center justify-between gap-2">
+            <button
+              type="button"
+              onClick={() => setDayIndex((i) => (i === 0 ? 6 : i - 1))}
+              className="min-h-[44px] min-w-[44px] flex items-center justify-center rounded-lg border border-slate-600 bg-slate-800/80 text-slate-300 hover:text-white transition-colors"
+              aria-label="Previous day"
+            >
+              ←
+            </button>
+            <span className="text-sm font-medium text-white">
+              {DAY_NAMES[dayIndex]} — {new Date(currentDayDate + "T12:00:00Z").toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })}
+            </span>
+            <button
+              type="button"
+              onClick={() => setDayIndex((i) => (i === 6 ? 0 : i + 1))}
+              className="min-h-[44px] min-w-[44px] flex items-center justify-center rounded-lg border border-slate-600 bg-slate-800/80 text-slate-300 hover:text-white transition-colors"
+              aria-label="Next day"
+            >
+              →
+            </button>
+          </div>
+          {(() => {
+            const date = currentDayDate;
+            const dayShifts = shiftsByDate[date] ?? [];
+            const totalHours = dayShifts.reduce((s, sh) => s + sh.hours, 0);
+            const laborCost = dayShifts.reduce((s, sh) => s + sh.cost, 0);
+            const projSales = projectedSalesForDate(date);
+            const slph = totalHours > 0 ? Math.round((projSales / totalHours) * 10) / 10 : 0;
+            const dateLabel = new Date(date + "T12:00:00Z").toLocaleDateString("en-US", { month: "short", day: "numeric" });
+            return (
+              <section className="rounded-xl border border-border/50 bg-black/20 overflow-hidden">
+                <div className="p-4 border-b border-border/30 flex items-center justify-between flex-wrap gap-2">
+                  <div>
+                    <span className="font-semibold text-white">{DAY_NAMES[dayIndex]}</span>
+                    <span className="text-muted text-sm ml-2">{dateLabel}</span>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => openAdd(date)}
+                    className="min-h-[44px] rounded-lg border border-brand/50 bg-brand/15 px-3 py-2 text-sm font-medium text-brand hover:bg-brand/25"
+                  >
+                    Add Shift
+                  </button>
+                </div>
+                <div className="p-4 space-y-3">
+                  {dayShifts.length === 0 ? (
+                    <p className="text-sm text-muted py-4">No shifts scheduled.</p>
+                  ) : (
+                    dayShifts.map((sh) => (
+                      <button
+                        type="button"
+                        key={sh.id}
+                        onClick={() => openEdit(sh)}
+                        className={cn(
+                          "w-full flex items-center justify-between rounded-xl border px-4 py-3 text-left min-h-[52px] transition-colors",
+                          ROLE_COLORS[sh.role] ?? "bg-muted/10 text-muted border-border/30",
+                          highlightedShiftId === sh.id && "bg-blue-900/30 border-blue-600/50"
+                        )}
+                      >
+                        <div className="min-w-0">
+                          <div className="font-semibold text-white text-base">{sh.name}</div>
+                          <div className="text-xs uppercase tracking-wide opacity-90 mt-0.5">
+                            {roleLabel(sh.role)} · {formatTimeOption(sh.start_time)} – {formatTimeOption(sh.end_time)}
+                          </div>
+                        </div>
+                        <div className="text-sm font-semibold tabular-nums shrink-0">{sh.hours}h · ${sh.cost.toFixed(0)}</div>
+                      </button>
+                    ))
+                  )}
+                </div>
+                <div className="p-4 border-t border-border/30 bg-black/20 grid grid-cols-3 gap-2 text-center">
+                  <div>
+                    <div className="text-[10px] uppercase text-muted">Hours</div>
+                    <div className="text-base font-bold tabular-nums text-white">{totalHours.toFixed(1)}</div>
+                  </div>
+                  <div>
+                    <div className="text-[10px] uppercase text-muted">Labor</div>
+                    <div className="text-base font-bold tabular-nums text-white">{"$" + laborCost.toFixed(0)}</div>
+                  </div>
+                  <div>
+                    <div className="text-[10px] uppercase text-muted flex items-center justify-center gap-0.5">
+                      SLPH
+                      <EducationInfoIcon metricKey="slph" size="sm" />
+                    </div>
+                    <div
+                      className={cn(
+                        "text-base font-bold tabular-nums",
+                        slph >= 65 ? "text-emerald-400" : slph >= 50 ? "text-amber-400" : "text-red-400"
+                      )}
+                    >
+                      {"$" + slph}
+                    </div>
+                  </div>
+                </div>
+              </section>
+            );
+          })()}
+        </div>
+      ) : (
       <div className="space-y-4">
         {weekDates.map((date, i) => {
           const dayShifts = shiftsByDate[date] ?? [];
@@ -513,6 +715,7 @@ export default function SchedulePage() {
           );
         })}
       </div>
+      )}
 
       <ShiftModal
         isOpen={modalState.mode !== "closed"}
@@ -521,6 +724,13 @@ export default function SchedulePage() {
         errors={formErrors}
         employees={activeEmployees}
         weekDates={weekDates}
+        isValid={
+          !!form.employee_id &&
+          !!form.date &&
+          !!form.start_time &&
+          !!form.end_time &&
+          (form.start_time === "" || form.end_time === "" || form.start_time < form.end_time)
+        }
         onClose={closeModal}
         onChange={setFormField}
         onSave={handleSave}

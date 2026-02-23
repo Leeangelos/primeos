@@ -17,12 +17,21 @@ const CHANNELS = [
 ];
 
 const ROLE_STYLE: Record<string, string> = {
+  owner: "bg-blue-500/20 text-blue-400 border-blue-500/40",
+  admin: "bg-purple-500/20 text-purple-400 border-purple-500/40",
   manager: "bg-amber-500/20 text-amber-400 border-amber-500/40",
   shift_lead: "bg-brand/20 text-brand border-brand/40",
   cook: "bg-emerald-500/20 text-emerald-400 border-emerald-500/40",
   cashier: "bg-blue-500/20 text-blue-400 border-blue-500/40",
   driver: "bg-purple-500/20 text-purple-400 border-purple-500/40",
   team: "bg-muted/20 text-muted border-border/40",
+};
+
+const SENDER_STYLE: Record<string, { text: string; bg: string }> = {
+  Angelo: { text: "text-blue-400", bg: "bg-blue-400/20" },
+  Greg: { text: "text-emerald-400", bg: "bg-emerald-400/20" },
+  Rosario: { text: "text-amber-400", bg: "bg-amber-400/20" },
+  LeeAnn: { text: "text-purple-400", bg: "bg-purple-400/20" },
 };
 
 type Message = {
@@ -261,12 +270,16 @@ export default function ChatPage() {
 
 function MessageBlock({ m, isAnnouncements }: { m: Message; isAnnouncements: boolean }) {
   const roleStyle = ROLE_STYLE[m.sender_role ?? ""] ?? ROLE_STYLE.team;
+  const senderStyle = SENDER_STYLE[m.sender_name] ?? { text: "text-white", bg: "bg-muted/20" };
   const time = new Date(m.created_at).toLocaleTimeString("en-US", { hour: "numeric", minute: "2-digit" });
 
   return (
     <div className={cn("rounded-lg border p-3", isAnnouncements || m.is_announcement ? "border-amber-500/40 bg-amber-500/5" : "border-border/30 bg-black/10")}>
       <div className="flex items-center gap-2 flex-wrap mb-1">
-        <span className="font-medium text-white text-sm">{m.sender_name}</span>
+        <span className={cn("h-6 w-6 rounded-full flex items-center justify-center text-xs font-bold shrink-0", senderStyle.bg, senderStyle.text)}>
+          {m.sender_name.slice(0, 1)}
+        </span>
+        <span className={cn("font-medium text-sm", senderStyle.text)}>{m.sender_name}</span>
         {m.sender_role && (
           <span className={cn("text-[10px] uppercase px-2 py-0.5 rounded border", roleStyle)}>{m.sender_role.replace("_", " ")}</span>
         )}

@@ -4,7 +4,7 @@ import { useState, useEffect, useCallback } from "react";
 import { createPortal } from "react-dom";
 import { EducationInfoIcon } from "@/src/components/education/InfoIcon";
 import { EDUCATION_CONTENT } from "@/src/lib/education-content";
-import { SEED_TASKS } from "@/src/lib/seed-data";
+import { SEED_TASKS, SEED_EMPLOYEES } from "@/src/lib/seed-data";
 import { COCKPIT_STORE_SLUGS, COCKPIT_TARGETS, type CockpitStoreSlug } from "@/lib/cockpit-config";
 import { getStoreColor } from "@/lib/store-colors";
 import { cn } from "@/lib/utils";
@@ -81,8 +81,7 @@ export default function TasksPage() {
   const [category, setCategory] = useState<typeof CATEGORIES[number]["key"]>("all");
   const [tasks, setTasks] = useState<Task[]>([]);
   const [loading, setLoading] = useState(true);
-  const [completeTarget, setCompleteTarget] = useState<{ task: Task; name: string } | null>(null);
-  const [completeName, setCompleteName] = useState("");
+  const [completingTaskId, setCompletingTaskId] = useState<string | null>(null);
   const [showAddTask, setShowAddTask] = useState(false);
   const [addTitle, setAddTitle] = useState("");
   const [addCategory, setAddCategory] = useState<Task["category"]>("custom");
@@ -118,22 +117,31 @@ export default function TasksPage() {
     completionPct >= 70 ? "border-amber-500/50 bg-amber-500/10 text-amber-400" :
     "border-red-500/50 bg-red-500/10 text-red-400";
 
-  async function handleComplete() {
-    if (!completeTarget || !completeName.trim()) return;
+  const employees = SEED_EMPLOYEES.filter((e) => e.status === "active");
+
+  async function handleComplete(taskId: string, selectedName: string) {
+    if (!selectedName?.trim()) return;
     setSaving(true);
+    const completedAt = new Date().toLocaleString();
     await fetch("/api/tasks", {
       method: "PUT",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
-        id: completeTarget.task.id,
+        id: taskId,
         status: "completed",
-        completed_by: completeName.trim(),
+        completed_by: selectedName.trim(),
         completed_at: new Date().toISOString(),
       }),
     });
+    setTasks((prev) =>
+      prev.map((t) =>
+        t.id === taskId
+          ? { ...t, status: "completed", completed_by: selectedName.trim(), completed_at: completedAt }
+          : t
+      )
+    );
     setSaving(false);
-    setCompleteTarget(null);
-    setCompleteName("");
+    setCompletingTaskId(null);
     loadTasks();
   }
 
@@ -172,7 +180,7 @@ export default function TasksPage() {
     <div className="space-y-5">
       <div className="dashboard-toolbar p-3 sm:p-5 space-y-3">
         <div className="flex items-center gap-2 flex-wrap">
-          <h1 className="text-lg font-semibold sm:text-2xl">Task Manager</h1>
+          <h1 className="text-lg font-semibold sm:text-2xl">Manager Tasks</h1>
           <EducationInfoIcon metricKey="task_management" />
         </div>
         <p className="text-xs text-muted">Daily opening, closing, prep, and cleaning. Mark complete when done.</p>
@@ -254,18 +262,37 @@ export default function TasksPage() {
                 key={task.id}
                 className={cn("rounded-lg border p-3 flex items-center gap-3", isCompleted ? "border-emerald-500/30 bg-emerald-500/5" : "border-border/50 bg-black/20")}
               >
-                <button
-                  type="button"
-                  onClick={() => {
-                    if (isCompleted) return;
-                    setCompleteTarget({ task, name: "" });
-                    setCompleteName("");
-                  }}
-                  className={cn("shrink-0 min-h-[44px] min-w-[44px] rounded border flex items-center justify-center text-sm", isCompleted ? "border-emerald-500/50 bg-emerald-500/20 text-emerald-400" : "border-border/50 bg-black/30 text-muted hover:border-brand/50")}
-                  aria-label={isCompleted ? "Completed" : "Mark complete"}
-                >
-                  {isCompleted ? "✓" : ""}
-                </button>
+                {completingTaskId === task.id ? (
+                  <div className="flex items-center gap-2 shrink-0">
+                    <select
+                      onChange={(e) => {
+                        const v = e.target.value;
+                        if (v) handleComplete(task.id, v);
+                      }}
+                      defaultValue=""
+                      className="bg-slate-700 border border-slate-600 rounded-lg text-xs text-white h-8 px-2"
+                      autoFocus
+                    >
+                      <option value="" disabled>Who completed this?</option>
+                      {employees.map((emp) => (
+                        <option key={emp.id} value={emp.name}>{emp.name} ({ROLES[emp.role] ?? emp.role})</option>
+                      ))}
+                    </select>
+                    <button type="button" onClick={() => setCompletingTaskId(null)} className="text-xs text-slate-500">Cancel</button>
+                  </div>
+                ) : (
+                  <button
+                    type="button"
+                    onClick={() => {
+                      if (isCompleted) return;
+                      setCompletingTaskId(task.id);
+                    }}
+                    className={cn("shrink-0 min-h-[44px] min-w-[44px] rounded border flex items-center justify-center text-sm", isCompleted ? "border-emerald-500/50 bg-emerald-500/20 text-emerald-400" : "border-border/50 bg-black/30 text-muted hover:border-brand/50")}
+                    aria-label={isCompleted ? "Completed" : "Mark complete"}
+                  >
+                    {isCompleted ? "✓" : ""}
+                  </button>
+                )}
                 <div className="min-w-0 flex-1">
                   <div className={cn("font-medium text-sm", isCompleted && "line-through text-muted")}>{task.title}</div>
                   <div className="flex flex-wrap items-center gap-2 mt-1">
@@ -273,7 +300,11 @@ export default function TasksPage() {
                     <span className="text-[10px] text-muted">{formatDate(task.due_date)}</span>
                     <span className={cn("text-[10px] uppercase px-2 py-0.5 rounded border", PRIORITY_STYLE[task.priority] ?? PRIORITY_STYLE.medium)}>{task.priority}</span>
                     {task.due_time && <span className="text-[10px] text-muted">{task.due_time}</span>}
-                    {isCompleted && task.completed_by && <span className="text-[10px] text-emerald-400/80">by {task.completed_by}</span>}
+                    {isCompleted && task.completed_by && (
+                      <span className="text-xs text-slate-500">
+                        Completed by {task.completed_by}{task.completed_at ? ` · ${task.completed_at}` : ""}
+                      </span>
+                    )}
                   </div>
                 </div>
               </div>
@@ -309,31 +340,6 @@ export default function TasksPage() {
           </div>
         );
       })()}
-
-      {/* Complete-task modal */}
-      {completeTarget && typeof document !== "undefined" && createPortal(
-        <div className="fixed inset-0 z-[9999] flex items-center justify-center p-4" style={{ position: "fixed", top: 0, left: 0, right: 0, bottom: 0 }} onClick={() => setCompleteTarget(null)}>
-          <div className="absolute inset-0 bg-black/80 backdrop-blur-sm" />
-          <div className="relative w-full max-w-sm rounded-2xl border border-border bg-[#0d0f13] p-4 sm:p-5 shadow-2xl min-w-0" onClick={(e) => e.stopPropagation()}>
-            <button type="button" onClick={() => setCompleteTarget(null)} className="absolute top-3 right-3 min-h-[44px] min-w-[44px] flex items-center justify-center text-muted hover:text-white text-lg -mr-2" aria-label="Close">✕</button>
-            <h3 className="text-base font-semibold text-white mb-1">Mark complete</h3>
-            <p className="text-sm text-muted mb-3">{completeTarget.task.title}</p>
-            <label className="block text-xs text-muted mb-1">Your name</label>
-            <input
-              type="text"
-              value={completeName}
-              onChange={(e) => setCompleteName(e.target.value)}
-              placeholder="e.g. Jordan"
-              className="w-full rounded-lg border border-border/50 bg-black/30 px-3 py-2.5 text-sm text-white placeholder:text-muted focus:border-brand/60 focus:ring-1 focus:ring-brand/40 focus:outline-none mb-4"
-            />
-            <div className="flex gap-2">
-              <button type="button" onClick={handleComplete} disabled={!completeName.trim() || saving} className="flex-1 rounded-lg border border-emerald-500/50 bg-emerald-500/15 px-4 py-2.5 text-sm font-semibold text-emerald-400 hover:bg-emerald-500/25 disabled:opacity-50">Done</button>
-              <button type="button" onClick={() => setCompleteTarget(null)} className="flex-1 rounded-lg border border-border/50 bg-black/30 px-4 py-2.5 text-sm text-muted hover:text-white">Cancel</button>
-            </div>
-          </div>
-        </div>,
-        document.body
-      )}
 
       {/* Add task modal */}
       {showAddTask && typeof document !== "undefined" && createPortal(
@@ -395,7 +401,7 @@ export default function TasksPage() {
             <div className="space-y-3 text-sm">
               <div>
                 <h4 className="font-medium text-white mb-1">Why Task Accountability Matters</h4>
-                <p className="text-muted text-xs leading-relaxed">When opening and closing tasks are written down and checked off, nothing gets missed. Ovens get turned off. Walk-in temps get logged. Cash gets counted. One skipped step can cost you a health write-up or a safety incident. Task Manager gives you a single place to see what’s done and what’s left—and who did it.</p>
+                <p className="text-muted text-xs leading-relaxed">When opening and closing tasks are written down and checked off, nothing gets missed. Ovens get turned off. Walk-in temps get logged. Cash gets counted. One skipped step can cost you a health write-up or a safety incident. Manager Tasks gives you a single place to see what’s done and what’s left—and who did it.</p>
               </div>
               <div>
                 <h4 className="font-medium text-white mb-1">How Completion Tracking Reduces Errors</h4>

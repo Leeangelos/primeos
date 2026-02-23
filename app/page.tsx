@@ -7,6 +7,7 @@ import { BarChart3, Calendar, Check, ChevronDown, ChevronRight, ClipboardList, M
 import { Area, AreaChart, ReferenceLine, ResponsiveContainer } from "recharts";
 import { COLORS, getGradeColor } from "@/src/lib/design-tokens";
 import { EducationInfoIcon } from "@/src/components/education/InfoIcon";
+import { formatPct } from "@/src/lib/formatters";
 import { SEED_DAILY_KPIS, SEED_MORNING_BRIEF, SEED_STORES } from "@/src/lib/seed-data";
 
 function firstSentences(text: string, count: number): string {
@@ -178,21 +179,21 @@ export default function HomePage() {
         list.push({
           key: "food_cost",
           label: `Food Cost (${storeLabel})`,
-          message: `Food cost at ${kpi.foodCostPct.toFixed(1)}% — above 33% target. Tap for playbook.`,
+          message: `Food cost at ${formatPct(kpi.foodCostPct)} — above 33% target. Tap for playbook.`,
         });
       }
       if (getGradeColor(kpi.laborPct, LABOR_RED, "lower_is_better") === COLORS.grade.red) {
         list.push({
           key: "labor_pct",
           label: `Labor % (${storeLabel})`,
-          message: `Labor at ${kpi.laborPct.toFixed(1)}% — above 24% target. Tap for playbook.`,
+          message: `Labor at ${formatPct(kpi.laborPct)} — above 24% target. Tap for playbook.`,
         });
       }
       if (getGradeColor(kpi.primePct, PRIME_RED, "lower_is_better") === COLORS.grade.red) {
         list.push({
           key: "prime_cost",
           label: `PRIME % (${storeLabel})`,
-          message: `PRIME at ${kpi.primePct.toFixed(1)}% — above 58% target. Tap for playbook.`,
+          message: `PRIME at ${formatPct(kpi.primePct)} — above 58% target. Tap for playbook.`,
         });
       }
       if (getGradeColor(kpi.sales / 100, dailyTargetSales / 100, "higher_is_better") === COLORS.grade.red) {
@@ -301,7 +302,7 @@ export default function HomePage() {
               <EducationInfoIcon metricKey="food_cost" />
             </div>
             <div className="text-2xl font-bold tabular-nums" style={{ color: getGradeColor(kpi.foodCostPct, FOOD_COST_TARGET, "lower_is_better") }}>
-              {kpi.foodCostPct.toFixed(1)}%
+              {formatPct(kpi.foodCostPct)}
             </div>
             <div className="text-xs text-slate-500">Target: 28–31%{kpi.isYesterday ? " (Yesterday)" : ""}</div>
           </div>
@@ -311,7 +312,7 @@ export default function HomePage() {
               <EducationInfoIcon metricKey="labor_pct" />
             </div>
             <div className="text-2xl font-bold tabular-nums" style={{ color: getGradeColor(kpi.laborPct, LABOR_TARGET, "lower_is_better") }}>
-              {kpi.laborPct.toFixed(1)}%
+              {formatPct(kpi.laborPct)}
             </div>
             <div className="text-xs text-slate-500">Target: 19–22%{kpi.isYesterday ? " (Yesterday)" : ""}</div>
           </div>
@@ -321,7 +322,7 @@ export default function HomePage() {
               <EducationInfoIcon metricKey="prime_cost" />
             </div>
             <div className="text-2xl font-bold tabular-nums" style={{ color: getGradeColor(kpi.primePct, PRIME_TARGET, "lower_is_better") }}>
-              {kpi.primePct.toFixed(1)}%
+              {formatPct(kpi.primePct)}
             </div>
             <div className="text-xs text-slate-500">Target: ≤55%{kpi.isYesterday ? " (Yesterday)" : ""}</div>
           </div>

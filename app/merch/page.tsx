@@ -3,7 +3,7 @@
 import { Suspense, useState, useEffect, useCallback } from "react";
 import { createPortal } from "react-dom";
 import { useSearchParams } from "next/navigation";
-import { Shirt } from "lucide-react";
+import { Shirt, ShoppingCart } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { SEED_MERCH } from "@/src/lib/seed-data";
 
@@ -146,11 +146,20 @@ function MerchContent() {
         <div className="rounded-lg border border-amber-500/50 bg-amber-500/10 p-5 text-center text-sm text-amber-400">Checkout canceled. Your cart is still here.</div>
       )}
 
-      {/* Cart floating button */}
-      {cartCount > 0 && !showCart && (
-        <button type="button" onClick={() => setShowCart(true)} className="fixed bottom-6 right-6 z-50 rounded-full bg-brand text-white h-14 w-14 flex items-center justify-center shadow-[0_0_20px_rgba(249,115,22,0.4)] text-lg font-bold">
-          {cartCount}
-        </button>
+      {/* Sticky floating cart bubble */}
+      {cartCount > 0 && (
+        <div className="fixed bottom-24 right-4 z-40">
+          <button
+            type="button"
+            onClick={() => setShowCart(true)}
+            className="flex items-center gap-2 bg-[#E65100] hover:bg-orange-600 text-white px-4 py-3 rounded-full shadow-lg shadow-black/30 transition-colors"
+          >
+            <ShoppingCart className="w-4 h-4" />
+            <span className="text-sm font-semibold">
+              Cart ({cartCount} {cartCount === 1 ? "item" : "items"})
+            </span>
+          </button>
+        </div>
       )}
 
       {loading ? (
@@ -291,73 +300,54 @@ function MerchContent() {
         </div>
       )}
 
-      {/* Cart Drawer */}
+      {/* Cart bottom sheet */}
       {showCart && (
-        <div className="fixed inset-0 z-[9999] flex items-end sm:items-center justify-center" onClick={() => setShowCart(false)}>
-          <div className="absolute inset-0 bg-black/80 backdrop-blur-sm" />
-          <div className="relative w-full max-w-md mx-auto rounded-t-2xl sm:rounded-2xl border border-border bg-[#0d0f13] p-4 sm:p-5 shadow-2xl overflow-y-auto max-h-[85vh] min-w-0" onClick={(e) => e.stopPropagation()}>
-            <button type="button" onClick={() => setShowCart(false)} className="absolute top-3 right-3 min-h-[44px] min-w-[44px] flex items-center justify-center text-muted hover:text-white text-lg -mr-2" aria-label="Close">✕</button>
-            <h3 className="text-base font-semibold text-brand mb-4">Your Cart ({cartCount} items)</h3>
+        <>
+          <div className="fixed inset-0 bg-black/60 z-50" onClick={() => setShowCart(false)} aria-hidden />
+          <div className="fixed inset-x-0 bottom-0 z-50 bg-slate-800 rounded-t-2xl border-t border-slate-700 p-5 pb-28 max-h-[70vh] overflow-y-auto animate-slide-up">
+            <div className="w-10 h-1 bg-slate-600 rounded-full mx-auto mb-4" />
+            <h3 className="text-lg font-bold text-white mb-4">Your Cart</h3>
 
             {cart.length === 0 ? (
-              <p className="text-sm text-muted text-center py-8">Cart is empty</p>
+              <p className="text-sm text-slate-400 py-4">Cart is empty</p>
             ) : (
               <>
-                <div className="space-y-2 mb-4">
-                  {cart.map((item, idx) => (
-                    <div key={idx} className="flex items-center justify-between rounded-lg border border-border/30 bg-black/20 p-3">
-                      <div>
-                        <div className="text-sm text-white font-medium">{item.name}</div>
-                        <div className="text-[10px] text-muted">{item.brand === "lindseys" ? "Lindsey's" : "LeeAngelo's"} · {item.size} · Qty: {item.qty}</div>
-                      </div>
-                      <div className="flex items-center gap-2">
-                        <span className="text-sm font-bold tabular-nums">${(item.price * item.qty).toFixed(2)}</span>
-                        <button type="button" onClick={() => removeFromCart(idx)} className="text-red-400 hover:text-red-300 text-xs">✕</button>
-                      </div>
+                {cart.map((item, idx) => (
+                  <div key={idx} className="flex items-center justify-between py-3 border-b border-slate-700">
+                    <div>
+                      <div className="text-sm text-white">{item.name}</div>
+                      <div className="text-xs text-slate-400">Qty: {item.qty} × ${item.price}</div>
                     </div>
-                  ))}
-                </div>
+                    <div className="text-sm text-white font-medium">${(item.qty * item.price).toFixed(2)}</div>
+                  </div>
+                ))}
 
-                <div className="border-t border-border/30 pt-3 space-y-1 mb-4">
-                  <div className="flex justify-between text-xs text-muted"><span>Subtotal</span><span>${cartTotal.toFixed(2)}</span></div>
-                  <div className="flex justify-between text-xs text-muted"><span>Tax (7.5%)</span><span>${cartTax.toFixed(2)}</span></div>
-                  <div className="flex justify-between text-sm font-bold text-brand"><span>Total</span><span>${cartGrandTotal.toFixed(2)}</span></div>
-                </div>
-
-                <div className="space-y-2 mb-4">
-                  <input
-                    type="text"
-                    placeholder="Your name *"
-                    value={employeeName}
-                    onChange={(e) => setEmployeeName(e.target.value)}
-                    className="w-full rounded-lg border border-border/50 bg-black/30 text-white text-sm px-3 py-2 placeholder:text-muted/50"
-                  />
-                  <input
-                    type="email"
-                    placeholder="Email (optional — for receipt)"
-                    value={employeeEmail}
-                    onChange={(e) => setEmployeeEmail(e.target.value)}
-                    className="w-full rounded-lg border border-border/50 bg-black/30 text-white text-sm px-3 py-2 placeholder:text-muted/50"
-                  />
+                <div className="flex justify-between items-center mt-4 pt-3 border-t border-slate-700">
+                  <span className="text-base font-bold text-white">Total</span>
+                  <span className="text-base font-bold text-emerald-400">${cartTotal.toFixed(2)}</span>
                 </div>
 
                 <button
                   type="button"
-                  onClick={handleCheckout}
-                  disabled={checkingOut || !employeeName || cart.length === 0}
-                  className={cn(
-                    "w-full rounded-xl py-3 text-center text-sm font-bold transition-all",
-                    checkingOut || !employeeName
-                      ? "bg-muted/20 text-muted cursor-wait"
-                      : "bg-brand text-white hover:bg-brand/90 shadow-[0_0_20px_rgba(249,115,22,0.3)]"
-                  )}
+                  onClick={() => alert("Checkout coming soon")}
+                  className="w-full py-3 rounded-xl bg-[#E65100] hover:bg-orange-600 text-white text-sm font-semibold mt-4 transition-colors"
                 >
-                  {checkingOut ? "Redirecting to payment..." : `Pay $${cartGrandTotal.toFixed(2)} with Stripe`}
+                  Checkout
+                </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setCart([]);
+                    setShowCart(false);
+                  }}
+                  className="w-full py-3 rounded-xl bg-slate-700 text-slate-300 text-sm font-semibold mt-2"
+                >
+                  Clear Cart
                 </button>
               </>
             )}
           </div>
-        </div>
+        </>
       )}
 
       {showEducation && typeof document !== "undefined" && createPortal(

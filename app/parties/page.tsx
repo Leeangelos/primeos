@@ -57,26 +57,17 @@ export default function PartiesPage() {
     <div className="space-y-5">
       <div className="dashboard-toolbar p-3 sm:p-5 space-y-3">
         <div className="flex items-center gap-2 flex-wrap">
-          <h1 className="text-lg font-semibold sm:text-2xl">Party Orders</h1>
+          <h1 className="text-lg font-semibold sm:text-2xl">Catering & Large Orders</h1>
           <EducationInfoIcon metricKey="party_orders" />
         </div>
-        <p className="text-xs text-muted">Catering and party orders. Margins and upsell strategy.</p>
-
-        <div className="flex justify-center sm:justify-start">
-          <button
-            type="button"
-            className="min-h-[44px] rounded-lg border-2 border-brand bg-brand/20 text-brand font-semibold px-5 py-2.5 text-sm hover:bg-brand/30 transition-colors"
-          >
-            New Party Order
-          </button>
-        </div>
+        <p className="text-xs text-muted">Catering and event orders. Margins and upsell strategy.</p>
       </div>
 
       {/* Upcoming */}
       <section className="space-y-3">
         <h2 className="text-sm font-semibold text-white px-1">Upcoming</h2>
         {upcoming.length === 0 ? (
-          <p className="text-sm text-muted py-4 text-center">No upcoming party orders.</p>
+          <p className="text-sm text-muted py-4 text-center">No upcoming catering orders.</p>
         ) : (
           <div className="space-y-2">
             {upcoming.map((p) => (
@@ -90,7 +81,7 @@ export default function PartiesPage() {
       <section className="space-y-3">
         <h2 className="text-sm font-semibold text-muted px-1">Completed</h2>
         {completed.length === 0 ? (
-          <p className="text-sm text-muted py-4 text-center">No completed party orders.</p>
+          <p className="text-sm text-muted py-4 text-center">No completed catering orders.</p>
         ) : (
           <div className="space-y-2">
             {completed.map((p) => (

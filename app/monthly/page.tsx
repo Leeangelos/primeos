@@ -9,16 +9,16 @@ import {
 } from "@/lib/cockpit-config";
 import { getStoreColor } from "@/lib/store-colors";
 import { EducationInfoIcon } from "@/src/components/education/InfoIcon";
+import { formatPct as formatPctShared, formatDollars as formatDollarsBase } from "@/src/lib/formatters";
 import { SEED_DAILY_KPIS } from "@/src/lib/seed-data";
 
 function formatPct(n: number | null): string {
   if (n == null || Number.isNaN(n)) return "—";
-  return `${n.toFixed(1)}%`;
+  return formatPctShared(n);
 }
-
 function formatDollars(n: number | null): string {
   if (n == null || Number.isNaN(n)) return "—";
-  return `$${n.toLocaleString("en-US", { minimumFractionDigits: 0, maximumFractionDigits: 0 })}`;
+  return formatDollarsBase(n);
 }
 
 function formatNum(n: number | null): string {

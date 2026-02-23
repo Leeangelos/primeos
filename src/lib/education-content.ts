@@ -217,7 +217,7 @@ export const EDUCATION_CONTENT: Record<string, EducationEntry> = {
   },
 
   party_orders: {
-    title: "Party Order Margins & Upsell",
+    title: "Catering & Large Order Margins & Upsell",
     whatItMeans:
       "Party and catering orders are prepaid, predictable, and bulk-prepped — typically 15–20% higher margin than walk-in. You prep efficiently, staff precisely, and avoid waste. A shop doing 4 parties per weekend at $400 avg = $6,400/month in premium revenue. Upsell strategy: always quote a package (e.g. pizza + wings + drinks) first; add-ons like salads, desserts, and premium toppings lift the ticket. Consider establishing a deposit (e.g. 25–50%) to lock the date; balance due on pickup or delivery. Track repeat party customers — they're your best referral source.",
     whenRedPlaybook: [

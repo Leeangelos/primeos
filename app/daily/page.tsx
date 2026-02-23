@@ -18,7 +18,14 @@ import { getStoreColor } from "@/lib/store-colors";
 import { cn } from "@/lib/utils";
 import { getGradeBg, getGradeColor } from "@/src/lib/design-tokens";
 import { EducationInfoIcon } from "@/src/components/education/InfoIcon";
+import { ExportButton } from "@/src/components/ui/ExportButton";
+import { formatPct as formatPctShared } from "@/src/lib/formatters";
 import { SEED_DAILY_KPIS } from "@/src/lib/seed-data";
+
+function formatPct(n: number | null): string {
+  if (n == null || Number.isNaN(n)) return "—";
+  return formatPctShared(n);
+}
 
 function todayYYYYMMDD(): string {
   const t = new Date();
@@ -38,11 +45,6 @@ function nextDay(dateStr: string): string {
   const d = new Date(dateStr + "T12:00:00Z");
   d.setUTCDate(d.getUTCDate() + 1);
   return d.toISOString().slice(0, 10);
-}
-
-function formatPct(n: number | null): string {
-  if (n == null || Number.isNaN(n)) return "—";
-  return `${n.toFixed(1)}%`;
 }
 
 function formatNum(n: number | null): string {
@@ -343,6 +345,7 @@ function DailyPageContent() {
           <div className="flex items-center gap-2">
             <h1 className="text-lg font-semibold sm:text-2xl">Daily KPI Entry</h1>
             <button type="button" onClick={() => setShowEducation("overview")} className="inline-flex items-center justify-center min-h-[44px] min-w-[44px] rounded-full bg-muted/20 text-muted hover:bg-brand/20 hover:text-brand transition-colors text-xs font-bold" aria-label="Learn more">i</button>
+            <ExportButton pageName="Daily KPIs" />
           </div>
           <select
             value={storeId}
@@ -501,7 +504,7 @@ function DailyPageContent() {
                     <div className="text-xs text-muted/60 mt-1">7-day avg: {rolling.slph}</div>
                   )}
                   {rolling && label === "GROSS PROFIT %" && rolling.primePct != null && (
-                    <div className="text-xs text-muted/60 mt-1">7-day avg: {(100 - rolling.primePct).toFixed(1)}%</div>
+                    <div className="text-xs text-muted/60 mt-1">7-day avg: {formatPct(100 - rolling.primePct)}</div>
                   )}
                 </div>
               );
@@ -829,10 +832,10 @@ function DailyPageContent() {
                     </div>
                     <div className="flex items-center gap-3 shrink-0">
                       <span className={cn("text-xs font-medium px-2 py-0.5 rounded-full", getRecentEntryBadgeClass(row.food_cost_pct, 31))}>
-                        FC {row.food_cost_pct.toFixed(1)}%
+                        FC {formatPct(row.food_cost_pct)}
                       </span>
                       <span className={cn("text-xs font-medium px-2 py-0.5 rounded-full", getRecentEntryBadgeClass(row.labor_pct, 22))}>
-                        LB {row.labor_pct.toFixed(1)}%
+                        LB {formatPct(row.labor_pct)}
                       </span>
                     </div>
                   </Link>

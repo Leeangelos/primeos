@@ -55,7 +55,7 @@ export default function PrivacyPage() {
             <li>→ Employee information (names, roles, hire dates, pay rates)</li>
             <li>→ Marketing campaign data and ad spend</li>
             <li>→ Delivery platform data (DoorDash, UberEats, etc.)</li>
-            <li>→ Catering and party order data</li>
+            <li>→ Catering and large order data</li>
             <li>→ Vendor and invoice data</li>
           </ul>
           <p className="font-semibold text-white mt-3">Data from Third-Party Integrations</p>

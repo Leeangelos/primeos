@@ -158,7 +158,7 @@ export default function BillingPage() {
           <FeatureRow text="Invoice Scanner (AI OCR)" />
           <FeatureRow text="Sales Report + Comparisons" />
           <FeatureRow text="Actual P&L (CPA Upload)" />
-          <FeatureRow text="Task Manager" />
+          <FeatureRow text="Manager Tasks" />
           <FeatureRow text="Team Chat" />
         </ul>
         <button
@@ -195,7 +195,7 @@ export default function BillingPage() {
           <FeatureRow text="People Economics + CAC/LTV" />
           <FeatureRow text="Marketing ROI + ROAS" />
           <FeatureRow text="DoorDash Economics" />
-          <FeatureRow text="Party Order Management" />
+          <FeatureRow text="Catering & Large Orders" />
           <FeatureRow text="Hiring Pipeline" />
           <FeatureRow text="Local Intelligence" />
           <FeatureRow text="Team Merch Store" />

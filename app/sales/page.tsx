@@ -12,6 +12,8 @@ import {
 } from "recharts";
 import { cn } from "@/lib/utils";
 import { EducationInfoIcon } from "@/src/components/education/InfoIcon";
+import { ExportButton } from "@/src/components/ui/ExportButton";
+import { formatPct } from "@/src/lib/formatters";
 import {
   SEED_DAILY_KPIS,
   SEED_SALES_CHANNEL_PCT,
@@ -189,9 +191,12 @@ export default function SalesPage() {
   return (
     <div className="space-y-4 min-w-0 overflow-x-hidden pb-28">
       <div className="dashboard-toolbar p-3 sm:p-5 space-y-3">
-        <div className="flex items-center gap-2">
-          <h1 className="text-lg font-semibold sm:text-2xl">Sales Report</h1>
-          <EducationInfoIcon metricKey="daily_sales" />
+        <div className="flex items-center justify-between gap-2 flex-wrap">
+          <div className="flex items-center gap-2">
+            <h1 className="text-lg font-semibold sm:text-2xl">Sales Report</h1>
+            <EducationInfoIcon metricKey="daily_sales" />
+          </div>
+          <ExportButton pageName="Sales Report" />
         </div>
         <p className="text-xs text-muted">Daily sales and comparison by period.</p>
 
@@ -272,8 +277,7 @@ export default function SalesPage() {
                 changePct > 0 ? "text-emerald-400" : changePct < 0 ? "text-red-400" : "text-slate-400"
               )}
             >
-              {changePct > 0 ? "+" : ""}
-              {changePct}%
+              {(changePct > 0 ? "+" : "") + formatPct(changePct)}
             </span>
           </div>
         </div>
@@ -341,7 +345,7 @@ export default function SalesPage() {
                 >
                   <span className="text-slate-300">{row.channel}</span>
                   <span className="text-white font-medium tabular-nums">
-                    {fmt(row.amount)} <span className="text-slate-500 font-normal">({row.pct}%)</span>
+                    {fmt(row.amount)} <span className="text-slate-500 font-normal">({formatPct(row.pct)})</span>
                   </span>
                 </li>
               ))}
