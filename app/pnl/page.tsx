@@ -39,10 +39,12 @@ type LineItemProps = {
   grade?: "green" | "yellow" | "red";
   bold?: boolean;
   metricKey?: string;
+  amountColor?: "green" | "red";
 };
 
-function LineItem({ label, amount, pct, grade, bold, metricKey }: LineItemProps) {
+function LineItem({ label, amount, pct, grade, bold, metricKey, amountColor }: LineItemProps) {
   const gradeClass = grade === "green" ? "text-emerald-400" : grade === "yellow" ? "text-amber-400" : grade === "red" ? "text-red-400" : "text-white";
+  const amountClass = amountColor === "red" ? "text-red-400" : amountColor === "green" ? "text-emerald-400" : pct != null ? gradeClass : "text-white";
   return (
     <div className="flex justify-between items-center gap-2 py-1.5">
       <div className="flex items-center gap-2 min-w-0">
@@ -50,10 +52,10 @@ function LineItem({ label, amount, pct, grade, bold, metricKey }: LineItemProps)
         {metricKey && <EducationInfoIcon metricKey={metricKey} />}
       </div>
       <div className="flex items-center gap-2 shrink-0">
-        <span className={`tabular-nums ${bold ? "font-semibold" : "font-medium"} ${pct != null ? gradeClass : "text-white"}`}>
+        <span className={`tabular-nums ${bold ? "font-semibold" : "font-medium"} ${amountClass}`}>
           {amount}
         </span>
-        {pct != null && <span className="text-xs text-slate-400 tabular-nums">{pct}</span>}
+        {pct != null && <span className={`text-xs tabular-nums ${grade != null ? gradeClass : "text-slate-400"}`}>{pct}</span>}
       </div>
     </div>
   );
@@ -75,7 +77,7 @@ export default function PnlPage() {
   const { startDate, endDate, label: mtdLabel } = useMemo(() => getMTDRange(), []);
 
   const storeForSeed = storeFilter === "all" ? "kent" : storeFilter;
-  const storeName = storeFilter === "all" ? "Kent" : COCKPIT_TARGETS[storeFilter].name.split(" ")[0];
+  const storeName = storeFilter === "all" ? "All Locations" : COCKPIT_TARGETS[storeFilter].name;
 
   const pnl = useMemo(() => {
     const rows = SEED_DAILY_KPIS.filter(
@@ -146,7 +148,7 @@ export default function PnlPage() {
               <span className="text-slate-300">Total Sales</span>
               <EducationInfoIcon metricKey="daily_sales" />
             </div>
-            <span className="tabular-nums font-medium text-white shrink-0">{formatDollars(pnl.totalSales)}</span>
+            <span className="tabular-nums font-medium text-emerald-400 shrink-0">{formatDollars(pnl.totalSales)}</span>
           </div>
         </div>
 
@@ -158,12 +160,14 @@ export default function PnlPage() {
             pct={formatPct(pnl.foodPct)}
             grade={pctToGrade(pnl.foodPct, 31)}
             metricKey="food_cost"
+            amountColor="red"
           />
           <LineItem
             label="Disposables"
             amount={formatDollars(pnl.totalDisposables)}
             pct={formatPct(pnl.dispPct)}
-            metricKey="prime_cost"
+            metricKey="disposables_pct"
+            amountColor="red"
           />
           <Divider />
           <LineItem
@@ -172,7 +176,8 @@ export default function PnlPage() {
             pct={formatPct(pnl.cogsPct)}
             bold
             grade={pctToGrade(pnl.cogsPct, 35)}
-            metricKey="food_cost"
+            metricKey="cogs"
+            amountColor="red"
           />
         </div>
 
@@ -184,6 +189,7 @@ export default function PnlPage() {
             pct={formatPct(pnl.laborPct)}
             grade={pctToGrade(pnl.laborPct, 22)}
             metricKey="labor_pct"
+            amountColor="red"
           />
         </div>
 

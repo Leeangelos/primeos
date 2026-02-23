@@ -179,7 +179,7 @@ function WeeklyPageContent() {
         lastWeek: fmtDollars(lastW.sales),
         changePct: change(thisW.sales, lastW.sales),
         changeArrow: arrow(change(thisW.sales, lastW.sales)),
-        gradeColor: "text-slate-300",
+        gradeColor: "text-emerald-400",
         changeColor: changeColor(change(thisW.sales, lastW.sales), true),
       },
       {
@@ -189,7 +189,7 @@ function WeeklyPageContent() {
         lastWeek: fmtDollars(lastW.sales / 7),
         changePct: change(thisW.sales, lastW.sales),
         changeArrow: arrow(change(thisW.sales, lastW.sales)),
-        gradeColor: "text-slate-300",
+        gradeColor: "text-emerald-400",
         changeColor: changeColor(change(thisW.sales, lastW.sales), true),
       },
       {

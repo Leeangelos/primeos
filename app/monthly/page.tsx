@@ -41,10 +41,12 @@ type LineItemProps = {
   grade?: "green" | "yellow" | "red";
   bold?: boolean;
   metricKey?: string;
+  amountColor?: "green" | "red";
 };
 
-function LineItem({ label, amount, pct, grade, bold, metricKey }: LineItemProps) {
+function LineItem({ label, amount, pct, grade, bold, metricKey, amountColor }: LineItemProps) {
   const gradeClass = grade === "green" ? "text-emerald-400" : grade === "yellow" ? "text-amber-400" : grade === "red" ? "text-red-400" : "text-white";
+  const amountClass = amountColor === "red" ? "text-red-400" : amountColor === "green" ? "text-emerald-400" : pct != null ? gradeClass : "text-white";
   return (
     <div className="flex justify-between items-center gap-2 py-1.5">
       <div className="flex items-center gap-2 min-w-0">
@@ -52,10 +54,10 @@ function LineItem({ label, amount, pct, grade, bold, metricKey }: LineItemProps)
         {pct != null && metricKey && <EducationInfoIcon metricKey={metricKey} />}
       </div>
       <div className="flex items-center gap-2 shrink-0">
-        <span className={`tabular-nums ${bold ? "font-semibold" : "font-medium"} ${pct != null ? gradeClass : "text-white"}`}>
+        <span className={`tabular-nums ${bold ? "font-semibold" : "font-medium"} ${amountClass}`}>
           {amount}
         </span>
-        {pct != null && <span className="text-xs text-slate-400 tabular-nums">{pct}</span>}
+        {pct != null && <span className={`text-xs tabular-nums ${grade != null ? gradeClass : "text-slate-400"}`}>{pct}</span>}
       </div>
     </div>
   );
@@ -84,7 +86,7 @@ function MonthlyContent() {
   );
 
   const storeForSeed = storeFilter === "all" ? "kent" : storeFilter;
-  const storeName = storeFilter === "all" ? "Kent" : COCKPIT_TARGETS[storeFilter].name.split(" ")[0];
+  const storeName = storeFilter === "all" ? "All Locations" : COCKPIT_TARGETS[storeFilter].name;
 
   const pnl = useMemo(() => {
     const rows = SEED_DAILY_KPIS.filter(
@@ -183,9 +185,12 @@ function MonthlyContent() {
 
         <div className="p-4 border-b border-slate-700">
           <div className="text-xs text-slate-500 uppercase tracking-wide mb-2">Revenue</div>
-          <div className="flex justify-between text-sm">
-            <span className="text-slate-300">Total Sales</span>
-            <span className="text-white font-medium">{formatDollars(pnl.totalSales)}</span>
+          <div className="flex justify-between items-center gap-2 text-sm py-1.5">
+            <div className="flex items-center gap-2 min-w-0">
+              <span className="text-slate-300">Total Sales</span>
+              <EducationInfoIcon metricKey="daily_sales" />
+            </div>
+            <span className="text-emerald-400 font-medium shrink-0">{formatDollars(pnl.totalSales)}</span>
           </div>
         </div>
 
@@ -197,12 +202,14 @@ function MonthlyContent() {
             pct={formatPct(pnl.foodPct)}
             grade={pctToGrade(pnl.foodPct, 31)}
             metricKey="food_cost"
+            amountColor="red"
           />
           <LineItem
             label="Disposables"
             amount={formatDollars(pnl.totalDisposables)}
             pct={formatPct(pnl.dispPct)}
-            metricKey="prime_cost"
+            metricKey="disposables_pct"
+            amountColor="red"
           />
           <Divider />
           <LineItem
@@ -211,7 +218,8 @@ function MonthlyContent() {
             pct={formatPct(pnl.cogsPct)}
             bold
             grade={pctToGrade(pnl.cogsPct, 35)}
-            metricKey="food_cost"
+            metricKey="cogs"
+            amountColor="red"
           />
         </div>
 
@@ -223,13 +231,17 @@ function MonthlyContent() {
             pct={formatPct(pnl.laborPct)}
             grade={pctToGrade(pnl.laborPct, 22)}
             metricKey="labor_pct"
+            amountColor="red"
           />
         </div>
 
         <div className="p-4 bg-slate-700/50">
-          <div className="flex justify-between items-baseline">
-            <span className="text-white font-bold">Gross Profit</span>
-            <div className="text-right">
+          <div className="flex justify-between items-center gap-2">
+            <div className="flex items-center gap-2 min-w-0">
+              <span className="text-white font-bold">Gross Profit</span>
+              <EducationInfoIcon metricKey="gross_profit" />
+            </div>
+            <div className="text-right shrink-0">
               <span className="text-emerald-400 font-bold text-lg">{formatDollars(pnl.grossProfit)}</span>
               <span className="text-xs text-slate-400 ml-2">{formatPct(pnl.gpPct)}</span>
             </div>

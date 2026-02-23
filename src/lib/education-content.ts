@@ -305,4 +305,82 @@ export const EDUCATION_CONTENT: Record<string, EducationEntry> = {
       "Consider building a 90-day improvement plan: target 1 point improvement in GP per month while holding fixed costs flat",
     ],
   },
+
+  revenue: {
+    title: "Total Revenue",
+    whatItMeans:
+      "Total money collected from all sales channels — dine-in, pickup, delivery, and third-party platforms. This is the top line before any costs are subtracted. Track daily and compare week-over-week to spot trends early.",
+    whenRedPlaybook: [
+      "Consider reviewing whether a specific daypart (lunch vs dinner) is underperforming",
+      "Consider checking if recent menu price changes affected transaction count",
+      "Consider comparing dine-in vs delivery mix — a shift toward delivery may lower average ticket",
+      "Consider reviewing whether local events or weather affected foot traffic",
+      "Consider evaluating marketing campaigns — are they driving measurable revenue?",
+    ],
+  },
+
+  disposables_pct: {
+    title: "Disposables & Packaging %",
+    whatItMeans:
+      "Total disposable supplies (boxes, bags, cups, napkins, gloves, foil) as a percentage of sales. Target: 3–5%. Often overlooked but adds up — on $5,000/day, every extra point costs $50/day or $1,500/month.",
+    whenRedPlaybook: [
+      "Consider auditing box usage — are staff using 16-inch boxes for 12-inch pizzas?",
+      "Consider checking if delivery mix increased — more delivery means more packaging per order",
+      "Consider comparing supplier prices on your top 5 disposable items",
+      "Consider whether portion cups and bags are being over-used or doubled up",
+      "Consider renegotiating bulk pricing with your disposables vendor",
+    ],
+  },
+
+  avg_daily_sales: {
+    title: "Average Daily Sales",
+    whatItMeans:
+      "Total sales for the period divided by number of operating days. Smooths out high and low days to show your true daily run rate. Use this to set daily targets and spot when you're trending above or below your baseline.",
+    whenRedPlaybook: [
+      "Consider comparing this period to the same period last year for seasonality",
+      "Consider reviewing whether any closures or short days dragged down the average",
+      "Consider checking if a specific day of the week is consistently underperforming",
+      "Consider whether marketing or promotions are needed to boost slow days",
+      "Consider evaluating hours of operation — are you open during your highest-demand windows?",
+    ],
+  },
+
+  insurance_pct: {
+    title: "Insurance %",
+    whatItMeans:
+      "Total insurance premiums as a percentage of revenue. Target: 1.5–2.5% of revenue. Includes general liability, workers comp, property, and auto if applicable. Many operators overpay by 15–20% because they auto-renew without shopping.",
+    whenRedPlaybook: [
+      "Consider getting 3 competitive quotes at your next renewal — don't auto-renew",
+      "Consider bundling policies (GL + property + auto) for multi-policy discounts",
+      "Consider reviewing your workers comp classification — incorrect codes can cost thousands",
+      "Consider raising deductibles if your claims history is clean — lower premiums immediately",
+      "Consider working with an independent broker who shops multiple carriers",
+    ],
+  },
+
+  utilities_pct: {
+    title: "Utilities %",
+    whatItMeans:
+      "Total utility costs (electric, gas, water, trash, internet, phone) as a percentage of revenue. Target: 3–5% of revenue. The walk-in cooler and ovens are your biggest draws — maintenance directly impacts this number.",
+    whenRedPlaybook: [
+      "Consider checking walk-in cooler door seals — a bad seal can add $200+/month to electric",
+      "Consider switching to LED lighting throughout — pays for itself in 3–6 months",
+      "Consider installing a programmable thermostat for HVAC — reduce overnight heating/cooling",
+      "Consider reviewing trash pickup frequency — you may be paying for pickups you don't need",
+      "Consider auditing your phone/internet plan — many operators are on legacy plans that cost more than current options",
+    ],
+  },
+
+  total_employees: {
+    title: "Total Employees",
+    whatItMeans:
+      "Headcount across all locations and roles. Drives labor cost, scheduling, and turnover metrics. Track active vs termed and compare to sales to see if you're right-sized for volume.",
+    whenRedPlaybook: [
+      "Consider comparing headcount to same period last year — are you carrying more people for the same sales?",
+      "Consider reviewing role mix — too many managers or leads can push labor % up",
+      "Consider correlating with churn — high turnover often means understaffing key shifts or poor fit",
+      "Consider evaluating whether part-time vs full-time mix matches your demand curve",
+      "Consider checking that every role has clear responsibilities and isn't duplicated across locations",
+    ],
+  },
 };

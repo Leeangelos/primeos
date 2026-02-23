@@ -92,6 +92,7 @@ export default function PeoplePage() {
             <div>
               <div className="flex items-center gap-1.5 text-slate-400 text-xs uppercase tracking-wide mb-1">
                 Total employees
+                <EducationInfoIcon metricKey="total_employees" size="sm" />
               </div>
               <div className="text-xl font-bold text-white tabular-nums">{employees.length}</div>
             </div>
@@ -116,7 +117,7 @@ export default function PeoplePage() {
                 CAC spent this quarter
                 <EducationInfoIcon metricKey="employee_cac" />
               </div>
-              <div className="text-xl font-bold text-white tabular-nums">
+              <div className="text-xl font-bold text-red-400 tabular-nums">
                 ${CAC_SPENT_THIS_QUARTER.toLocaleString()}
               </div>
             </div>

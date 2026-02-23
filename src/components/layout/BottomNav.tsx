@@ -28,6 +28,7 @@ import {
   Gift,
   ShoppingBag,
   BookUser,
+  Home,
   LucideIcon,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
@@ -112,7 +113,7 @@ function NavSection({
               onClick={() => setMoreOpen(false)}
               className={cn(
                 "flex items-center gap-3 px-4 py-3 active:bg-slate-700/50",
-                isActive ? "bg-slate-700/30" : ""
+                isActive ? "bg-orange-950/20" : ""
               )}
             >
               <div className="w-8 h-8 rounded-lg bg-slate-800 flex items-center justify-center border border-slate-700">
@@ -122,7 +123,7 @@ function NavSection({
                 <div className="text-sm text-white">{item.label}</div>
                 <div className="text-xs text-slate-500">{item.desc}</div>
               </div>
-              {isActive && <div className="w-1.5 h-1.5 rounded-full bg-blue-400" />}
+              {isActive && <div className="w-1.5 h-1.5 rounded-full bg-orange-500" />}
             </Link>
           );
         })}
@@ -203,32 +204,48 @@ export function BottomNav() {
               <Link
                 key={href}
                 href={href}
-                className={cn(
-                  "flex flex-col items-center justify-center gap-0.5 min-w-[44px] min-h-[44px] flex-1 max-w-[80px] transition-colors",
-                  isActive ? "text-blue-400" : "text-slate-500"
-                )}
+                className="flex flex-col items-center justify-center gap-0.5 min-w-[44px] min-h-[44px] flex-1 max-w-[80px] transition-colors"
                 aria-current={isActive ? "page" : undefined}
               >
-                <Icon className="w-5 h-5 shrink-0" aria-hidden />
-                <span className="text-[10px] font-medium whitespace-nowrap leading-tight">{label}</span>
+                {isActive ? (
+                  <div className="flex flex-col items-center gap-0.5 relative">
+                    <div className="relative">
+                      <Icon className="w-5 h-5 text-[#E65100]" aria-hidden />
+                      <div className="absolute -inset-1 bg-orange-500/20 rounded-full blur-sm -z-10" aria-hidden />
+                    </div>
+                    <span className="text-[10px] text-[#E65100] font-medium whitespace-nowrap leading-tight">{label}</span>
+                  </div>
+                ) : (
+                  <div className="flex flex-col items-center gap-0.5">
+                    <Icon className="w-5 h-5 shrink-0 text-slate-500" aria-hidden />
+                    <span className="text-[10px] text-slate-500 font-medium whitespace-nowrap leading-tight">{label}</span>
+                  </div>
+                )}
               </Link>
             );
           })}
           <button
             type="button"
             onClick={() => setMoreOpen(true)}
-            className={cn(
-              "flex flex-col items-center justify-center gap-0.5 min-w-[44px] min-h-[44px] flex-1 max-w-[80px] transition-colors",
-              moreOpen ? "text-blue-400" : "text-slate-500"
-            )}
+            className="flex flex-col items-center justify-center gap-0.5 min-w-[44px] min-h-[44px] flex-1 max-w-[80px] transition-colors"
             aria-expanded={moreOpen}
             aria-haspopup="dialog"
             aria-label="More pages"
           >
-            <Menu className="w-5 h-5 shrink-0" aria-hidden />
-            <span className="text-[10px] font-medium whitespace-nowrap leading-tight">
-              More
-            </span>
+            {moreOpen ? (
+              <div className="flex flex-col items-center gap-0.5 relative">
+                <div className="relative">
+                  <Menu className="w-5 h-5 text-[#E65100]" aria-hidden />
+                  <div className="absolute -inset-1 bg-orange-500/20 rounded-full blur-sm -z-10" aria-hidden />
+                </div>
+                <span className="text-[10px] text-[#E65100] font-medium whitespace-nowrap leading-tight">More</span>
+              </div>
+            ) : (
+              <div className="flex flex-col items-center gap-0.5">
+                <Menu className="w-5 h-5 shrink-0 text-slate-500" aria-hidden />
+                <span className="text-[10px] text-slate-500 font-medium whitespace-nowrap leading-tight">More</span>
+              </div>
+            )}
           </button>
         </div>
       </nav>
@@ -249,6 +266,15 @@ export function BottomNav() {
             </div>
 
             <div className="px-4 py-4 space-y-6 pb-32">
+              <Link href="/" onClick={() => setMoreOpen(false)} className="flex items-center gap-3 px-4 py-3 mb-2 bg-slate-800 rounded-xl border border-slate-700 active:bg-slate-700/50">
+                <div className="w-8 h-8 rounded-lg bg-slate-800 flex items-center justify-center border border-slate-700">
+                  <Home className="w-4 h-4 text-blue-400" />
+                </div>
+                <div className="flex-1">
+                  <div className="text-sm text-white font-medium">Home Dashboard</div>
+                  <div className="text-xs text-slate-500">Back to overview</div>
+                </div>
+              </Link>
               <NavSection
                 title="Daily Operations"
                 items={[

@@ -24,7 +24,7 @@ export interface CockpitTargets {
 /** Target set by store slug. LeeAngelo's (kent, aurora) share one set; Lindsey's (lindseys) another. */
 export const COCKPIT_TARGETS: Record<CockpitStoreSlug, CockpitTargets> = {
   kent: {
-    name: "Kent (LeeAngelo's)",
+    name: "LeeAngelo's Kent",
     primeMax: 55,
     laborMin: 19,
     laborMax: 21,
@@ -32,7 +32,7 @@ export const COCKPIT_TARGETS: Record<CockpitStoreSlug, CockpitTargets> = {
     slphMin: 80,
   },
   aurora: {
-    name: "Aurora (LeeAngelo's)",
+    name: "LeeAngelo's Aurora",
     primeMax: 55,
     laborMin: 19,
     laborMax: 21,

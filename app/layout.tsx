@@ -17,24 +17,28 @@ export const viewport: Viewport = {
   themeColor: "#0f172a",
 };
 
-const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || "https://primeos.app";
-
 export const metadata: Metadata = {
   title: "PrimeOS — The Operating System for Pizza",
   description: "One app. Every number. Plain English. 90 seconds a day.",
-  manifest: "/manifest.json",
+  metadataBase: new URL("https://primeos-nine.vercel.app"),
   openGraph: {
     title: "PrimeOS — The Operating System for Pizza",
     description: "One app. Every number. Plain English. 90 seconds a day.",
-    type: "website",
-    url: siteUrl,
+    url: "https://primeos-nine.vercel.app",
     siteName: "PrimeOS",
+    type: "website",
+    locale: "en_US",
   },
   twitter: {
     card: "summary",
     title: "PrimeOS — The Operating System for Pizza",
     description: "One app. Every number. Plain English. 90 seconds a day.",
   },
+  robots: {
+    index: true,
+    follow: true,
+  },
+  manifest: "/manifest.json",
   appleWebApp: {
     capable: true,
     statusBarStyle: "black-translucent" as const,

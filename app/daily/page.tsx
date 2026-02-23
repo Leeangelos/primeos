@@ -548,7 +548,7 @@ function DailyPageContent() {
                 placeholder="e.g., 5420.00"
                 value={netSales}
                 onChange={(e) => setNetSales(e.target.value)}
-                className={cn(inputCls, netSalesInvalid && "border-red-500/60")}
+                className={cn(inputCls, netSalesInvalid && "border-red-500/60", "text-emerald-400")}
               />
             </label>
 
@@ -563,7 +563,7 @@ function DailyPageContent() {
                 placeholder="e.g., 1670.00"
                 value={foodCost}
                 onChange={(e) => setFoodCost(e.target.value)}
-                className={inputCls}
+                className={cn(inputCls, "text-red-400")}
               />
             </label>
 
@@ -578,7 +578,7 @@ function DailyPageContent() {
                 placeholder="e.g., 1252.00"
                 value={laborCost}
                 onChange={(e) => setLaborCost(e.target.value)}
-                className={inputCls}
+                className={cn(inputCls, "text-red-400")}
               />
             </label>
 
@@ -593,7 +593,7 @@ function DailyPageContent() {
                 placeholder="e.g., 190.00"
                 value={disposablesCost}
                 onChange={(e) => setDisposablesCost(e.target.value)}
-                className={inputCls}
+                className={cn(inputCls, "text-red-400")}
               />
             </label>
 
@@ -608,7 +608,7 @@ function DailyPageContent() {
                 placeholder="e.g., 287"
                 value={tickets}
                 onChange={(e) => setTickets(e.target.value)}
-                className={inputCls}
+                className={cn(inputCls, "text-white")}
               />
             </label>
 
@@ -623,7 +623,7 @@ function DailyPageContent() {
                 placeholder="e.g., 86.5"
                 value={laborHours}
                 onChange={(e) => setLaborHours(e.target.value)}
-                className={inputCls}
+                className={cn(inputCls, "text-white")}
               />
             </label>
           </div>

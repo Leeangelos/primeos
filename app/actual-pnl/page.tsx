@@ -1,24 +1,81 @@
 "use client";
 
-import { useState, useRef, useEffect } from "react";
+import { useState, useRef, useEffect, useMemo } from "react";
 import { FileUp, Camera, Image, FileText, FileSpreadsheet, ChevronDown } from "lucide-react";
 import { EducationInfoIcon } from "@/src/components/education/InfoIcon";
 import { cn } from "@/lib/utils";
 
-const STORAGE_KEY = "actual-pnl-uploaded";
+const STORAGE_KEY_MONTHS = "primeos-actual-pnl-months";
+const STORAGE_KEY_LEGACY = "actual-pnl-uploaded";
+
+function getMonthlyPnlData(monthKey: string) {
+  const base = {
+    revenue: 148200,
+    food: 44460,
+    labor: 31122,
+    disposables: 5928,
+    rent: 8400,
+    insurance: 2800,
+    utilities: 5190,
+    loans: 4200,
+    marketing: 3100,
+    tech: 680,
+    professional: 850,
+    repairs: 1400,
+    misc: 2100,
+  };
+
+  const monthVariations: Record<string, number> = {
+    "2026-01": 0.94,
+    "2026-02": 1.0,
+    "2025-12": 1.08,
+    "2025-11": 0.97,
+    "2025-10": 1.02,
+  };
+
+  const multiplier = monthVariations[monthKey] ?? 1.0;
+
+  return {
+    revenue: Math.round(base.revenue * multiplier),
+    food: Math.round(base.food * multiplier),
+    labor: Math.round(base.labor * multiplier),
+    disposables: Math.round(base.disposables * multiplier),
+    rent: base.rent,
+    insurance: base.insurance,
+    utilities: base.utilities,
+    loans: base.loans,
+    marketing: base.marketing,
+    tech: base.tech,
+    professional: base.professional,
+    repairs: base.repairs,
+    misc: base.misc,
+  };
+}
+
+function formatDollars(n: number): string {
+  return "$" + n.toLocaleString("en-US", { maximumFractionDigits: 0 });
+}
+
+function formatPct(n: number): string {
+  return n.toFixed(1) + "%";
+}
 
 function LineItem({
   label,
   amount,
   pct,
   badge,
+  metricKey,
+  amountColor,
 }: {
   label: string;
   amount: string;
   pct?: string;
   badge?: "green" | "yellow" | "red";
+  metricKey?: string;
+  amountColor?: "green" | "red";
 }) {
-  const amountClass =
+  const badgeClass =
     badge === "green"
       ? "text-emerald-400"
       : badge === "yellow"
@@ -26,9 +83,18 @@ function LineItem({
         : badge === "red"
           ? "text-red-400"
           : "text-white";
+  const amountClass =
+    amountColor === "red"
+      ? "text-red-400"
+      : amountColor === "green"
+        ? "text-emerald-400"
+        : badgeClass;
   return (
     <div className="flex justify-between items-center gap-2 py-1.5 text-sm">
-      <span className="text-slate-300">{label}</span>
+      <div className="flex items-center gap-2 min-w-0">
+        <span className="text-slate-300">{label}</span>
+        {metricKey != null && <EducationInfoIcon metricKey={metricKey} size="sm" />}
+      </div>
       <div className="flex items-center gap-2 shrink-0">
         <span className={cn("font-medium tabular-nums", amountClass)}>{amount}</span>
         {pct != null && <span className="text-xs text-slate-400 tabular-nums">{pct}</span>}
@@ -82,6 +148,7 @@ const NET_PROFIT_PLAYBOOK = [
 ];
 
 export default function ActualPnlPage() {
+  const [uploadedMonths, setUploadedMonths] = useState<Record<string, boolean>>({});
   const [viewMode, setViewMode] = useState<"upload" | "processing" | "pnl">("upload");
   const [month, setMonth] = useState(1); // February = 1
   const [year, setYear] = useState(2026);
@@ -90,17 +157,44 @@ export default function ActualPnlPage() {
   const galleryInputRef = useRef<HTMLInputElement>(null);
   const pdfInputRef = useRef<HTMLInputElement>(null);
 
+  const currentMonthKey = `${year}-${String(month + 1).padStart(2, "0")}`;
+  const isUploaded = uploadedMonths[currentMonthKey] === true;
+
   useEffect(() => {
     if (typeof window === "undefined") return;
-    const stored = localStorage.getItem(STORAGE_KEY);
-    if (stored === "true") setViewMode("pnl");
+    const stored = localStorage.getItem(STORAGE_KEY_MONTHS);
+    if (stored) {
+      try {
+        setUploadedMonths(JSON.parse(stored));
+      } catch {
+        // ignore
+      }
+      return;
+    }
+    const legacy = localStorage.getItem(STORAGE_KEY_LEGACY);
+    if (legacy === "true") {
+      const key = "2026-02";
+      const next = { [key]: true };
+      setUploadedMonths(next);
+      localStorage.setItem(STORAGE_KEY_MONTHS, JSON.stringify(next));
+      localStorage.removeItem(STORAGE_KEY_LEGACY);
+    }
   }, []);
+
+  useEffect(() => {
+    if (viewMode === "processing") return;
+    setViewMode(isUploaded ? "pnl" : "upload");
+  }, [currentMonthKey, isUploaded]);
 
   const handleFile = () => {
     setViewMode("processing");
     setTimeout(() => {
+      const next = { ...uploadedMonths, [currentMonthKey]: true };
+      setUploadedMonths(next);
       setViewMode("pnl");
-      if (typeof window !== "undefined") localStorage.setItem(STORAGE_KEY, "true");
+      if (typeof window !== "undefined") {
+        localStorage.setItem(STORAGE_KEY_MONTHS, JSON.stringify(next));
+      }
     }, 2000);
   };
 
@@ -118,6 +212,32 @@ export default function ActualPnlPage() {
   };
 
   const monthLabel = `${MONTHS[month]} ${year}`;
+
+  const pnl = useMemo(() => {
+    const d = getMonthlyPnlData(currentMonthKey);
+    const totalVariable = d.food + d.labor + d.disposables;
+    const grossProfit = d.revenue - totalVariable;
+    const totalFixed = d.rent + d.insurance + d.utilities + d.loans + d.marketing + d.tech + d.professional + d.repairs + d.misc;
+    const netProfit = grossProfit - totalFixed;
+    const rev = d.revenue;
+    return {
+      ...d,
+      totalVariable,
+      grossProfit,
+      totalFixed,
+      netProfit,
+      variablePct: rev > 0 ? (totalVariable / rev) * 100 : 0,
+      gpPct: rev > 0 ? (grossProfit / rev) * 100 : 0,
+      fixedPct: rev > 0 ? (totalFixed / rev) * 100 : 0,
+      netPct: rev > 0 ? (netProfit / rev) * 100 : 0,
+      foodPct: rev > 0 ? (d.food / rev) * 100 : 0,
+      laborPct: rev > 0 ? (d.labor / rev) * 100 : 0,
+      dispPct: rev > 0 ? (d.disposables / rev) * 100 : 0,
+      rentPct: rev > 0 ? (d.rent / rev) * 100 : 0,
+      insurancePct: rev > 0 ? (d.insurance / rev) * 100 : 0,
+      utilitiesPct: rev > 0 ? (d.utilities / rev) * 100 : 0,
+    };
+  }, [currentMonthKey]);
 
   return (
     <div className="space-y-4 pb-28">
@@ -229,25 +349,25 @@ export default function ActualPnlPage() {
               <div className="text-xs text-slate-500 uppercase tracking-wide mb-2">Revenue</div>
               <div className="flex justify-between text-sm">
                 <span className="text-slate-300">Total Sales</span>
-                <span className="text-white font-medium">$148,200</span>
+                <span className="text-emerald-400 font-medium">{formatDollars(pnl.revenue)}</span>
               </div>
             </div>
             <div className="p-4 border-b border-slate-700">
               <div className="text-xs text-slate-500 uppercase tracking-wide mb-2">Variable Costs</div>
-              <LineItem label="Food & Beverage" amount="$44,460" pct="30.0%" />
-              <LineItem label="Labor" amount="$31,122" pct="21.0%" />
-              <LineItem label="Disposables & Packaging" amount="$5,928" pct="4.0%" />
-              <div className="flex justify-between text-sm font-semibold text-white pt-2 mt-2 border-t border-slate-600">
+              <LineItem label="Food & Beverage" amount={formatDollars(pnl.food)} pct={formatPct(pnl.foodPct)} amountColor="red" />
+              <LineItem label="Labor" amount={formatDollars(pnl.labor)} pct={formatPct(pnl.laborPct)} amountColor="red" />
+              <LineItem label="Disposables & Packaging" amount={formatDollars(pnl.disposables)} pct={formatPct(pnl.dispPct)} amountColor="red" />
+              <div className="flex justify-between text-sm font-semibold text-red-400 pt-2 mt-2 border-t border-slate-600">
                 <span>Total Variable</span>
-                <span>$81,510 (55.0%)</span>
+                <span>{formatDollars(pnl.totalVariable)} ({formatPct(pnl.variablePct)})</span>
               </div>
             </div>
             <div className="p-4 border-b border-slate-700 bg-emerald-950/20">
               <div className="flex justify-between">
                 <span className="text-emerald-400 font-bold">Gross Profit</span>
                 <div>
-                  <span className="text-emerald-400 font-bold text-lg">$66,690</span>
-                  <span className="text-xs text-slate-400 ml-2">45.0%</span>
+                  <span className="text-emerald-400 font-bold text-lg">{formatDollars(pnl.grossProfit)}</span>
+                  <span className="text-xs text-slate-400 ml-2">{formatPct(pnl.gpPct)}</span>
                 </div>
               </div>
             </div>
@@ -256,18 +376,18 @@ export default function ActualPnlPage() {
                 <div className="text-xs text-slate-500 uppercase tracking-wide">Fixed Costs</div>
                 <EducationInfoIcon metricKey="occupancy_pct" size="sm" />
               </div>
-              <LineItem label="Rent / Occupancy" amount="$8,400" pct="5.7%" badge="green" />
-              <LineItem label="Insurance" amount="$2,800" pct="1.9%" badge="green" />
-              <LineItem label="Utilities" amount="$5,190" pct="3.5%" badge="green" />
-              <LineItem label="Loan Payments" amount="$4,200" pct="2.8%" />
-              <LineItem label="Marketing & Advertising" amount="$3,100" pct="2.1%" />
-              <LineItem label="Technology & Software" amount="$680" pct="0.5%" />
-              <LineItem label="Professional Services (CPA, Legal)" amount="$850" pct="0.6%" />
-              <LineItem label="Repairs & Maintenance" amount="$1,400" pct="0.9%" />
-              <LineItem label="Miscellaneous" amount="$2,100" pct="1.4%" />
-              <div className="flex justify-between text-sm font-semibold text-white pt-2 mt-2 border-t border-slate-600">
+              <LineItem label="Rent / Occupancy" amount={formatDollars(pnl.rent)} pct={formatPct(pnl.rentPct)} badge="green" metricKey="occupancy_pct" amountColor="red" />
+              <LineItem label="Insurance" amount={formatDollars(pnl.insurance)} pct={formatPct(pnl.insurancePct)} badge="green" metricKey="insurance_pct" amountColor="red" />
+              <LineItem label="Utilities" amount={formatDollars(pnl.utilities)} pct={formatPct(pnl.utilitiesPct)} badge="green" metricKey="utilities_pct" amountColor="red" />
+              <LineItem label="Loan Payments" amount={formatDollars(pnl.loans)} pct={formatPct(pnl.revenue > 0 ? (pnl.loans / pnl.revenue) * 100 : 0)} amountColor="red" />
+              <LineItem label="Marketing & Advertising" amount={formatDollars(pnl.marketing)} pct={formatPct(pnl.revenue > 0 ? (pnl.marketing / pnl.revenue) * 100 : 0)} amountColor="red" />
+              <LineItem label="Technology & Software" amount={formatDollars(pnl.tech)} pct={formatPct(pnl.revenue > 0 ? (pnl.tech / pnl.revenue) * 100 : 0)} amountColor="red" />
+              <LineItem label="Professional Services (CPA, Legal)" amount={formatDollars(pnl.professional)} pct={formatPct(pnl.revenue > 0 ? (pnl.professional / pnl.revenue) * 100 : 0)} amountColor="red" />
+              <LineItem label="Repairs & Maintenance" amount={formatDollars(pnl.repairs)} pct={formatPct(pnl.revenue > 0 ? (pnl.repairs / pnl.revenue) * 100 : 0)} amountColor="red" />
+              <LineItem label="Miscellaneous" amount={formatDollars(pnl.misc)} pct={formatPct(pnl.revenue > 0 ? (pnl.misc / pnl.revenue) * 100 : 0)} amountColor="red" />
+              <div className="flex justify-between text-sm font-semibold text-red-400 pt-2 mt-2 border-t border-slate-600">
                 <span>Total Fixed</span>
-                <span>$28,720 (19.4%)</span>
+                <span>{formatDollars(pnl.totalFixed)} ({formatPct(pnl.fixedPct)})</span>
               </div>
             </div>
             <div className="p-4 bg-slate-700/50">
@@ -277,8 +397,8 @@ export default function ActualPnlPage() {
                   <EducationInfoIcon metricKey="net_profit" size="sm" />
                 </div>
                 <div>
-                  <span className="text-emerald-400 font-bold text-xl">$37,970</span>
-                  <span className="text-xs text-slate-400 ml-2">25.6%</span>
+                  <span className="text-emerald-400 font-bold text-xl">{formatDollars(pnl.netProfit)}</span>
+                  <span className="text-xs text-slate-400 ml-2">{formatPct(pnl.netPct)}</span>
                 </div>
               </div>
             </div>
@@ -289,25 +409,25 @@ export default function ActualPnlPage() {
             <div className="space-y-3">
               <div className="flex justify-between items-center">
                 <span className="text-sm text-slate-300">Your GP P&L says you made</span>
-                <span className="text-lg font-bold text-emerald-400">$66,690</span>
+                <span className="text-lg font-bold text-emerald-400">{formatDollars(pnl.grossProfit)}</span>
               </div>
               <div className="flex justify-between items-center">
                 <span className="text-sm text-slate-300">Your Actual P&L says you kept</span>
-                <span className="text-lg font-bold text-white">$37,970</span>
+                <span className="text-lg font-bold text-white">{formatDollars(pnl.netProfit)}</span>
               </div>
               <div className="border-t border-amber-800/50 pt-3">
                 <div className="flex justify-between items-center">
                   <span className="text-sm font-semibold text-amber-400">The gap (your fixed costs)</span>
-                  <span className="text-lg font-bold text-amber-400">$28,720</span>
+                  <span className="text-lg font-bold text-amber-400">{formatDollars(pnl.totalFixed)}</span>
                 </div>
               </div>
             </div>
             <div className="mt-4 space-y-2">
               <p className="text-xs text-amber-200/70">
-                That&apos;s 19.4¢ of every dollar going to costs you don&apos;t see on your daily P&L.
+                That&apos;s {pnl.fixedPct.toFixed(1)}¢ of every dollar going to costs you don&apos;t see on your daily P&L.
               </p>
               <p className="text-xs text-amber-200/70">
-                Biggest chunks: Rent $8,400 · Utilities $5,190 · Loan Payments $4,200
+                Biggest chunks: Rent {formatDollars(pnl.rent)} · Utilities {formatDollars(pnl.utilities)} · Loan Payments {formatDollars(pnl.loans)}
               </p>
             </div>
           </div>
@@ -317,31 +437,31 @@ export default function ActualPnlPage() {
             <div className="space-y-3">
               <BenchmarkRow
                 label="Occupancy (Rent)"
-                actual="5.7%"
+                actual={formatPct(pnl.rentPct)}
                 target="≤6%"
                 status="green"
-                detail="$8,400/mo on $148,200 revenue. You're within target."
+                detail={`${formatDollars(pnl.rent)}/mo on ${formatDollars(pnl.revenue)} revenue. You're within target.`}
               />
               <BenchmarkRow
                 label="Insurance"
-                actual="1.9%"
+                actual={formatPct(pnl.insurancePct)}
                 target="1.5–2.5%"
                 status="green"
-                detail="$2,800/mo. Consider shopping insurance at the next renewal (3 quotes is a solid baseline)."
+                detail={`${formatDollars(pnl.insurance)}/mo. Consider shopping insurance at the next renewal (3 quotes is a solid baseline).`}
               />
               <BenchmarkRow
                 label="Utilities"
-                actual="3.5%"
+                actual={formatPct(pnl.utilitiesPct)}
                 target="3–5%"
                 status="green"
-                detail="$5,190/mo. Consider checking walk-in seals, LED lighting, and thermostat schedule."
+                detail={`${formatDollars(pnl.utilities)}/mo. Consider checking walk-in seals, LED lighting, and thermostat schedule.`}
               />
               <BenchmarkRow
                 label="Total Fixed"
-                actual="19.4%"
+                actual={formatPct(pnl.fixedPct)}
                 target="≤20%"
                 status="green"
-                detail="$28,720/mo. You're running a tight ship."
+                detail={`${formatDollars(pnl.totalFixed)}/mo. You're running a tight ship.`}
               />
             </div>
           </div>

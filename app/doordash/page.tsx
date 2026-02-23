@@ -52,11 +52,17 @@ export default function DoorDashPage() {
         <div className="text-[10px] uppercase text-muted tracking-wider">30-day summary</div>
         <div className="grid grid-cols-2 gap-4">
           <div>
-            <div className="text-[9px] uppercase text-muted">DoorDash Revenue</div>
-            <div className="text-xl font-bold tabular-nums text-white">{fmt(totalRevenue)}</div>
+            <div className="text-[9px] uppercase text-muted flex items-center gap-1">
+              DoorDash Revenue
+              <EducationInfoIcon metricKey="doordash_effective_commission" size="sm" />
+            </div>
+            <div className="text-xl font-bold tabular-nums text-emerald-400">{fmt(totalRevenue)}</div>
           </div>
           <div>
-            <div className="text-[9px] uppercase text-muted">Commission Paid</div>
+            <div className="text-[9px] uppercase text-muted flex items-center gap-1">
+              Commission Paid
+              <EducationInfoIcon metricKey="doordash_effective_commission" size="sm" />
+            </div>
             <div className="text-xl font-bold tabular-nums text-red-400">−{fmt(totalCommission)}</div>
           </div>
           <div>
@@ -81,7 +87,10 @@ export default function DoorDashPage() {
             </div>
           </div>
           <div>
-            <div className="text-[9px] uppercase text-muted">Net Revenue</div>
+            <div className="text-[9px] uppercase text-muted flex items-center gap-1">
+              Net Revenue
+              <EducationInfoIcon metricKey="doordash_effective_commission" size="sm" />
+            </div>
             <div className="text-xl font-bold tabular-nums text-emerald-400">{fmt(netRevenue)}</div>
           </div>
         </div>

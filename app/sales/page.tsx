@@ -224,14 +224,20 @@ export default function SalesPage() {
                 Total Sales
                 <EducationInfoIcon metricKey="daily_sales" />
               </div>
-              <div className="text-xl font-bold text-white tabular-nums">{fmt(totalSales)}</div>
+              <div className="text-xl font-bold text-emerald-400 tabular-nums">{fmt(totalSales)}</div>
             </div>
             <div>
-              <div className="text-slate-400 text-xs uppercase tracking-wide mb-1">Avg Daily</div>
+              <div className="flex items-center gap-1.5 text-slate-400 text-xs uppercase tracking-wide mb-1">
+                Avg Daily
+                <EducationInfoIcon metricKey="avg_daily_sales" size="sm" />
+              </div>
               <div className="text-xl font-bold text-white tabular-nums">{fmt(avgDaily)}</div>
             </div>
             <div>
-              <div className="text-slate-400 text-xs uppercase tracking-wide mb-1">Best Day</div>
+              <div className="flex items-center gap-1.5 text-slate-400 text-xs uppercase tracking-wide mb-1">
+                Best Day
+                <EducationInfoIcon metricKey="daily_sales" size="sm" />
+              </div>
               <div className="text-lg font-semibold text-emerald-400 tabular-nums">
                 {bestDay
                   ? `${new Date(bestDay.date + "T12:00:00Z").toLocaleDateString("en-US", { weekday: "short" })} ${fmt(bestDay.sales)}`
@@ -239,8 +245,11 @@ export default function SalesPage() {
               </div>
             </div>
             <div>
-              <div className="text-slate-400 text-xs uppercase tracking-wide mb-1">Worst Day</div>
-              <div className="text-lg font-semibold text-slate-300 tabular-nums">
+              <div className="flex items-center gap-1.5 text-slate-400 text-xs uppercase tracking-wide mb-1">
+                Worst Day
+                <EducationInfoIcon metricKey="daily_sales" size="sm" />
+              </div>
+              <div className="text-lg font-semibold text-red-400 tabular-nums">
                 {worstDay
                   ? `${new Date(worstDay.date + "T12:00:00Z").toLocaleDateString("en-US", { weekday: "short" })} ${fmt(worstDay.sales)}`
                   : "—"}

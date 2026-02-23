@@ -66,7 +66,7 @@ function storeSlugForFetch(slug: StoreSlug): string {
 
 export default function HomePage() {
   const [selectedStore, setSelectedStore] = useState<StoreSlug>("kent");
-  const [showStoreSheet, setShowStoreSheet] = useState(false);
+  const [storeOpen, setStoreOpen] = useState(false);
   const [kpi, setKpi] = useState<KpiSnapshot | null>(null);
   const [loading, setLoading] = useState(true);
   const [usedSeedData, setUsedSeedData] = useState(false);
@@ -215,21 +215,48 @@ export default function HomePage() {
 
   const trendArrow = salesTrendPct >= 0 ? "↑" : "↓";
 
+  const selectedStoreName = getStoreLabel(selectedStore);
+  const stores = STORE_OPTIONS.map((opt) => ({ id: opt.slug, name: opt.name }));
+
   return (
     <div className="space-y-6">
-      <div className="flex items-center gap-2 mb-4">
+      <div className="relative mb-4">
         <button
           type="button"
-          onClick={() => setShowStoreSheet(true)}
-          className="flex items-center gap-2 bg-slate-800 rounded-lg px-3 py-2 border border-slate-700 text-sm text-white min-h-[44px] max-w-[200px] min-w-0"
+          onClick={() => setStoreOpen(!storeOpen)}
+          className="flex items-center gap-2 bg-slate-800 rounded-lg px-3 py-2 border border-slate-700 text-sm text-white min-h-[44px]"
           aria-haspopup="listbox"
-          aria-expanded={showStoreSheet}
-          aria-label={`Store: ${getStoreLabel(selectedStore)}. Select location.`}
+          aria-expanded={storeOpen}
+          aria-label={`Store: ${selectedStoreName}. Select location.`}
         >
           <MapPin className="w-4 h-4 text-blue-400 shrink-0" aria-hidden />
-          <span className="truncate">{getStoreLabel(selectedStore)}</span>
-          <ChevronDown className="w-4 h-4 text-slate-400 shrink-0" aria-hidden />
+          <span className="truncate">{selectedStoreName}</span>
+          <ChevronDown className={`w-4 h-4 text-slate-400 shrink-0 transition-transform ${storeOpen ? "rotate-180" : ""}`} aria-hidden />
         </button>
+
+        {storeOpen && (
+          <>
+            <div className="fixed inset-0 z-30" aria-hidden="true" onClick={() => setStoreOpen(false)} />
+            <div className="absolute top-full left-0 mt-1 z-40 w-64 bg-slate-800 rounded-xl border border-slate-700 shadow-lg shadow-black/30 overflow-hidden">
+              {stores.map((store) => (
+                <button
+                  key={store.id}
+                  type="button"
+                  onClick={() => {
+                    setSelectedStore(store.id as StoreSlug);
+                    setStoreOpen(false);
+                  }}
+                  className={`w-full flex items-center justify-between px-4 py-3 text-sm hover:bg-slate-700/50 transition-colors ${
+                    selectedStore === store.id ? "text-blue-400" : "text-slate-300"
+                  }`}
+                >
+                  <span>{store.name}</span>
+                  {selectedStore === store.id && <Check className="w-4 h-4 text-blue-400 shrink-0" aria-hidden />}
+                </button>
+              ))}
+            </div>
+          </>
+        )}
       </div>
 
       <div className="flex items-start justify-between gap-4">
@@ -261,7 +288,7 @@ export default function HomePage() {
               <span className="text-xs text-slate-400 uppercase tracking-wide">Today&apos;s Sales</span>
               <EducationInfoIcon metricKey="daily_sales" />
             </div>
-            <div className="text-2xl font-bold tabular-nums" style={{ color: getGradeColor(kpi.sales / 100, dailyTargetSales / 100, "higher_is_better") }}>
+            <div className="text-2xl font-bold tabular-nums text-emerald-400">
               ${kpi.sales.toLocaleString("en-US", { maximumFractionDigits: 0 })}
             </div>
             <div className="text-xs text-slate-500">
@@ -340,7 +367,10 @@ export default function HomePage() {
         <h3 className="text-sm font-semibold text-slate-400 uppercase tracking-wide mb-3">7-Day Trend</h3>
         <div className="grid grid-cols-2 gap-4 min-w-0">
           <div className="min-w-0">
-            <div className="text-xs text-slate-500 mb-1">Sales</div>
+            <div className="flex items-center gap-1.5 text-xs text-slate-500 mb-1">
+              Sales
+              <EducationInfoIcon metricKey="daily_sales" size="sm" />
+            </div>
             <div className="w-full h-[60px] min-h-[60px]">
               <ResponsiveContainer width="100%" height={60}>
                 <AreaChart data={last7Days} margin={{ top: 4, right: 4, bottom: 4, left: 4 }}>
@@ -359,7 +389,10 @@ export default function HomePage() {
             </div>
           </div>
           <div className="min-w-0">
-            <div className="text-xs text-slate-500 mb-1">Food Cost</div>
+            <div className="flex items-center gap-1.5 text-xs text-slate-500 mb-1">
+              Food Cost
+              <EducationInfoIcon metricKey="food_cost" size="sm" />
+            </div>
             <div className="w-full h-[60px] min-h-[60px]">
               <ResponsiveContainer width="100%" height={60}>
                 <AreaChart data={last7Days} margin={{ top: 4, right: 4, bottom: 4, left: 4 }}>
@@ -459,33 +492,6 @@ export default function HomePage() {
           </div>
         </Link>
       </div>
-
-      {showStoreSheet && typeof document !== "undefined" && createPortal(
-        <div className="fixed inset-0 z-[9999] flex items-end justify-center" aria-modal="true" role="dialog" aria-label="Select location">
-          <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={() => setShowStoreSheet(false)} aria-hidden="true" />
-          <div className="relative w-full max-w-md bg-slate-800 rounded-t-2xl border-t border-x border-slate-700 shadow-2xl overflow-hidden max-h-[85vh] min-w-0" onClick={(e) => e.stopPropagation()}>
-            <div className="sticky top-0 flex items-center justify-between p-4 border-b border-slate-700 bg-slate-800">
-              <h3 className="text-sm font-semibold text-slate-400 uppercase tracking-wide">Location</h3>
-              <button type="button" onClick={() => setShowStoreSheet(false)} className="min-h-[44px] min-w-[44px] flex items-center justify-center text-slate-400 hover:text-white" aria-label="Close">✕</button>
-            </div>
-            <ul className="py-2" role="listbox">
-              {STORE_OPTIONS.map((opt) => (
-                <li key={opt.slug} role="option" aria-selected={selectedStore === opt.slug}>
-                  <button
-                    type="button"
-                    onClick={() => { setSelectedStore(opt.slug); setShowStoreSheet(false); }}
-                    className="w-full flex items-center justify-between gap-3 px-4 py-3 text-left text-sm text-white hover:bg-slate-700/50 min-h-[44px]"
-                  >
-                    <span>{opt.name}</span>
-                    {selectedStore === opt.slug && <Check className="w-5 h-5 text-blue-400 shrink-0" aria-hidden />}
-                  </button>
-                </li>
-              ))}
-            </ul>
-          </div>
-        </div>,
-        document.body
-      )}
 
       {showEducation && typeof document !== "undefined" && createPortal(
         <div className="fixed inset-0 z-[9999] flex items-center justify-center p-4" style={{ position: "fixed", top: 0, left: 0, right: 0, bottom: 0 }} onClick={() => setShowEducation(false)}>

@@ -7,8 +7,8 @@
 // ============ STORES ============
 export const SEED_STORES = [
   { id: "kent", name: "LeeAngelo's Kent", slug: "kent", avgDailySales: 5200 },
-  { id: "aurora", name: "LeeAngelo's Stow", slug: "aurora", avgDailySales: 3800 },
-  { id: "lindseys", name: "LeeAngelo's Ravenna", slug: "lindseys", avgDailySales: 2600 },
+  { id: "aurora", name: "LeeAngelo's Aurora", slug: "aurora", avgDailySales: 3800 },
+  { id: "lindseys", name: "Lindsey's", slug: "lindseys", avgDailySales: 2600 },
 ] as const;
 
 // ============ HELPERS ============
