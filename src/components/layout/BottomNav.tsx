@@ -319,6 +319,14 @@ export function BottomNav() {
                 openUpgradeModal={openUpgrade}
                 setMoreOpen={setMoreOpen}
               />
+
+              <div className="pt-4 border-t border-slate-800 mt-2">
+                <div className="flex justify-center gap-3">
+                  <Link href="/terms" onClick={() => setMoreOpen(false)} className="text-xs text-slate-600 hover:text-slate-400">Terms of Service</Link>
+                  <span className="text-xs text-slate-700">·</span>
+                  <Link href="/privacy" onClick={() => setMoreOpen(false)} className="text-xs text-slate-600 hover:text-slate-400">Privacy Policy</Link>
+                </div>
+              </div>
             </div>
           </div>
         </>
