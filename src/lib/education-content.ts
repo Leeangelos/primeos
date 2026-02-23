@@ -383,4 +383,53 @@ export const EDUCATION_CONTENT: Record<string, EducationEntry> = {
       "Consider checking that every role has clear responsibilities and isn't duplicated across locations",
     ],
   },
+
+  menu_price_comparison: {
+    title: "Cross-Location Price Comparison",
+    whatItMeans:
+      "Compares prices for the same menu items across your locations. Different markets may support different price points, but gaps larger than 15% on identical items may indicate a pricing misalignment. PrimeOS flags these so you can evaluate whether the difference is intentional or if revenue is being left on the table.",
+    whenRedPlaybook: [
+      "Consider reviewing items with the largest price gaps first — these have the biggest revenue impact",
+      "Consider whether market differences (college town vs suburban) justify the gap",
+      "Consider testing a small price increase at the lower-priced location on your top 5 sellers",
+      "Consider checking if competitors in each market have similar pricing differences",
+      "Consider aligning prices gradually — sudden jumps can affect customer perception",
+    ],
+  },
+  menu_gap_analysis: {
+    title: "Menu Gap Analysis",
+    whatItMeans:
+      "Shows items that exist at one location but not others. Gaps may be intentional (kitchen equipment, local demand) or opportunities to expand your menu at underperforming locations. An item that sells well at one location could be a revenue opportunity at another.",
+    whenRedPlaybook: [
+      "Consider whether the unique item could work at your other locations based on kitchen capacity",
+      "Consider running a 30-day test of the top-selling unique item at another location",
+      "Consider checking if ingredient supply chains support adding the item at other locations",
+      "Consider whether removing underperforming unique items would simplify operations",
+      "Consider surveying customers at other locations about interest in the unique items",
+    ],
+  },
+  menu_item_count: {
+    title: "Total Menu Items",
+    whatItMeans:
+      "The number of distinct menu items at this location. A larger menu can attract more customers but increases complexity, waste, and prep time. Most successful independents find a sweet spot between 40-80 items. More items means more inventory, more training, and more room for error.",
+    whenRedPlaybook: [
+      "Consider reviewing your bottom 10 sellers — items that sell fewer than 5 per week may not justify the prep and inventory",
+      "Consider whether consolidating similar items would simplify without losing revenue",
+      "Consider seasonal rotation instead of permanent menu additions",
+      "Consider the impact on food cost — more items often means more waste on slow-moving ingredients",
+      "Consider whether your kitchen staff can consistently execute every item at quality during a rush",
+    ],
+  },
+  menu_avg_price: {
+    title: "Average Menu Price",
+    whatItMeans:
+      "The average price across all sizes and items on your menu. This gives you a rough benchmark for your price positioning in the market. A higher average may mean premium positioning; a lower average may mean value positioning. Neither is wrong — but it should be intentional.",
+    whenRedPlaybook: [
+      "Consider comparing your average price to competitors within a 3-mile radius",
+      "Consider whether your average ticket aligns with your average menu price — if ticket is much lower, customers may be choosing only cheaper items",
+      "Consider whether a modest price increase on your top 10 sellers would significantly affect volume",
+      "Consider your food cost target — menu prices must support the margin you need",
+      "Consider testing premium items or add-ons that naturally raise the average without changing base prices",
+    ],
+  },
 };

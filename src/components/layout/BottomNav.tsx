@@ -23,6 +23,7 @@ import {
   BookOpen,
   Package,
   FileText,
+  UtensilsCrossed,
   Users,
   Target,
   Gift,
@@ -313,6 +314,7 @@ export function BottomNav() {
                   { href: "/recipes", icon: BookOpen, label: "Recipes", desc: "Food costing and portions", color: "text-amber-400" },
                   { href: "/inventory", icon: Package, label: "Inventory", desc: "Stock levels and par", color: "text-yellow-400" },
                   { href: "/invoices", icon: FileText, label: "Invoice Scanner", desc: "AI-powered OCR scanning", color: "text-violet-400" },
+                  { href: "/menu-intelligence", icon: UtensilsCrossed, label: "Menu Intelligence", desc: "Prices, comparison, gap analysis", color: "text-teal-400" },
                 ]}
                 pathname={pathname}
                 currentTier={currentTier}
