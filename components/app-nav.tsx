@@ -1,65 +1,14 @@
 "use client";
 
-import Link from "next/link";
-import { usePathname } from "next/navigation";
-import { cn } from "@/lib/utils";
-
-const tabs = [
-  { href: "/daily", label: "Daily" },
-  { href: "/weekly", label: "Weekly" },
-  { href: "/monthly", label: "Monthly" },
-  { href: "/rolodex", label: "Rolodex" },
-  { href: "/brief", label: "Brief" },
-  { href: "/pnl", label: "GP P&L" },
-  { href: "/actual-pnl", label: "Actual P&L" },
-  { href: "/tasks", label: "Tasks" },
-  { href: "/chat", label: "Chat" },
-  { href: "/recipes", label: "Recipes" },
-  { href: "/invoices", label: "Invoices" },
-  { href: "/sales", label: "Sales" },
-  { href: "/inventory", label: "Inventory" },
-  { href: "/people", label: "People" },
-  { href: "/marketing", label: "Marketing" },
-  { href: "/parties", label: "Parties" },
-  { href: "/schedule", label: "Schedule" },
-  { href: "/billing", label: "Billing" },
-  { href: "/doordash", label: "DoorDash" },
-  { href: "/merch", label: "Merch" },
-] as const;
-
 export function AppNav() {
-  const pathname = usePathname();
-  const linkClass = (isActive: boolean) =>
-    cn(
-      "rounded-lg px-3 py-2 text-sm font-medium transition-colors min-h-[44px] min-w-[44px] flex items-center justify-center",
-      isActive
-        ? "border border-brand/50 bg-brand/15 text-brand shadow-[0_0_8px_rgba(249,115,22,0.3)]"
-        : "border border-border/30 bg-black/20 text-muted hover:text-white hover:border-border/50 hover:bg-black/30"
-    );
-  const renderLink = ({ href, label }: { href: string; label: string }) => {
-    const isActive = pathname === href || pathname.startsWith(href + "/");
-    return (
-      <Link
-        key={href}
-        href={href}
-        className={linkClass(isActive)}
-        aria-current={isActive ? "page" : undefined}
-      >
-        {label}
-      </Link>
-    );
-  };
-
   return (
-    <nav aria-label="Main">
-      <div
-        className="rounded-xl border border-brand/20 bg-black/30 p-2 overflow-hidden"
-        style={{ boxShadow: "0 0 15px rgba(249,115,22,0.08), inset 0 0 15px rgba(249,115,22,0.03)" }}
-      >
-        <div className="flex flex-wrap gap-1.5 justify-center max-w-full">
-          {tabs.map(renderLink)}
+    <header className="sticky top-0 z-40 bg-slate-900/95 backdrop-blur-sm border-b border-slate-700">
+      <div className="flex items-center justify-between px-4 h-14">
+        <div className="flex items-center gap-2">
+          <span className="text-lg font-bold text-white">PrimeOS</span>
         </div>
+        <span className="text-xs text-slate-500">Internal · Manual Entry</span>
       </div>
-    </nav>
+    </header>
   );
 }
