@@ -10,6 +10,25 @@ import {
   GraduationCap,
   Menu,
   Lock,
+  BarChart3,
+  Calendar,
+  Clock,
+  CheckSquare,
+  MessageCircle,
+  DollarSign,
+  FileSpreadsheet,
+  TrendingUp,
+  Truck,
+  CreditCard,
+  BookOpen,
+  Package,
+  FileText,
+  Users,
+  Target,
+  Gift,
+  ShoppingBag,
+  BookUser,
+  LucideIcon,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { getRequiredTier } from "@/src/lib/tier-config";
@@ -30,53 +49,87 @@ const MAIN_TABS = [
   { href: "/training", label: "Guide", Icon: GraduationCap },
 ] as const;
 
-const MORE_SECTIONS: { title: string; links: { href: string; label: string }[] }[] = [
-  {
-    title: "Daily Operations",
-    links: [
-      { href: "/daily", label: "Daily KPI" },
-      { href: "/weekly", label: "Weekly Cockpit" },
-      { href: "/monthly", label: "Monthly P&L" },
-      { href: "/brief", label: "Morning Brief" },
-    ],
-  },
-  {
-    title: "Financial",
-    links: [
-      { href: "/pnl", label: "GP P&L" },
-      { href: "/actual-pnl", label: "Actual P&L" },
-      { href: "/sales", label: "Sales Report" },
-      { href: "/doordash", label: "DoorDash Economics" },
-      { href: "/billing", label: "Billing" },
-    ],
-  },
-  {
-    title: "Operations",
-    links: [
-      { href: "/recipes", label: "Recipes" },
-      { href: "/inventory", label: "Inventory" },
-      { href: "/invoices", label: "Invoice Scanner" },
-      { href: "/schedule", label: "Smart Schedule" },
-    ],
-  },
-  {
-    title: "People",
-    links: [
-      { href: "/people", label: "People Economics" },
-      { href: "/chat", label: "Team Chat" },
-      { href: "/tasks", label: "Task Manager" },
-      { href: "/merch", label: "Team Merch" },
-    ],
-  },
-  {
-    title: "Resources",
-    links: [
-      { href: "/rolodex", label: "Trusted Rolodex" },
-      { href: "/marketing", label: "Ad Accountability" },
-      { href: "/parties", label: "Party Orders" },
-    ],
-  },
-];
+type NavItem = {
+  href: string;
+  icon: LucideIcon;
+  label: string;
+  desc: string;
+  color: string;
+};
+
+function NavSection({
+  title,
+  items,
+  pathname,
+  currentTier,
+  openUpgradeModal,
+  setMoreOpen,
+}: {
+  title: string;
+  items: NavItem[];
+  pathname: string;
+  currentTier: string;
+  openUpgradeModal: (requiredTier: string, pageName: string) => void;
+  setMoreOpen: (open: boolean) => void;
+}) {
+  const tierOrder = ["free", "starter", "operator", "owner", "enterprise"];
+  const userIndex = tierOrder.indexOf(currentTier);
+
+  return (
+    <div>
+      <h3 className="text-xs text-slate-500 uppercase tracking-wider font-semibold mb-2">{title}</h3>
+      <div className="bg-slate-800 rounded-xl border border-slate-700 overflow-hidden divide-y divide-slate-700/50">
+        {items.map((item) => {
+          const Icon = item.icon;
+          const isActive = pathname === item.href || pathname.startsWith(item.href + "/");
+          const requiredIndex = tierOrder.indexOf(getRequiredTier(item.href));
+          const locked = userIndex < requiredIndex;
+
+          if (locked) {
+            return (
+              <button
+                key={item.href}
+                type="button"
+                onClick={() => openUpgradeModal(getRequiredTier(item.href), item.label)}
+                className="w-full flex items-center gap-3 px-4 py-3 active:bg-slate-700/50"
+              >
+                <div className="w-8 h-8 rounded-lg bg-slate-700/50 flex items-center justify-center">
+                  <Icon className="w-4 h-4 text-slate-600" />
+                </div>
+                <div className="flex-1 text-left">
+                  <div className="text-sm text-slate-500">{item.label}</div>
+                  <div className="text-xs text-slate-600">{item.desc}</div>
+                </div>
+                <Lock className="w-3.5 h-3.5 text-slate-600" />
+              </button>
+            );
+          }
+
+          return (
+            <Link
+              key={item.href}
+              href={item.href}
+              onClick={() => setMoreOpen(false)}
+              className={cn(
+                "flex items-center gap-3 px-4 py-3 active:bg-slate-700/50",
+                isActive ? "bg-slate-700/30" : ""
+              )}
+            >
+              <div className="w-8 h-8 rounded-lg bg-slate-800 flex items-center justify-center border border-slate-700">
+                <Icon className={cn("w-4 h-4", item.color)} />
+              </div>
+              <div className="flex-1">
+                <div className="text-sm text-white">{item.label}</div>
+                <div className="text-xs text-slate-500">{item.desc}</div>
+              </div>
+              {isActive && <div className="w-1.5 h-1.5 rounded-full bg-blue-400" />}
+            </Link>
+          );
+        })}
+      </div>
+    </div>
+  );
+}
 
 export function BottomNav() {
   const pathname = usePathname();
@@ -180,90 +233,95 @@ export function BottomNav() {
         </div>
       </nav>
 
-      {/* More: slide-up drawer */}
+      {/* More: full-screen slide-up drawer */}
       {moreOpen && (
-        <div
-          className="fixed inset-0 z-[9998] flex flex-col justify-end"
-          aria-modal="true"
-          role="dialog"
-          aria-label="More pages"
-        >
+        <>
           <div
-            className="absolute inset-0 bg-black/50"
-            onClick={closeMore}
+            className="fixed inset-0 bg-black/60 z-50"
+            onClick={() => setMoreOpen(false)}
             aria-hidden="true"
           />
-          <div
-            className="relative bg-slate-800 rounded-t-2xl max-h-[85vh] overflow-y-auto shadow-2xl border-t border-slate-700 pb-[env(safe-area-inset-bottom)]"
-            onClick={(e) => e.stopPropagation()}
-          >
-            <div className="sticky top-0 bg-slate-800 flex items-center justify-between px-4 py-3 border-b border-slate-700 z-10">
-              <h2 className="text-lg font-bold text-white">More</h2>
-              <button
-                type="button"
-                onClick={closeMore}
-                className="min-w-[44px] min-h-[44px] flex items-center justify-center rounded-lg text-slate-400 hover:text-white"
-                aria-label="Close"
-              >
-                <span className="text-xl leading-none">×</span>
-              </button>
+          <div className="fixed inset-x-0 bottom-0 top-12 z-50 bg-slate-900 rounded-t-2xl overflow-y-auto animate-slide-up">
+            {/* Handle bar */}
+            <div className="sticky top-0 bg-slate-900 pt-3 pb-2 px-4 border-b border-slate-800 z-10">
+              <div className="w-10 h-1 bg-slate-700 rounded-full mx-auto mb-3" />
+              <h2 className="text-lg font-bold text-white">All Tools</h2>
             </div>
-            <div className="p-4 space-y-6">
-              {MORE_SECTIONS.map((section) => (
-                <div key={section.title}>
-                  <h3 className="text-[10px] font-semibold uppercase tracking-wider text-slate-500 mb-2">
-                    {section.title}
-                  </h3>
-                  <ul className="space-y-0.5">
-                    {section.links.map(({ href, label }) => {
-                      const isActive =
-                        pathname === href || pathname.startsWith(href + "/");
-                      const required = getRequiredTier(href);
-                      const canAccess = hasAccess(href, currentTier);
 
-                      if (!canAccess) {
-                        return (
-                          <li key={href}>
-                            <button
-                              type="button"
-                              onClick={() => {
-                                openUpgrade(required, label);
-                              }}
-                              className={cn(
-                                "flex items-center min-h-[44px] px-3 py-2 rounded-lg text-sm font-medium transition-colors w-full text-left",
-                                "text-slate-500 hover:bg-slate-700"
-                              )}
-                            >
-                              <Lock className="w-3.5 h-3.5 text-slate-500 flex-shrink-0 mr-2" aria-hidden />
-                              {label}
-                            </button>
-                          </li>
-                        );
-                      }
+            <div className="px-4 py-4 space-y-6 pb-32">
+              <NavSection
+                title="Daily Operations"
+                items={[
+                  { href: "/daily", icon: ClipboardList, label: "Daily KPIs", desc: "Enter today's numbers", color: "text-blue-400" },
+                  { href: "/brief", icon: Sparkles, label: "Morning Brief", desc: "AI summary of yesterday", color: "text-purple-400" },
+                  { href: "/weekly", icon: BarChart3, label: "Weekly Cockpit", desc: "Week-over-week trends", color: "text-emerald-400" },
+                  { href: "/monthly", icon: Calendar, label: "Monthly Summary", desc: "Monthly P&L rollup", color: "text-amber-400" },
+                  { href: "/schedule", icon: Clock, label: "Smart Schedule", desc: "Shifts and labor planning", color: "text-cyan-400" },
+                  { href: "/tasks", icon: CheckSquare, label: "Tasks", desc: "Team task management", color: "text-orange-400" },
+                  { href: "/chat", icon: MessageCircle, label: "Team Chat", desc: "Internal messaging", color: "text-pink-400" },
+                ]}
+                pathname={pathname}
+                currentTier={currentTier}
+                openUpgradeModal={openUpgrade}
+                setMoreOpen={setMoreOpen}
+              />
 
-                      return (
-                        <li key={href}>
-                          <Link
-                            href={href}
-                            onClick={closeMore}
-                            className={cn(
-                              "flex items-center min-h-[44px] px-3 py-2 rounded-lg text-sm font-medium transition-colors",
-                              isActive
-                                ? "bg-blue-500/10 text-blue-400"
-                                : "text-slate-200 hover:bg-slate-700"
-                            )}
-                          >
-                            {label}
-                          </Link>
-                        </li>
-                      );
-                    })}
-                  </ul>
-                </div>
-              ))}
+              <NavSection
+                title="Financial"
+                items={[
+                  { href: "/pnl", icon: DollarSign, label: "GP P&L", desc: "Gross profit tracking", color: "text-emerald-400" },
+                  { href: "/actual-pnl", icon: FileSpreadsheet, label: "Actual P&L", desc: "CPA upload — real net profit", color: "text-green-400" },
+                  { href: "/sales", icon: TrendingUp, label: "Sales Report", desc: "Revenue comparisons", color: "text-blue-400" },
+                  { href: "/doordash", icon: Truck, label: "DoorDash Economics", desc: "True delivery costs", color: "text-red-400" },
+                  { href: "/billing", icon: CreditCard, label: "Billing", desc: "Plans and payments", color: "text-slate-400" },
+                ]}
+                pathname={pathname}
+                currentTier={currentTier}
+                openUpgradeModal={openUpgrade}
+                setMoreOpen={setMoreOpen}
+              />
+
+              <NavSection
+                title="Kitchen & Inventory"
+                items={[
+                  { href: "/recipes", icon: BookOpen, label: "Recipes", desc: "Food costing and portions", color: "text-amber-400" },
+                  { href: "/inventory", icon: Package, label: "Inventory", desc: "Stock levels and par", color: "text-yellow-400" },
+                  { href: "/invoices", icon: FileText, label: "Invoice Scanner", desc: "AI-powered OCR scanning", color: "text-violet-400" },
+                ]}
+                pathname={pathname}
+                currentTier={currentTier}
+                openUpgradeModal={openUpgrade}
+                setMoreOpen={setMoreOpen}
+              />
+
+              <NavSection
+                title="People & Marketing"
+                items={[
+                  { href: "/people", icon: Users, label: "People Economics", desc: "CAC, LTV, churn tracking", color: "text-cyan-400" },
+                  { href: "/marketing", icon: Target, label: "Ad Accountability", desc: "ROAS and campaign tracking", color: "text-rose-400" },
+                  { href: "/parties", icon: Gift, label: "Party Orders", desc: "Catering and events", color: "text-fuchsia-400" },
+                  { href: "/merch", icon: ShoppingBag, label: "Team Merch", desc: "Staff gear and ordering", color: "text-orange-400" },
+                ]}
+                pathname={pathname}
+                currentTier={currentTier}
+                openUpgradeModal={openUpgrade}
+                setMoreOpen={setMoreOpen}
+              />
+
+              <NavSection
+                title="Resources"
+                items={[
+                  { href: "/rolodex", icon: BookUser, label: "Trusted Rolodex", desc: "Vendors, repairs, contacts", color: "text-teal-400" },
+                  { href: "/training", icon: GraduationCap, label: "Training Guide", desc: "Learn every metric", color: "text-indigo-400" },
+                ]}
+                pathname={pathname}
+                currentTier={currentTier}
+                openUpgradeModal={openUpgrade}
+                setMoreOpen={setMoreOpen}
+              />
             </div>
           </div>
-        </div>
+        </>
       )}
 
       <UpgradeModal
