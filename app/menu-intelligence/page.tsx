@@ -10,7 +10,18 @@ import {
   getComparableItems,
   getMenuGaps,
 } from "@/src/lib/menu-data";
+import { formatDollars } from "@/src/lib/formatters";
 import { EducationInfoIcon } from "@/src/components/education/InfoIcon";
+import { DataDisclaimer } from "@/src/components/ui/DataDisclaimer";
+
+const PRICING_GAPS = [
+  { item_name: "Large Pepperoni Pizza", store_id: "kent", menuPrice: 29.95, avgActualPrice: 27.4, unitsSold: 180, gap: -2.55, gapPct: -8.5, cause: "Possible causes: unapplied POS price updates, staff discounts, coupon overuse, or incorrect ringing." },
+  { item_name: "Large Cheese Pizza", store_id: "kent", menuPrice: 15.95, avgActualPrice: 15.2, gapPct: -4.7, unitsSold: 420, gap: -0.75, cause: "Within acceptable range. Minor variance likely from loyalty discounts." },
+  { item_name: "Traditional Wings 10pc", store_id: "kent", menuPrice: 15.95, avgActualPrice: 14.5, unitsSold: 140, gap: -1.45, gapPct: -9.1, cause: "Possible causes: combo pricing applied incorrectly, or manual price override at register." },
+  { item_name: "Family Supreme Pizza", store_id: "aurora", menuPrice: 34.99, avgActualPrice: 32.1, unitsSold: 85, gap: -2.89, gapPct: -8.3, cause: "Aurora showing larger gap than Kent on same item. Consider auditing POS pricing at Aurora." },
+  { item_name: "Cheesy Bread Large", store_id: "kent", menuPrice: 22.99, avgActualPrice: 22.99, unitsSold: 95, gap: 0, gapPct: 0, cause: "No gap. Price is correct." },
+  { item_name: "Boom Boom Shrimp Wrap", store_id: "aurora", menuPrice: 19.99, avgActualPrice: 17.99, unitsSold: 45, gap: -2, gapPct: -10, cause: "Significant gap. Check if an old price is still programmed in the POS." },
+];
 
 const STORE_OPTIONS: { value: string; label: string }[] = [
   { value: "all", label: "All Locations" },
@@ -75,7 +86,7 @@ function useComparableWithGaps() {
 
 export default function MenuIntelligencePage() {
   const [storeId, setStoreId] = useState("all");
-  const [view, setView] = useState<"menu" | "compare" | "gaps">("menu");
+  const [view, setView] = useState<"menu" | "compare" | "gaps" | "pricing-gaps">("menu");
   const [openCategories, setOpenCategories] = useState<Set<string>>(new Set());
 
   const items = useMemo(() => getMenuByStore(storeId), [storeId]);
@@ -203,6 +214,18 @@ export default function MenuIntelligencePage() {
           )}
         >
           Gaps
+        </button>
+        <button
+          type="button"
+          onClick={() => setView("pricing-gaps")}
+          className={cn(
+            "flex-1 py-2 rounded-md text-xs font-medium transition-colors",
+            view === "pricing-gaps"
+              ? "bg-slate-700 text-white"
+              : "text-slate-400 hover:text-slate-300"
+          )}
+        >
+          Price Gaps
         </button>
       </div>
 
@@ -361,22 +384,57 @@ export default function MenuIntelligencePage() {
         </div>
       )}
 
-      <div className="bg-slate-800/50 rounded-xl border border-slate-700/50 p-3 mt-4">
-        <div className="flex items-center gap-2 mb-1">
-          <div className="w-2 h-2 rounded-full bg-emerald-400" />
-          <span className="text-xs text-slate-400 font-medium">
-            Data Confidence: High
-          </span>
-        </div>
-        <p className="text-xs text-slate-500">
-          Prices sourced directly from your public menu websites. Last synced
-          February 23, 2026.
-        </p>
-        <p className="text-xs text-slate-600 mt-1">
-          Calculations are based on your imported data. Verify against your
-          actual financial records.
-        </p>
-      </div>
+      {view === "pricing-gaps" && (() => {
+        const filtered = PRICING_GAPS.filter(
+          (item) => item.gapPct < -2 && (storeId === "all" || item.store_id === storeId)
+        );
+        const totalMonthlyGap = filtered.reduce((sum, item) => sum + Math.abs(item.gap * item.unitsSold), 0);
+        return (
+          <div className="space-y-3">
+            <div className="flex items-center gap-2">
+              <h3 className="text-sm font-semibold text-white">Menu Price vs Actual Charge</h3>
+              <EducationInfoIcon metricKey="menu_pricing_gap" />
+            </div>
+            {filtered.length > 0 ? (
+              <>
+                <div className="bg-red-600/10 rounded-xl border border-red-700/30 p-3 mb-4">
+                  <p className="text-xs text-red-300">
+                    Price gaps on flagged items are costing approximately{" "}
+                    <span className="text-white font-semibold">{formatDollars(totalMonthlyGap)}</span>/month in lost revenue.
+                    That&apos;s <span className="text-white font-semibold">{formatDollars(totalMonthlyGap * 12)}</span>/year.
+                  </p>
+                </div>
+                {filtered.map((item, i) => (
+                  <div key={i} className="bg-slate-800 rounded-xl border border-slate-700 p-3 mb-2">
+                    <div className="flex items-center justify-between mb-1">
+                      <span className="text-sm font-medium text-white">{item.item_name}</span>
+                      <span className={`text-xs px-2 py-0.5 rounded-full ${item.gapPct < -5 ? "bg-red-600/20 text-red-400 border border-red-700/30" : "bg-amber-600/20 text-amber-400 border border-amber-700/30"}`}>
+                        {item.gapPct.toFixed(1)}% gap
+                      </span>
+                    </div>
+                    <div className="flex gap-4 text-xs text-slate-400 mb-2">
+                      <span>Menu: ${item.menuPrice.toFixed(2)}</span>
+                      <span>Avg Sale: ${item.avgActualPrice.toFixed(2)}</span>
+                      <span>{item.unitsSold} sold</span>
+                    </div>
+                    <div className="flex items-center justify-between text-xs">
+                      <span className="text-red-400">Revenue gap: {formatDollars(Math.abs(item.gap * item.unitsSold))}/month</span>
+                    </div>
+                    <p className="text-xs text-slate-500 mt-2">{item.cause}</p>
+                  </div>
+                ))}
+              </>
+            ) : (
+              <p className="text-xs text-slate-500">No items with a price gap &gt; 2% for this store.</p>
+            )}
+          </div>
+        );
+      })()}
+
+      <DataDisclaimer
+        confidence="high"
+        details="Prices sourced directly from your public menu websites. Last synced February 23, 2026."
+      />
     </div>
   );
 }

@@ -4,6 +4,7 @@ import { useState, useMemo, useEffect } from "react";
 import { Scale, Info } from "lucide-react";
 import { formatDollars, formatPct } from "@/src/lib/formatters";
 import { EducationInfoIcon } from "@/src/components/education/InfoIcon";
+import { DataDisclaimer } from "@/src/components/ui/DataDisclaimer";
 import { SEED_STORES } from "@/src/lib/seed-data";
 
 // Theoretical vs Actual food cost data — 6 months per store
@@ -278,17 +279,7 @@ export default function FoodCostAnalysisPage() {
         ))}
       </div>
 
-      {/* Data Confidence */}
-      <div className="bg-slate-800/50 rounded-xl border border-slate-700/50 p-3 mt-4">
-        <div className="flex items-center gap-2 mb-1">
-          <div className="w-2 h-2 rounded-full bg-amber-400" />
-          <span className="text-xs text-slate-400 font-medium">Data Confidence: Medium</span>
-        </div>
-        <p className="text-xs text-slate-500">
-          Theoretical costs based on estimated recipe costs. Import your sales mix and invoices for higher accuracy. Connect FoodTec API for real-time data.
-        </p>
-        <p className="text-xs text-slate-600 mt-1">Calculations are based on your imported data. Verify against your actual financial records.</p>
-      </div>
+      <DataDisclaimer confidence="medium" details="Theoretical costs based on estimated recipe costs. Import your sales mix and invoices for higher accuracy." />
     </div>
   );
 }

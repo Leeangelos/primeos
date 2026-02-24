@@ -23,6 +23,7 @@ import {
 } from "@/src/lib/vendor-data";
 import { formatPct, formatDollars } from "@/src/lib/formatters";
 import { EducationInfoIcon } from "@/src/components/education/InfoIcon";
+import { DataDisclaimer } from "@/src/components/ui/DataDisclaimer";
 import { SEED_STORES } from "@/src/lib/seed-data";
 
 const STORE_REVENUE: Record<string, number> = { kent: 44000, aurora: 52000, lindseys: 32000 };
@@ -812,19 +813,7 @@ export default function VendorTrackerPage() {
         </div>
       )}
 
-      {/* SECTION 8: DATA TRUST FOOTER */}
-      <div className="bg-slate-800/50 rounded-xl border border-slate-700/50 p-3 mt-4">
-        <div className="flex items-center gap-2 mb-1">
-          <div className="w-2 h-2 rounded-full bg-emerald-400" />
-          <span className="text-xs text-slate-400 font-medium">Data Confidence: High</span>
-        </div>
-        <p className="text-xs text-slate-500">
-          12 months of vendor cost data loaded. Trends require 2+ months of data.
-        </p>
-        <p className="text-xs text-slate-600 mt-1">
-          Calculations are based on your imported data. Verify against your actual financial records.
-        </p>
-      </div>
+      <DataDisclaimer confidence="high" details="12 months of vendor cost data loaded. Trends require 2+ months." />
     </div>
   );
 }

@@ -553,6 +553,18 @@ export const EDUCATION_CONTENT: Record<string, EducationEntry> = {
       "Consider reviewing camera footage during closing shifts if variance exceeds 10% — theft is rare but it happens",
     ],
   },
+  menu_pricing_gap: {
+    title: "Menu Price vs Actual Sale Price",
+    whatItMeans:
+      "Compares your listed menu price to what customers are actually being charged. A gap means customers are paying less than your menu price — usually due to unapplied POS updates, staff discounts, coupon overuse, incorrect ringing, or combo pricing errors. Every dollar of gap across hundreds of orders adds up fast.",
+    whenRedPlaybook: [
+      "Consider checking your POS for items still at old prices — price updates sometimes don't sync across all terminals",
+      "Consider auditing your coupon and discount usage — who has override access and how often is it used?",
+      "Consider reviewing combo pricing logic — some POS systems apply combo discounts incorrectly",
+      "Consider whether staff meals or manager comps are being recorded but lowering the average sale price",
+      "Consider running a POS price audit monthly — compare every item in POS to your current menu",
+    ],
+  },
   gl_upload: {
     title: "General Ledger Upload",
     whatItMeans:

@@ -4,6 +4,7 @@ import { useState } from "react";
 import { FileSpreadsheet, Upload, Check, ChevronDown, HelpCircle } from "lucide-react";
 import { formatDollars, formatPct } from "@/src/lib/formatters";
 import { EducationInfoIcon } from "@/src/components/education/InfoIcon";
+import { DataDisclaimer } from "@/src/components/ui/DataDisclaimer";
 import { SEED_STORES } from "@/src/lib/seed-data";
 
 const GL_CATEGORIES = [
@@ -27,6 +28,14 @@ const SEED_GL_RESULTS = {
   operating: { label: "Operating Expenses", amount: 2680, accounts: ["7100 — Supplies", "7200 — Repairs", "7300 — Equipment Lease", "7400 — Technology/POS"] },
   marketing: { label: "Marketing", amount: 1850, accounts: ["7500 — Online Ads", "7600 — Print/Local", "7700 — Loyalty Program"] },
   admin: { label: "Administrative", amount: 1420, accounts: ["8100 — Office Supplies", "8200 — Legal/Accounting", "8300 — Bank Fees", "8400 — CC Processing Fees"] },
+};
+
+const PNL_COMPARISON = {
+  revenue: { gl: 47600, pnl: 47600, label: "Total Revenue" },
+  food: { gl: 14280, pnl: 14460, label: "Food Cost" },
+  labor: { gl: 13328, pnl: 12922, label: "Labor Cost" },
+  occupancy: { gl: 5590, pnl: 5190, label: "Occupancy" },
+  marketing: { gl: 1850, pnl: 1800, label: "Marketing" },
 };
 
 const STORE_OPTIONS = SEED_STORES.map((s) => ({ value: s.slug, label: s.name }));
@@ -309,6 +318,42 @@ export default function GLUploadPage() {
               <p>→ CC Processing Tracker (fees from GL admin accounts)</p>
             </div>
           </div>
+
+          <div className="bg-slate-800 rounded-xl border border-slate-700 p-4 mt-4">
+            <h3 className="text-sm font-semibold text-white mb-1">GL vs P&L Reconciliation</h3>
+            <p className="text-xs text-slate-500 mb-3">Comparing your GL data to your Actual P&L for the same month</p>
+
+            {Object.entries(PNL_COMPARISON).map(([key, row]) => {
+              const diff = row.gl - row.pnl;
+              const diffPct = row.pnl > 0 ? (diff / row.pnl) * 100 : 0;
+              const isMismatch = Math.abs(diffPct) > 2;
+              return (
+                <div key={key} className={`flex items-center justify-between py-2 border-b border-slate-700/50 last:border-0 ${isMismatch ? "bg-amber-600/5 -mx-1 px-1 rounded" : ""}`}>
+                  <span className="text-xs text-slate-400">{row.label}</span>
+                  <div className="flex items-center gap-3 text-xs">
+                    <span className="text-slate-500">GL: {formatDollars(row.gl)}</span>
+                    <span className="text-slate-500">P&L: {formatDollars(row.pnl)}</span>
+                    {isMismatch ? (
+                      <span className="text-amber-400 font-medium">{diffPct > 0 ? "+" : ""}{diffPct.toFixed(1)}%</span>
+                    ) : (
+                      <span className="text-emerald-400">✓</span>
+                    )}
+                  </div>
+                </div>
+              );
+            })}
+
+            {Object.entries(PNL_COMPARISON).some(([, row]) => {
+              const diffPct = row.pnl > 0 ? ((row.gl - row.pnl) / row.pnl) * 100 : 0;
+              return Math.abs(diffPct) > 2;
+            }) && (
+              <div className="mt-3 p-2 rounded-lg bg-amber-600/10 border border-amber-700/30">
+                <p className="text-xs text-amber-300">Some line items differ by more than 2% between your GL and P&L. Common causes: timing differences, accruals, or classification errors. Your GL is typically more accurate.</p>
+              </div>
+            )}
+          </div>
+
+          <DataDisclaimer confidence="high" details="Data parsed from your General Ledger export." />
         </div>
       )}
     </div>

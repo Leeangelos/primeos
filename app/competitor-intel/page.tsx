@@ -17,6 +17,7 @@ import {
 import { MENU_DATA } from "@/src/lib/menu-data";
 import { SEED_STORES } from "@/src/lib/seed-data";
 import { EducationInfoIcon } from "@/src/components/education/InfoIcon";
+import { DataDisclaimer } from "@/src/components/ui/DataDisclaimer";
 
 const STORE_OPTIONS = SEED_STORES.map((s) => ({ value: s.slug, label: s.name }));
 
@@ -263,19 +264,7 @@ export default function CompetitorIntelPage() {
         </p>
       </div>
 
-      <div className="bg-slate-800/50 rounded-xl border border-slate-700/50 p-3 mt-3">
-        <div className="flex items-center gap-2 mb-1">
-          <div className="w-2 h-2 rounded-full bg-amber-400" />
-          <span className="text-xs text-slate-400 font-medium">Data Confidence: Medium</span>
-        </div>
-        <p className="text-xs text-slate-500">
-          Competitor prices and ratings are seeded from public data and may not reflect current pricing. Verify by
-          checking competitor websites directly.
-        </p>
-        <p className="text-xs text-slate-600 mt-1">
-          Calculations are based on your imported data. Verify against your actual financial records.
-        </p>
-      </div>
+      <DataDisclaimer confidence="medium" details="Competitor prices and ratings from public data. May not reflect current pricing." />
     </div>
   );
 }
