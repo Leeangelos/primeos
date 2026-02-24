@@ -1,5 +1,4 @@
 import { createClient as createSupabaseClient, SupabaseClient } from "@supabase/supabase-js";
-import { createCookieStorage } from "./supabase-cookie-storage";
 
 const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
 const anonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
@@ -7,9 +6,8 @@ const anonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
 let urlLogged = false;
 
 /**
- * Supabase client for browser and server.
- * In the browser we use cookie-based auth storage so the session persists in iOS PWA/standalone
- * (sameSite: lax, secure in production). Server/scripts get default storage.
+ * Supabase client for API routes and client components.
+ * Uses Supabase's default localStorage-based session persistence in the browser.
  */
 export function createClient(): SupabaseClient {
   if (!url || !anonKey) {
@@ -19,11 +17,7 @@ export function createClient(): SupabaseClient {
     urlLogged = true;
     console.log("[Supabase] NEXT_PUBLIC_SUPABASE_URL prefix:", url.slice(0, 10) + "...");
   }
-  const isBrowser = typeof window !== "undefined";
-  const options = isBrowser
-    ? { auth: { storage: createCookieStorage(), persistSession: true } }
-    : undefined;
-  return createSupabaseClient(url, anonKey, options);
+  return createSupabaseClient(url, anonKey);
 }
 
 /**
