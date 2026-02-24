@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import { useState, useCallback, useEffect } from "react";
 import {
   LayoutDashboard,
@@ -34,8 +34,10 @@ import {
   Home,
   LucideIcon,
   Settings,
+  LogOut,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { createClient } from "@/lib/supabase";
 import { getRequiredTier } from "@/src/lib/tier-config";
 import { useTier } from "@/src/lib/tier-context";
 import { UpgradeModal } from "@/src/components/layout/UpgradeModal";
@@ -138,11 +140,19 @@ function NavSection({
 
 export function BottomNav() {
   const pathname = usePathname();
+  const router = useRouter();
   const { currentTier } = useTier();
   const [moreOpen, setMoreOpen] = useState(false);
   const [upgradeModal, setUpgradeModal] = useState<{ requiredTier: string; pageName: string } | null>(null);
 
   const closeMore = useCallback(() => setMoreOpen(false), []);
+
+  const handleLogout = async () => {
+    const supabase = createClient();
+    await supabase.auth.signOut();
+    router.push("/login");
+    router.refresh();
+  };
 
   const openUpgrade = useCallback((requiredTier: string, pageName: string) => {
     setUpgradeModal({ requiredTier, pageName });
@@ -362,6 +372,13 @@ export function BottomNav() {
                   <span className="text-xs text-slate-700">·</span>
                   <Link href="/privacy" onClick={() => setMoreOpen(false)} className="text-xs text-slate-600 hover:text-slate-400">Privacy Policy</Link>
                 </div>
+                <button
+                  onClick={handleLogout}
+                  className="flex items-center gap-3 w-full px-4 py-3 mt-4 rounded-xl text-red-400 hover:bg-red-600/10 transition-colors"
+                >
+                  <LogOut className="w-5 h-5" />
+                  <span className="text-sm font-medium">Log Out</span>
+                </button>
               </div>
             </div>
           </div>
