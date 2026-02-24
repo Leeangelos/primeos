@@ -3,7 +3,7 @@
 import { createContext, useContext, useState, useCallback, useEffect } from "react";
 
 const STORAGE_KEY = "primeos-demo-tier";
-const DEFAULT_TIER = "owner";
+const DEFAULT_TIER = "enterprise";
 
 type TierKey = "free" | "starter" | "operator" | "owner" | "enterprise";
 

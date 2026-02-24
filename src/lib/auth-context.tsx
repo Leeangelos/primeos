@@ -14,15 +14,15 @@ type AuthContextValue = {
 
 const AuthContext = createContext<AuthContextValue | null>(null);
 
-/** Maps app role from profiles table to billing tier key. No profile => Demo experience (starter). */
+/** Maps app role from profiles table to billing tier key. No profile => full Enterprise experience. */
 function roleToTier(role: string | null): string {
-  if (!role) return "starter";
+  if (!role) return "enterprise";
   const r = role.toLowerCase();
   if (r === "owner") return "owner";
   if (r === "manager") return "operator";
   if (r === "crew") return "starter";
   if (r === "demo") return "starter";
-  return "starter";
+  return "enterprise";
 }
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
@@ -43,7 +43,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         const tier = roleToTier(data?.role ?? null);
         setCurrentTier(tier);
       } catch {
-        setCurrentTier("starter");
+        setCurrentTier("enterprise");
       }
     },
     [setCurrentTier]
