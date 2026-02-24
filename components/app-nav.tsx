@@ -2,6 +2,7 @@
 
 import { Sun, Moon } from "lucide-react";
 import { useTheme } from "@/src/lib/theme-context";
+import { NotificationCenter } from "@/src/components/layout/NotificationCenter";
 
 export function AppNav() {
   const { theme, toggleTheme } = useTheme();
@@ -11,8 +12,9 @@ export function AppNav() {
         <div className="flex items-center gap-2">
           <span className="text-lg font-bold text-white">PrimeOS</span>
         </div>
-        <div className="flex items-center gap-3">
-          <span className="text-xs text-slate-500">Internal · Manual Entry</span>
+        <div className="flex items-center gap-2">
+          <span className="text-xs text-slate-500 hidden sm:inline">Internal · Manual Entry</span>
+          <NotificationCenter />
           <button
             type="button"
             onClick={toggleTheme}

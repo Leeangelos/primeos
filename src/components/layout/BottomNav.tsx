@@ -18,6 +18,7 @@ import {
   DollarSign,
   FileSpreadsheet,
   TrendingUp,
+  Building2,
   Truck,
   CreditCard,
   BookOpen,
@@ -298,6 +299,7 @@ export function BottomNav() {
                 items={[
                   { href: "/pnl", icon: DollarSign, label: "GP P&L", desc: "Gross profit tracking", color: "text-emerald-400" },
                   { href: "/actual-pnl", icon: FileSpreadsheet, label: "Actual P&L", desc: "CPA upload — real net profit", color: "text-green-400" },
+                  { href: "/vendor-tracker", icon: Building2, label: "Vendor Tracker", desc: "Costs, trends, and alerts", color: "text-rose-400" },
                   { href: "/sales", icon: TrendingUp, label: "Sales Report", desc: "Revenue comparisons", color: "text-blue-400" },
                   { href: "/doordash", icon: Truck, label: "DoorDash Economics", desc: "True delivery costs", color: "text-red-400" },
                   { href: "/billing", icon: CreditCard, label: "Billing", desc: "Plans and payments", color: "text-slate-400" },

@@ -33,6 +33,7 @@ export const TIERS = {
       "/inventory",
       "/invoices",
       "/menu-intelligence",
+      "/vendor-tracker",
       "/sales",
       "/actual-pnl",
       "/tasks",

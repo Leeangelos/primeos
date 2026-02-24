@@ -147,6 +147,14 @@ body {
   animation: slide-up 0.3s ease-out;
 }
 
+@keyframes slide-left {
+  from { transform: translateX(100%); }
+  to { transform: translateX(0); }
+}
+.animate-slide-left {
+  animation: slide-left 0.2s ease-out;
+}
+
 /* Dark mode (default) */
 .dark-mode {
   --bg-primary: #0f172a;

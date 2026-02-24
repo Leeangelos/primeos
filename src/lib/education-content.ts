@@ -432,4 +432,65 @@ export const EDUCATION_CONTENT: Record<string, EducationEntry> = {
       "Consider testing premium items or add-ons that naturally raise the average without changing base prices",
     ],
   },
+
+  vendor_total_spend: {
+    title: "Total Vendor Spend",
+    whatItMeans:
+      "The sum of all payments to all vendors in the selected period. This is the total outflow from your business to external suppliers and service providers. Tracking this monthly helps you spot when total costs are creeping up even if individual vendors look stable.",
+    whenRedPlaybook: [
+      "Consider comparing this month's total to the same month last year — seasonal patterns matter",
+      "Consider identifying which vendor category drove the largest increase",
+      "Consider whether revenue increased proportionally — costs rising faster than revenue is the danger sign",
+      "Consider scheduling a quarterly vendor review to catch creeping costs early",
+      "Consider whether any vendor costs could be consolidated or renegotiated",
+    ],
+  },
+  vendor_price_change: {
+    title: "Vendor Price Change",
+    whatItMeans:
+      "The percentage change in a vendor's cost from one period to the next. Small increases (1-3%) are normal inflation. Increases over 5% deserve attention. Increases over 10% are a red flag that needs immediate review — either the vendor raised prices, you're ordering more, or both.",
+    whenRedPlaybook: [
+      "Consider requesting an itemized breakdown of the price increase from the vendor",
+      "Consider comparing the increase to food inflation indexes (USDA reports monthly)",
+      "Consider getting 2-3 competing quotes to benchmark the new price",
+      "Consider whether your order volume changed — more units at the same price looks like a price increase",
+      "Consider negotiating a price lock for 6-12 months in exchange for volume commitment",
+    ],
+  },
+  cc_effective_rate: {
+    title: "Credit Card Effective Rate",
+    whatItMeans:
+      "Your actual credit card processing cost as a percentage of total card sales. Most operators are quoted 2.6% but their effective rate is actually 3.2-3.8% after interchange fees, batch fees, PCI compliance fees, and statement fees. Industry benchmark for restaurants: 2.5-3.0%. Every 0.1% over benchmark costs $40/month on $40,000 in card sales — that's $480/year.",
+    whenRedPlaybook: [
+      "Consider requesting a full fee breakdown from your processor — not just the quoted rate",
+      "Consider calculating: total fees ÷ total card sales = your real effective rate",
+      "Consider getting 2-3 competing quotes from processors that specialize in restaurants",
+      "Consider whether you're paying PCI compliance fees that could be eliminated by completing your PCI questionnaire",
+      "Consider negotiating — operators who switch or threaten to switch typically save $2,000-5,000/year",
+    ],
+  },
+  occupancy_cost: {
+    title: "Occupancy Cost %",
+    whatItMeans:
+      "Monthly rent divided by monthly revenue. This tells you what percentage of every dollar goes to your landlord. Industry benchmark: 6-8% is healthy, 8-10% is manageable, over 10% is a red flag. Unlike food and labor which you control daily, rent is locked into a lease — so this number is really about whether your revenue justifies your space.",
+    whenRedPlaybook: [
+      "Consider that high occupancy cost is usually a revenue problem, not a rent problem — the fix is more sales, not cheaper space",
+      "Consider extending hours, adding catering, or increasing marketing to drive revenue up",
+      "Consider subleasing unused space or times (breakfast/lunch if you're dinner-only)",
+      "Consider negotiating rent reduction at lease renewal using your revenue data as leverage",
+      "Consider whether a smaller or less expensive location would maintain your revenue while reducing fixed costs",
+    ],
+  },
+  revenue_per_sqft: {
+    title: "Revenue per Square Foot",
+    whatItMeans:
+      "Monthly revenue divided by your total square footage. This measures how efficiently you're using your space. A higher number means you're generating more revenue per square foot of real estate you're paying for. Compare across your locations to see which store is using its space most efficiently.",
+    whenRedPlaybook: [
+      "Consider comparing this across your locations — the lowest performer may need layout or menu optimization",
+      "Consider whether your seating capacity matches your peak demand — empty tables during rushes is lost revenue per square foot",
+      "Consider adding revenue streams that don't require more space (catering, online ordering, merchandise)",
+      "Consider whether kitchen layout changes could increase throughput during peak hours",
+      "Consider whether any square footage is underutilized (storage rooms, unused dining areas)",
+    ],
+  },
 };
