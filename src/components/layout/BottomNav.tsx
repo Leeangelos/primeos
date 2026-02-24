@@ -32,6 +32,7 @@ import {
   BookUser,
   Home,
   LucideIcon,
+  Settings,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { getRequiredTier } from "@/src/lib/tier-config";
@@ -301,7 +302,7 @@ export function BottomNav() {
                   { href: "/actual-pnl", icon: FileSpreadsheet, label: "Actual P&L", desc: "CPA upload — real net profit", color: "text-green-400" },
                   { href: "/vendor-tracker", icon: Building2, label: "Vendor Tracker", desc: "Costs, trends, and alerts", color: "text-rose-400" },
                   { href: "/sales", icon: TrendingUp, label: "Sales Report", desc: "Revenue comparisons", color: "text-blue-400" },
-                  { href: "/doordash", icon: Truck, label: "DoorDash Economics", desc: "True delivery costs", color: "text-red-400" },
+                  { href: "/doordash", icon: Truck, label: "Delivery Economics", desc: "Platform costs and comparison", color: "text-red-400" },
                   { href: "/billing", icon: CreditCard, label: "Billing", desc: "Plans and payments", color: "text-slate-400" },
                 ]}
                 pathname={pathname}
@@ -341,6 +342,7 @@ export function BottomNav() {
               <NavSection
                 title="Resources"
                 items={[
+                  { href: "/vendor-settings", icon: Settings, label: "Vendor Settings", desc: "Manage vendors and platforms", color: "text-slate-400" },
                   { href: "/rolodex", icon: BookUser, label: "Trusted Rolodex", desc: "Vendors, repairs, contacts", color: "text-teal-400" },
                   { href: "/training", icon: GraduationCap, label: "Training Guide", desc: "Learn every metric", color: "text-indigo-400" },
                 ]}

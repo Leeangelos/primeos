@@ -493,4 +493,28 @@ export const EDUCATION_CONTENT: Record<string, EducationEntry> = {
       "Consider whether any square footage is underutilized (storage rooms, unused dining areas)",
     ],
   },
+  delivery_economics: {
+    title: "Delivery Platform Economics",
+    whatItMeans:
+      "Not all delivery platforms are equal. A platform with high gross revenue but 30% commission may net you less than a platform with lower volume but 15% commission. PrimeOS compares your actual net revenue per order across every platform you use — so you know which platforms are actually making you money.",
+    whenRedPlaybook: [
+      "Consider calculating your total cost per delivery order: food cost + labor + packaging + platform commission",
+      "Consider whether orders on high-commission platforms are profitable after all costs",
+      "Consider raising delivery menu prices on high-commission platforms to protect margins",
+      "Consider promoting direct ordering (your website) where commission is lowest",
+      "Consider reducing menu items available on the most expensive platforms to limit exposure",
+    ],
+  },
+  net_revenue_per_order: {
+    title: "Net Revenue per Order",
+    whatItMeans:
+      "The money you actually keep per order after the platform takes their commission. This is the number that matters — not gross revenue. A platform sending you 300 orders at $13/net each is worth more than one sending 100 orders at $14/net each. But if your food cost per order is $8, the first platform only nets you $5 profit while the second nets $6.",
+    whenRedPlaybook: [
+      "Consider comparing net/order across platforms — the difference compounds over hundreds of orders per month",
+      "Consider whether low net/order platforms are worth the volume they bring",
+      "Consider negotiating commission rates with platforms where you have high volume — they want to keep you",
+      "Consider running the math: if net/order minus food cost minus labor minus packaging is negative, that platform loses money on every order",
+      "Consider testing a price increase on the lowest net/order platform — even $0.50 more per order across 300 orders is $150/month",
+    ],
+  },
 };

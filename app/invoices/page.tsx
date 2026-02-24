@@ -2,11 +2,39 @@
 
 import { useState, useRef } from "react";
 import { createPortal } from "react-dom";
-import { Pencil, CheckCircle, AlertTriangle } from "lucide-react";
+import { Pencil, CheckCircle, AlertTriangle, Check, Plus } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { EducationInfoIcon } from "@/src/components/education/InfoIcon";
 import { ExportButton } from "@/src/components/ui/ExportButton";
 import { SEED_INVOICES, type SeedInvoice, type SeedInvoiceLineItem } from "@/src/lib/seed-data";
+import { VENDORS, type Vendor } from "@/src/lib/vendor-data";
+import { formatDollars } from "@/src/lib/formatters";
+
+function matchVendor(invoiceVendorName: string, storeId: string): Vendor | null {
+  if (!invoiceVendorName || invoiceVendorName === "Unknown") return null;
+
+  const storeVendors = VENDORS.filter((v) => v.store_id === storeId && v.is_active);
+  const searchName = invoiceVendorName.toLowerCase().trim();
+
+  const exact = storeVendors.find((v) => v.vendor_name.toLowerCase() === searchName);
+  if (exact) return exact;
+
+  const contains = storeVendors.find(
+    (v) =>
+      v.vendor_name.toLowerCase().includes(searchName) ||
+      searchName.includes(v.vendor_name.toLowerCase().split(" ")[0].toLowerCase())
+  );
+  if (contains) return contains;
+
+  const firstWord = storeVendors.find((v) => {
+    const vendorFirst = v.vendor_name.toLowerCase().split(" ")[0];
+    const invoiceFirst = searchName.split(" ")[0];
+    return vendorFirst === invoiceFirst && vendorFirst.length > 3;
+  });
+  if (firstWord) return firstWord;
+
+  return null;
+}
 
 function recalcLine(item: SeedInvoiceLineItem): SeedInvoiceLineItem {
   const ext = item.qty * item.unit_price;
@@ -26,7 +54,23 @@ export default function InvoicesPage() {
   const [editingInvoice, setEditingInvoice] = useState<string | null>(null);
   const [editDraft, setEditDraft] = useState<SeedInvoice | null>(null);
   const [scanning, setScanning] = useState(false);
+  const [vendorPrompts, setVendorPrompts] = useState<Record<string, "pending" | "added" | "dismissed">>({});
+  const [vendorAddToast, setVendorAddToast] = useState<string | null>(null);
   const fileRef = useRef<HTMLInputElement>(null);
+
+  const selectedStore = "kent";
+
+  function handleAddToVendorTracker(invoice: SeedInvoice, vendor: Vendor) {
+    setVendorPrompts((prev) => ({ ...prev, [invoice.id]: "added" }));
+    setVendorAddToast(vendor.vendor_name);
+    setTimeout(() => setVendorAddToast(null), 2500);
+  }
+
+  function handleNewVendorDetected(invoice: SeedInvoice) {
+    setVendorPrompts((prev) => ({ ...prev, [invoice.id]: "dismissed" }));
+    setVendorAddToast("New vendor — go to Vendor Settings to add " + invoice.vendor_name);
+    setTimeout(() => setVendorAddToast(null), 3500);
+  }
 
   function formatDate(dateStr: string | null): string {
     if (!dateStr) return "—";
@@ -118,6 +162,14 @@ export default function InvoicesPage() {
 
   return (
     <div className="space-y-4 min-w-0 overflow-x-hidden pb-28">
+      {vendorAddToast && (
+        <div className="fixed top-16 left-1/2 -translate-x-1/2 z-50 bg-emerald-600/20 border border-emerald-700/50 rounded-xl px-4 py-2.5 shadow-lg shadow-black/30 animate-slide-up">
+          <p className="text-xs text-emerald-300">
+            {vendorAddToast.includes("—") ? vendorAddToast : `${vendorAddToast} entry added to Vendor Tracker`}
+          </p>
+        </div>
+      )}
+
       <div className="dashboard-toolbar p-3 sm:p-5 space-y-3">
         <div className="flex items-center justify-between gap-2 flex-wrap">
           <div className="flex items-center gap-2">
@@ -245,6 +297,79 @@ export default function InvoicesPage() {
                   <span>Approve Invoice</span>
                 </button>
               )}
+
+              {(() => {
+                const matched = matchVendor(inv.vendor_name, selectedStore);
+                const promptState = vendorPrompts[inv.id];
+
+                if (matched && promptState !== "added" && promptState !== "dismissed") {
+                  return (
+                    <div className="mt-3 p-3 rounded-lg bg-blue-950/30 border border-blue-800/50">
+                      <p className="text-xs text-blue-300 mb-2">
+                        This looks like a <span className="text-white font-medium">{matched.vendor_name}</span> invoice
+                        for <span className="text-white font-medium">{formatDollars(inv.total)}</span>. Add to vendor
+                        tracker?
+                      </p>
+                      <div className="flex gap-2">
+                        <button
+                          type="button"
+                          onClick={() => handleAddToVendorTracker(inv, matched)}
+                          className="flex items-center gap-1 px-3 py-1.5 rounded-lg bg-blue-600/20 border border-blue-700/50 text-xs text-blue-400 hover:bg-blue-600/30 transition-colors"
+                        >
+                          <Check className="w-3 h-3" />
+                          <span>Add</span>
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => setVendorPrompts((prev) => ({ ...prev, [inv.id]: "dismissed" }))}
+                          className="px-3 py-1.5 rounded-lg text-xs text-slate-500 hover:text-slate-400"
+                        >
+                          Dismiss
+                        </button>
+                      </div>
+                    </div>
+                  );
+                }
+
+                if (promptState === "added") {
+                  return (
+                    <div className="flex items-center gap-1.5 mt-2 text-xs text-emerald-400">
+                      <Check className="w-3 h-3" />
+                      <span>Added to Vendor Tracker</span>
+                    </div>
+                  );
+                }
+
+                if (!matched && inv.vendor_name !== "Unknown" && promptState !== "dismissed") {
+                  return (
+                    <div className="mt-3 p-3 rounded-lg bg-amber-950/30 border border-amber-800/50">
+                      <p className="text-xs text-amber-300 mb-2">
+                        New vendor detected: <span className="text-white font-medium">{inv.vendor_name}</span>. Add to
+                        your vendor database?
+                      </p>
+                      <div className="flex gap-2">
+                        <button
+                          type="button"
+                          onClick={() => handleNewVendorDetected(inv)}
+                          className="flex items-center gap-1 px-3 py-1.5 rounded-lg bg-amber-600/20 border border-amber-700/50 text-xs text-amber-400 hover:bg-amber-600/30 transition-colors"
+                        >
+                          <Plus className="w-3 h-3" />
+                          <span>Add Vendor</span>
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => setVendorPrompts((prev) => ({ ...prev, [inv.id]: "dismissed" }))}
+                          className="px-3 py-1.5 rounded-lg text-xs text-slate-500 hover:text-slate-400"
+                        >
+                          Dismiss
+                        </button>
+                      </div>
+                    </div>
+                  );
+                }
+
+                return null;
+              })()}
             </div>
           );
         })}

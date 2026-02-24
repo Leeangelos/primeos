@@ -1,158 +1,349 @@
 "use client";
 
-import { useMemo } from "react";
-import {
-  BarChart,
-  Bar,
-  XAxis,
-  YAxis,
-  Tooltip,
-  ResponsiveContainer,
-  Legend,
-} from "recharts";
-import { EducationInfoIcon } from "@/src/components/education/InfoIcon";
+import { useState, useMemo } from "react";
 import { formatPct, formatDollars } from "@/src/lib/formatters";
-import { SEED_DOORDASH } from "@/src/lib/seed-data";
-import { cn } from "@/lib/utils";
+import { EducationInfoIcon } from "@/src/components/education/InfoIcon";
 
-function fmt(n: number): string {
-  return n >= 1000 ? `$${(n / 1000).toFixed(1)}k` : `$${Math.round(n)}`;
-}
+type PlatformMonthlyData = {
+  grossRevenue: number;
+  commissionPct: number;
+  commissionDollars: number;
+  netRevenue: number;
+  orderCount: number;
+  avgOrderValue: number;
+  avgNetPerOrder: number;
+  prevGrossRevenue: number;
+  prevCommissionDollars: number;
+  prevOrderCount: number;
+};
 
-export default function DoorDashPage() {
-  const data = SEED_DOORDASH;
+type DeliveryPlatform = {
+  id: string;
+  name: string;
+  icon: string;
+  color: string;
+  bgColor: string;
+  borderColor: string;
+  isActive: boolean;
+  monthlyData: PlatformMonthlyData;
+};
 
-  const totalRevenue = data.reduce((s, d) => s + d.gross_sales, 0);
-  const totalCommission = data.reduce((s, d) => s + d.commission_dollars, 0);
-  const effectiveCommissionPct = totalRevenue > 0 ? (totalCommission / totalRevenue) * 100 : 0;
-  const netRevenue = data.reduce((s, d) => s + d.net_revenue, 0);
-  const commissionPct = totalRevenue > 0 ? (totalCommission / totalRevenue) * 100 : 0;
-  const netPct = totalRevenue > 0 ? (netRevenue / totalRevenue) * 100 : 0;
+const DELIVERY_PLATFORMS: DeliveryPlatform[] = [
+  {
+    id: "doordash",
+    name: "DoorDash",
+    icon: "🚗",
+    color: "text-red-400",
+    bgColor: "bg-red-400/10",
+    borderColor: "border-red-700/30",
+    isActive: true,
+    monthlyData: {
+      grossRevenue: 5480,
+      commissionPct: 25.2,
+      commissionDollars: 1381,
+      netRevenue: 4099,
+      orderCount: 312,
+      avgOrderValue: 17.56,
+      avgNetPerOrder: 13.14,
+      prevGrossRevenue: 4920,
+      prevCommissionDollars: 1230,
+      prevOrderCount: 280,
+    },
+  },
+  {
+    id: "ubereats",
+    name: "UberEats",
+    icon: "🍔",
+    color: "text-emerald-400",
+    bgColor: "bg-emerald-400/10",
+    borderColor: "border-emerald-700/30",
+    isActive: true,
+    monthlyData: {
+      grossRevenue: 2840,
+      commissionPct: 30.0,
+      commissionDollars: 852,
+      netRevenue: 1988,
+      orderCount: 148,
+      avgOrderValue: 19.19,
+      avgNetPerOrder: 13.43,
+      prevGrossRevenue: 2560,
+      prevCommissionDollars: 768,
+      prevOrderCount: 132,
+    },
+  },
+  {
+    id: "slice",
+    name: "Slice",
+    icon: "🍕",
+    color: "text-orange-400",
+    bgColor: "bg-orange-400/10",
+    borderColor: "border-orange-700/30",
+    isActive: false,
+    monthlyData: {
+      grossRevenue: 1200,
+      commissionPct: 7.9,
+      commissionDollars: 95,
+      netRevenue: 1105,
+      orderCount: 68,
+      avgOrderValue: 17.65,
+      avgNetPerOrder: 16.25,
+      prevGrossRevenue: 980,
+      prevCommissionDollars: 77,
+      prevOrderCount: 54,
+    },
+  },
+  {
+    id: "direct",
+    name: "Direct Online",
+    icon: "🌐",
+    color: "text-blue-400",
+    bgColor: "bg-blue-400/10",
+    borderColor: "border-blue-700/30",
+    isActive: false,
+    monthlyData: {
+      grossRevenue: 3200,
+      commissionPct: 3.5,
+      commissionDollars: 112,
+      netRevenue: 3088,
+      orderCount: 185,
+      avgOrderValue: 17.3,
+      avgNetPerOrder: 16.69,
+      prevGrossRevenue: 2800,
+      prevCommissionDollars: 98,
+      prevOrderCount: 160,
+    },
+  },
+];
 
-  const commissionGrade = effectiveCommissionPct < 20 ? "green" : effectiveCommissionPct <= 25 ? "yellow" : "red";
+const COMPARISON_ROWS: { label: string; key: keyof PlatformMonthlyData; format: "dollar" | "pct" | "dollar2" | "number"; lowerIsBetter: boolean }[] = [
+  { label: "Gross Revenue", key: "grossRevenue", format: "dollar", lowerIsBetter: false },
+  { label: "Commission $", key: "commissionDollars", format: "dollar", lowerIsBetter: true },
+  { label: "Commission %", key: "commissionPct", format: "pct", lowerIsBetter: true },
+  { label: "Net Revenue", key: "netRevenue", format: "dollar", lowerIsBetter: false },
+  { label: "Orders", key: "orderCount", format: "number", lowerIsBetter: false },
+  { label: "Avg Order", key: "avgOrderValue", format: "dollar2", lowerIsBetter: false },
+  { label: "Net/Order", key: "avgNetPerOrder", format: "dollar2", lowerIsBetter: false },
+];
 
-  const chartData = useMemo(() => {
-    return data.map((d) => ({
-      date: d.date,
-      label: new Date(d.date + "T12:00:00Z").toLocaleDateString("en-US", { month: "short", day: "numeric" }),
-      revenue: d.gross_sales,
-      commission: d.commission_dollars,
-    }));
-  }, [data]);
+export default function DeliveryEconomicsPage() {
+  const [activePlatforms, setActivePlatforms] = useState<string[]>(() =>
+    DELIVERY_PLATFORMS.filter((p) => p.isActive).map((p) => p.id)
+  );
+
+  const togglePlatform = (id: string) => {
+    setActivePlatforms((prev) => {
+      if (prev.includes(id)) {
+        if (prev.length <= 1) return prev;
+        return prev.filter((p) => p !== id);
+      }
+      return [...prev, id];
+    });
+  };
+
+  const activePlatformData = useMemo(
+    () => DELIVERY_PLATFORMS.filter((p) => activePlatforms.includes(p.id)),
+    [activePlatforms]
+  );
+
+  const lowestCommissionPlatform = useMemo(() => {
+    if (activePlatformData.length === 0) return null;
+    return activePlatformData.reduce((a, b) =>
+      a.monthlyData.commissionPct <= b.monthlyData.commissionPct ? a : b
+    );
+  }, [activePlatformData]);
+
+  const highestNetPlatform = useMemo(() => {
+    if (activePlatformData.length === 0) return null;
+    return activePlatformData.reduce((a, b) =>
+      a.monthlyData.avgNetPerOrder >= b.monthlyData.avgNetPerOrder ? a : b
+    );
+  }, [activePlatformData]);
+
+  const mostOrdersPlatform = useMemo(() => {
+    if (activePlatformData.length === 0) return null;
+    return activePlatformData.reduce((a, b) =>
+      a.monthlyData.orderCount >= b.monthlyData.orderCount ? a : b
+    );
+  }, [activePlatformData]);
+
+  const lowestNetPlatform = useMemo(() => {
+    if (activePlatformData.length === 0) return null;
+    return activePlatformData.reduce((a, b) =>
+      a.monthlyData.avgNetPerOrder <= b.monthlyData.avgNetPerOrder ? a : b
+    );
+  }, [activePlatformData]);
+
+  const formatCell = (val: number, format: string) => {
+    if (format === "dollar") return formatDollars(val);
+    if (format === "pct") return formatPct(val);
+    if (format === "dollar2") return "$" + val.toFixed(2);
+    return String(val);
+  };
+
+  const getBestValue = (key: keyof PlatformMonthlyData, lowerIsBetter: boolean) => {
+    if (activePlatformData.length === 0) return null;
+    const values = activePlatformData.map((p) => p.monthlyData[key] as number);
+    return lowerIsBetter ? Math.min(...values) : Math.max(...values);
+  };
 
   return (
-    <div className="space-y-5">
-      <div className="dashboard-toolbar p-3 sm:p-5 space-y-3">
-        <div className="flex items-center gap-2 flex-wrap">
-          <h1 className="text-lg font-semibold sm:text-2xl">DoorDash Economics</h1>
-          <EducationInfoIcon metricKey="doordash_effective_commission" />
+    <div className="space-y-4 pb-28 min-w-0 overflow-x-hidden">
+      <div className="flex items-center justify-between mb-4">
+        <div>
+          <h1 className="text-xl font-bold text-white">Delivery Economics</h1>
+          <p className="text-xs text-slate-400 mt-0.5">Platform costs, commissions, and net revenue per order</p>
         </div>
-        <p className="text-xs text-muted">What you really keep after DoorDash takes their cut.</p>
+        <EducationInfoIcon metricKey="delivery_economics" />
       </div>
 
-      {/* Summary card */}
-      <div className="rounded-xl border border-border bg-black/20 p-4 space-y-4">
-        <div className="text-[10px] uppercase text-muted tracking-wider">30-day summary</div>
-        <div className="grid grid-cols-2 gap-4">
-          <div>
-            <div className="text-[9px] uppercase text-muted flex items-center gap-1">
-              DoorDash Revenue
-              <EducationInfoIcon metricKey="doordash_effective_commission" size="sm" />
-            </div>
-            <div className="text-sm text-emerald-400 font-medium">
-              {formatDollars(totalRevenue)} <span className="text-xs text-slate-500 font-normal">({formatPct(100)})</span>
-            </div>
-          </div>
-          <div>
-            <div className="text-[9px] uppercase text-muted flex items-center gap-1">
-              Commission Paid
-              <EducationInfoIcon metricKey="doordash_effective_commission" size="sm" />
-            </div>
-            <div className="text-sm text-red-400 font-medium">
-              {formatDollars(totalCommission)} <span className="text-xs text-slate-500 font-normal">({formatPct(commissionPct)})</span>
-            </div>
-          </div>
-          <div>
-            <div className="text-[9px] uppercase text-muted flex items-center gap-1">
-              Effective Commission %
-              <EducationInfoIcon metricKey="doordash_effective_commission" size="sm" />
-            </div>
-            <div
-              className={cn(
-                "text-xl font-bold tabular-nums",
-                commissionGrade === "green" && "text-emerald-400",
-                commissionGrade === "yellow" && "text-amber-400",
-                commissionGrade === "red" && "text-red-400"
-              )}
+      <div className="mb-4">
+        <h3 className="text-xs text-slate-500 mb-2">Active Platforms</h3>
+        <div className="flex flex-wrap gap-2">
+          {DELIVERY_PLATFORMS.map((p) => (
+            <button
+              key={p.id}
+              type="button"
+              onClick={() => togglePlatform(p.id)}
+              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg border text-xs font-medium transition-colors ${
+                activePlatforms.includes(p.id)
+                  ? `${p.bgColor} ${p.borderColor} ${p.color}`
+                  : "bg-slate-800 border-slate-700 text-slate-500"
+              }`}
             >
-              {formatPct(effectiveCommissionPct)}
-            </div>
-            <div className="text-[10px] text-muted mt-0.5">
-              {commissionGrade === "green" && "Strong (<20%)"}
-              {commissionGrade === "yellow" && "OK (20–25%)"}
-              {commissionGrade === "red" && "High (>25%)"}
-            </div>
-          </div>
-          <div>
-            <div className="text-[9px] uppercase text-muted flex items-center gap-1">
-              Net Revenue
-              <EducationInfoIcon metricKey="doordash_effective_commission" size="sm" />
-            </div>
-            <div className="text-sm text-emerald-400 font-medium">
-              {formatDollars(netRevenue)} <span className="text-xs text-slate-500 font-normal">({formatPct(netPct)})</span>
-            </div>
-          </div>
+              <span>{p.icon}</span>
+              <span>{p.name}</span>
+            </button>
+          ))}
         </div>
       </div>
 
-      {/* Trend chart: last 30 days revenue vs commission */}
-      <div className="rounded-xl border border-border bg-black/20 p-4 min-w-0">
-        <h2 className="text-xs font-semibold uppercase tracking-wider text-muted mb-3">
-          Last 30 days — DoorDash revenue vs commission
-        </h2>
-        <div className="w-full h-[260px] min-h-[200px]">
-          <ResponsiveContainer width="100%" height="100%">
-            <BarChart data={chartData} margin={{ top: 8, right: 8, left: 8, bottom: 8 }}>
-              <XAxis dataKey="label" tick={{ fontSize: 9, fill: "#94a3b8" }} interval="preserveStartEnd" />
-              <YAxis tick={{ fontSize: 10, fill: "#94a3b8" }} tickFormatter={(v) => (v >= 1000 ? `$${v / 1000}k` : `$${v}`)} width={36} />
-              <Tooltip
-                contentStyle={{ backgroundColor: "#1e293b", border: "1px solid #334155", borderRadius: "8px", padding: "8px 12px", fontSize: "12px" }}
-                labelStyle={{ color: "#94a3b8", marginBottom: "4px" }}
-                labelFormatter={(_, payload) => payload?.[0]?.payload?.date ?? ""}
-                formatter={(value: number | undefined, name?: string) => {
-                  const pct = totalRevenue > 0 && value != null ? (value / totalRevenue) * 100 : null;
-                  const label = name === "revenue" ? "Revenue" : "Commission";
-                  const text = value != null ? `${formatDollars(value)} (${pct != null ? formatPct(pct) : "—"})` : "—";
-                  return [text, label];
-                }}
-              />
-              <Legend formatter={(v) => (v === "revenue" ? "Revenue" : "Commission")} />
-              <Bar dataKey="revenue" name="revenue" fill="rgb(34 197 94)" radius={[4, 4, 0, 0]} />
-              <Bar dataKey="commission" name="commission" fill="rgb(239 68 68)" radius={[4, 4, 0, 0]} />
-            </BarChart>
-          </ResponsiveContainer>
-        </div>
-      </div>
+      {activePlatformData.map((p) => {
+        const d = p.monthlyData;
+        return (
+          <div key={p.id} className={`bg-slate-800 rounded-xl border ${p.borderColor} p-4 mb-3`}>
+            <div className="flex items-center gap-2 mb-3">
+              <span className="text-lg">{p.icon}</span>
+              <h3 className={`text-sm font-semibold ${p.color}`}>{p.name}</h3>
+            </div>
 
-      {/* What DoorDash Really Costs You — key demo section */}
-      <section className="rounded-xl border border-amber-500/30 bg-amber-500/5 p-4 space-y-3">
-        <h2 className="text-sm font-semibold text-amber-400 flex items-center gap-2">
-          What DoorDash Really Costs You
-          <EducationInfoIcon metricKey="doordash_effective_commission" size="sm" />
-        </h2>
-        <p className="text-xs text-muted leading-relaxed">
-          The number on your statement is only part of it. <strong className="text-white">True cost</strong> includes:
-        </p>
-        <ul className="text-xs text-muted space-y-1.5 list-disc list-inside">
-          <li><strong className="text-white">Commission</strong> — delivery fee + % of order (often 18–25%)</li>
-          <li><strong className="text-white">Packaging</strong> — extra boxes, bags, napkins, utensils for delivery</li>
-          <li><strong className="text-white">Tablet & POS fees</strong> — hardware and integration costs</li>
-          <li><strong className="text-white">Marketing</strong> — promoted listings, boosts, and promos</li>
-        </ul>
-        <p className="text-xs text-muted leading-relaxed">
-          Many operators only look at commission. Add packaging and ad spend and your <strong className="text-amber-400">true cost can be 28–35%</strong> of DoorDash revenue. Know your all-in number so you can push direct ordering and keep 100% where it matters.
-        </p>
-      </section>
+            <div className="grid grid-cols-3 gap-3 mb-3">
+              <div>
+                <div className="text-xs text-slate-500">Gross Revenue</div>
+                <div className="text-sm text-emerald-400 font-medium">{formatDollars(d.grossRevenue)}</div>
+              </div>
+              <div>
+                <div className="text-xs text-slate-500">Commission</div>
+                <div className="text-sm text-red-400 font-medium">{formatDollars(d.commissionDollars)}</div>
+                <div className="text-[10px] text-slate-600">{formatPct(d.commissionPct)}</div>
+              </div>
+              <div>
+                <div className="text-xs text-slate-500">Net Revenue</div>
+                <div className="text-sm text-emerald-400 font-medium">{formatDollars(d.netRevenue)}</div>
+              </div>
+            </div>
+
+            <div className="grid grid-cols-3 gap-3">
+              <div>
+                <div className="text-xs text-slate-500">Orders</div>
+                <div className="text-sm text-white font-medium">{d.orderCount}</div>
+              </div>
+              <div>
+                <div className="text-xs text-slate-500">Avg Order</div>
+                <div className="text-sm text-white font-medium">${d.avgOrderValue.toFixed(2)}</div>
+              </div>
+              <div>
+                <div className="text-xs text-slate-500">Net/Order</div>
+                <div className="text-sm text-white font-medium">${d.avgNetPerOrder.toFixed(2)}</div>
+              </div>
+            </div>
+          </div>
+        );
+      })}
+
+      {activePlatformData.length >= 2 && (
+        <div className="bg-slate-800 rounded-xl border border-slate-700 p-4">
+          <div className="flex items-center gap-2 mb-3">
+            <h3 className="text-sm font-semibold text-white">Platform Comparison</h3>
+            <EducationInfoIcon metricKey="net_revenue_per_order" size="sm" />
+          </div>
+
+          <div className="space-y-2 mb-4">
+            {lowestCommissionPlatform && (
+              <div className="flex items-center gap-2 px-3 py-2 rounded-lg bg-emerald-600/10 border border-emerald-700/30">
+                <span className="text-xs text-emerald-400">💰 Lowest Commission:</span>
+                <span className="text-xs text-white font-medium">
+                  {lowestCommissionPlatform.name} at {formatPct(lowestCommissionPlatform.monthlyData.commissionPct)}
+                </span>
+              </div>
+            )}
+            {highestNetPlatform && (
+              <div className="flex items-center gap-2 px-3 py-2 rounded-lg bg-emerald-600/10 border border-emerald-700/30">
+                <span className="text-xs text-emerald-400">🎯 Highest Net/Order:</span>
+                <span className="text-xs text-white font-medium">
+                  {highestNetPlatform.name} at ${highestNetPlatform.monthlyData.avgNetPerOrder.toFixed(2)}
+                </span>
+              </div>
+            )}
+            {mostOrdersPlatform && (
+              <div className="flex items-center gap-2 px-3 py-2 rounded-lg bg-blue-600/10 border border-blue-700/30">
+                <span className="text-xs text-blue-400">📦 Most Orders:</span>
+                <span className="text-xs text-white font-medium">
+                  {mostOrdersPlatform.name} with {mostOrdersPlatform.monthlyData.orderCount} orders
+                </span>
+              </div>
+            )}
+          </div>
+
+          <div className="overflow-x-auto">
+            <table className="w-full text-xs">
+              <thead>
+                <tr className="border-b border-slate-700">
+                  <th className="text-left text-slate-500 py-2 pr-2">Metric</th>
+                  {activePlatformData.map((p) => (
+                    <th key={p.id} className={`text-right py-2 px-1 ${p.color}`}>
+                      {p.name}
+                    </th>
+                  ))}
+                </tr>
+              </thead>
+              <tbody>
+                {COMPARISON_ROWS.map((row) => {
+                  const bestVal = getBestValue(row.key, row.lowerIsBetter);
+                  return (
+                    <tr key={row.key} className="border-b border-slate-700/50">
+                      <td className="text-slate-400 py-2 pr-2">{row.label}</td>
+                      {activePlatformData.map((p) => {
+                        const val = p.monthlyData[row.key] as number;
+                        const isBest = bestVal != null && val === bestVal;
+                        return (
+                          <td
+                            key={p.id}
+                            className={`text-right py-2 px-1 ${isBest ? "text-emerald-400 font-medium" : "text-slate-300"}`}
+                          >
+                            {formatCell(val, row.format)}
+                          </td>
+                        );
+                      })}
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          </div>
+
+          {activePlatformData.length >= 2 && highestNetPlatform && lowestNetPlatform && (
+            <div className="mt-3 px-3 py-2 rounded-lg bg-slate-700/50">
+              <p className="text-xs text-slate-300">
+                {mostOrdersPlatform?.name} brings the most orders, but {highestNetPlatform.name} nets you $
+                {(highestNetPlatform.monthlyData.avgNetPerOrder - lowestNetPlatform.monthlyData.avgNetPerOrder).toFixed(
+                  2
+                )}{" "}
+                more per order after fees.
+              </p>
+            </div>
+          )}
+        </div>
+      )}
     </div>
   );
 }

@@ -70,6 +70,7 @@ export const TIERS = {
       "/local-intel",
       "/merch",
       "/rolodex",
+      "/vendor-settings",
     ],
   },
   enterprise: {
