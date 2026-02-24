@@ -24,8 +24,8 @@ export function TOSGate({ children }: { children: React.ReactNode }) {
     setAccepted(true);
   };
 
-  // Terms and privacy pages are always accessible without accepting TOS
-  if (pathname === "/terms" || pathname === "/privacy") {
+  // Login, terms, and privacy are always accessible without accepting TOS
+  if (pathname === "/login" || pathname === "/terms" || pathname === "/privacy") {
     return <>{children}</>;
   }
 

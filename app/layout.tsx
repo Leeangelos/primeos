@@ -6,8 +6,10 @@ import { ConsentBanner } from "@/src/components/legal/ConsentBanner";
 import { AddToHomeScreenPrompt } from "@/src/components/legal/AddToHomeScreen";
 import { NotificationPrompt } from "@/src/components/legal/NotificationPrompt";
 import { TOSGate } from "@/src/components/legal/TOSGate";
+import { AuthGuard } from "@/src/components/auth/AuthGuard";
 import { ThemeProvider } from "@/src/lib/theme-context";
 import { TierProvider } from "@/src/lib/tier-context";
+import { AuthProvider } from "@/src/lib/auth-context";
 
 import type { Viewport, Metadata } from "next";
 
@@ -60,25 +62,29 @@ export default function RootLayout({
         <ThemeProvider>
           <TierProvider>
             <TOSGate>
-              <div className="mx-auto max-w-6xl px-4 py-4">
-                <AppNav />
-                <NotificationPrompt />
-                <AddToHomeScreenPrompt />
+              <AuthProvider>
+                <AuthGuard>
+                  <div className="mx-auto max-w-6xl px-4 py-4">
+                    <AppNav />
+                    <NotificationPrompt />
+                    <AddToHomeScreenPrompt />
 
-                <main className="glass glow rounded-2xl p-3 sm:p-5 pb-28 mt-4">{children}</main>
+                    <main className="glass glow rounded-2xl p-3 sm:p-5 pb-28 mt-4">{children}</main>
 
-                <footer className="text-center py-4 pb-28">
-                  <p className="text-xs text-slate-500">© 2026 Ambition & Legacy LLC. All rights reserved.</p>
-                  <div className="flex justify-center gap-3 mt-1">
-                    <Link href="/terms" className="text-xs text-slate-600 hover:text-slate-400">Terms of Service</Link>
-                    <span className="text-xs text-slate-700">·</span>
-                    <Link href="/privacy" className="text-xs text-slate-600 hover:text-slate-400">Privacy Policy</Link>
+                    <footer className="text-center py-4 pb-28">
+                      <p className="text-xs text-slate-500">© 2026 Ambition & Legacy LLC. All rights reserved.</p>
+                      <div className="flex justify-center gap-3 mt-1">
+                        <Link href="/terms" className="text-xs text-slate-600 hover:text-slate-400">Terms of Service</Link>
+                        <span className="text-xs text-slate-700">·</span>
+                        <Link href="/privacy" className="text-xs text-slate-600 hover:text-slate-400">Privacy Policy</Link>
+                      </div>
+                    </footer>
+
+                    <ConsentBanner />
+                    <BottomNav />
                   </div>
-                </footer>
-
-                <ConsentBanner />
-                <BottomNav />
-              </div>
+                </AuthGuard>
+              </AuthProvider>
             </TOSGate>
           </TierProvider>
         </ThemeProvider>

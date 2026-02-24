@@ -83,7 +83,7 @@ export function NotificationCenter() {
       {isOpen && (
         <>
           <div className="fixed inset-0 bg-black/60 z-50" onClick={() => setIsOpen(false)} />
-          <div className="fixed inset-y-0 right-0 w-full max-w-sm z-50 bg-slate-900 border-l border-slate-700 flex flex-col animate-slide-left">
+          <div className="fixed inset-y-0 right-0 w-full max-w-sm z-50 bg-slate-900 border-l border-slate-700 flex flex-col animate-slide-left" style={{ paddingTop: "env(safe-area-inset-top, 0px)" }}>
             {/* Header */}
             <div className="flex items-center justify-between p-4 border-b border-slate-700">
               <div className="flex items-center gap-2">

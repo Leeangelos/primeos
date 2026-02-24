@@ -262,7 +262,7 @@ export function BottomNav() {
             onClick={() => setMoreOpen(false)}
             aria-hidden="true"
           />
-          <div className="fixed inset-x-0 bottom-0 top-12 z-50 bg-slate-900 rounded-t-2xl overflow-y-auto animate-slide-up">
+          <div className="fixed inset-x-0 bottom-0 z-50 bg-slate-900 rounded-t-2xl overflow-y-auto animate-slide-up" style={{ top: "calc(3.5rem + env(safe-area-inset-top, 0px))" }}>
             {/* Handle bar */}
             <div className="sticky top-0 bg-slate-900 pt-3 pb-2 px-4 border-b border-slate-800 z-10">
               <div className="w-10 h-1 bg-slate-700 rounded-full mx-auto mb-3" />

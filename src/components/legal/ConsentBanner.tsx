@@ -21,7 +21,7 @@ export function ConsentBanner() {
   if (!visible) return null;
 
   return (
-    <div className="fixed bottom-20 left-4 right-4 z-40 bg-slate-800 rounded-xl border border-slate-700 p-4 shadow-lg shadow-black/20">
+    <div className="fixed left-4 right-4 z-40 bg-slate-800 rounded-xl border border-slate-700 p-4 shadow-lg shadow-black/20" style={{ bottom: "calc(5rem + env(safe-area-inset-bottom, 0px))" }}>
       <p className="text-xs text-slate-300 leading-relaxed mb-3">
         PrimeOS uses cookies and collects data to operate. By continuing, you agree to our{" "}
         <Link href="/privacy" className="text-blue-400 underline">Privacy Policy</Link>
