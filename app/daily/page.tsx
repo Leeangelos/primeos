@@ -3,7 +3,7 @@
 import { Suspense, useState, useMemo, useEffect } from "react";
 import { createPortal } from "react-dom";
 import Link from "next/link";
-import { Mic } from "lucide-react";
+import { Mic, AlertTriangle } from "lucide-react";
 import { useSearchParams } from "next/navigation";
 import {
   COCKPIT_STORE_SLUGS,
@@ -21,8 +21,20 @@ import { getGradeBg, getGradeColor } from "@/src/lib/design-tokens";
 import { useRedAlert } from "@/src/lib/useRedAlert";
 import { EducationInfoIcon } from "@/src/components/education/InfoIcon";
 import { ExportButton } from "@/src/components/ui/ExportButton";
-import { formatPct as formatPctShared } from "@/src/lib/formatters";
+import { formatPct as formatPctShared, formatDollars } from "@/src/lib/formatters";
 import { SEED_DAILY_KPIS } from "@/src/lib/seed-data";
+
+type WarningItem = { field: string; message: string; severity: "error" | "warning" | "info" };
+
+const TRAILING_AVERAGES: Record<string, { sales: number; foodPct: number; laborPct: number }> = {
+  monday: { sales: 3800, foodPct: 29.5, laborPct: 27.2 },
+  tuesday: { sales: 3600, foodPct: 29.8, laborPct: 27.5 },
+  wednesday: { sales: 4100, foodPct: 29.2, laborPct: 26.8 },
+  thursday: { sales: 4400, foodPct: 29.4, laborPct: 26.5 },
+  friday: { sales: 5800, foodPct: 28.8, laborPct: 25.2 },
+  saturday: { sales: 6200, foodPct: 28.5, laborPct: 24.8 },
+  sunday: { sales: 4600, foodPct: 29.0, laborPct: 26.0 },
+};
 
 function formatPct(n: number | null): string {
   if (n == null || Number.isNaN(n)) return "—";
@@ -144,6 +156,142 @@ function DailyPageContent() {
   const [isListening, setIsListening] = useState(false);
   const [voiceError, setVoiceError] = useState(false);
   const [showVoiceTip, setShowVoiceTip] = useState(true);
+  const [warnings, setWarnings] = useState<WarningItem[]>([]);
+  const [storeChangeWarning, setStoreChangeWarning] = useState<string | null>(null);
+
+  function validateEntries() {
+    const newWarnings: WarningItem[] = [];
+    const sales = parseFloat(netSales) || 0;
+    const food = parseFloat(foodCost) || 0;
+    const labor = parseFloat(laborCost) || 0;
+    const disposables = parseFloat(disposablesCost) || 0;
+    const transactions = parseFloat(tickets) || 0;
+    const hours = parseFloat(laborHours) || 0;
+
+    const dayOfWeek = new Date(businessDate + "T12:00:00Z").toLocaleDateString("en-US", { weekday: "long" }).toLowerCase();
+    const avg = TRAILING_AVERAGES[dayOfWeek] ?? TRAILING_AVERAGES.wednesday;
+
+    if (sales < 0 || food < 0 || labor < 0) {
+      newWarnings.push({ field: "general", message: "Numbers can't be negative. Check your entries.", severity: "error" });
+    }
+
+    if (sales > 500000) {
+      newWarnings.push({
+        field: "sales",
+        message: "Sales over $500,000 in a single day seems incorrect. Double-check this number.",
+        severity: "error",
+      });
+    }
+
+    if (sales > 0 && (sales > avg.sales * 2 || sales < avg.sales * 0.5)) {
+      const dayName = dayOfWeek.charAt(0).toUpperCase() + dayOfWeek.slice(1);
+      newWarnings.push({
+        field: "sales",
+        message: `Today's sales (${formatDollars(sales)}) are ${sales > avg.sales * 2 ? "significantly higher" : "significantly lower"} than your typical ${dayName} (${formatDollars(avg.sales)}). Double-check this number.`,
+        severity: "warning",
+      });
+    }
+
+    if (sales > 0 && food > 0) {
+      const foodPct = (food / sales) * 100;
+      if (foodPct > 45) {
+        newWarnings.push({
+          field: "food",
+          message: `Food cost at ${formatPctShared(foodPct)} is extremely high. Verify the food purchases amount.`,
+          severity: "warning",
+        });
+      }
+      if (foodPct < 15 && foodPct > 0) {
+        newWarnings.push({
+          field: "food",
+          message: `Food cost at ${formatPctShared(foodPct)} is unusually low. Did you miss an invoice?`,
+          severity: "warning",
+        });
+      }
+    }
+
+    if (sales > 0 && labor > 0) {
+      const laborPct = (labor / sales) * 100;
+      if (laborPct > 35) {
+        newWarnings.push({
+          field: "labor",
+          message: `Labor at ${formatPctShared(laborPct)} is outside the typical range (20-32%). Verify hours and sales.`,
+          severity: "warning",
+        });
+      }
+      if (laborPct < 10 && laborPct > 0) {
+        newWarnings.push({
+          field: "labor",
+          message: `Labor at ${formatPctShared(laborPct)} seems too low. Are all employees accounted for?`,
+          severity: "warning",
+        });
+      }
+    }
+
+    if (sales > 0) {
+      if (food === 0) {
+        newWarnings.push({
+          field: "food",
+          message:
+            "Food purchases is $0. If the store was open, there were likely food costs. Enter $0 only if no deliveries or purchases were made today.",
+          severity: "info",
+        });
+      }
+      if (labor === 0) {
+        newWarnings.push({
+          field: "labor",
+          message: "Labor cost is $0. Did you mean to enter $0? If the store was open, there should be labor costs.",
+          severity: "info",
+        });
+      }
+      if (transactions === 0) {
+        newWarnings.push({
+          field: "transactions",
+          message: "Transaction count is 0 but sales are entered. How many transactions?",
+          severity: "info",
+        });
+      }
+      if (hours === 0) {
+        newWarnings.push({
+          field: "hours",
+          message: "Total hours is 0 but sales are entered. How many labor hours?",
+          severity: "info",
+        });
+      }
+    }
+
+    const entryDate = new Date(businessDate + "T12:00:00Z");
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    if (entryDate > today) {
+      newWarnings.push({ field: "date", message: "Can't enter data for a future date.", severity: "error" });
+    }
+
+    const daysOld = Math.floor((today.getTime() - entryDate.getTime()) / 86400000);
+    if (daysOld > 7) {
+      newWarnings.push({
+        field: "date",
+        message: `You're entering data for ${daysOld} days ago. Make sure this is intentional.`,
+        severity: "warning",
+      });
+    }
+
+    setWarnings(newWarnings);
+  }
+
+  useEffect(() => {
+    const timer = setTimeout(validateEntries, 500);
+    return () => clearTimeout(timer);
+  }, [netSales, foodCost, laborCost, disposablesCost, tickets, laborHours, businessDate]);
+
+  function handleStoreChange(newStore: CockpitStoreSlug) {
+    setStoreId(newStore);
+    if (typeof window !== "undefined") window.localStorage.setItem("primeos-last-store", newStore);
+    if (netSales || foodCost || laborCost) {
+      setStoreChangeWarning(newStore);
+      setTimeout(() => setStoreChangeWarning(null), 3000);
+    }
+  }
 
   /* eslint-disable react-hooks/set-state-in-effect -- sync URL params to state */
   useEffect(() => {
@@ -470,7 +618,7 @@ function DailyPageContent() {
           </div>
           <select
             value={storeId}
-            onChange={(e) => setStoreId(e.target.value as CockpitStoreSlug)}
+            onChange={(e) => handleStoreChange(e.target.value as CockpitStoreSlug)}
             className={cn(
               "sm:hidden dashboard-input rounded-lg border-2 px-3 py-2.5 text-sm font-medium focus:outline-none",
               getStoreColor(storeId).borderActive,
@@ -489,7 +637,7 @@ function DailyPageContent() {
               <button
                 key={id}
                 type="button"
-                onClick={() => setStoreId(id)}
+                onClick={() => handleStoreChange(id)}
                 className={cn(
                   "rounded-lg border px-4 py-2.5 text-sm font-medium transition-colors",
                   storeId === id
@@ -702,7 +850,11 @@ function DailyPageContent() {
                 placeholder="e.g., 1670.00"
                 value={foodCost}
                 onChange={(e) => setFoodCost(e.target.value)}
-                className={cn(inputCls, "text-red-400")}
+                className={cn(
+                  inputCls,
+                  warnings.some((w) => w.field === "food") && (warnings.find((w) => w.field === "food")?.severity === "error" ? "border-red-500" : "border-amber-500"),
+                  "text-red-400"
+                )}
               />
             </label>
 
@@ -717,7 +869,11 @@ function DailyPageContent() {
                 placeholder="e.g., 1252.00"
                 value={laborCost}
                 onChange={(e) => setLaborCost(e.target.value)}
-                className={cn(inputCls, "text-red-400")}
+                className={cn(
+                  inputCls,
+                  warnings.some((w) => w.field === "labor") && (warnings.find((w) => w.field === "labor")?.severity === "error" ? "border-red-500" : "border-amber-500"),
+                  "text-red-400"
+                )}
               />
             </label>
 
@@ -732,7 +888,11 @@ function DailyPageContent() {
                 placeholder="e.g., 190.00"
                 value={disposablesCost}
                 onChange={(e) => setDisposablesCost(e.target.value)}
-                className={cn(inputCls, "text-red-400")}
+                className={cn(
+                  inputCls,
+                  warnings.some((w) => w.field === "disposables") && (warnings.find((w) => w.field === "disposables")?.severity === "error" ? "border-red-500" : "border-amber-500"),
+                  "text-red-400"
+                )}
               />
             </label>
 
@@ -747,7 +907,11 @@ function DailyPageContent() {
                 placeholder="e.g., 287"
                 value={tickets}
                 onChange={(e) => setTickets(e.target.value)}
-                className={cn(inputCls, "text-white")}
+                className={cn(
+                  inputCls,
+                  warnings.some((w) => w.field === "transactions") && (warnings.find((w) => w.field === "transactions")?.severity === "error" ? "border-red-500" : "border-amber-500"),
+                  "text-white"
+                )}
               />
             </label>
 
@@ -762,10 +926,44 @@ function DailyPageContent() {
                 placeholder="e.g., 86.5"
                 value={laborHours}
                 onChange={(e) => setLaborHours(e.target.value)}
-                className={cn(inputCls, "text-white")}
+                className={cn(
+                  inputCls,
+                  warnings.some((w) => w.field === "hours") && (warnings.find((w) => w.field === "hours")?.severity === "error" ? "border-red-500" : "border-amber-500"),
+                  "text-white"
+                )}
               />
             </label>
           </div>
+
+          {warnings.length > 0 && (
+            <div className="space-y-2 mb-4">
+              {warnings.map((w, i) => (
+                <div
+                  key={i}
+                  className={`flex items-start gap-2 p-3 rounded-xl border ${
+                    w.severity === "error"
+                      ? "bg-red-600/10 border-red-700/30"
+                      : w.severity === "warning"
+                        ? "bg-amber-600/10 border-amber-700/30"
+                        : "bg-blue-600/10 border-blue-700/30"
+                  }`}
+                >
+                  <AlertTriangle
+                    className={`w-4 h-4 mt-0.5 flex-shrink-0 ${
+                      w.severity === "error" ? "text-red-400" : w.severity === "warning" ? "text-amber-400" : "text-blue-400"
+                    }`}
+                  />
+                  <p
+                    className={`text-xs ${
+                      w.severity === "error" ? "text-red-300" : w.severity === "warning" ? "text-amber-300" : "text-blue-300"
+                    }`}
+                  >
+                    {w.message}
+                  </p>
+                </div>
+              ))}
+            </div>
+          )}
 
           <button
             type="button"

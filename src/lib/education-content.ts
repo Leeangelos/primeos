@@ -517,4 +517,64 @@ export const EDUCATION_CONTENT: Record<string, EducationEntry> = {
       "Consider testing a price increase on the lowest net/order platform — even $0.50 more per order across 300 orders is $150/month",
     ],
   },
+  competitor_intelligence: {
+    title: "Competitor Intelligence",
+    whatItMeans:
+      "Understanding your competitive landscape helps you price correctly and spot opportunities. You don't need to be the cheapest — you need to know where you sit in your market. PrimeOS monitors your local competition so you can make informed pricing and marketing decisions instead of guessing.",
+    whenRedPlaybook: [
+      "Consider that a new competitor opening nearby is not a reason to panic or cut prices",
+      "Consider doubling down on your strengths — speed, quality, customer relationships, community presence",
+      "Consider that new competitors typically take 6-12 months to stabilize; during that period, focus on retention",
+      "Consider running targeted ads to customers in the new competitor's delivery zone",
+      "Consider monitoring their Google reviews for weaknesses you can capitalize on",
+    ],
+  },
+  market_position: {
+    title: "Market Price Position",
+    whatItMeans:
+      "Where your prices sit relative to local competitors. Being above market average is fine if your quality, speed, and reputation support it. Being below market average means you may be leaving revenue on the table. The goal is intentional pricing — knowing where you are and why.",
+    whenRedPlaybook: [
+      "Consider testing a small price increase on your top 5 sellers — even $0.50 per item can add $500+/month",
+      "Consider whether your food quality and customer experience justify a premium position",
+      "Consider that customers who choose you over chains are less price-sensitive than you think",
+      "Consider comparing your average ticket to competitors — you may be underpriced across the board",
+      "Consider raising delivery prices (where price sensitivity is lower) before dine-in",
+    ],
+  },
+  theoretical_food_cost: {
+    title: "Theoretical vs Actual Food Cost",
+    whatItMeans:
+      "Theoretical food cost is what your food should have cost based on your recipes and what you sold. Actual food cost is what you really spent on food. The gap between them reveals waste, theft, overportioning, unrecorded comps, or inventory errors. A gap under 2% is excellent. 2-5% needs attention. Over 5% means money is leaking and requires immediate investigation.",
+    whenRedPlaybook: [
+      "Consider running a portioning audit on your top 5 sellers — watch 10 make-ups and weigh them against recipe specs",
+      "Consider reviewing unrecorded employee meals, manager comps, and remakes — these add up fast",
+      "Consider checking if vendor prices increased without updating your recipe costs in PrimeOS",
+      "Consider auditing your walk-in and prep waste — expired items and over-prepping are common culprits",
+      "Consider reviewing camera footage during closing shifts if variance exceeds 10% — theft is rare but it happens",
+    ],
+  },
+  gl_upload: {
+    title: "General Ledger Upload",
+    whatItMeans:
+      "A General Ledger is the most detailed financial record your business produces. Every transaction is recorded and categorized by account number. Uploading your GL gives PrimeOS the cleanest, most accurate data possible — better than manual entry, better than P&L uploads. If your accountant can export a GL from QuickBooks, Xero, or FreshBooks, PrimeOS can read it.",
+    whenRedPlaybook: [
+      "Consider asking your accountant for a monthly GL export in CSV format — most software does this in 2 clicks",
+      "Consider uploading the GL within the first week of each month for the previous month",
+      "Consider that GL data is more accurate than manual entry because it captures every transaction automatically",
+      "Consider using the GL to verify your manual P&L entries — discrepancies reveal classification errors",
+      "Consider that consistent monthly GL uploads give PrimeOS the best possible data for trend analysis and forecasting",
+    ],
+  },
+  google_rating: {
+    title: "Google Rating & Reviews",
+    whatItMeans:
+      "Your Google rating directly impacts how many new customers find you. A 4.5 vs 4.0 rating can mean 20-30% more clicks from Google Maps. Review count matters too — a 4.5 with 2,000 reviews is more trustworthy than a 4.8 with 50 reviews. Monitor both your rating and your competitors'.",
+    whenRedPlaybook: [
+      "Consider responding to every negative review within 24 hours — professional responses build trust with future customers reading reviews",
+      "Consider asking satisfied customers to leave reviews — a simple receipt message or counter sign can double your review rate",
+      "Consider that 1-star reviews hurt less when you have hundreds of 5-star reviews diluting them",
+      "Consider monitoring competitor reviews for complaints you can address in your marketing",
+      "Consider that review volume matters — aim for at least 10 new reviews per month per location",
+    ],
+  },
 };

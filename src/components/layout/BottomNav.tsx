@@ -25,6 +25,7 @@ import {
   Package,
   FileText,
   UtensilsCrossed,
+  Scale,
   Users,
   Target,
   Gift,
@@ -300,6 +301,7 @@ export function BottomNav() {
                 items={[
                   { href: "/pnl", icon: DollarSign, label: "GP P&L", desc: "Gross profit tracking", color: "text-emerald-400" },
                   { href: "/actual-pnl", icon: FileSpreadsheet, label: "Actual P&L", desc: "CPA upload — real net profit", color: "text-green-400" },
+                  { href: "/gl-upload", icon: FileSpreadsheet, label: "GL Upload", desc: "General Ledger import", color: "text-cyan-400" },
                   { href: "/vendor-tracker", icon: Building2, label: "Vendor Tracker", desc: "Costs, trends, and alerts", color: "text-rose-400" },
                   { href: "/sales", icon: TrendingUp, label: "Sales Report", desc: "Revenue comparisons", color: "text-blue-400" },
                   { href: "/doordash", icon: Truck, label: "Delivery Economics", desc: "Platform costs and comparison", color: "text-red-400" },
@@ -318,6 +320,7 @@ export function BottomNav() {
                   { href: "/inventory", icon: Package, label: "Inventory", desc: "Stock levels and par", color: "text-yellow-400" },
                   { href: "/invoices", icon: FileText, label: "Invoice Scanner", desc: "AI-powered OCR scanning", color: "text-violet-400" },
                   { href: "/menu-intelligence", icon: UtensilsCrossed, label: "Menu Intelligence", desc: "Prices, comparison, gap analysis", color: "text-teal-400" },
+                  { href: "/food-cost-analysis", icon: Scale, label: "Food Cost Analysis", desc: "Theoretical vs actual variance", color: "text-pink-400" },
                 ]}
                 pathname={pathname}
                 currentTier={currentTier}
@@ -330,6 +333,7 @@ export function BottomNav() {
                 items={[
                   { href: "/people", icon: Users, label: "People Economics", desc: "CAC, LTV, churn tracking", color: "text-cyan-400" },
                   { href: "/marketing", icon: Target, label: "Ad Accountability", desc: "ROAS and campaign tracking", color: "text-rose-400" },
+                  { href: "/competitor-intel", icon: Target, label: "Competitor Intel", desc: "Market position and alerts", color: "text-violet-400" },
                   { href: "/parties", icon: Gift, label: "Catering & Large Orders", desc: "Catering and event orders", color: "text-fuchsia-400" },
                   { href: "/merch", icon: ShoppingBag, label: "Team Merch", desc: "Staff gear and ordering", color: "text-orange-400" },
                 ]}

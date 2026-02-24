@@ -34,6 +34,8 @@ export const TIERS = {
       "/invoices",
       "/menu-intelligence",
       "/vendor-tracker",
+      "/competitor-intel",
+      "/food-cost-analysis",
       "/sales",
       "/actual-pnl",
       "/tasks",
@@ -71,6 +73,7 @@ export const TIERS = {
       "/merch",
       "/rolodex",
       "/vendor-settings",
+      "/gl-upload",
     ],
   },
   enterprise: {

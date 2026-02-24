@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { useMemo, useState, useEffect } from "react";
 import { createPortal } from "react-dom";
-import { BarChart3, Calendar, Check, ChevronDown, ChevronRight, ClipboardList, MapPin, Sparkles, TriangleAlert } from "lucide-react";
+import { BarChart3, Calendar, Check, ChevronDown, ChevronRight, ClipboardList, MapPin, Sparkles, TriangleAlert, AlertTriangle, X } from "lucide-react";
 import { Area, AreaChart, ReferenceLine, ResponsiveContainer } from "recharts";
 import { COLORS, getGradeColor } from "@/src/lib/design-tokens";
 import { useRedAlert } from "@/src/lib/useRedAlert";
@@ -73,6 +73,7 @@ export default function HomePage() {
   const [loading, setLoading] = useState(true);
   const [usedSeedData, setUsedSeedData] = useState(false);
   const [showEducation, setShowEducation] = useState(false);
+  const [showMissingBanner, setShowMissingBanner] = useState(true);
   const today = todayYYYYMMDD();
   const yesterday = yesterdayYYYYMMDD();
 
@@ -284,6 +285,33 @@ export default function HomePage() {
           </p>
         </div>
       </div>
+
+      {showMissingBanner && (
+        <div className="bg-amber-600/10 rounded-xl border border-amber-700/30 p-3 mb-4 flex items-start justify-between">
+          <div className="flex items-start gap-2">
+            <AlertTriangle className="w-4 h-4 text-amber-400 mt-0.5 flex-shrink-0" />
+            <div>
+              <p className="text-sm text-amber-300 font-medium">Yesterday&apos;s numbers are missing</p>
+              <p className="text-xs text-amber-400/70 mt-0.5">
+                You entered data for 5 of 7 days last week. Missing: Tuesday, Thursday.
+              </p>
+            </div>
+          </div>
+          <div className="flex items-center gap-2 flex-shrink-0">
+            <Link href="/daily" className="text-xs text-amber-400 hover:text-amber-300 font-medium">
+              Enter Now →
+            </Link>
+            <button
+              type="button"
+              onClick={() => setShowMissingBanner(false)}
+              className="text-slate-600 hover:text-slate-400"
+              aria-label="Dismiss"
+            >
+              <X className="w-3.5 h-3.5" />
+            </button>
+          </div>
+        </div>
+      )}
 
       {loading ? (
         <div className="grid grid-cols-2 gap-3 min-w-0">
