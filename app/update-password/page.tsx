@@ -18,16 +18,19 @@ export default function UpdatePasswordPage() {
 
   useEffect(() => {
     const supabase = createClient();
-    const {
-      data: { subscription },
-    } = supabase.auth.onAuthStateChange((event) => {
+
+    const hash = window.location.hash;
+    if (hash && (hash.includes("type=recovery") || hash.includes("type=signup"))) {
+      setIsRecovery(true);
+    }
+
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event) => {
       if (event === "PASSWORD_RECOVERY") {
         setIsRecovery(true);
       }
     });
-    return () => {
-      subscription.unsubscribe();
-    };
+
+    return () => subscription.unsubscribe();
   }, []);
 
   async function handleSubmit(e: React.FormEvent) {
