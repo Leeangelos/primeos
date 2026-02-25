@@ -221,8 +221,8 @@ export default function HomePage() {
     if (usedSeedData) {
       list.push({
         key: "food_cost",
-        label: "Food Cost (Stow)",
-        message: "Stow food cost at 32.8% for 3 consecutive days. Approaching red. Tap for playbook.",
+        label: "Food Cost (Aurora)",
+        message: "LeeAngelo's Aurora food cost at 32.8% for 3 consecutive days. Approaching red. Tap for playbook.",
       });
     }
     return list;
