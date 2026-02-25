@@ -152,20 +152,20 @@ function MerchContent() {
         <div className="rounded-lg border border-amber-500/50 bg-amber-500/10 p-5 text-center text-sm text-amber-400">Checkout canceled. Your cart is still here.</div>
       )}
 
-      {/* Sticky floating cart bubble */}
+      {/* Fixed floating cart bubble — stays visible above content, below modals */}
       {cartCount > 0 && (
-        <div className="fixed bottom-24 right-4 z-40">
-          <button
-            type="button"
-            onClick={() => setShowCart(true)}
-            className="flex items-center gap-2 bg-[#E65100] hover:bg-orange-600 text-white px-4 py-3 rounded-full shadow-lg shadow-black/30 transition-colors"
-          >
-            <ShoppingCart className="w-4 h-4" />
-            <span className="text-sm font-semibold">
-              Cart ({cartCount} {cartCount === 1 ? "item" : "items"})
-            </span>
-          </button>
-        </div>
+        <button
+          type="button"
+          onClick={() => setShowCart(true)}
+          className="fixed z-30 rounded-full bg-[#E65100] hover:bg-orange-600 shadow-lg shadow-black/30 px-4 py-3 flex items-center gap-2 transition-colors"
+          style={{
+            bottom: "calc(5rem + env(safe-area-inset-bottom, 0px))",
+            right: "1rem",
+          }}
+        >
+          <ShoppingCart className="w-5 h-5 text-white" />
+          <span className="text-white text-sm font-semibold">Cart ({cartCount})</span>
+        </button>
       )}
 
       {loading ? (
