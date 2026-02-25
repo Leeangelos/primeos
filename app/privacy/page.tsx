@@ -31,9 +31,9 @@ export default function PrivacyPage() {
       <div className="space-y-8 text-sm text-slate-300 leading-relaxed">
         <Section number="1" title="Who We Are">
           <p>
-            PrimeOS is operated by Ambition & Legacy LLC, located at 4463 Ridge View Dr, Kent, OH 44240. When we say &quot;we,&quot; &quot;us,&quot; or &quot;our,&quot; we mean Ambition & Legacy LLC. When we say &quot;you&quot; or &quot;User,&quot; we mean anyone who uses PrimeOS.
+            PrimeOS is operated by Ambition & Legacy LLC, Kent, Ohio 44240. When we say &quot;we,&quot; &quot;us,&quot; or &quot;our,&quot; we mean Ambition & Legacy LLC. When we say &quot;you&quot; or &quot;User,&quot; we mean anyone who uses PrimeOS.
           </p>
-          <p>Contact: leeangelos.cao@gmail.com | (330) 310-6014</p>
+          <p>Contact: hello@getprimeos.com</p>
         </Section>
 
         <Section number="2" title="What Data We Collect">
@@ -154,7 +154,7 @@ export default function PrivacyPage() {
             <li>→ Deletion — You can request deletion of your account and all associated data</li>
             <li>→ Opt-out of aggregated data — You can request that your data be excluded from anonymized benchmarks</li>
           </ul>
-          <p>To exercise any of these rights, contact us at leeangelos.cao@gmail.com. We will respond within 30 days.</p>
+          <p>To exercise any of these rights, contact us at hello@getprimeos.com. We will respond within 30 days.</p>
         </Section>
 
         <Section number="10" title="Data Retention">
@@ -180,7 +180,7 @@ export default function PrivacyPage() {
             <li>→ Right to opt-out of the sale of personal information (we do not sell your data)</li>
             <li>→ Right to non-discrimination for exercising your privacy rights</li>
           </ul>
-          <p>To exercise your CCPA rights, contact us at leeangelos.cao@gmail.com.</p>
+          <p>To exercise your CCPA rights, contact us at hello@getprimeos.com.</p>
         </Section>
 
         <Section number="13" title="Changes to This Policy">
@@ -192,9 +192,8 @@ export default function PrivacyPage() {
         <Section number="14" title="Contact Us">
           <p>If you have questions about this Privacy Policy or your data, contact us:</p>
           <p className="mt-2">Ambition & Legacy LLC</p>
-          <p>4463 Ridge View Dr, Kent, OH 44240</p>
-          <p>Email: leeangelos.cao@gmail.com</p>
-          <p>Phone: (330) 310-6014</p>
+          <p>Kent, Ohio 44240</p>
+          <p>Email: hello@getprimeos.com</p>
         </Section>
       </div>
 
