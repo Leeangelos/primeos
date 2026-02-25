@@ -598,7 +598,7 @@ function DailyPageContent() {
   }, [storeId]);
 
   const inputCls =
-    "mt-1 w-full min-h-[48px] h-12 px-4 text-lg font-medium tabular-nums placeholder:text-muted focus:border-brand/60 focus:ring-1 focus:ring-brand/40 focus:outline-none rounded-lg border border-border/50 bg-black/30 text-white dashboard-input";
+    "w-full min-h-[44px] h-11 px-3 text-sm font-medium tabular-nums placeholder:text-muted focus:border-brand/60 focus:ring-1 focus:ring-brand/40 focus:outline-none rounded-xl border border-slate-600 bg-slate-700 text-white dashboard-input";
 
   return (
     <>
@@ -824,12 +824,13 @@ function DailyPageContent() {
           )}
           <h2 className="text-sm font-medium text-muted">Enter numbers</h2>
           <div className="grid grid-cols-1 gap-4 max-w-full min-w-0">
-            <label className="block min-w-0">
+            <div className="space-y-1 min-w-0">
               <div className="flex items-center gap-2">
-                <span className="text-sm text-slate-400">Total Sales ($)</span>
+                <label htmlFor="daily-net-sales" className="text-xs text-slate-400">Sales ($)</label>
                 <EducationInfoIcon metricKey="daily_sales" />
               </div>
               <input
+                id="daily-net-sales"
                 type="number"
                 inputMode="decimal"
                 placeholder="e.g., 5420.00"
@@ -837,14 +838,15 @@ function DailyPageContent() {
                 onChange={(e) => setNetSales(e.target.value)}
                 className={cn(inputCls, netSalesInvalid && "border-red-500/60", "text-emerald-400")}
               />
-            </label>
+            </div>
 
-            <label className="block min-w-0">
+            <div className="space-y-1 min-w-0">
               <div className="flex items-center gap-2">
-                <span className="text-sm text-slate-400">Total Food Purchases ($)</span>
+                <label htmlFor="daily-food" className="text-xs text-slate-400">Food ($)</label>
                 <EducationInfoIcon metricKey="food_cost" />
               </div>
               <input
+                id="daily-food"
                 type="number"
                 inputMode="decimal"
                 placeholder="e.g., 1670.00"
@@ -856,14 +858,15 @@ function DailyPageContent() {
                   "text-red-400"
                 )}
               />
-            </label>
+            </div>
 
-            <label className="block min-w-0">
+            <div className="space-y-1 min-w-0">
               <div className="flex items-center gap-2">
-                <span className="text-sm text-slate-400">Total Labor Cost ($)</span>
+                <label htmlFor="daily-labor" className="text-xs text-slate-400">Labor ($)</label>
                 <EducationInfoIcon metricKey="labor_pct" />
               </div>
               <input
+                id="daily-labor"
                 type="number"
                 inputMode="decimal"
                 placeholder="e.g., 1252.00"
@@ -875,14 +878,15 @@ function DailyPageContent() {
                   "text-red-400"
                 )}
               />
-            </label>
+            </div>
 
-            <label className="block min-w-0">
+            <div className="space-y-1 min-w-0">
               <div className="flex items-center gap-2">
-                <span className="text-sm text-slate-400">Total Disposables ($)</span>
+                <label htmlFor="daily-disposables" className="text-xs text-slate-400">Disposables ($)</label>
                 <EducationInfoIcon metricKey="prime_cost" />
               </div>
               <input
+                id="daily-disposables"
                 type="number"
                 inputMode="decimal"
                 placeholder="e.g., 190.00"
@@ -894,14 +898,15 @@ function DailyPageContent() {
                   "text-red-400"
                 )}
               />
-            </label>
+            </div>
 
-            <label className="block min-w-0">
+            <div className="space-y-1 min-w-0">
               <div className="flex items-center gap-2">
-                <span className="text-sm text-slate-400">Transaction Count</span>
+                <label htmlFor="daily-transactions" className="text-xs text-slate-400">Transactions</label>
                 <EducationInfoIcon metricKey="ticket_avg" />
               </div>
               <input
+                id="daily-transactions"
                 type="number"
                 inputMode="decimal"
                 placeholder="e.g., 287"
@@ -913,14 +918,15 @@ function DailyPageContent() {
                   "text-white"
                 )}
               />
-            </label>
+            </div>
 
-            <label className="block min-w-0">
+            <div className="space-y-1 min-w-0">
               <div className="flex items-center gap-2">
-                <span className="text-sm text-slate-400">Total Hours Worked</span>
+                <label htmlFor="daily-hours" className="text-xs text-slate-400">Hours Worked</label>
                 <EducationInfoIcon metricKey="slph" />
               </div>
               <input
+                id="daily-hours"
                 type="number"
                 inputMode="decimal"
                 placeholder="e.g., 86.5"
@@ -932,7 +938,7 @@ function DailyPageContent() {
                   "text-white"
                 )}
               />
-            </label>
+            </div>
           </div>
 
           {warnings.length > 0 && (
