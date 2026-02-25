@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import { Settings, Check, Pencil, Archive } from "lucide-react";
 import {
   VENDORS,
@@ -57,6 +57,18 @@ export default function VendorSettingsPage() {
 
   const [activePlatforms, setActivePlatforms] = useState(["doordash", "ubereats"]);
   const [leaseDetails, setLeaseDetails] = useState<Record<string, LeaseState>>(initialLeaseDetails);
+  const [saveToast, setSaveToast] = useState(false);
+
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    const saved = localStorage.getItem("primeos-lease-details");
+    if (saved) {
+      try {
+        const parsed = JSON.parse(saved) as Record<string, LeaseState>;
+        setLeaseDetails((prev) => ({ ...initialLeaseDetails(), ...parsed }));
+      } catch {}
+    }
+  }, []);
 
   const storeVendors = useMemo(() => vendors.filter((v) => v.store_id === selectedStore), [vendors, selectedStore]);
   const sortedStoreVendors = useMemo(
@@ -170,17 +182,23 @@ export default function VendorSettingsPage() {
   };
 
   const handleSaveLease = () => {
-    setLeaseDetails((prev) => ({
-      ...prev,
+    const next: Record<string, LeaseState> = {
+      ...leaseDetails,
       [selectedStore]: {
         ...currentLease,
         monthlyRent: Number(currentLease.monthlyRent) || 0,
         sqft: Number(currentLease.sqft) || 0,
-        leaseRenewal: currentLease.leaseRenewal,
-        ccProcessor: currentLease.ccProcessor,
-        ccQuotedRate: currentLease.ccQuotedRate,
+        leaseRenewal: currentLease.leaseRenewal ?? "",
+        ccProcessor: currentLease.ccProcessor ?? "",
+        ccQuotedRate: currentLease.ccQuotedRate ?? "",
       },
-    }));
+    };
+    setLeaseDetails(next);
+    if (typeof window !== "undefined") {
+      localStorage.setItem("primeos-lease-details", JSON.stringify(next));
+    }
+    setSaveToast(true);
+    setTimeout(() => setSaveToast(false), 2500);
   };
 
   const monthlyRent = typeof currentLease.monthlyRent === "number" ? currentLease.monthlyRent : Number(currentLease.monthlyRent) || 0;
@@ -188,6 +206,14 @@ export default function VendorSettingsPage() {
 
   return (
     <div className="space-y-4 pb-28 min-w-0 overflow-x-hidden">
+      {saveToast && (
+        <div
+          className="fixed left-1/2 z-50 -translate-x-1/2 bg-emerald-600/20 border border-emerald-700/30 rounded-xl px-4 py-2.5 shadow-lg shadow-black/30"
+          style={{ top: "calc(4rem + env(safe-area-inset-top, 0px))" }}
+        >
+          <p className="text-xs text-emerald-400 font-medium">Lease details saved</p>
+        </div>
+      )}
       <div className="flex items-center justify-between mb-4">
         <div>
           <h1 className="text-xl font-bold text-white">Vendor Settings</h1>
