@@ -5,6 +5,14 @@ import { Sparkles, Check } from "lucide-react";
 import { useTier } from "@/src/lib/tier-context";
 import { getTierLabel, TIERS } from "@/src/lib/tier-config";
 
+const DEMO_TIERS = [
+  { id: "free", label: "Free", color: "text-slate-400" },
+  { id: "starter", label: "Starter", color: "text-blue-400" },
+  { id: "operator", label: "Operator", color: "text-amber-400" },
+  { id: "owner", label: "Owner", color: "text-emerald-400" },
+  { id: "enterprise", label: "Enterprise", color: "text-purple-400" },
+] as const;
+
 function FeatureRow({ text }: { text: string }) {
   return (
     <li className="flex items-start gap-2">
@@ -52,8 +60,16 @@ export default function BillingPage() {
         </div>
       )}
 
-      {/* Trial / Active plan banner */}
-      {currentTier === "owner" ? (
+      {/* Trial / Active plan banner — Enterprise: no trial; Owner: trial; others: plan active */}
+      {currentTier === "enterprise" ? (
+        <div className="bg-emerald-950/30 rounded-xl border border-emerald-800/50 p-4 mb-6">
+          <div className="flex items-center gap-2 mb-1">
+            <Check className="w-4 h-4 text-emerald-400" aria-hidden />
+            <span className="text-sm font-semibold text-emerald-400">Enterprise — Full Access</span>
+          </div>
+          <p className="text-sm text-slate-300">Demo: all pages unlocked. Use the switcher below to simulate lower tiers.</p>
+        </div>
+      ) : currentTier === "owner" ? (
         <div className="bg-blue-950/30 rounded-xl border border-blue-800/50 p-4 mb-6">
           <div className="flex items-center gap-2 mb-1">
             <Sparkles className="w-4 h-4 text-blue-400" aria-hidden />
@@ -260,19 +276,47 @@ export default function BillingPage() {
 
       <div className="bg-slate-700/50 rounded-xl p-4 mt-6 mb-4">
         <p className="text-xs text-slate-500 uppercase tracking-wide mb-2">Demo: Switch Tier</p>
+        <p className="text-xs text-slate-400 mb-3">Tap any tier to switch immediately. Lock icons and upgrade prompts update for demos.</p>
         <div className="flex flex-wrap gap-2 items-center">
-          {["free", "starter", "operator", "owner", "enterprise"].map((tier) => (
-            <button
-              key={tier}
-              type="button"
-              onClick={() => setCurrentTier(tier)}
-              className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-colors ${
-                currentTier === tier ? "bg-blue-600 text-white" : "bg-slate-700 text-slate-400"
-              }`}
-            >
-              {getTierLabel(tier)}
-            </button>
-          ))}
+          {DEMO_TIERS.map((tier) => {
+            const isActive = currentTier === tier.id;
+            return (
+              <button
+                key={tier.id}
+                type="button"
+                onClick={() => {
+                  setCurrentTier(tier.id);
+                  try {
+                    localStorage.setItem("primeos-demo-tier", tier.id);
+                  } catch {
+                    // ignore
+                  }
+                }}
+                className={`px-3 py-2 rounded-lg text-xs font-medium transition-colors flex items-center gap-1.5 min-h-[44px] ${
+                  isActive ? "bg-slate-600 text-white ring-2 ring-white/50" : `bg-slate-700 hover:bg-slate-600 hover:text-slate-300 ${tier.color}`
+                }`}
+              >
+                <span>{tier.label}</span>
+                {isActive && <span className="bg-slate-500 text-white text-[10px] font-bold px-1.5 py-0.5 rounded">CURRENT</span>}
+              </button>
+            );
+          })}
+        </div>
+        <button
+          type="button"
+          onClick={() => {
+            setCurrentTier("enterprise");
+            try {
+              localStorage.setItem("primeos-demo-tier", "enterprise");
+            } catch {
+              // ignore
+            }
+          }}
+          className="w-full py-2 rounded-lg bg-purple-600/20 border border-purple-700/30 text-purple-400 text-xs font-medium mt-2"
+        >
+          Reset to Enterprise (Full Access)
+        </button>
+        <div className="flex flex-wrap gap-2 items-center mt-3 pt-3 border-t border-slate-600">
           <button
             type="button"
             onClick={() => {
