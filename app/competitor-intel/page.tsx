@@ -19,7 +19,10 @@ import { SEED_STORES } from "@/src/lib/seed-data";
 import { EducationInfoIcon } from "@/src/components/education/InfoIcon";
 import { DataDisclaimer } from "@/src/components/ui/DataDisclaimer";
 
-const STORE_OPTIONS = SEED_STORES.map((s) => ({ value: s.slug, label: s.name }));
+const STORE_OPTIONS = [
+  { value: "all", label: "All Locations" },
+  ...SEED_STORES.map((s) => ({ value: s.slug, label: s.name })),
+];
 
 function formatTime(isoString: string): string {
   const now = new Date();
@@ -27,9 +30,10 @@ function formatTime(isoString: string): string {
   const diffMs = now.getTime() - date.getTime();
   const diffDays = Math.floor(diffMs / 86400000);
   const diffHours = Math.floor(diffMs / 3600000);
-  if (diffHours < 24) return `${diffHours}h ago`;
-  if (diffDays === 1) return "Yesterday";
-  return `${diffDays}d ago`;
+  if (diffHours < 24) return diffHours <= 1 ? "1 hour ago" : `${diffHours} hours ago`;
+  if (diffDays === 1) return "1 day ago";
+  if (diffDays < 7) return `${diffDays} days ago`;
+  return date.toLocaleDateString("en-US", { month: "short", day: "numeric", year: date.getFullYear() !== now.getFullYear() ? "numeric" : undefined });
 }
 
 function getStoreName(storeId: string): string {
@@ -37,15 +41,15 @@ function getStoreName(storeId: string): string {
 }
 
 export default function CompetitorIntelPage() {
-  const [selectedStore, setSelectedStore] = useState("kent");
+  const [selectedStore, setSelectedStore] = useState("all");
   const [expandedCompetitor, setExpandedCompetitor] = useState<string | null>(null);
   const [view, setView] = useState<"overview" | "alerts" | "pricing">("overview");
 
   const competitors = useMemo(() => getCompetitorsByStore(selectedStore), [selectedStore]);
-  const alerts = useMemo(
-    () => getAlertsByStore(selectedStore).sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime()),
-    [selectedStore]
-  );
+  const alerts = useMemo(() => {
+    const list = getAlertsByStore(selectedStore);
+    return [...list].sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
+  }, [selectedStore]);
   const marketAvg = useMemo(() => getMarketAvgPrice(selectedStore), [selectedStore]);
 
   const yourCheese = useMemo(
@@ -112,28 +116,34 @@ export default function CompetitorIntelPage() {
         <>
           <div className="bg-slate-800 rounded-xl border border-slate-700 p-4 mb-4">
             <h3 className="text-sm font-semibold text-white mb-3">Your Market Position</h3>
-            <div className="grid grid-cols-2 gap-3">
-              <div>
-                <div className="text-xs text-slate-500">Your Large Cheese</div>
-                <div className="text-lg text-emerald-400 font-bold">${yourPrice.toFixed(2)}</div>
-              </div>
-              <div className="flex items-center gap-1">
-                <div>
-                  <div className="text-xs text-slate-500">Market Average</div>
-                  <div className="text-lg text-white font-bold">${marketAvg.avgCheese.toFixed(2)}</div>
+            {selectedStore === "all" ? (
+              <p className="text-xs text-slate-400">Select a store to see your market position vs local competitors.</p>
+            ) : (
+              <>
+                <div className="grid grid-cols-2 gap-3">
+                  <div>
+                    <div className="text-xs text-slate-500">Your Large Cheese</div>
+                    <div className="text-lg text-emerald-400 font-bold">${yourPrice.toFixed(2)}</div>
+                  </div>
+                  <div className="flex items-center gap-1">
+                    <div>
+                      <div className="text-xs text-slate-500">Market Average</div>
+                      <div className="text-lg text-white font-bold">${marketAvg.avgCheese.toFixed(2)}</div>
+                    </div>
+                    <EducationInfoIcon metricKey="market_position" size="sm" />
+                  </div>
                 </div>
-                <EducationInfoIcon metricKey="market_position" size="sm" />
-              </div>
-            </div>
-            <div className="mt-2 px-3 py-2 rounded-lg bg-slate-700/50">
-              <p className="text-xs text-slate-300">
-                Your price is{" "}
-                <span className={priceDiffPct > 0 ? "text-emerald-400" : "text-amber-400"}>
-                  {Math.abs(priceDiffPct).toFixed(1)}% {priceDiffPct > 0 ? "above" : "below"}
-                </span>{" "}
-                the local market average of {marketAvg.competitorCount} competitors.
-              </p>
-            </div>
+                <div className="mt-2 px-3 py-2 rounded-lg bg-slate-700/50">
+                  <p className="text-xs text-slate-300">
+                    Your price is{" "}
+                    <span className={priceDiffPct > 0 ? "text-emerald-400" : "text-amber-400"}>
+                      {Math.abs(priceDiffPct).toFixed(1)}% {priceDiffPct > 0 ? "above" : "below"}
+                    </span>{" "}
+                    the local market average of {marketAvg.competitorCount} competitors.
+                  </p>
+                </div>
+              </>
+            )}
           </div>
 
           {competitors.map((comp) => (
@@ -204,7 +214,7 @@ export default function CompetitorIntelPage() {
               <div key={alert.id} className="bg-slate-800 rounded-xl border border-slate-700 p-3 mb-2">
                 <div className="flex items-start gap-2">
                   <div
-                    className={`w-2 h-2 rounded-full mt-1.5 flex-shrink-0 ${alert.icon_color.replace("text-", "bg-")}`}
+                    className={`w-2.5 h-2.5 rounded-full mt-1.5 flex-shrink-0 ${alert.icon_color.replace(/^text-/, "bg-")}`}
                   />
                   <div className="min-w-0">
                     <div className="text-sm font-medium text-white">{alert.title}</div>
@@ -225,12 +235,16 @@ export default function CompetitorIntelPage() {
             <EducationInfoIcon metricKey="market_position" />
           </div>
 
-          <div className="flex items-center justify-between p-2 rounded-lg bg-[#E65100]/10 border border-[#E65100]/30 mb-2">
-            <span className="text-sm text-white font-medium">{yourStoreName}</span>
-            <span className="text-sm text-[#E65100] font-bold">${yourPrice.toFixed(2)}</span>
-          </div>
+          {selectedStore === "all" ? (
+            <p className="text-xs text-slate-400">Select a store to see your price vs competitor prices.</p>
+          ) : (
+            <>
+              <div className="flex items-center justify-between p-2 rounded-lg bg-[#E65100]/10 border border-[#E65100]/30 mb-2">
+                <span className="text-sm text-white font-medium">{yourStoreName}</span>
+                <span className="text-sm text-[#E65100] font-bold">${yourPrice.toFixed(2)}</span>
+              </div>
 
-          {competitorsSortedByPrice.map((comp) => (
+              {competitorsSortedByPrice.map((comp) => (
             <div
               key={comp.id}
               className="flex items-center justify-between p-2 border-b border-slate-700/50 last:border-0"
@@ -247,12 +261,14 @@ export default function CompetitorIntelPage() {
             </div>
           ))}
 
-          <div className="flex items-center justify-between p-2 mt-2 rounded-lg bg-slate-700/50">
-            <span className="text-xs text-slate-500 font-medium">
-              Market Average ({marketAvg.competitorCount} shops)
-            </span>
-            <span className="text-sm text-white font-medium">${marketAvg.avgCheese.toFixed(2)}</span>
-          </div>
+              <div className="flex items-center justify-between p-2 mt-2 rounded-lg bg-slate-700/50">
+                <span className="text-xs text-slate-500 font-medium">
+                  Market Average ({marketAvg.competitorCount} shops)
+                </span>
+                <span className="text-sm text-white font-medium">${marketAvg.avgCheese.toFixed(2)}</span>
+              </div>
+            </>
+          )}
         </div>
       )}
 
