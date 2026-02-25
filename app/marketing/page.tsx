@@ -31,12 +31,26 @@ function fmtDollars(n: number): string {
   return "$" + n.toLocaleString("en-US", { maximumFractionDigits: 0 });
 }
 
+function getWeekStart(): string {
+  const d = new Date();
+  d.setDate(d.getDate() - d.getDay() + 1);
+  return d.toLocaleDateString("en-US", { month: "short", day: "numeric" });
+}
+
+function getWeekEnd(): string {
+  const d = new Date();
+  d.setDate(d.getDate() - d.getDay() + 7);
+  return d.toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" });
+}
+
 type DateRange = "daily" | "weekly" | "monthly" | "custom";
 
 export default function MarketingPage() {
   const campaigns = SEED_MARKETING_CAMPAIGNS;
   const [expandedCampaign, setExpandedCampaign] = useState<string | null>(null);
   const [range, setRange] = useState<DateRange>("monthly");
+  const [customStart, setCustomStart] = useState("2026-02-01");
+  const [customEnd, setCustomEnd] = useState("2026-02-22");
 
   const summary = useMemo(() => {
     const totalSpend = campaigns.reduce((s, c) => s + c.spend, 0);
@@ -62,8 +76,31 @@ export default function MarketingPage() {
           <button type="button" onClick={() => setRange("monthly")} className={cn("px-3 py-1.5 rounded-md text-xs font-medium transition-colors", range === "monthly" ? "bg-slate-700 text-white" : "text-slate-400")}>Monthly</button>
           <button type="button" onClick={() => setRange("custom")} className={cn("px-3 py-1.5 rounded-md text-xs font-medium transition-colors", range === "custom" ? "bg-slate-700 text-white" : "text-slate-400")}>Custom</button>
         </div>
+        {range !== "custom" && (
+          <p className="text-xs text-slate-400 mb-3">
+            {range === "daily"
+              ? `Today — ${new Date().toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })}`
+              : range === "weekly"
+                ? `Week of ${getWeekStart()} — ${getWeekEnd()}`
+                : `${new Date().toLocaleDateString("en-US", { month: "long", year: "numeric" })}`}
+          </p>
+        )}
         {range === "custom" && (
-          <p className="text-xs text-slate-400 mb-3">Showing: Feb 1 – Feb 22, 2026</p>
+          <div className="flex items-center gap-2 mb-3">
+            <input
+              type="date"
+              value={customStart}
+              onChange={(e) => setCustomStart(e.target.value)}
+              className="bg-slate-700 border border-slate-600 rounded-lg text-xs text-white h-9 px-2"
+            />
+            <span className="text-xs text-slate-500">to</span>
+            <input
+              type="date"
+              value={customEnd}
+              onChange={(e) => setCustomEnd(e.target.value)}
+              className="bg-slate-700 border border-slate-600 rounded-lg text-xs text-white h-9 px-2"
+            />
+          </div>
         )}
       </div>
 
