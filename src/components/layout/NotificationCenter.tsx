@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import { createPortal } from "react-dom";
 import {
   Bell,
   X,
@@ -21,7 +22,12 @@ import { useRouter } from "next/navigation";
 export function NotificationCenter() {
   const [isOpen, setIsOpen] = useState(false);
   const [notifications, setNotifications] = useState<AppNotification[]>([]);
+  const [mounted, setMounted] = useState(false);
   const router = useRouter();
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
 
   useEffect(() => {
     setNotifications(generateNotifications());
@@ -62,28 +68,19 @@ export function NotificationCenter() {
     }
   };
 
-  return (
+  const drawerContent = isOpen && mounted && typeof document !== "undefined" ? (
     <>
-      {/* Bell icon with badge */}
-      <button
-        type="button"
-        onClick={() => setIsOpen(true)}
-        className="relative p-1.5 rounded-lg hover:bg-slate-700/50 transition-colors"
+      <div
+        className="fixed inset-0 bg-black/60 z-[100]"
+        onClick={() => setIsOpen(false)}
+        aria-hidden
+      />
+      <div
+        className="fixed inset-y-0 right-0 w-full sm:w-80 sm:max-w-[20rem] z-[100] bg-slate-900 border-l border-slate-700 flex flex-col animate-slide-left"
+        style={{ paddingTop: "env(safe-area-inset-top, 0px)" }}
+        role="dialog"
         aria-label="Notifications"
       >
-        <Bell className="w-4 h-4 text-slate-400" />
-        {unreadCount > 0 && (
-          <span className="absolute -top-0.5 -right-0.5 min-w-[16px] h-4 flex items-center justify-center rounded-full bg-red-500 text-[10px] text-white font-bold px-1">
-            {unreadCount > 9 ? "9+" : unreadCount}
-          </span>
-        )}
-      </button>
-
-      {/* Drawer */}
-      {isOpen && (
-        <>
-          <div className="fixed inset-0 bg-black/60 z-50" onClick={() => setIsOpen(false)} />
-          <div className="fixed inset-y-0 right-0 w-full max-w-sm z-50 bg-slate-900 border-l border-slate-700 flex flex-col animate-slide-left" style={{ paddingTop: "env(safe-area-inset-top, 0px)" }}>
             {/* Header */}
             <div className="flex items-center justify-between p-4 border-b border-slate-700">
               <div className="flex items-center gap-2">
@@ -168,7 +165,25 @@ export function NotificationCenter() {
             </div>
           </div>
         </>
-      )}
+  ) : null;
+
+  return (
+    <>
+      <button
+        type="button"
+        onClick={() => setIsOpen(true)}
+        className="relative min-w-[44px] min-h-[44px] flex items-center justify-center rounded-lg hover:bg-slate-700/50 transition-colors touch-manipulation"
+        aria-label="Notifications"
+        aria-expanded={isOpen}
+      >
+        <Bell className="w-4 h-4 text-slate-400" />
+        {unreadCount > 0 && (
+          <span className="absolute top-1 right-1 min-w-[16px] h-4 flex items-center justify-center rounded-full bg-red-500 text-[10px] text-white font-bold px-1">
+            {unreadCount > 9 ? "9+" : unreadCount}
+          </span>
+        )}
+      </button>
+      {drawerContent && createPortal(drawerContent, document.body)}
     </>
   );
 }
