@@ -454,16 +454,16 @@ export default function InvoicesPage() {
                   </span>
                 </div>
                 {isEditing && editDraft ? (
-                  <div className="space-y-2">
+                  <div className="space-y-2 overflow-x-auto">
                     {editDraft.line_items.map((item, idx) => (
                       <div
                         key={idx}
-                        className="grid grid-cols-[1fr_60px_60px_80px_80px_32px] gap-2 items-center py-2 border-b border-slate-700/50 last:border-0 text-sm"
+                        className="grid grid-cols-[minmax(100px,1fr)_60px_60px_80px_80px_32px] gap-2 items-center py-2 border-b border-slate-700/50 last:border-0 text-sm min-w-0"
                       >
                         <input
                           value={item.product}
                           onChange={(e) => updateLine(idx, { product: e.target.value })}
-                          className="bg-slate-700 border border-slate-600 rounded-lg text-sm h-8 px-2 text-white col-span-1 min-w-0"
+                          className="bg-slate-700 border border-slate-600 rounded-lg text-sm h-8 px-2 text-white min-w-0"
                           placeholder="Product"
                         />
                         <input
@@ -514,17 +514,17 @@ export default function InvoicesPage() {
                       (item: SeedInvoiceLineItem, idx: number) => (
                         <li
                           key={idx}
-                          className="flex justify-between items-baseline gap-2 py-2 border-b border-slate-700/50 last:border-0 text-sm"
+                          className="flex items-center justify-between gap-2 py-1.5 border-b border-slate-700/50 last:border-0 text-sm"
                         >
-                          <div className="min-w-0">
-                            <span className="text-slate-200">{item.product}</span>
-                            <span className="text-slate-500 ml-2">
+                          <div className="flex-1 min-w-0 pr-3">
+                            <div className="text-sm text-white truncate">{item.product}</div>
+                            <div className="text-xs text-slate-500">
                               {item.qty} {item.unit} × ${item.unit_price.toFixed(2)}
-                            </span>
+                            </div>
                           </div>
-                          <span className="text-white font-medium tabular-nums shrink-0">
+                          <div className="text-sm text-white font-medium tabular-nums shrink-0">
                             ${item.extended_price.toFixed(2)}
-                          </span>
+                          </div>
                         </li>
                       )
                     )}
