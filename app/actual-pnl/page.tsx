@@ -8,9 +8,38 @@ import { formatPct, formatDollars } from "@/src/lib/formatters";
 import { cn } from "@/lib/utils";
 
 const STORAGE_KEY_MONTHS = "primeos-actual-pnl-months";
+const STORAGE_KEY_DATA = "primeos-actual-pnl-data";
 const STORAGE_KEY_LEGACY = "actual-pnl-uploaded";
 
-function getMonthlyPnlData(monthKey: string) {
+export type PnlRawData = {
+  revenue: number;
+  food: number;
+  labor: number;
+  disposables: number;
+  rent: number;
+  insurance: number;
+  utilities: number;
+  loans: number;
+  marketing: number;
+  tech: number;
+  professional: number;
+  repairs: number;
+  misc: number;
+};
+
+/** Seasonal revenue multiplier by month (1–12): lower Jan/Feb, higher summer. */
+function getSeasonalMultiplier(monthKey: string): number {
+  const [, m] = monthKey.split("-").map(Number);
+  const monthIndex = typeof m === "number" && m >= 1 && m <= 12 ? m : 6;
+  const multipliers: Record<number, number> = {
+    1: 0.92, 2: 0.94, 3: 0.98, 4: 1.0, 5: 1.02, 6: 1.04,
+    7: 1.06, 8: 1.05, 9: 1.02, 10: 1.0, 11: 0.98, 12: 1.04,
+  };
+  return multipliers[monthIndex] ?? 1.0;
+}
+
+function getMonthlyPnlData(monthKey: string): PnlRawData {
+  const multiplier = getSeasonalMultiplier(monthKey);
   const base = {
     revenue: 148200,
     food: 44460,
@@ -26,17 +55,6 @@ function getMonthlyPnlData(monthKey: string) {
     repairs: 1400,
     misc: 2100,
   };
-
-  const monthVariations: Record<string, number> = {
-    "2026-01": 0.94,
-    "2026-02": 1.0,
-    "2025-12": 1.08,
-    "2025-11": 0.97,
-    "2025-10": 1.02,
-  };
-
-  const multiplier = monthVariations[monthKey] ?? 1.0;
-
   return {
     revenue: Math.round(base.revenue * multiplier),
     food: Math.round(base.food * multiplier),
@@ -143,6 +161,7 @@ const NET_PROFIT_PLAYBOOK = [
 
 export default function ActualPnlPage() {
   const [uploadedMonths, setUploadedMonths] = useState<Record<string, boolean>>({});
+  const [uploadedPnlData, setUploadedPnlData] = useState<Record<string, PnlRawData>>({});
   const [viewMode, setViewMode] = useState<"upload" | "processing" | "pnl">("upload");
   const [month, setMonth] = useState(1); // February = 1
   const [year, setYear] = useState(2026);
@@ -163,14 +182,23 @@ export default function ActualPnlPage() {
       } catch {
         // ignore
       }
-      return;
+    }
+    const dataStored = localStorage.getItem(STORAGE_KEY_DATA);
+    if (dataStored) {
+      try {
+        setUploadedPnlData(JSON.parse(dataStored));
+      } catch {
+        // ignore
+      }
     }
     const legacy = localStorage.getItem(STORAGE_KEY_LEGACY);
     if (legacy === "true") {
       const key = "2026-02";
-      const next = { [key]: true };
-      setUploadedMonths(next);
-      localStorage.setItem(STORAGE_KEY_MONTHS, JSON.stringify(next));
+      const snapshot = getMonthlyPnlData(key);
+      setUploadedMonths((prev) => ({ ...prev, [key]: true }));
+      setUploadedPnlData((prev) => ({ ...prev, [key]: snapshot }));
+      localStorage.setItem(STORAGE_KEY_MONTHS, JSON.stringify({ [key]: true }));
+      localStorage.setItem(STORAGE_KEY_DATA, JSON.stringify({ [key]: snapshot }));
       localStorage.removeItem(STORAGE_KEY_LEGACY);
     }
   }, []);
@@ -183,11 +211,15 @@ export default function ActualPnlPage() {
   const handleFile = () => {
     setViewMode("processing");
     setTimeout(() => {
-      const next = { ...uploadedMonths, [currentMonthKey]: true };
-      setUploadedMonths(next);
+      const snapshot = getMonthlyPnlData(currentMonthKey);
+      const nextMonths = { ...uploadedMonths, [currentMonthKey]: true };
+      const nextData = { ...uploadedPnlData, [currentMonthKey]: snapshot };
+      setUploadedMonths(nextMonths);
+      setUploadedPnlData(nextData);
       setViewMode("pnl");
       if (typeof window !== "undefined") {
-        localStorage.setItem(STORAGE_KEY_MONTHS, JSON.stringify(next));
+        localStorage.setItem(STORAGE_KEY_MONTHS, JSON.stringify(nextMonths));
+        localStorage.setItem(STORAGE_KEY_DATA, JSON.stringify(nextData));
       }
     }, 2000);
   };
@@ -208,30 +240,37 @@ export default function ActualPnlPage() {
   const monthLabel = `${MONTHS[month]} ${year}`;
 
   const pnl = useMemo(() => {
-    const d = getMonthlyPnlData(currentMonthKey);
+    const d: PnlRawData = uploadedPnlData[currentMonthKey] ?? getMonthlyPnlData(currentMonthKey);
+    const rev = d.revenue;
     const totalVariable = d.food + d.labor + d.disposables;
-    const grossProfit = d.revenue - totalVariable;
+    const grossProfit = rev - totalVariable;
     const totalFixed = d.rent + d.insurance + d.utilities + d.loans + d.marketing + d.tech + d.professional + d.repairs + d.misc;
     const netProfit = grossProfit - totalFixed;
-    const rev = d.revenue;
+    const pct = (x: number) => (rev > 0 ? (x / rev) * 100 : 0);
     return {
       ...d,
       totalVariable,
       grossProfit,
       totalFixed,
       netProfit,
-      variablePct: rev > 0 ? (totalVariable / rev) * 100 : 0,
-      gpPct: rev > 0 ? (grossProfit / rev) * 100 : 0,
-      fixedPct: rev > 0 ? (totalFixed / rev) * 100 : 0,
-      netPct: rev > 0 ? (netProfit / rev) * 100 : 0,
-      foodPct: rev > 0 ? (d.food / rev) * 100 : 0,
-      laborPct: rev > 0 ? (d.labor / rev) * 100 : 0,
-      dispPct: rev > 0 ? (d.disposables / rev) * 100 : 0,
-      rentPct: rev > 0 ? (d.rent / rev) * 100 : 0,
-      insurancePct: rev > 0 ? (d.insurance / rev) * 100 : 0,
-      utilitiesPct: rev > 0 ? (d.utilities / rev) * 100 : 0,
+      variablePct: pct(totalVariable),
+      gpPct: pct(grossProfit),
+      fixedPct: pct(totalFixed),
+      netPct: pct(netProfit),
+      foodPct: pct(d.food),
+      laborPct: pct(d.labor),
+      dispPct: pct(d.disposables),
+      rentPct: pct(d.rent),
+      insurancePct: pct(d.insurance),
+      utilitiesPct: pct(d.utilities),
+      loansPct: pct(d.loans),
+      marketingPct: pct(d.marketing),
+      techPct: pct(d.tech),
+      professionalPct: pct(d.professional),
+      repairsPct: pct(d.repairs),
+      miscPct: pct(d.misc),
     };
-  }, [currentMonthKey]);
+  }, [currentMonthKey, uploadedPnlData]);
 
   return (
     <div className="space-y-4 pb-28">
@@ -376,12 +415,12 @@ export default function ActualPnlPage() {
               <LineItem label="Rent / Occupancy" amount={formatDollars(pnl.rent)} pct={formatPct(pnl.rentPct)} badge="green" metricKey="occupancy_pct" amountColor="red" />
               <LineItem label="Insurance" amount={formatDollars(pnl.insurance)} pct={formatPct(pnl.insurancePct)} badge="green" metricKey="insurance_pct" amountColor="red" />
               <LineItem label="Utilities" amount={formatDollars(pnl.utilities)} pct={formatPct(pnl.utilitiesPct)} badge="green" metricKey="utilities_pct" amountColor="red" />
-              <LineItem label="Loan Payments" amount={formatDollars(pnl.loans)} pct={formatPct(pnl.revenue > 0 ? (pnl.loans / pnl.revenue) * 100 : 0)} amountColor="red" />
-              <LineItem label="Marketing & Advertising" amount={formatDollars(pnl.marketing)} pct={formatPct(pnl.revenue > 0 ? (pnl.marketing / pnl.revenue) * 100 : 0)} amountColor="red" />
-              <LineItem label="Technology & Software" amount={formatDollars(pnl.tech)} pct={formatPct(pnl.revenue > 0 ? (pnl.tech / pnl.revenue) * 100 : 0)} amountColor="red" />
-              <LineItem label="Professional Services (CPA, Legal)" amount={formatDollars(pnl.professional)} pct={formatPct(pnl.revenue > 0 ? (pnl.professional / pnl.revenue) * 100 : 0)} amountColor="red" />
-              <LineItem label="Repairs & Maintenance" amount={formatDollars(pnl.repairs)} pct={formatPct(pnl.revenue > 0 ? (pnl.repairs / pnl.revenue) * 100 : 0)} amountColor="red" />
-              <LineItem label="Miscellaneous" amount={formatDollars(pnl.misc)} pct={formatPct(pnl.revenue > 0 ? (pnl.misc / pnl.revenue) * 100 : 0)} amountColor="red" />
+              <LineItem label="Loan Payments" amount={formatDollars(pnl.loans)} pct={formatPct(pnl.loansPct)} amountColor="red" />
+              <LineItem label="Marketing & Advertising" amount={formatDollars(pnl.marketing)} pct={formatPct(pnl.marketingPct)} amountColor="red" />
+              <LineItem label="Technology & Software" amount={formatDollars(pnl.tech)} pct={formatPct(pnl.techPct)} amountColor="red" />
+              <LineItem label="Professional Services (CPA, Legal)" amount={formatDollars(pnl.professional)} pct={formatPct(pnl.professionalPct)} amountColor="red" />
+              <LineItem label="Repairs & Maintenance" amount={formatDollars(pnl.repairs)} pct={formatPct(pnl.repairsPct)} amountColor="red" />
+              <LineItem label="Miscellaneous" amount={formatDollars(pnl.misc)} pct={formatPct(pnl.miscPct)} amountColor="red" />
               <div className="flex justify-between text-sm font-semibold text-red-400 pt-2 mt-2 border-t border-slate-600">
                 <span>Total Fixed</span>
                 <span>{formatDollars(pnl.totalFixed)} ({formatPct(pnl.fixedPct)})</span>
@@ -410,18 +449,18 @@ export default function ActualPnlPage() {
               </div>
               <div className="flex justify-between items-center">
                 <span className="text-sm text-slate-300">Your Actual P&L says you kept</span>
-                <span className="text-lg font-bold text-white">{formatDollars(pnl.netProfit)}</span>
+                <span className="text-lg font-bold text-emerald-400">{formatDollars(pnl.netProfit)}</span>
               </div>
               <div className="border-t border-amber-800/50 pt-3">
                 <div className="flex justify-between items-center">
                   <span className="text-sm font-semibold text-amber-400">The gap (your fixed costs)</span>
-                  <span className="text-lg font-bold text-amber-400">{formatDollars(pnl.totalFixed)}</span>
+                  <span className="text-lg font-bold text-red-400">{formatDollars(pnl.totalFixed)}</span>
                 </div>
               </div>
             </div>
             <div className="mt-4 space-y-2">
               <p className="text-xs text-amber-200/70">
-                That&apos;s {pnl.fixedPct.toFixed(1)}¢ of every dollar going to costs you don&apos;t see on your daily P&L.
+                That&apos;s {formatPct(pnl.fixedPct)} of every dollar going to costs you don&apos;t see on your daily P&L.
               </p>
               <p className="text-xs text-amber-200/70">
                 Biggest chunks: Rent {formatDollars(pnl.rent)} · Utilities {formatDollars(pnl.utilities)} · Loan Payments {formatDollars(pnl.loans)}
