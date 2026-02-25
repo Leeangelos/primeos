@@ -374,27 +374,30 @@ export default function VendorTrackerPage() {
       </div>
 
       {/* SECTION 2: VIEW TABS */}
-      <div className="flex bg-slate-800 rounded-lg p-0.5 border border-slate-700 mb-4 overflow-x-auto">
-        {(["movers", "all", "annual", "cc", "occupancy"] as const).map((tab) => (
-          <button
-            key={tab}
-            type="button"
-            onClick={() => setView(tab)}
-            className={`px-3 py-1.5 rounded-md text-xs font-medium whitespace-nowrap transition-colors ${
-              view === tab ? "bg-slate-700 text-white" : "text-slate-400 hover:text-slate-300"
-            }`}
-          >
-            {tab === "movers"
-              ? "Price Movers"
-              : tab === "all"
-                ? "All Vendors"
-                : tab === "annual"
-                  ? "Annual"
-                  : tab === "cc"
-                    ? "CC Processing"
-                    : "Occupancy"}
-          </button>
-        ))}
+      <div className="relative mb-4">
+        <div className="flex overflow-x-auto no-scrollbar gap-1 bg-slate-800 rounded-lg p-0.5 border border-slate-700">
+          {(["movers", "all", "annual", "cc", "occupancy"] as const).map((tab) => (
+            <button
+              key={tab}
+              type="button"
+              onClick={() => setView(tab)}
+              className={`px-3 py-1.5 rounded-md text-xs font-medium whitespace-nowrap transition-colors shrink-0 ${
+                view === tab ? "bg-slate-700 text-white" : "text-slate-400 hover:text-slate-300"
+              }`}
+            >
+              {tab === "movers"
+                ? "Movers"
+                : tab === "all"
+                  ? "All"
+                  : tab === "annual"
+                    ? "Annual"
+                    : tab === "cc"
+                      ? "CC Proc"
+                      : "Occ."}
+            </button>
+          ))}
+        </div>
+        <div className="absolute right-0 top-0 bottom-0 w-8 bg-gradient-to-l from-slate-900 to-transparent pointer-events-none rounded-r-lg" aria-hidden />
       </div>
 
       {/* SECTION 3: PRICE MOVERS VIEW */}
@@ -593,16 +596,26 @@ export default function VendorTrackerPage() {
                 return (
                   <tr key={v.id} className="border-b border-slate-700/50">
                     <td className="text-slate-300 py-2 pr-3 sticky left-0 bg-slate-900 z-10">{v.vendor_name}</td>
-                    {ANNUAL_MONTHS.map((m) => {
+                    {ANNUAL_MONTHS.map((m, colIndex) => {
                       const cost = getCostForMonth(v.id, m.month, m.year);
                       ytd += cost;
-                      const prevYearCost = getCostForMonth(v.id, m.month, m.year - 1);
-                      const isHigher = prevYearCost > 0 && cost > prevYearCost * 1.03;
-                      const isLower = prevYearCost > 0 && cost < prevYearCost * 0.97;
+                      const prev = colIndex > 0 ? ANNUAL_MONTHS[colIndex - 1] : null;
+                      const prevCost = prev ? getCostForMonth(v.id, prev.month, prev.year) : 0;
+                      const changePct = prevCost > 0 ? ((cost - prevCost) / prevCost) * 100 : 0;
+                      const cellClass =
+                        prevCost === 0
+                          ? "text-white"
+                          : changePct <= -2
+                            ? "text-emerald-400 bg-emerald-600/5"
+                            : changePct > 5
+                              ? "text-red-400 bg-red-600/5"
+                              : changePct > 2
+                                ? "text-amber-400 bg-amber-600/5"
+                                : "text-white";
                       return (
                         <td
                           key={`${m.year}-${m.month}`}
-                          className={`text-right py-2 px-1 tabular-nums ${isHigher ? "text-red-400" : isLower ? "text-emerald-400" : "text-slate-400"}`}
+                          className={`text-right py-2 px-1 tabular-nums ${cellClass}`}
                         >
                           {cost > 0 ? `$${(cost / 1000).toFixed(1)}k` : "—"}
                         </td>
@@ -616,18 +629,33 @@ export default function VendorTrackerPage() {
               })}
               <tr className="border-t-2 border-slate-600">
                 <td className="text-white font-semibold py-2 pr-3 sticky left-0 bg-slate-900 z-10">TOTAL</td>
-                {ANNUAL_MONTHS.map((m) => {
+                {ANNUAL_MONTHS.map((m, colIndex) => {
                   const monthTotal = vendorsForAnnual.reduce(
                     (s, v) => s + getCostForMonth(v.id, m.month, m.year),
                     0
                   );
+                  const prev = colIndex > 0 ? ANNUAL_MONTHS[colIndex - 1] : null;
+                  const prevTotal = prev
+                    ? vendorsForAnnual.reduce((s, v) => s + getCostForMonth(v.id, prev.month, prev.year), 0)
+                    : 0;
+                  const changePct = prevTotal > 0 ? ((monthTotal - prevTotal) / prevTotal) * 100 : 0;
+                  const cellClass =
+                    prevTotal === 0
+                      ? "text-white font-semibold"
+                      : changePct <= -2
+                        ? "text-emerald-400 bg-emerald-600/5 font-semibold"
+                        : changePct > 5
+                          ? "text-red-400 bg-red-600/5 font-semibold"
+                          : changePct > 2
+                            ? "text-amber-400 bg-amber-600/5 font-semibold"
+                            : "text-white font-semibold";
                   return (
-                    <td key={`${m.year}-${m.month}`} className="text-right text-white font-medium py-2 px-1 tabular-nums">
+                    <td key={`${m.year}-${m.month}`} className={`text-right py-2 px-1 tabular-nums ${cellClass}`}>
                       ${(monthTotal / 1000).toFixed(1)}k
                     </td>
                   );
                 })}
-                <td className="text-right text-white font-bold py-2 pl-2 tabular-nums">
+                <td className="text-right text-white font-semibold py-2 pl-2 tabular-nums">
                   {formatDollars(
                     vendorsForAnnual.reduce((s, v) => {
                       return s + ANNUAL_MONTHS.reduce((t, m) => t + getCostForMonth(v.id, m.month, m.year), 0);
@@ -800,18 +828,18 @@ export default function VendorTrackerPage() {
         </div>
       )}
 
-      {view !== "cc" && view !== "occupancy" && (
-        <div className="fixed bottom-24 right-4 z-40">
-          <button
-            type="button"
-            onClick={() => setShowAddEntry(true)}
-            className="w-12 h-12 rounded-full bg-[#E65100] hover:bg-orange-600 text-white shadow-lg shadow-black/30 flex items-center justify-center transition-colors"
-            aria-label="Add vendor entry"
-          >
-            <Plus className="w-5 h-5" />
-          </button>
-        </div>
-      )}
+      <button
+        type="button"
+        onClick={() => setShowAddEntry(true)}
+        className="fixed z-30 w-14 h-14 rounded-full bg-[#E65100] hover:bg-orange-600 shadow-lg shadow-black/30 flex items-center justify-center transition-colors"
+        style={{
+          bottom: "calc(5rem + env(safe-area-inset-bottom, 0px))",
+          right: "1rem",
+        }}
+        aria-label="Quick vendor entry"
+      >
+        <Plus className="w-6 h-6 text-white" />
+      </button>
 
       <DataDisclaimer confidence="high" details="12 months of vendor cost data loaded. Trends require 2+ months." />
     </div>
