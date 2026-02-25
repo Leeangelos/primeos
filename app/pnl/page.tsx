@@ -117,7 +117,25 @@ export default function PnlPage() {
       <div className={`dashboard-toolbar p-3 sm:p-5 space-y-3 ${getStoreColor(storeFilter === "all" ? "kent" : storeFilter).glow}`}>
         <div className="flex items-center justify-between gap-2 flex-wrap">
           <h1 className="text-lg font-semibold sm:text-2xl">GP P&L — Gross Profit</h1>
-          <ExportButton pageName="GP P&L" />
+          <ExportButton
+          pageName="GP P&L"
+          getData={() => ({
+            headers: ["Period", "Store", "Total Sales", "Food", "Labor", "Disposables", "COGS", "Gross Profit", "Food %", "Labor %", "GP %"],
+            rows: [[
+              mtdLabel,
+              storeName,
+              String(pnl.totalSales),
+              String(pnl.totalFood),
+              String(pnl.totalLabor),
+              String(pnl.totalDisposables),
+              String(pnl.totalCOGS),
+              String(pnl.grossProfit),
+              pnl.foodPct.toFixed(1),
+              pnl.laborPct.toFixed(1),
+              pnl.gpPct.toFixed(1),
+            ]],
+          })}
+        />
           <ShareButton targetRef={shareRef} title="GP P&L" fileName="primeos-gp-pnl" />
         </div>
         <p className="text-xs text-muted">Month-to-date rolling view. What you control daily.</p>

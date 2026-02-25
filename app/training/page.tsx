@@ -361,7 +361,7 @@ export default function TrainingPage() {
           Every morning, PrimeOS AI reads yesterday&apos;s numbers and writes you a plain-English summary. No jargon. No charts to interpret. Just: here&apos;s what happened, here&apos;s what&apos;s good, here&apos;s what needs attention, and here&apos;s what&apos;s coming up.
         </p>
         <p className="mb-3">
-          The Brief pulls from your daily KPIs, weekly trends, employee data, and local events (coming soon). It&apos;s like having a business partner who reviewed everything before you woke up.
+          The Brief pulls from your daily KPIs, weekly trends, employee data, and local events (planned). It&apos;s like having a business partner who reviewed everything before you woke up.
         </p>
         <p className="mb-0">
           How to use it: Read it with your coffee. If it flags something red, consider going to that page and using the playbook. If everything is green, you just saved yourself 20 minutes of spreadsheet scanning.

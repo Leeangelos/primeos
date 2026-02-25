@@ -176,7 +176,19 @@ export default function InvoicesPage() {
             <h1 className="text-lg font-semibold sm:text-2xl">Invoice Scanner</h1>
             <EducationInfoIcon metricKey="invoice_scanning" />
           </div>
-          <ExportButton pageName="Invoices" />
+          <ExportButton
+            pageName="Invoices"
+            getData={() => ({
+              headers: ["Vendor", "Date", "Invoice #", "Total", "Status"],
+              rows: invoices.map((inv) => [
+                inv.vendor_name,
+                inv.invoice_date ?? "",
+                inv.invoice_number ?? "",
+                String(inv.total.toFixed(2)),
+                inv.status,
+              ]),
+            })}
+          />
         </div>
         <p className="text-xs text-muted">
           Snap a photo of any vendor invoice. AI extracts every line item and price.

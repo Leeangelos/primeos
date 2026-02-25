@@ -258,7 +258,7 @@ export default function CompetitorIntelPage() {
 
       <div className="bg-slate-800/50 rounded-xl border border-slate-700/50 p-3 mt-4">
         <p className="text-xs text-slate-500">
-          Coming soon: automated competitor monitoring. PrimeOS will scan competitor websites, Google reviews, and
+          Planned: automated competitor monitoring. PrimeOS will scan competitor websites, Google reviews, and
           social media for changes in pricing, menu items, promotions, and customer sentiment — and alert you
           automatically.
         </p>

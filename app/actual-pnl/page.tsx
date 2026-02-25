@@ -280,7 +280,31 @@ export default function ActualPnlPage() {
           <FileSpreadsheet className="w-6 h-6 text-slate-500 shrink-0" aria-hidden />
           <EducationInfoIcon metricKey="gp_vs_net_profit" />
         </div>
-        <ExportButton pageName="Actual P&L" />
+        <ExportButton
+        pageName="Actual P&L"
+        getData={() => ({
+          headers: ["Month", "Revenue", "Food", "Labor", "Disposables", "Gross Profit", "Rent", "Insurance", "Utilities", "Loans", "Marketing", "Tech", "Professional", "Repairs", "Misc", "Total Fixed", "Net Profit"],
+          rows: [[
+            monthLabel,
+            String(pnl.revenue),
+            String(pnl.food),
+            String(pnl.labor),
+            String(pnl.disposables),
+            String(pnl.grossProfit),
+            String(pnl.rent),
+            String(pnl.insurance),
+            String(pnl.utilities),
+            String(pnl.loans),
+            String(pnl.marketing),
+            String(pnl.tech),
+            String(pnl.professional),
+            String(pnl.repairs),
+            String(pnl.misc),
+            String(pnl.totalFixed),
+            String(pnl.netProfit),
+          ]],
+        })}
+      />
       </div>
       <p className="text-sm text-slate-400">Upload your CPA&apos;s monthly financials. See your real net profit.</p>
 

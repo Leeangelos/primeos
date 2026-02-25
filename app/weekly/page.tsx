@@ -292,7 +292,25 @@ function WeeklyPageContent() {
           <div className="flex items-center gap-2">
             <h1 className="text-xl sm:text-2xl font-semibold">Weekly Snapshot</h1>
             <button type="button" onClick={() => setShowEducation("overview")} className="inline-flex items-center justify-center min-h-[44px] min-w-[44px] rounded-full bg-muted/20 text-muted hover:bg-brand/20 hover:text-brand transition-colors text-xs font-bold" aria-label="Learn more">i</button>
-            <ExportButton pageName="Weekly Snapshot" />
+            <ExportButton
+            pageName="Weekly Snapshot"
+            getData={() => ({
+              headers: ["Week Start", "Week End", "Store", "Sales", "Food+Disp %", "Labor %", "PRIME %", "SLPH", "Transactions"],
+              rows: thisWeekSeed
+                ? [[
+                    weekStart,
+                    getWeekEnd(weekStart),
+                    store === "all" ? "All stores" : COCKPIT_TARGETS[store].name,
+                    String(thisWeekSeed.sales),
+                    thisWeekSeed.food_disp_pct != null ? thisWeekSeed.food_disp_pct.toFixed(1) : "",
+                    thisWeekSeed.labor_pct != null ? thisWeekSeed.labor_pct.toFixed(1) : "",
+                    thisWeekSeed.prime_pct != null ? thisWeekSeed.prime_pct.toFixed(1) : "",
+                    thisWeekSeed.slph != null ? String(thisWeekSeed.slph) : "",
+                    String(thisWeekSeed.transactions ?? ""),
+                  ]]
+                : [],
+            })}
+          />
             <ShareButton targetRef={shareRef} title="Weekly Snapshot" fileName="primeos-weekly-snapshot" />
           </div>
           <p className="mt-1 text-sm text-muted">

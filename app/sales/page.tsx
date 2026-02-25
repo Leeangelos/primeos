@@ -196,7 +196,13 @@ export default function SalesPage() {
             <h1 className="text-lg font-semibold sm:text-2xl">Sales Report</h1>
             <EducationInfoIcon metricKey="daily_sales" />
           </div>
-          <ExportButton pageName="Sales Report" />
+          <ExportButton
+          pageName="Sales Report"
+          getData={() => ({
+            headers: ["Date", "Sales"],
+            rows: dailyRows.map((r) => [r.date, String(r.sales)]),
+          })}
+        />
         </div>
         <p className="text-xs text-muted">Daily sales and comparison by period.</p>
 

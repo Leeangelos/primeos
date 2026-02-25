@@ -534,7 +534,13 @@ function DailyPageContent() {
           <div className="flex items-center gap-2">
             <h1 className="text-lg font-semibold sm:text-2xl">Daily KPI Entry</h1>
             <button type="button" onClick={() => setShowEducation("overview")} className="inline-flex items-center justify-center min-h-[44px] min-w-[44px] rounded-full bg-muted/20 text-muted hover:bg-brand/20 hover:text-brand transition-colors text-xs font-bold" aria-label="Learn more">i</button>
-            <ExportButton pageName="Daily KPIs" />
+            <ExportButton
+              pageName="Daily KPIs"
+              getData={() => ({
+                headers: ["Date", "Sales", "Food", "Labor", "Disposables", "Transactions", "Hours"],
+                rows: [[businessDate, netSales || "", foodCost || "", laborCost || "", disposablesCost || "", tickets || "", laborHours || ""]],
+              })}
+            />
           </div>
           <select
             value={storeId}

@@ -43,6 +43,7 @@ function MerchContent() {
   const [checkingOut, setCheckingOut] = useState(false);
   const [showCart, setShowCart] = useState(false);
   const [showEducation, setShowEducation] = useState(false);
+  const [checkoutToast, setCheckoutToast] = useState(false);
 
   const loadItems = useCallback(async () => {
     setLoading(true);
@@ -105,6 +106,11 @@ function MerchContent() {
 
   return (
     <div className="space-y-5">
+      {checkoutToast && (
+        <div className="fixed top-16 left-1/2 -translate-x-1/2 z-50 bg-slate-800 border border-slate-700 rounded-xl px-4 py-2.5 shadow-lg shadow-black/30">
+          <p className="text-xs text-slate-300">Checkout not available in this demo.</p>
+        </div>
+      )}
       <div className="dashboard-toolbar p-3 sm:p-5 space-y-3">
         <div className="flex items-center gap-2">
           <h1 className="text-lg font-semibold sm:text-2xl">Team Merch</h1>
@@ -329,7 +335,10 @@ function MerchContent() {
 
                 <button
                   type="button"
-                  onClick={() => alert("Checkout coming soon")}
+                  onClick={() => {
+                    setCheckoutToast(true);
+                    setTimeout(() => setCheckoutToast(false), 2000);
+                  }}
                   className="w-full py-3 rounded-xl bg-[#E65100] hover:bg-orange-600 text-white text-sm font-semibold mt-4 transition-colors"
                 >
                   Checkout

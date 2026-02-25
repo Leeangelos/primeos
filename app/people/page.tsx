@@ -98,7 +98,21 @@ export default function PeoplePage() {
             <h1 className="text-lg font-semibold sm:text-2xl">People Economics</h1>
             <EducationInfoIcon metricKey="employee_cac" />
           </div>
-          <ExportButton pageName="People Economics" />
+          <ExportButton
+          pageName="People Economics"
+          getData={() => ({
+            headers: ["Name", "Role", "Store", "Status", "Hire Date", "Tenure (months)", "Pay Rate"],
+            rows: employees.map((e) => [
+              e.name,
+              ROLES[e.role] ?? e.role,
+              getStoreName(e.store_id),
+              e.status,
+              e.hire_date,
+              String(e.tenure_months),
+              String(e.pay_rate),
+            ]),
+          })}
+        />
         </div>
         <p className="text-xs text-muted">
           Turnover cost, CAC, tenure, and churn. 12 seed employees.
