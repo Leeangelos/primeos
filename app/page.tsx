@@ -9,7 +9,16 @@ import { COLORS, getGradeColor } from "@/src/lib/design-tokens";
 import { useRedAlert } from "@/src/lib/useRedAlert";
 import { EducationInfoIcon } from "@/src/components/education/InfoIcon";
 import { formatPct } from "@/src/lib/formatters";
+import { EDUCATION_CONTENT } from "@/src/lib/education-content";
 import { SEED_DAILY_KPIS, SEED_MORNING_BRIEF, SEED_STORES } from "@/src/lib/seed-data";
+
+/** Map alert keys to education content keys (for playbook modal). */
+const ALERT_TO_EDUCATION: Record<string, string> = {
+  food_cost: "food_cost",
+  labor_pct: "labor_pct",
+  prime_cost: "prime_cost",
+  daily_sales: "daily_sales",
+};
 
 function firstSentences(text: string, count: number): string {
   const parts = text.split(/(?<=[.!?])\s+/);
@@ -73,6 +82,7 @@ export default function HomePage() {
   const [loading, setLoading] = useState(true);
   const [usedSeedData, setUsedSeedData] = useState(false);
   const [showEducation, setShowEducation] = useState(false);
+  const [educationKey, setEducationKey] = useState<string | null>(null);
   const [showMissingBanner, setShowMissingBanner] = useState(true);
   const today = todayYYYYMMDD();
   const yesterday = yesterdayYYYYMMDD();
@@ -508,16 +518,60 @@ export default function HomePage() {
             <TriangleAlert className="w-4 h-4 text-red-400 shrink-0" aria-hidden />
             <h3 className="text-sm font-semibold text-red-400 uppercase tracking-wide">Needs Attention</h3>
           </div>
-          {redMetrics.map((metric) => (
-            <div key={`${metric.key}-${metric.label}`} className="flex items-center justify-between py-2 border-b border-red-900/30 last:border-0">
-              <div className="min-w-0">
-                <div className="text-sm text-white font-medium">{metric.label}</div>
-                <div className="text-xs text-red-300">{metric.message}</div>
-              </div>
-              <EducationInfoIcon metricKey={metric.key} />
-            </div>
-          ))}
+          {redMetrics.map((metric) => {
+            const educationKeyForAlert = ALERT_TO_EDUCATION[metric.key] ?? metric.key;
+            return (
+              <button
+                key={`${metric.key}-${metric.label}`}
+                type="button"
+                onClick={() => setEducationKey(educationKeyForAlert)}
+                className="w-full text-left bg-red-600/10 rounded-xl border border-red-700/30 p-3 mb-2 min-h-[44px] active:bg-red-600/20 transition-colors last:mb-0"
+              >
+                <div className="flex items-start justify-between gap-2">
+                  <div className="min-w-0">
+                    <div className="flex items-center gap-2">
+                      <AlertTriangle className="w-4 h-4 text-red-400 flex-shrink-0" aria-hidden />
+                      <span className="text-sm text-red-400 font-medium">{metric.label}</span>
+                    </div>
+                    <p className="text-xs text-slate-400 mt-1">{metric.message}</p>
+                  </div>
+                  <span className="text-[10px] text-red-400/60 flex-shrink-0">Tap for playbook →</span>
+                </div>
+              </button>
+            );
+          })}
         </div>
+      )}
+
+      {educationKey && EDUCATION_CONTENT[educationKey] && typeof document !== "undefined" && createPortal(
+        <>
+          <div className="fixed inset-0 bg-black/60 z-50" onClick={() => setEducationKey(null)} aria-hidden />
+          <div
+            className="fixed inset-x-4 top-1/2 -translate-y-1/2 z-50 bg-slate-800 rounded-2xl border border-slate-700 p-5 max-h-[80vh] overflow-y-auto"
+            style={{ marginTop: "env(safe-area-inset-top, 0px)" }}
+            onClick={(e) => e.stopPropagation()}
+          >
+            <h3 className="text-lg font-bold text-white mb-2">{EDUCATION_CONTENT[educationKey].title}</h3>
+            <p className="text-sm text-slate-300 mb-4 leading-relaxed">{EDUCATION_CONTENT[educationKey].whatItMeans}</p>
+            <h4 className="text-xs text-slate-500 uppercase tracking-wide mb-2">Playbook</h4>
+            <div className="space-y-2">
+              {(EDUCATION_CONTENT[educationKey].whenRedPlaybook ?? []).map((tip: string, i: number) => (
+                <div key={i} className="flex items-start gap-2">
+                  <div className="w-1.5 h-1.5 rounded-full bg-amber-400 mt-1.5 flex-shrink-0" />
+                  <p className="text-xs text-slate-400 leading-relaxed">{tip}</p>
+                </div>
+              ))}
+            </div>
+            <button
+              type="button"
+              onClick={() => setEducationKey(null)}
+              className="w-full mt-4 py-2.5 rounded-xl bg-slate-700 text-slate-300 text-sm font-medium"
+            >
+              Close
+            </button>
+          </div>
+        </>,
+        document.body
       )}
 
       <div className="grid grid-cols-2 gap-3">
