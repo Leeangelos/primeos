@@ -186,28 +186,102 @@ body {
   --text-dim: #94a3b8;
 }
 
-/* Override Tailwind classes in light mode */
-.light-mode .bg-slate-900 { background-color: var(--bg-primary) !important; }
-.light-mode .bg-slate-800 { background-color: var(--bg-card) !important; }
-.light-mode .bg-slate-800\/50 { background-color: rgba(255,255,255,0.5) !important; }
-.light-mode .bg-slate-700 { background-color: #f1f5f9 !important; }
-.light-mode .bg-slate-700\/50 { background-color: rgba(241,245,249,0.5) !important; }
+/* ——— Header and bottom nav STAY DARK in light mode (branded elements) ——— */
+.light-mode header {
+  background-color: #0f172a !important;
+  border-color: #1e293b !important;
+}
+.light-mode header * { color: #ffffff; }
+.light-mode header .text-slate-400 { color: #94a3b8 !important; }
+.light-mode header .text-slate-500 { color: #64748b !important; }
 
-.light-mode .border-slate-700 { border-color: var(--border-card) !important; }
-.light-mode .border-slate-700\/50 { border-color: rgba(226,232,240,0.5) !important; }
-.light-mode .border-slate-800 { border-color: var(--border-primary) !important; }
-.light-mode .border-slate-600 { border-color: #cbd5e1 !important; }
+.light-mode .bottom-nav {
+  background-color: #0f172a !important;
+  border-color: #1e293b !important;
+}
+.light-mode .bottom-nav * { color: inherit; }
+.light-mode .bottom-nav .text-slate-500 { color: #94a3b8 !important; }
+.light-mode .bottom-nav .text-\[#E65100\] { color: #E65100 !important; }
 
-.light-mode .text-white { color: var(--text-primary) !important; }
-.light-mode .text-slate-300 { color: #334155 !important; }
-.light-mode .text-slate-400 { color: var(--text-secondary) !important; }
-.light-mode .text-slate-500 { color: var(--text-muted) !important; }
-.light-mode .text-slate-600 { color: var(--text-dim) !important; }
+/* ——— Body and main wrapper: light background ——— */
+.light-mode body {
+  background-color: #f8fafc !important;
+  color: #0f172a !important;
+}
 
-/* Keep accent colors unchanged in light mode */
-/* text-emerald-400, text-red-400, text-blue-400, text-amber-400, text-[#E65100] stay as-is */
+.light-mode main.glass {
+  background: #f8fafc !important;
+  border-color: #e2e8f0 !important;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.06), 0 0 0 1px rgba(0,0,0,0.04) !important;
+}
+.light-mode main.glow { box-shadow: 0 1px 3px rgba(0,0,0,0.08), 0 4px 12px rgba(0,0,0,0.04) !important; }
 
-/* Shadows for light mode */
-.light-mode .shadow-lg { box-shadow: 0 10px 15px -3px rgba(0,0,0,0.08), 0 4px 6px -4px rgba(0,0,0,0.04) !important; }
-.light-mode .shadow-black\/30 { --tw-shadow-color: rgba(0,0,0,0.08) !important; }
-.light-mode .shadow-black\/20 { --tw-shadow-color: rgba(0,0,0,0.04) !important; }
+/* ——— Content area only: scope all overrides to main (exclude header/nav) ——— */
+.light-mode main .bg-slate-900 { background-color: #f8fafc !important; }
+.light-mode main .bg-slate-800 {
+  background-color: #ffffff !important;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.08) !important;
+}
+.light-mode main .bg-slate-800\/50 { background-color: rgba(255,255,255,0.7) !important; }
+.light-mode main .bg-slate-700 { background-color: #f1f5f9 !important; }
+.light-mode main .bg-slate-700\/50 { background-color: rgba(241,245,249,0.7) !important; }
+.light-mode main .bg-slate-900\/95 { background-color: #f8fafc !important; }
+
+.light-mode main .border-slate-700 { border-color: #e2e8f0 !important; }
+.light-mode main .border-slate-700\/50 { border-color: rgba(226,232,240,0.7) !important; }
+.light-mode main .border-slate-800 { border-color: #e2e8f0 !important; }
+.light-mode main .border-slate-600 { border-color: #cbd5e1 !important; }
+
+.light-mode main .text-white { color: #0f172a !important; }
+.light-mode main .text-slate-300 { color: #334155 !important; }
+.light-mode main .text-slate-400 { color: #475569 !important; }
+.light-mode main .text-slate-500 { color: #64748b !important; }
+.light-mode main .text-slate-600 { color: #64748b !important; }
+
+/* ——— Daily KPI / Morning Brief: dashboard classes (same look as other pages) ——— */
+.light-mode main .dashboard-toolbar {
+  background: #ffffff !important;
+  border-color: #e2e8f0 !important;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.08) !important;
+}
+.light-mode main .dashboard-scoreboard {
+  background: #ffffff !important;
+  border-color: #e2e8f0 !important;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.08) !important;
+}
+.light-mode main .dashboard-surface {
+  background: #ffffff !important;
+  border-color: #e2e8f0 !important;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.08) !important;
+}
+.light-mode main .dashboard-pill {
+  background: #f1f5f9 !important;
+  border-color: #e2e8f0 !important;
+}
+.light-mode main .dashboard-input {
+  background: #f1f5f9 !important;
+  border-color: #cbd5e1 !important;
+}
+
+/* ——— Inputs, selects, textareas in main ——— */
+.light-mode main input,
+.light-mode main select,
+.light-mode main textarea {
+  background-color: #f1f5f9 !important;
+  border-color: #cbd5e1 !important;
+  color: #0f172a !important;
+}
+
+/* ——— Accent colors: do NOT change in light mode (stay vibrant) ——— */
+.light-mode .text-emerald-400 { color: rgb(52 211 153) !important; }
+.light-mode .text-red-400 { color: rgb(248 113 113) !important; }
+.light-mode .text-amber-400 { color: rgb(251 191 36) !important; }
+.light-mode .text-blue-400 { color: rgb(96 165 250) !important; }
+.light-mode .text-\[#E65100\] { color: #E65100 !important; }
+.light-mode .bg-\[#E65100\] { background-color: #E65100 !important; }
+.light-mode .text-purple-400 { color: rgb(192 132 252) !important; }
+
+/* ——— Shadows for light mode (content only) ——— */
+.light-mode main .shadow-lg { box-shadow: 0 10px 15px -3px rgba(0,0,0,0.08), 0 4px 6px -4px rgba(0,0,0,0.04) !important; }
+.light-mode main .shadow-black\/30 { box-shadow: 0 4px 12px rgba(0,0,0,0.08) !important; }
+.light-mode main .shadow-black\/20 { box-shadow: 0 2px 8px rgba(0,0,0,0.06) !important; }

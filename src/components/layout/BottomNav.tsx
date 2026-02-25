@@ -172,7 +172,7 @@ export function BottomNav() {
   return (
     <>
       <nav
-        className="fixed bottom-0 left-0 right-0 z-50 bg-slate-900/95 backdrop-blur-sm border-t border-slate-700 pb-[env(safe-area-inset-bottom)]"
+        className="bottom-nav fixed bottom-0 left-0 right-0 z-50 bg-slate-900/95 backdrop-blur-sm border-t border-slate-700 pb-[env(safe-area-inset-bottom)]"
         aria-label="Bottom navigation"
       >
         {currentTier === "owner" && (
