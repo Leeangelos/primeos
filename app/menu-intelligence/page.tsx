@@ -68,18 +68,18 @@ function useComparableWithGaps() {
           allPricesBySize.set(s.size_name, list);
         }
       }
-      let hasLargeGap = false;
+      let maxGapPct = 0;
       for (const prices of allPricesBySize.values()) {
-        if (prices.length < 2) continue;
-        const min = Math.min(...prices);
-        const max = Math.max(...prices);
-        if (min > 0 && (max - min) / min > 0.15) {
-          hasLargeGap = true;
-          break;
-        }
+        const valid = prices.filter((p) => p > 0);
+        if (valid.length < 2) continue;
+        const min = Math.min(...valid);
+        const max = Math.max(...valid);
+        const gapPct = min > 0 ? ((max - min) / min) * 100 : 0;
+        if (gapPct > maxGapPct) maxGapPct = gapPct;
       }
+      const hasLargeGap = maxGapPct >= 15;
       const commonSizes = [...allPricesBySize.keys()].sort();
-      return { ...item, hasLargeGap, commonSizes };
+      return { ...item, hasLargeGap, gapPct: maxGapPct, commonSizes };
     });
   }, []);
 }
@@ -123,12 +123,6 @@ export default function MenuIntelligencePage() {
       return next;
     });
   };
-
-  // Default: first category open
-  const effectiveOpen = useMemo(() => {
-    if (openCategories.size > 0) return openCategories;
-    return new Set(categories.length > 0 ? [categories[0]] : []);
-  }, [openCategories, categories]);
 
   return (
     <div className="space-y-4 pb-28 min-w-0 overflow-x-hidden">
@@ -232,7 +226,7 @@ export default function MenuIntelligencePage() {
       {view === "menu" && (
         <div className="space-y-2">
           {categories.map((cat) => {
-            const isOpen = effectiveOpen.has(cat);
+            const isOpen = openCategories.has(cat);
             const catItems = itemsByCategory.get(cat) ?? [];
             return (
               <div
@@ -311,13 +305,13 @@ export default function MenuIntelligencePage() {
               key={item.item_name}
               className="bg-slate-800 rounded-xl border border-slate-700 p-3 mb-2"
             >
-              <div className="flex items-center justify-between mb-2">
-                <span className="text-sm font-medium text-white">
+              <div className="flex items-center justify-between gap-2 mb-2 flex-wrap">
+                <span className="text-sm font-medium text-white min-w-0">
                   {item.item_name}
                 </span>
-                {item.hasLargeGap && (
-                  <span className="text-[10px] px-2 py-0.5 rounded-full bg-amber-600/20 text-amber-400 border border-amber-700/50">
-                    15%+ gap
+                {item.hasLargeGap && item.stores.length >= 2 && (
+                  <span className="px-1.5 py-0.5 rounded text-[10px] font-medium bg-amber-600/20 text-amber-400 border border-amber-700/30 shrink-0">
+                    {Math.round(item.gapPct)}% gap
                   </span>
                 )}
               </div>
