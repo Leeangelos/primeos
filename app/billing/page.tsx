@@ -26,6 +26,21 @@ export default function BillingPage() {
   const { currentTier, setCurrentTier } = useTier();
   const [selectedPlan, setSelectedPlan] = useState<string | null>(null);
   const [confirmationMessage, setConfirmationMessage] = useState<string | null>(null);
+  const [resetToast, setResetToast] = useState<string | null>(null);
+
+  const handleReset = (keys: string[], label: string) => {
+    keys.forEach((key) => {
+      try {
+        localStorage.removeItem(key);
+      } catch {
+        // ignore
+      }
+    });
+    setResetToast(label);
+    setTimeout(() => {
+      window.location.reload();
+    }, 300);
+  };
 
   useEffect(() => {
     if (!confirmationMessage) return;
@@ -48,6 +63,14 @@ export default function BillingPage() {
 
   return (
     <div className="space-y-4 pb-28">
+      {resetToast && (
+        <div
+          className="fixed z-50 bg-emerald-600/20 border border-emerald-700/30 rounded-xl px-4 py-2.5 shadow-lg left-1/2 -translate-x-1/2"
+          style={{ top: "calc(4rem + env(safe-area-inset-top, 0px))" }}
+        >
+          <p className="text-xs text-emerald-400 font-medium">{resetToast} reset — reloading...</p>
+        </div>
+      )}
       <div className="mb-2">
         <h1 className="text-lg font-semibold sm:text-2xl text-white">Choose Your Plan</h1>
         <p className="text-sm text-slate-400 mt-1">Every tier pays for itself in the first week.</p>
@@ -319,42 +342,29 @@ export default function BillingPage() {
         <div className="flex flex-wrap gap-2 items-center mt-3 pt-3 border-t border-slate-600">
           <button
             type="button"
-            onClick={() => {
-              localStorage.removeItem("primeos-tos-accepted");
-              localStorage.removeItem("primeos-tos-accepted-at");
-              window.location.reload();
-            }}
-            className="px-3 py-1.5 rounded-lg text-xs font-medium bg-slate-700 text-slate-400"
+            onClick={() => handleReset(["primeos-tos-accepted", "primeos-tos-accepted-at"], "Terms of Service")}
+            className="px-3 py-2 rounded-lg text-xs font-medium bg-slate-700 text-slate-400 active:bg-slate-600 touch-manipulation min-h-[44px]"
           >
             Reset TOS
           </button>
           <button
             type="button"
-            onClick={() => {
-              localStorage.removeItem("primeos-consent-dismissed");
-              window.location.reload();
-            }}
-            className="px-3 py-1.5 rounded-lg text-xs font-medium bg-slate-700 text-slate-400"
+            onClick={() => handleReset(["primeos-consent-dismissed"], "Cookie Consent")}
+            className="px-3 py-2 rounded-lg text-xs font-medium bg-slate-700 text-slate-400 active:bg-slate-600 touch-manipulation min-h-[44px]"
           >
             Reset Consent
           </button>
           <button
             type="button"
-            onClick={() => {
-              localStorage.removeItem("primeos-notification-prompt-dismissed");
-              window.location.reload();
-            }}
-            className="px-3 py-1.5 rounded-lg text-xs font-medium bg-slate-700 text-slate-400"
+            onClick={() => handleReset(["primeos-notification-prompt-dismissed"], "Notifications")}
+            className="px-3 py-2 rounded-lg text-xs font-medium bg-slate-700 text-slate-400 active:bg-slate-600 touch-manipulation min-h-[44px]"
           >
             Reset Notifications
           </button>
           <button
             type="button"
-            onClick={() => {
-              localStorage.removeItem("primeos-a2hs-dismissed");
-              window.location.reload();
-            }}
-            className="px-3 py-1.5 rounded-lg text-xs font-medium bg-slate-700 text-slate-400"
+            onClick={() => handleReset(["primeos-a2hs-dismissed"], "Add to Home Screen")}
+            className="px-3 py-2 rounded-lg text-xs font-medium bg-slate-700 text-slate-400 active:bg-slate-600 touch-manipulation min-h-[44px]"
           >
             Reset A2HS
           </button>
