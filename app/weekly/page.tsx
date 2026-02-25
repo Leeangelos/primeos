@@ -21,8 +21,8 @@ import { COLORS, getGradeColor } from "@/src/lib/design-tokens";
 import { useRedAlert } from "@/src/lib/useRedAlert";
 import { EducationInfoIcon } from "@/src/components/education/InfoIcon";
 import { ExportButton } from "@/src/components/ui/ExportButton";
-import { ShareButton } from "@/src/components/ui/ShareButton";
-import { formatPct } from "@/src/lib/formatters";
+import { formatPct, formatDollars } from "@/src/lib/formatters";
+import { Share2 } from "lucide-react";
 import { SEED_WEEKLY_COCKPIT } from "@/src/lib/seed-data";
 
 /** Store slug for daily drill-down; daily page uses cockpit slugs (kent, aurora, lindseys). */
@@ -120,6 +120,7 @@ function WeeklyPageContent() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [showEducation, setShowEducation] = useState<string | null>(null);
+  const [shareToast, setShareToast] = useState(false);
 
   /* eslint-disable react-hooks/set-state-in-effect -- sync URL params to state */
   useEffect(() => {
@@ -284,9 +285,45 @@ function WeeklyPageContent() {
   useRedAlert(weeklyGrades);
 
   const shareRef = useRef<HTMLDivElement>(null);
+  const storeName = store === "all" ? "All stores" : COCKPIT_TARGETS[store].name;
+
+  async function handleShare() {
+    const weekLabel = `Week of ${new Date(weekStart + "T12:00:00Z").toLocaleDateString("en-US", { month: "short", day: "numeric" })} – ${new Date(getWeekEnd(weekStart) + "T12:00:00Z").toLocaleDateString("en-US", { month: "short", day: "numeric" })}`;
+    const textBody = thisWeekSeed
+      ? `Sales: ${formatDollars(thisWeekSeed.sales)}\nFood Cost: ${thisWeekSeed.food_disp_pct != null ? formatPct(thisWeekSeed.food_disp_pct) : "—"}\nLabor: ${thisWeekSeed.labor_pct != null ? formatPct(thisWeekSeed.labor_pct) : "—"}\nPRIME: ${thisWeekSeed.prime_pct != null ? formatPct(thisWeekSeed.prime_pct) : "—"}\nSLPH: ${thisWeekSeed.slph != null ? thisWeekSeed.slph.toFixed(0) : "—"}\nTransactions: ${thisWeekSeed.transactions ?? "—"}`
+      : "No data for this week.";
+    const shareText = `PrimeOS — Weekly Snapshot\n${storeName}\n${weekLabel}\n\n${textBody}\n\nPowered by PrimeOS — getprimeos.com`;
+
+    if (navigator.share) {
+      try {
+        await navigator.share({
+          title: "PrimeOS — Weekly Snapshot",
+          text: shareText,
+        });
+        return;
+      } catch (e) {
+        if ((e as Error)?.name === "AbortError") return;
+      }
+    }
+    try {
+      await navigator.clipboard.writeText(shareText);
+      setShareToast(true);
+      setTimeout(() => setShareToast(false), 2500);
+    } catch {
+      // Clipboard failed
+    }
+  }
 
   return (
     <div className="space-y-6">
+      {shareToast && (
+        <div
+          className="fixed z-50 bg-emerald-600/20 border border-emerald-700/30 rounded-xl px-4 py-2.5 shadow-lg left-1/2 -translate-x-1/2"
+          style={{ top: "calc(4rem + env(safe-area-inset-top, 0px))" }}
+        >
+          <p className="text-xs text-emerald-400 font-medium">Copied to clipboard</p>
+        </div>
+      )}
       <div className={`dashboard-toolbar p-3 sm:p-5 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between ${store !== "all" ? getStoreColor(store).glow : ""}`}>
         <div>
           <div className="flex items-center gap-2">
@@ -311,7 +348,14 @@ function WeeklyPageContent() {
                 : [],
             })}
           />
-            <ShareButton targetRef={shareRef} title="Weekly Snapshot" fileName="primeos-weekly-snapshot" />
+            <button
+            type="button"
+            onClick={handleShare}
+            className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-slate-800 border border-slate-700 text-xs text-slate-400 hover:text-slate-300 transition-colors"
+          >
+            <Share2 className="w-3.5 h-3.5" />
+            <span>Share</span>
+          </button>
           </div>
           <p className="mt-1 text-sm text-muted">
             Tap any day to edit. Tap a store card to drill in.
