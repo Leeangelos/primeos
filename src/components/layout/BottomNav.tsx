@@ -138,11 +138,14 @@ function NavSection({
   );
 }
 
+const NAV_BAR_HEIGHT = "4rem"; /* h-16 */
+
 export function BottomNav() {
   const pathname = usePathname();
   const router = useRouter();
   const { currentTier } = useTier();
   const [moreOpen, setMoreOpen] = useState(false);
+  const [dragStart, setDragStart] = useState<number | null>(null);
   const [upgradeModal, setUpgradeModal] = useState<{ requiredTier: string; pageName: string } | null>(null);
 
   const closeMore = useCallback(() => setMoreOpen(false), []);
@@ -240,7 +243,7 @@ export function BottomNav() {
           })}
           <button
             type="button"
-            onClick={() => setMoreOpen(true)}
+            onClick={() => setMoreOpen((prev) => !prev)}
             className="flex flex-col items-center justify-center gap-0.5 min-w-[44px] min-h-[44px] flex-1 max-w-[80px] transition-colors"
             aria-expanded={moreOpen}
             aria-haspopup="dialog"
@@ -264,22 +267,50 @@ export function BottomNav() {
         </div>
       </nav>
 
-      {/* More: full-screen slide-up drawer */}
+      {/* Backdrop: tap to close (above content, below nav and drawer) */}
       {moreOpen && (
-        <>
-          <div
-            className="fixed inset-0 bg-black/60 z-50"
-            onClick={() => setMoreOpen(false)}
-            aria-hidden="true"
-          />
-          <div className="fixed inset-x-0 bottom-0 z-50 bg-slate-900 rounded-t-2xl overflow-y-auto animate-slide-up" style={{ top: "calc(3.5rem + env(safe-area-inset-top, 0px))" }}>
-            {/* Handle bar */}
-            <div className="sticky top-0 bg-slate-900 pt-3 pb-2 px-4 border-b border-slate-800 z-10">
-              <div className="w-10 h-1 bg-slate-700 rounded-full mx-auto mb-3" />
-              <h2 className="text-lg font-bold text-white">All Tools</h2>
-            </div>
+        <div
+          className="fixed inset-0 bg-black/40 z-40"
+          onClick={() => setMoreOpen(false)}
+          aria-hidden
+        />
+      )}
 
-            <div className="px-4 py-4 space-y-6 pb-32">
+      {/* More drawer: slides up from above the nav bar; nav stays visible */}
+      <div
+        className={cn(
+          "fixed left-0 right-0 z-50 bg-slate-900 border-t border-slate-700 rounded-t-2xl transition-transform duration-300 ease-out",
+          moreOpen ? "translate-y-0" : "translate-y-full pointer-events-none"
+        )}
+        style={{
+          bottom: `calc(${NAV_BAR_HEIGHT} + env(safe-area-inset-bottom, 0px))`,
+          maxHeight: "80vh",
+          overflowY: "auto",
+        }}
+        aria-hidden={!moreOpen}
+      >
+        {/* Drag handle: pull down to close */}
+        <div
+          className="flex justify-center pt-3 pb-1 bg-slate-900 sticky top-0 z-10 border-b border-slate-800 touch-none"
+          onTouchStart={(e) => setDragStart(e.touches[0].clientY)}
+          onTouchMove={(e) => {
+            if (dragStart !== null) {
+              const diff = e.touches[0].clientY - dragStart;
+              if (diff > 50) {
+                setMoreOpen(false);
+                setDragStart(null);
+              }
+            }
+          }}
+          onTouchEnd={() => setDragStart(null)}
+        >
+          <div className="w-10 h-1 rounded-full bg-slate-600" />
+        </div>
+        <div className="px-4 pt-2 pb-4">
+          <h2 className="text-lg font-bold text-white mb-4">All Tools</h2>
+        </div>
+
+        <div className="px-4 py-2 space-y-6 pb-24">
               <Link href="/" onClick={() => setMoreOpen(false)} className="flex items-center gap-3 px-4 py-3 mb-2 bg-slate-800 rounded-xl border border-slate-700 active:bg-slate-700/50">
                 <div className="w-8 h-8 rounded-lg bg-slate-800 flex items-center justify-center border border-slate-700">
                   <Home className="w-4 h-4 text-blue-400" />
@@ -381,9 +412,7 @@ export function BottomNav() {
                 </button>
               </div>
             </div>
-          </div>
-        </>
-      )}
+      </div>
 
       <UpgradeModal
         isOpen={upgradeModal != null}
