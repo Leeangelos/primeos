@@ -2,12 +2,43 @@
 
 import { useState, useEffect, useCallback } from "react";
 import { createPortal } from "react-dom";
+import { createClient } from "@/lib/supabase";
 import { EducationInfoIcon } from "@/src/components/education/InfoIcon";
 import { EDUCATION_CONTENT } from "@/src/lib/education-content";
 import { SEED_CHAT_MESSAGES } from "@/src/lib/seed-data";
 import { COCKPIT_STORE_SLUGS, COCKPIT_TARGETS, type CockpitStoreSlug } from "@/lib/cockpit-config";
 import { getStoreColor } from "@/lib/store-colors";
 import { cn } from "@/lib/utils";
+
+function getMessageColor(senderName: string) {
+  switch (senderName.toLowerCase()) {
+    case "angelo": return "bg-blue-600/20 border-blue-700/30";
+    case "greg": return "bg-emerald-600/20 border-emerald-700/30";
+    case "rosario": return "bg-amber-600/20 border-amber-700/30";
+    case "leeann": return "bg-purple-600/20 border-purple-700/30";
+    default: return "bg-slate-700/50 border-slate-600";
+  }
+}
+
+function getAvatarColor(senderName: string) {
+  switch (senderName.toLowerCase()) {
+    case "angelo": return "bg-blue-600";
+    case "greg": return "bg-emerald-600";
+    case "rosario": return "bg-amber-600";
+    case "leeann": return "bg-purple-600";
+    default: return "bg-slate-600";
+  }
+}
+
+function getTextColor(senderName: string) {
+  switch (senderName.toLowerCase()) {
+    case "angelo": return "text-blue-400";
+    case "greg": return "text-emerald-400";
+    case "rosario": return "text-amber-400";
+    case "leeann": return "text-purple-400";
+    default: return "text-slate-400";
+  }
+}
 
 const CHANNELS = [
   { key: "general" as const, label: "General" },
@@ -25,13 +56,6 @@ const ROLE_STYLE: Record<string, string> = {
   cashier: "bg-blue-500/20 text-blue-400 border-blue-500/40",
   driver: "bg-purple-500/20 text-purple-400 border-purple-500/40",
   team: "bg-muted/20 text-muted border-border/40",
-};
-
-const SENDER_STYLE: Record<string, { text: string; bg: string }> = {
-  Angelo: { text: "text-blue-400", bg: "bg-blue-400/20" },
-  Greg: { text: "text-emerald-400", bg: "bg-emerald-400/20" },
-  Rosario: { text: "text-amber-400", bg: "bg-amber-400/20" },
-  LeeAnn: { text: "text-purple-400", bg: "bg-purple-400/20" },
 };
 
 type Message = {
@@ -52,10 +76,26 @@ export default function ChatPage() {
   const [messages, setMessages] = useState<Message[]>([]);
   const [counts, setCounts] = useState<Record<string, number>>({ general: 0, announcements: 0, "shift-swap": 0, "managers-only": 0 });
   const [loading, setLoading] = useState(true);
-  const [senderName, setSenderName] = useState("");
+  const [currentUser, setCurrentUser] = useState<{ email: string; name: string } | null>(null);
   const [newMessage, setNewMessage] = useState("");
   const [sending, setSending] = useState(false);
   const [playbookOpen, setPlaybookOpen] = useState(true);
+
+  useEffect(() => {
+    const supabase = createClient();
+    supabase.auth.getUser().then(({ data: { user } }) => {
+      if (user) {
+        const userMap: Record<string, { name: string; color: string }> = {
+          "leeangelos.corp@gmail.com": { name: "Angelo", color: "blue" },
+          "greg@leeangelos.com": { name: "Greg", color: "green" },
+          "rosario@leeangelos.com": { name: "Rosario", color: "amber" },
+          "leeann@leeangelos.com": { name: "LeeAnn", color: "purple" },
+        };
+        const mapped = userMap[user.email || ""] || { name: user.email?.split("@")[0] || "User", color: "slate" };
+        setCurrentUser({ email: user.email || "", name: mapped.name });
+      }
+    });
+  }, []);
 
   const loadMessages = useCallback(async () => {
     setLoading(true);
@@ -79,7 +119,7 @@ export default function ChatPage() {
   useEffect(() => { loadCounts(); }, [loadCounts]);
 
   async function handleSend() {
-    if (!newMessage.trim()) return;
+    if (!newMessage.trim() || !currentUser) return;
     setSending(true);
     await fetch("/api/chat", {
       method: "POST",
@@ -87,7 +127,7 @@ export default function ChatPage() {
       body: JSON.stringify({
         store_slug: store,
         channel,
-        sender_name: senderName.trim() || "Anonymous",
+        sender_name: currentUser.name,
         sender_role: null,
         message: newMessage.trim(),
         is_pinned: false,
@@ -176,20 +216,17 @@ export default function ChatPage() {
             </div>
 
             <div className="p-3 border-t border-border/50 space-y-2">
-              <input
-                type="text"
-                value={senderName}
-                onChange={(e) => setSenderName(e.target.value)}
-                placeholder="Your name"
-                className="w-full rounded-lg border border-border/50 bg-black/30 px-3 py-2 text-sm text-white placeholder:text-muted focus:border-brand/60 focus:ring-1 focus:ring-brand/40 focus:outline-none"
-              />
+              {!currentUser ? (
+                <p className="text-sm text-muted py-2">Log in to use chat.</p>
+              ) : null}
               <div className="flex gap-2">
                 <textarea
                   value={newMessage}
                   onChange={(e) => setNewMessage(e.target.value)}
-                  placeholder="Type a message..."
+                  placeholder={currentUser ? "Type a message..." : "Log in to use chat"}
                   rows={2}
-                  className="flex-1 rounded-lg border border-border/50 bg-black/30 px-3 py-2 text-sm text-white placeholder:text-muted focus:border-brand/60 focus:ring-1 focus:ring-brand/40 focus:outline-none resize-none"
+                  disabled={!currentUser}
+                  className="flex-1 rounded-lg border border-border/50 bg-black/30 px-3 py-2 text-sm text-white placeholder:text-muted focus:border-brand/60 focus:ring-1 focus:ring-brand/40 focus:outline-none resize-none disabled:opacity-50 disabled:cursor-not-allowed"
                   onKeyDown={(e) => {
                     if (e.key === "Enter" && !e.shiftKey) {
                       e.preventDefault();
@@ -200,7 +237,7 @@ export default function ChatPage() {
                 <button
                   type="button"
                   onClick={handleSend}
-                  disabled={!newMessage.trim() || sending}
+                  disabled={!newMessage.trim() || sending || !currentUser}
                   className="min-h-[44px] rounded-lg border border-brand/50 bg-brand/15 px-4 py-2 text-sm font-semibold text-brand hover:bg-brand/25 disabled:opacity-50 shrink-0"
                 >
                   Send
@@ -270,16 +307,18 @@ export default function ChatPage() {
 
 function MessageBlock({ m, isAnnouncements }: { m: Message; isAnnouncements: boolean }) {
   const roleStyle = ROLE_STYLE[m.sender_role ?? ""] ?? ROLE_STYLE.team;
-  const senderStyle = SENDER_STYLE[m.sender_name] ?? { text: "text-white", bg: "bg-muted/20" };
+  const messageColor = isAnnouncements || m.is_announcement ? "border-amber-500/40 bg-amber-500/5" : getMessageColor(m.sender_name);
+  const avatarColor = getAvatarColor(m.sender_name);
+  const textColor = getTextColor(m.sender_name);
   const time = new Date(m.created_at).toLocaleTimeString("en-US", { hour: "numeric", minute: "2-digit" });
 
   return (
-    <div className={cn("rounded-lg border p-3", isAnnouncements || m.is_announcement ? "border-amber-500/40 bg-amber-500/5" : "border-border/30 bg-black/10")}>
+    <div className={cn("rounded-lg border p-3", messageColor)}>
       <div className="flex items-center gap-2 flex-wrap mb-1">
-        <span className={cn("h-6 w-6 rounded-full flex items-center justify-center text-xs font-bold shrink-0", senderStyle.bg, senderStyle.text)}>
+        <span className={cn("h-6 w-6 rounded-full flex items-center justify-center text-xs font-bold text-white shrink-0", avatarColor)}>
           {m.sender_name.slice(0, 1)}
         </span>
-        <span className={cn("font-medium text-sm", senderStyle.text)}>{m.sender_name}</span>
+        <span className={cn("font-medium text-sm", textColor)}>{m.sender_name}</span>
         {m.sender_role && (
           <span className={cn("text-[10px] uppercase px-2 py-0.5 rounded border", roleStyle)}>{m.sender_role.replace("_", " ")}</span>
         )}
