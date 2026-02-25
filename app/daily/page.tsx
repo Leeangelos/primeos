@@ -1,9 +1,9 @@
 "use client";
 
-import { Suspense, useState, useMemo, useEffect } from "react";
+import { Suspense, useState, useMemo, useEffect, useCallback } from "react";
 import { createPortal } from "react-dom";
 import Link from "next/link";
-import { Mic, AlertTriangle } from "lucide-react";
+import { AlertTriangle } from "lucide-react";
 import { useSearchParams } from "next/navigation";
 import {
   COCKPIT_STORE_SLUGS,
@@ -153,9 +153,6 @@ function DailyPageContent() {
   const [acknowledged, setAcknowledged] = useState<string | null>(null); // timestamp
   const [ackLoading, setAckLoading] = useState(false);
   const [entry, setEntry] = useState<any>(null); // current day's data from API
-  const [isListening, setIsListening] = useState(false);
-  const [voiceError, setVoiceError] = useState(false);
-  const [showVoiceTip, setShowVoiceTip] = useState(true);
   const [warnings, setWarnings] = useState<WarningItem[]>([]);
   const [storeChangeWarning, setStoreChangeWarning] = useState<string | null>(null);
 
@@ -355,12 +352,6 @@ function DailyPageContent() {
   }, [storeId, businessDate]);
   /* eslint-enable react-hooks/set-state-in-effect */
 
-  useEffect(() => {
-    if (typeof window !== "undefined" && window.localStorage.getItem("primeos-voice-tip-seen")) {
-      setShowVoiceTip(false);
-    }
-  }, []);
-
   function updateFormField(field: string, value: number) {
     const str = String(value);
     if (field === "sales") setNetSales(str);
@@ -369,90 +360,6 @@ function DailyPageContent() {
     else if (field === "disposables") setDisposablesCost(str);
     else if (field === "transactions") setTickets(str);
     else if (field === "hours") setLaborHours(str);
-  }
-
-  function parseVoiceInput(transcript: string) {
-    const numberWords: Record<string, number> = {
-      zero: 0, one: 1, two: 2, three: 3, four: 4, five: 5,
-      six: 6, seven: 7, eight: 8, nine: 9, ten: 10,
-      eleven: 11, twelve: 12, thirteen: 13, fourteen: 14, fifteen: 15,
-      sixteen: 16, seventeen: 17, eighteen: 18, nineteen: 19,
-      twenty: 20, thirty: 30, forty: 40, fifty: 50,
-      sixty: 60, seventy: 70, eighty: 80, ninety: 90,
-      hundred: 100, thousand: 1000,
-    };
-
-    function wordsToNumber(str: string): number | null {
-      const direct = parseFloat(str.replace(/[,$]/g, ""));
-      if (!isNaN(direct)) return direct;
-      const words = str.trim().split(/\s+/);
-      let current = 0;
-      for (const word of words) {
-        const val = numberWords[word.toLowerCase()];
-        if (val === undefined) continue;
-        if (val === 100) current = (current === 0 ? 1 : current) * 100;
-        else if (val === 1000) current = (current === 0 ? 1 : current) * 1000;
-        else current += val;
-      }
-      return current > 0 ? current : null;
-    }
-
-    const patterns: { keys: string[]; field: string }[] = [
-      { keys: ["sales", "sale", "revenue"], field: "sales" },
-      { keys: ["food", "food cost", "food purchases"], field: "food" },
-      { keys: ["labor", "labour", "labor cost"], field: "labor" },
-      { keys: ["disposable", "disposables", "paper"], field: "disposables" },
-      { keys: ["transaction", "transactions", "ticket", "tickets", "orders"], field: "transactions" },
-      { keys: ["hours", "hour", "labor hours"], field: "hours" },
-    ];
-
-    for (const pattern of patterns) {
-      for (const key of pattern.keys) {
-        const regex = new RegExp(`${key}\\s+([\\w\\s]+?)(?=(?:\\s+(?:sales|sale|food|labor|disposable|transaction|hours))|$)`, "i");
-        const match = transcript.match(regex);
-        if (match) {
-          const num = wordsToNumber(match[1].trim());
-          if (num !== null) updateFormField(pattern.field, num);
-        }
-      }
-    }
-
-    const numbers = transcript.match(/\d[\d,.]*|\d/g);
-    if (numbers && numbers.length >= 3) {
-      const fields = ["sales", "food", "labor", "disposables", "transactions", "hours"];
-      numbers.forEach((n, i) => {
-        if (i < fields.length) {
-          const parsed = parseFloat(n.replace(/,/g, ""));
-          if (!isNaN(parsed)) updateFormField(fields[i], parsed);
-        }
-      });
-    }
-  }
-
-  function handleVoiceEntry() {
-    if (!("webkitSpeechRecognition" in window) && !("SpeechRecognition" in window)) {
-      setVoiceError(true);
-      setTimeout(() => setVoiceError(false), 3000);
-      return;
-    }
-    const SpeechRecognition = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
-    const recognition = new SpeechRecognition();
-    recognition.lang = "en-US";
-    recognition.continuous = false;
-    recognition.interimResults = false;
-    setIsListening(true);
-    recognition.onresult = (event: any) => {
-      const transcript = event.results[0][0].transcript.toLowerCase();
-      parseVoiceInput(transcript);
-      setIsListening(false);
-    };
-    recognition.onerror = () => {
-      setIsListening(false);
-      setVoiceError(true);
-      setTimeout(() => setVoiceError(false), 3000);
-    };
-    recognition.onend = () => setIsListening(false);
-    recognition.start();
   }
 
   const num = (s: string) => (s === "" ? null : parseFloat(s)) ?? null;
@@ -598,15 +505,28 @@ function DailyPageContent() {
   }, [storeId]);
 
   const inputCls =
-    "w-full min-h-[44px] h-11 px-3 text-sm font-medium tabular-nums placeholder:text-muted focus:border-brand/60 focus:ring-1 focus:ring-brand/40 focus:outline-none rounded-xl border border-slate-600 bg-slate-700 text-white dashboard-input";
+    "w-full min-h-[44px] h-11 px-3 text-sm font-medium tabular-nums placeholder:text-muted focus:border-brand/60 focus:ring-1 focus:ring-brand/40 focus:outline-none rounded-xl border bg-slate-700 text-white dashboard-input";
+
+  const { isOldDate, diffDays } = useMemo(() => {
+    const selectedDate = new Date(businessDate + "T12:00:00Z");
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    selectedDate.setHours(0, 0, 0, 0);
+    const diff = Math.floor((today.getTime() - selectedDate.getTime()) / (1000 * 60 * 60 * 24));
+    return { isOldDate: diff > 7, diffDays: diff };
+  }, [businessDate]);
+
+  const getInputBorder = useCallback(
+    (fieldName: string) => {
+      const w = warnings.find((x) => x.field === fieldName);
+      if (!w) return "border-slate-600";
+      return w.severity === "error" ? "border-red-500" : "border-amber-500";
+    },
+    [warnings]
+  );
 
   return (
     <>
-      {voiceError && (
-        <div className="fixed top-16 left-1/2 -translate-x-1/2 z-50 bg-slate-800 border border-amber-700/50 rounded-xl px-4 py-2.5 shadow-lg shadow-black/30">
-          <p className="text-xs text-amber-300">Couldn&apos;t hear that — try again or type manually</p>
-        </div>
-      )}
       <div className="space-y-5 min-w-0 overflow-x-hidden pb-28">
       {/* Toolbar */}
       <div className={`dashboard-toolbar p-3 sm:p-5 space-y-3 ${getStoreColor(storeId).glow}`}>
@@ -650,29 +570,37 @@ function DailyPageContent() {
             ))}
           </div>
         </div>
-        <div className="flex items-center gap-2 min-w-0">
-          <button
-            type="button"
-            onClick={() => setBusinessDate(prevDay(businessDate))}
-            className="rounded-lg border border-border/50 bg-black/30 min-h-[44px] min-w-[44px] flex items-center justify-center text-base font-medium text-muted hover:border-border hover:bg-black/40 hover:text-white active:bg-black/50 shrink-0"
-            aria-label="Previous day"
-          >
-            ←
-          </button>
-          <div className="flex-1 text-center min-w-0">
-            <div className="text-[10px] uppercase tracking-wider text-muted/70 mb-0.5">Business Date</div>
-            <div className="text-sm font-medium text-white">
-              {new Date(businessDate + "T12:00:00Z").toLocaleDateString("en-US", { weekday: "short", month: "short", day: "numeric", year: "numeric" })}
+        <div className={cn("rounded-lg border px-1 min-w-0", isOldDate ? "border-amber-500" : "border-border/50")}>
+          <div className="flex items-center gap-2 min-w-0">
+            <button
+              type="button"
+              onClick={() => setBusinessDate(prevDay(businessDate))}
+              className="rounded-lg border border-border/50 bg-black/30 min-h-[44px] min-w-[44px] flex items-center justify-center text-base font-medium text-muted hover:border-border hover:bg-black/40 hover:text-white active:bg-black/50 shrink-0"
+              aria-label="Previous day"
+            >
+              ←
+            </button>
+            <div className="flex-1 text-center min-w-0">
+              <div className="text-[10px] uppercase tracking-wider text-muted/70 mb-0.5">Business Date</div>
+              <div className="text-sm font-medium text-white">
+                {new Date(businessDate + "T12:00:00Z").toLocaleDateString("en-US", { weekday: "short", month: "short", day: "numeric", year: "numeric" })}
+              </div>
             </div>
+            <button
+              type="button"
+              onClick={() => setBusinessDate(nextDay(businessDate))}
+              className="rounded-lg border border-border/50 bg-black/30 min-h-[44px] min-w-[44px] flex items-center justify-center text-base font-medium text-muted hover:border-border hover:bg-black/40 hover:text-white active:bg-black/50 shrink-0"
+              aria-label="Next day"
+            >
+              →
+            </button>
           </div>
-          <button
-            type="button"
-            onClick={() => setBusinessDate(nextDay(businessDate))}
-            className="rounded-lg border border-border/50 bg-black/30 min-h-[44px] min-w-[44px] flex items-center justify-center text-base font-medium text-muted hover:border-border hover:bg-black/40 hover:text-white active:bg-black/50 shrink-0"
-            aria-label="Next day"
-          >
-            →
-          </button>
+          {isOldDate && (
+            <div className="flex items-center gap-2 mt-1 px-2 pb-1">
+              <div className="w-1.5 h-1.5 rounded-full bg-amber-400 flex-shrink-0" />
+              <p className="text-xs text-amber-400">This date is {diffDays} days ago. Double-check you&apos;re entering the right day.</p>
+            </div>
+          )}
         </div>
       </div>
 
@@ -807,21 +735,6 @@ function DailyPageContent() {
       {/* Control layer */}
       <div className="border-t border-border/40 pt-6 min-w-0">
         <div className="dashboard-surface p-4 sm:p-5 space-y-5 max-w-full overflow-x-hidden">
-          {showVoiceTip && (
-            <div className="bg-blue-950/30 rounded-lg border border-blue-800/50 p-3 mb-3 flex items-start justify-between">
-              <p className="text-xs text-blue-300">Tap the mic and say your numbers: &quot;sales fifty two hundred, food twelve hundred, labor nine fifty&quot;</p>
-              <button
-                type="button"
-                onClick={() => {
-                  if (typeof window !== "undefined") window.localStorage.setItem("primeos-voice-tip-seen", "true");
-                  setShowVoiceTip(false);
-                }}
-                className="text-xs text-slate-500 ml-2 flex-shrink-0"
-              >
-                ✕
-              </button>
-            </div>
-          )}
           <h2 className="text-sm font-medium text-muted">Enter numbers</h2>
           <div className="grid grid-cols-1 gap-4 max-w-full min-w-0">
             <div className="space-y-1 min-w-0">
@@ -836,7 +749,7 @@ function DailyPageContent() {
                 placeholder="e.g., 5420.00"
                 value={netSales}
                 onChange={(e) => setNetSales(e.target.value)}
-                className={cn(inputCls, netSalesInvalid && "border-red-500/60", "text-emerald-400")}
+                className={cn(inputCls, netSalesInvalid ? "border-red-500" : getInputBorder("sales"), "text-emerald-400")}
               />
             </div>
 
@@ -852,11 +765,7 @@ function DailyPageContent() {
                 placeholder="e.g., 1670.00"
                 value={foodCost}
                 onChange={(e) => setFoodCost(e.target.value)}
-                className={cn(
-                  inputCls,
-                  warnings.some((w) => w.field === "food") && (warnings.find((w) => w.field === "food")?.severity === "error" ? "border-red-500" : "border-amber-500"),
-                  "text-red-400"
-                )}
+                className={cn(inputCls, getInputBorder("food"), "text-red-400")}
               />
             </div>
 
@@ -872,11 +781,7 @@ function DailyPageContent() {
                 placeholder="e.g., 1252.00"
                 value={laborCost}
                 onChange={(e) => setLaborCost(e.target.value)}
-                className={cn(
-                  inputCls,
-                  warnings.some((w) => w.field === "labor") && (warnings.find((w) => w.field === "labor")?.severity === "error" ? "border-red-500" : "border-amber-500"),
-                  "text-red-400"
-                )}
+                className={cn(inputCls, getInputBorder("labor"), "text-red-400")}
               />
             </div>
 
@@ -892,11 +797,7 @@ function DailyPageContent() {
                 placeholder="e.g., 190.00"
                 value={disposablesCost}
                 onChange={(e) => setDisposablesCost(e.target.value)}
-                className={cn(
-                  inputCls,
-                  warnings.some((w) => w.field === "disposables") && (warnings.find((w) => w.field === "disposables")?.severity === "error" ? "border-red-500" : "border-amber-500"),
-                  "text-red-400"
-                )}
+                className={cn(inputCls, getInputBorder("disposables"), "text-red-400")}
               />
             </div>
 
@@ -912,11 +813,7 @@ function DailyPageContent() {
                 placeholder="e.g., 287"
                 value={tickets}
                 onChange={(e) => setTickets(e.target.value)}
-                className={cn(
-                  inputCls,
-                  warnings.some((w) => w.field === "transactions") && (warnings.find((w) => w.field === "transactions")?.severity === "error" ? "border-red-500" : "border-amber-500"),
-                  "text-white"
-                )}
+                className={cn(inputCls, getInputBorder("transactions"), "text-white")}
               />
             </div>
 
@@ -932,11 +829,7 @@ function DailyPageContent() {
                 placeholder="e.g., 86.5"
                 value={laborHours}
                 onChange={(e) => setLaborHours(e.target.value)}
-                className={cn(
-                  inputCls,
-                  warnings.some((w) => w.field === "hours") && (warnings.find((w) => w.field === "hours")?.severity === "error" ? "border-red-500" : "border-amber-500"),
-                  "text-white"
-                )}
+                className={cn(inputCls, getInputBorder("hours"), "text-white")}
               />
             </div>
           </div>
