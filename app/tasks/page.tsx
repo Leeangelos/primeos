@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useCallback } from "react";
 import { createPortal } from "react-dom";
+import { ChevronDown, Check } from "lucide-react";
 import { EducationInfoIcon } from "@/src/components/education/InfoIcon";
 import { EDUCATION_CONTENT } from "@/src/lib/education-content";
 import { SEED_TASKS, SEED_EMPLOYEES } from "@/src/lib/seed-data";
@@ -91,6 +92,8 @@ export default function TasksPage() {
   const [addNotes, setAddNotes] = useState("");
   const [saving, setSaving] = useState(false);
   const [playbookOpen, setPlaybookOpen] = useState(true);
+  const [showCompleted, setShowCompleted] = useState(false);
+  const [completingSelectedName, setCompletingSelectedName] = useState("");
 
   const loadTasks = useCallback(async () => {
     setLoading(true);
@@ -109,13 +112,11 @@ export default function TasksPage() {
 
   useEffect(() => { loadTasks(); }, [loadTasks]);
 
-  const completedCount = tasks.filter((t) => t.status === "completed").length;
-  const totalCount = tasks.length;
-  const completionPct = totalCount > 0 ? Math.round((completedCount / totalCount) * 100) : 0;
-  const heroColor =
-    completionPct >= 90 ? "border-emerald-500/50 bg-emerald-500/10 text-emerald-400" :
-    completionPct >= 70 ? "border-amber-500/50 bg-amber-500/10 text-amber-400" :
-    "border-red-500/50 bg-red-500/10 text-red-400";
+  const totalTasks = tasks.length;
+  const completedTasks = tasks.filter((t) => t.status === "completed").length;
+  const completionRate = totalTasks > 0 ? Math.round((completedTasks / totalTasks) * 100) : 0;
+  const activeTasks = tasks.filter((t) => t.status !== "completed");
+  const completedTasksList = tasks.filter((t) => t.status === "completed");
 
   const employees = SEED_EMPLOYEES.filter((e) => e.status === "active");
 
@@ -142,7 +143,7 @@ export default function TasksPage() {
     );
     setSaving(false);
     setCompletingTaskId(null);
-    loadTasks();
+    setCompletingSelectedName("");
   }
 
   async function handleAddTask() {
@@ -221,22 +222,20 @@ export default function TasksPage() {
         </div>
       </div>
 
-      {/* Progress bar + hero */}
-      {!loading && totalCount > 0 && (
-        <div className="space-y-3">
-          <div className="flex items-center justify-between text-sm">
-            <span className="text-muted">{completedCount} of {totalCount} tasks complete</span>
-            <span className="font-medium tabular-nums">{completionPct}%</span>
+      {/* Completion rate header */}
+      {!loading && totalTasks > 0 && (
+        <div className="flex items-center justify-between mb-4">
+          <div>
+            <span className="text-2xl font-bold text-white">{completionRate}%</span>
+            <span className="text-xs text-slate-500 ml-2">{completedTasks}/{totalTasks} tasks</span>
           </div>
-          <div className="h-2 rounded-full bg-black/40 overflow-hidden">
-            <div className={cn("h-full rounded-full transition-all", completionPct >= 90 ? "bg-emerald-500" : completionPct >= 70 ? "bg-amber-500" : "bg-red-500")} style={{ width: `${completionPct}%` }} />
-          </div>
-          <div className={cn("rounded-lg border p-4 text-center", heroColor)}>
-            <div className="text-[10px] font-medium uppercase tracking-widest opacity-90">Completion rate</div>
-            <div className="text-2xl font-bold mt-1">{completionPct}%</div>
-            <div className="text-xs mt-1 opacity-90">
-              {completionPct >= 90 ? "On track" : completionPct >= 70 ? "Catch up" : "Needs attention"}
-            </div>
+          <div className={cn(
+            "px-2.5 py-1 rounded-lg text-xs font-bold",
+            completionRate === 100 ? "bg-emerald-600/20 text-emerald-400" :
+            completionRate >= 75 ? "bg-amber-600/20 text-amber-400" :
+            "bg-red-600/20 text-red-400"
+          )}>
+            {completionRate === 100 ? "ALL DONE" : completionRate >= 75 ? "ALMOST" : "BEHIND"}
           </div>
         </div>
       )}
@@ -255,7 +254,7 @@ export default function TasksPage() {
         <div className="text-center py-12 text-muted text-sm">No tasks for this store and date.</div>
       ) : (
         <div className="space-y-2">
-          {tasks.map((task) => {
+          {activeTasks.map((task) => {
             const isCompleted = task.status === "completed";
             return (
               <div
@@ -263,22 +262,29 @@ export default function TasksPage() {
                 className={cn("rounded-lg border p-3 flex items-center gap-3", isCompleted ? "border-emerald-500/30 bg-emerald-500/5" : "border-border/50 bg-black/20")}
               >
                 {completingTaskId === task.id ? (
-                  <div className="flex items-center gap-2 shrink-0">
+                  <div className="mt-2 p-3 rounded-xl bg-slate-700/50 border border-slate-600 relative z-20 pb-4 min-w-0 flex-1 sm:flex-initial">
                     <select
-                      onChange={(e) => {
-                        const v = e.target.value;
-                        if (v) handleComplete(task.id, v);
-                      }}
-                      defaultValue=""
-                      className="bg-slate-700 border border-slate-600 rounded-lg text-xs text-white h-8 px-2"
+                      value={completingSelectedName}
+                      onChange={(e) => setCompletingSelectedName(e.target.value)}
+                      className="w-full bg-slate-700 border border-slate-600 rounded-lg text-xs text-white h-8 px-2"
                       autoFocus
                     >
-                      <option value="" disabled>Who completed this?</option>
+                      <option value="">Who completed this?</option>
                       {employees.map((emp) => (
                         <option key={emp.id} value={emp.name}>{emp.name} ({ROLES[emp.role] ?? emp.role})</option>
                       ))}
                     </select>
-                    <button type="button" onClick={() => setCompletingTaskId(null)} className="text-xs text-slate-500">Cancel</button>
+                    <div className="flex gap-2 mt-2">
+                      <button type="button" onClick={() => { setCompletingTaskId(null); setCompletingSelectedName(""); }} className="flex-1 py-2 rounded-lg bg-slate-600 text-slate-300 text-xs">Cancel</button>
+                      <button
+                        type="button"
+                        onClick={() => completingSelectedName.trim() && handleComplete(task.id, completingSelectedName)}
+                        disabled={!completingSelectedName.trim()}
+                        className="flex-1 py-2 rounded-lg bg-emerald-600 text-white text-xs disabled:opacity-50"
+                      >
+                        Confirm
+                      </button>
+                    </div>
                   </div>
                 ) : (
                   <button
@@ -286,6 +292,7 @@ export default function TasksPage() {
                     onClick={() => {
                       if (isCompleted) return;
                       setCompletingTaskId(task.id);
+                      setCompletingSelectedName("");
                     }}
                     className={cn("shrink-0 min-h-[44px] min-w-[44px] rounded border flex items-center justify-center text-sm", isCompleted ? "border-emerald-500/50 bg-emerald-500/20 text-emerald-400" : "border-border/50 bg-black/30 text-muted hover:border-brand/50")}
                     aria-label={isCompleted ? "Completed" : "Mark complete"}
@@ -293,23 +300,53 @@ export default function TasksPage() {
                     {isCompleted ? "✓" : ""}
                   </button>
                 )}
-                <div className="min-w-0 flex-1">
-                  <div className={cn("font-medium text-sm", isCompleted && "line-through text-muted")}>{task.title}</div>
-                  <div className="flex flex-wrap items-center gap-2 mt-1">
-                    <span className="text-[10px] uppercase px-2 py-0.5 rounded border border-border/30 text-muted">{ROLES[task.assigned_role] ?? task.assigned_role}</span>
-                    <span className="text-[10px] text-muted">{formatDate(task.due_date)}</span>
-                    <span className={cn("text-[10px] uppercase px-2 py-0.5 rounded border", PRIORITY_STYLE[task.priority] ?? PRIORITY_STYLE.medium)}>{task.priority}</span>
-                    {task.due_time && <span className="text-[10px] text-muted">{task.due_time}</span>}
-                    {isCompleted && task.completed_by && (
-                      <span className="text-xs text-slate-500">
-                        Completed by {task.completed_by}{task.completed_at ? ` · ${task.completed_at}` : ""}
-                      </span>
-                    )}
+                {completingTaskId !== task.id && (
+                  <div className="min-w-0 flex-1">
+                    <div className={cn("font-medium text-sm", isCompleted && "line-through text-muted")}>{task.title}</div>
+                    <div className="flex flex-wrap items-center gap-2 mt-1">
+                      <span className="text-[10px] uppercase px-2 py-0.5 rounded border border-border/30 text-muted">{ROLES[task.assigned_role] ?? task.assigned_role}</span>
+                      <span className="text-[10px] text-muted">{formatDate(task.due_date)}</span>
+                      <span className={cn("text-[10px] uppercase px-2 py-0.5 rounded border", PRIORITY_STYLE[task.priority] ?? PRIORITY_STYLE.medium)}>{task.priority}</span>
+                      {task.due_time && <span className="text-[10px] text-muted">{task.due_time}</span>}
+                      {isCompleted && task.completed_by && (
+                        <span className="text-xs text-slate-500">
+                          Completed by {task.completed_by}{task.completed_at ? ` · ${task.completed_at}` : ""}
+                        </span>
+                      )}
+                    </div>
                   </div>
-                </div>
+                )}
               </div>
             );
           })}
+
+          {completedTasksList.length > 0 && (
+            <div className="mt-6">
+              <button type="button" onClick={() => setShowCompleted(!showCompleted)} className="flex items-center gap-2 mb-3">
+                <ChevronDown className={cn("w-4 h-4 text-slate-500 transition-transform", showCompleted ? "rotate-180" : "")} />
+                <span className="text-sm text-slate-500 font-medium">Completed ({completedTasksList.length})</span>
+              </button>
+              {showCompleted && (
+                <div className="space-y-2 opacity-60">
+                  {completedTasksList.map((task) => (
+                    <div key={task.id} className="bg-slate-800 rounded-xl border border-slate-700 p-3">
+                      <div className="flex items-center gap-3">
+                        <div className="w-5 h-5 rounded-full bg-emerald-600/30 flex items-center justify-center flex-shrink-0">
+                          <Check className="w-3 h-3 text-emerald-400" />
+                        </div>
+                        <div>
+                          <span className="text-sm text-slate-400 line-through">{task.title}</span>
+                          {task.completed_by && (
+                            <span className="text-xs text-slate-600 block">Completed by {task.completed_by}</span>
+                          )}
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          )}
         </div>
       )}
 
