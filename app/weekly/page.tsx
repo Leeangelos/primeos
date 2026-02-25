@@ -91,6 +91,25 @@ function isValidCockpitStore(s: string | null): s is CockpitStoreSlug {
   return s === "kent" || s === "aurora" || s === "lindseys";
 }
 
+/** WoW change color: green = improvement, amber = flat (within 1%), red = decline. */
+function getChangeColor(current: number, previous: number, lowerIsBetter: boolean): string {
+  const change = current - previous;
+  const pctChange = previous !== 0 ? Math.abs(change / previous) * 100 : 0;
+  if (pctChange <= 1) return "text-amber-400";
+  if (lowerIsBetter) {
+    return change < 0 ? "text-emerald-400" : "text-red-400";
+  }
+  return change > 0 ? "text-emerald-400" : "text-red-400";
+}
+
+/** Arrow for WoW: ↑ when value went up, ↓ when down, → when flat. */
+function getChangeArrow(current: number, previous: number): string {
+  const change = current - previous;
+  const pctChange = previous !== 0 ? Math.abs(change / previous) * 100 : 0;
+  if (pctChange <= 1) return "→";
+  return change > 0 ? "↑" : "↓";
+}
+
 function WeeklyPageContent() {
   const searchParams = useSearchParams();
   const today = new Date().toISOString().slice(0, 10);
@@ -159,7 +178,7 @@ function WeeklyPageContent() {
     const targets = COCKPIT_TARGETS[store === "all" ? "kent" : store];
     const fmtPct = (n: number) => formatPct(n);
     const fmtDollars = (n: number) => `$${n.toLocaleString("en-US", { maximumFractionDigits: 0 })}`;
-    const change = (curr: number, prev: number) => (prev === 0 ? 0 : Math.round(((curr - prev) / prev) * 1000) / 10);
+    const changePct = (curr: number, prev: number) => (prev === 0 ? 0 : Math.round(((curr - prev) / prev) * 1000) / 10);
     const gradeClass = (value: number, target: number, lowerIsBetter: boolean): string => {
       const hex = getGradeColor(value, target, lowerIsBetter ? "lower_is_better" : "higher_is_better");
       if (hex === COLORS.grade.green) return "text-emerald-400";
@@ -167,12 +186,6 @@ function WeeklyPageContent() {
       if (hex === COLORS.grade.red) return "text-red-400";
       return "text-slate-300";
     };
-    const changeColor = (pct: number, improvementWhenPositive: boolean) => {
-      if (pct === 0) return "text-slate-400";
-      const good = improvementWhenPositive ? pct > 0 : pct < 0;
-      return good ? "text-emerald-400" : "text-red-400";
-    };
-    const arrow = (pct: number) => (pct > 0 ? "↑" : pct < 0 ? "↓" : "→");
     const avgTicketThis = thisW.transactions > 0 ? thisW.sales / thisW.transactions : 0;
     const avgTicketLast = lastW.transactions > 0 ? lastW.sales / lastW.transactions : 0;
     const kpis: { label: string; key: string; thisWeek: string; lastWeek: string; changePct: number; changeArrow: string; gradeColor: string; changeColor: string }[] = [
@@ -181,80 +194,80 @@ function WeeklyPageContent() {
         key: "daily_sales",
         thisWeek: fmtDollars(thisW.sales),
         lastWeek: fmtDollars(lastW.sales),
-        changePct: change(thisW.sales, lastW.sales),
-        changeArrow: arrow(change(thisW.sales, lastW.sales)),
+        changePct: changePct(thisW.sales, lastW.sales),
+        changeArrow: getChangeArrow(thisW.sales, lastW.sales),
         gradeColor: "text-emerald-400",
-        changeColor: changeColor(change(thisW.sales, lastW.sales), true),
+        changeColor: getChangeColor(thisW.sales, lastW.sales, false),
       },
       {
         label: "Avg Daily Sales",
         key: "daily_sales",
         thisWeek: fmtDollars(thisW.sales / 7),
         lastWeek: fmtDollars(lastW.sales / 7),
-        changePct: change(thisW.sales, lastW.sales),
-        changeArrow: arrow(change(thisW.sales, lastW.sales)),
+        changePct: changePct(thisW.sales, lastW.sales),
+        changeArrow: getChangeArrow(thisW.sales, lastW.sales),
         gradeColor: "text-emerald-400",
-        changeColor: changeColor(change(thisW.sales, lastW.sales), true),
+        changeColor: getChangeColor(thisW.sales, lastW.sales, false),
       },
       {
         label: "Food Cost %",
         key: "food_cost",
         thisWeek: fmtPct(thisW.food_disp_pct),
         lastWeek: fmtPct(lastW.food_disp_pct),
-        changePct: change(thisW.food_disp_pct, lastW.food_disp_pct),
-        changeArrow: arrow(change(thisW.food_disp_pct, lastW.food_disp_pct)),
+        changePct: changePct(thisW.food_disp_pct, lastW.food_disp_pct),
+        changeArrow: getChangeArrow(thisW.food_disp_pct, lastW.food_disp_pct),
         gradeColor: gradeClass(thisW.food_disp_pct, 31, true),
-        changeColor: changeColor(change(thisW.food_disp_pct, lastW.food_disp_pct), false),
+        changeColor: getChangeColor(thisW.food_disp_pct, lastW.food_disp_pct, true),
       },
       {
         label: "Labor %",
         key: "labor_pct",
         thisWeek: fmtPct(thisW.labor_pct),
         lastWeek: fmtPct(lastW.labor_pct),
-        changePct: change(thisW.labor_pct, lastW.labor_pct),
-        changeArrow: arrow(change(thisW.labor_pct, lastW.labor_pct)),
+        changePct: changePct(thisW.labor_pct, lastW.labor_pct),
+        changeArrow: getChangeArrow(thisW.labor_pct, lastW.labor_pct),
         gradeColor: gradeClass(thisW.labor_pct, targets.laborMax, true),
-        changeColor: changeColor(change(thisW.labor_pct, lastW.labor_pct), false),
+        changeColor: getChangeColor(thisW.labor_pct, lastW.labor_pct, true),
       },
       {
         label: "PRIME %",
         key: "prime_cost",
         thisWeek: fmtPct(thisW.prime_pct),
         lastWeek: fmtPct(lastW.prime_pct),
-        changePct: change(thisW.prime_pct, lastW.prime_pct),
-        changeArrow: arrow(change(thisW.prime_pct, lastW.prime_pct)),
+        changePct: changePct(thisW.prime_pct, lastW.prime_pct),
+        changeArrow: getChangeArrow(thisW.prime_pct, lastW.prime_pct),
         gradeColor: gradeClass(thisW.prime_pct, targets.primeMax, true),
-        changeColor: changeColor(change(thisW.prime_pct, lastW.prime_pct), false),
+        changeColor: getChangeColor(thisW.prime_pct, lastW.prime_pct, true),
       },
       {
         label: "SLPH",
         key: "slph",
         thisWeek: thisW.slph.toFixed(0),
         lastWeek: lastW.slph.toFixed(0),
-        changePct: change(thisW.slph, lastW.slph),
-        changeArrow: arrow(change(thisW.slph, lastW.slph)),
+        changePct: changePct(thisW.slph, lastW.slph),
+        changeArrow: getChangeArrow(thisW.slph, lastW.slph),
         gradeColor: gradeClass(thisW.slph, targets.slphMin, false),
-        changeColor: changeColor(change(thisW.slph, lastW.slph), true),
+        changeColor: getChangeColor(thisW.slph, lastW.slph, false),
       },
       {
         label: "Avg Ticket",
         key: "ticket_avg",
         thisWeek: avgTicketThis > 0 ? `$${avgTicketThis.toFixed(2)}` : "—",
         lastWeek: avgTicketLast > 0 ? `$${avgTicketLast.toFixed(2)}` : "—",
-        changePct: avgTicketLast > 0 ? change(avgTicketThis, avgTicketLast) : 0,
-        changeArrow: avgTicketLast > 0 ? arrow(change(avgTicketThis, avgTicketLast)) : "→",
+        changePct: avgTicketLast > 0 ? changePct(avgTicketThis, avgTicketLast) : 0,
+        changeArrow: avgTicketLast > 0 ? getChangeArrow(avgTicketThis, avgTicketLast) : "→",
         gradeColor: "text-slate-300",
-        changeColor: avgTicketLast > 0 ? changeColor(change(avgTicketThis, avgTicketLast), true) : "text-slate-400",
+        changeColor: avgTicketLast > 0 ? getChangeColor(avgTicketThis, avgTicketLast, false) : "text-slate-400",
       },
       {
         label: "Transaction Count",
         key: "daily_sales",
         thisWeek: thisW.transactions.toLocaleString(),
         lastWeek: lastW.transactions.toLocaleString(),
-        changePct: change(thisW.transactions, lastW.transactions),
-        changeArrow: arrow(change(thisW.transactions, lastW.transactions)),
+        changePct: changePct(thisW.transactions, lastW.transactions),
+        changeArrow: getChangeArrow(thisW.transactions, lastW.transactions),
         gradeColor: "text-slate-300",
-        changeColor: changeColor(change(thisW.transactions, lastW.transactions), true),
+        changeColor: getChangeColor(thisW.transactions, lastW.transactions, false),
       },
     ];
     return { thisWeekSeed: thisW, lastWeekSeed: lastW, comparisonKpis: kpis };
@@ -277,10 +290,10 @@ function WeeklyPageContent() {
       <div className={`dashboard-toolbar p-3 sm:p-5 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between ${store !== "all" ? getStoreColor(store).glow : ""}`}>
         <div>
           <div className="flex items-center gap-2">
-            <h1 className="text-xl sm:text-2xl font-semibold">Weekly Cockpit</h1>
+            <h1 className="text-xl sm:text-2xl font-semibold">Weekly Snapshot</h1>
             <button type="button" onClick={() => setShowEducation("overview")} className="inline-flex items-center justify-center min-h-[44px] min-w-[44px] rounded-full bg-muted/20 text-muted hover:bg-brand/20 hover:text-brand transition-colors text-xs font-bold" aria-label="Learn more">i</button>
-            <ExportButton pageName="Weekly Cockpit" />
-            <ShareButton targetRef={shareRef} title="Weekly Cockpit" fileName="primeos-weekly-cockpit" />
+            <ExportButton pageName="Weekly Snapshot" />
+            <ShareButton targetRef={shareRef} title="Weekly Snapshot" fileName="primeos-weekly-snapshot" />
           </div>
           <p className="mt-1 text-sm text-muted">
             Tap any day to edit. Tap a store card to drill in.
@@ -778,15 +791,15 @@ function WeeklyPageContent() {
 
             {showEducation === "overview" && (
               <div>
-                <h3 className="text-base font-semibold text-brand mb-1">🎓 Weekly Trends & the Cockpit</h3>
+                <h3 className="text-base font-semibold text-brand mb-1">🎓 Weekly Snapshot</h3>
                 <p className="text-xs text-muted mb-4">Why weekly matters more than daily. How to read it. What PRIME grading means.</p>
                 <div className="space-y-3 text-sm">
                   <div>
                     <h4 className="font-medium text-white mb-1">Weekly Trends Matter More Than Daily Spikes</h4>
-                <p className="text-muted text-xs leading-relaxed">One bad Tuesday doesn't mean the model is broken. One great Friday doesn't mean you're winning. The weekly cockpit rolls up the whole week so you see the real trend. If PRIME is red for the week, you're leaving $500–$2K on the table. Consider addressing it before the month closes.</p>
+                <p className="text-muted text-xs leading-relaxed">One bad Tuesday doesn't mean the model is broken. One great Friday doesn't mean you're winning. The weekly snapshot rolls up the whole week so you see the real trend. If PRIME is red for the week, you're leaving $500–$2K on the table. Consider addressing it before the month closes.</p>
                   </div>
                   <div>
-                    <h4 className="font-medium text-white mb-1">How to Read the Cockpit</h4>
+                    <h4 className="font-medium text-white mb-1">How to Read the Snapshot</h4>
                 <p className="text-muted text-xs leading-relaxed">Top number is Weekly PRIME %. Below that you see labor %, food+disposables %, and SLPH by store. Green = on target. Red = over. Tap any metric's (i) for the full playbook. Use the store filter to see one location or all. Tap a day to open daily entry and review the numbers that drove the week red.</p>
                   </div>
                   <div>
