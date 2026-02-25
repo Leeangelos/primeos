@@ -65,6 +65,42 @@ function shiftHours(start: string, end: string): number {
   return eh - sh + (em - sm) / 60;
 }
 
+function isInSameWeek(dateStr: string, weekStartDate: string): boolean {
+  const d = new Date(dateStr + "T12:00:00Z").getTime();
+  const start = new Date(weekStartDate + "T12:00:00Z").getTime();
+  const end = start + 6 * 86400000;
+  return d >= start && d <= end;
+}
+
+function checkMultiShift(
+  shifts: SeedShift[],
+  employeeId: string,
+  date: string,
+  excludeShiftId?: string
+): SeedShift[] {
+  return shifts.filter(
+    (s) =>
+      s.employee_id === employeeId &&
+      s.date === date &&
+      s.id !== excludeShiftId
+  );
+}
+
+function getWeeklyHours(
+  shifts: SeedShift[],
+  employeeId: string,
+  weekStartDate: string,
+  excludeShiftId?: string
+): number {
+  const weekShifts = shifts.filter(
+    (s) =>
+      s.employee_id === employeeId &&
+      isInSameWeek(s.date, weekStartDate) &&
+      s.id !== excludeShiftId
+  );
+  return weekShifts.reduce((sum, s) => sum + shiftHours(s.start_time, s.end_time), 0);
+}
+
 function formRoleToSeedRole(formRole: FormRole): string {
   if (formRole === "manager") return "manager";
   if (formRole === "driver") return "driver";
@@ -115,6 +151,9 @@ type ShiftModalProps = {
   employees: { id: string; name: string; role: string }[];
   weekDates: string[];
   isValid: boolean;
+  existingShiftsOnDay: number;
+  employeeName: string;
+  totalWeeklyHours: number;
   onClose: () => void;
   onChange: (field: keyof ShiftForm, value: string) => void;
   onSave: () => void;
@@ -129,6 +168,9 @@ function ShiftModal({
   employees,
   weekDates,
   isValid,
+  existingShiftsOnDay,
+  employeeName,
+  totalWeeklyHours,
   onClose,
   onChange,
   onSave,
@@ -219,6 +261,40 @@ function ShiftModal({
                 <p className="text-red-400 text-[10px] mt-0.5">{errors.date}</p>
               )}
             </div>
+
+            {/* Multi-shift warning */}
+            {form.employee_id && form.date && existingShiftsOnDay > 0 && (
+              <div className="flex items-center gap-2 px-3 py-2 rounded-lg bg-amber-600/10 border border-amber-700/30">
+                <span className="text-xs text-amber-400">
+                  ⚠ {employeeName} already has {existingShiftsOnDay} shift(s) on this day
+                </span>
+              </div>
+            )}
+
+            {/* Overtime warning */}
+            {totalWeeklyHours > 35 && form.employee_id && form.start_time && form.end_time && (
+              <div
+                className={cn(
+                  "flex items-center gap-2 px-3 py-2 rounded-lg",
+                  totalWeeklyHours >= 40
+                    ? "bg-red-600/10 border border-red-700/30"
+                    : "bg-amber-600/10 border border-amber-700/30"
+                )}
+              >
+                <span
+                  className={cn(
+                    "text-xs",
+                    totalWeeklyHours >= 40 ? "text-red-400" : "text-amber-400"
+                  )}
+                >
+                  {totalWeeklyHours >= 40
+                    ? `⚠ ${totalWeeklyHours.toFixed(1)}h this week — overtime will apply`
+                    : `${totalWeeklyHours.toFixed(1)}h this week — approaching overtime`}
+                </span>
+              </div>
+            )}
+
+            {/* TODO: Add availability check when employee availability data is available */}
 
             {/* Start time + End time: 2 columns */}
             <div className="grid grid-cols-2 gap-2">
@@ -347,7 +423,7 @@ export default function SchedulePage() {
 
   useEffect(() => {
     if (!highlightedShiftId) return;
-    const t = setTimeout(() => setHighlightedShiftId(null), 2000);
+    const t = setTimeout(() => setHighlightedShiftId(null), 3000);
     return () => clearTimeout(t);
   }, [highlightedShiftId]);
 
@@ -591,7 +667,7 @@ export default function SchedulePage() {
                         className={cn(
                           "w-full flex items-center justify-between rounded-xl border px-4 py-3 text-left min-h-[52px] transition-colors",
                           ROLE_COLORS[sh.role] ?? "bg-muted/10 text-muted border-border/30",
-                          highlightedShiftId === sh.id && "bg-blue-900/30 border-blue-600/50"
+                          highlightedShiftId === sh.id && "ring-2 ring-[#E65100] ring-opacity-70 animate-pulse"
                         )}
                       >
                         <div className="min-w-0">
@@ -672,7 +748,7 @@ export default function SchedulePage() {
                       className={cn(
                         "w-full flex items-center justify-between rounded-lg border px-3 py-2 text-left min-h-[44px] transition-colors",
                         ROLE_COLORS[sh.role] ?? "bg-muted/10 text-muted border-border/30",
-                        highlightedShiftId === sh.id && "bg-blue-900/30 border-blue-600/50"
+                        highlightedShiftId === sh.id && "ring-2 ring-[#E65100] ring-opacity-70 animate-pulse"
                       )}
                     >
                       <div className="min-w-0">
@@ -730,6 +806,27 @@ export default function SchedulePage() {
           !!form.start_time &&
           !!form.end_time &&
           (form.start_time === "" || form.end_time === "" || form.start_time < form.end_time)
+        }
+        existingShiftsOnDay={
+          form.employee_id && form.date
+            ? checkMultiShift(
+                shifts,
+                form.employee_id,
+                form.date,
+                modalState.mode === "edit" && "shift" in modalState ? modalState.shift.id : undefined
+              ).length
+            : 0
+        }
+        employeeName={activeEmployees.find((e) => e.id === form.employee_id)?.name ?? ""}
+        totalWeeklyHours={
+          form.employee_id && form.start_time && form.end_time
+            ? getWeeklyHours(
+                shifts,
+                form.employee_id,
+                weekDates[0],
+                modalState.mode === "edit" && "shift" in modalState ? modalState.shift.id : undefined
+              ) + shiftHours(form.start_time, form.end_time)
+            : 0
         }
         onClose={closeModal}
         onChange={setFormField}
