@@ -616,13 +616,15 @@ export const EDUCATION_CONTENT: Record<string, EducationEntry> = {
   daily_edge: {
     title: "The Daily Edge",
     whatItMeans:
-      "The Daily Edge is your personalized intelligence feed. Every day, PrimeOS surfaces insights, industry news, calculations, and lessons from other operators — all relevant to running your business. Think of it as a business coach that reads everything so you don't have to. The content is tailored to your store data, your market, and your stage of growth.",
+      "The Daily Edge is your personalized intelligence feed. Every morning at 6am, PrimeOS pulls the latest articles from the most trusted pizza industry publications — PMQ Pizza Magazine, Pizza Marketplace, and Nation's Restaurant News — filters them for what matters to independent operators, and delivers them to your feed before your competition sees them. Combined with curated insights tailored to your store data, you get both live industry intelligence and personalized operational guidance in one place.",
     whenRedPlaybook: [
       "Consider spending 3 minutes every morning reading The Daily Edge before your shift — it compounds over time",
       "Consider sharing relevant insights with your team — The Math cards are great conversation starters at shift meetings",
       "Consider acting on one actionable insight per week — small changes compound into big results",
       "Consider that Operator Stories come from real independent operators — their lessons can save you from their mistakes",
       "Consider saving insights that resonate — PrimeOS will track which content types you engage with most and show you more of what matters",
+      "Consider bookmarking the sources that resonate most — operators who engage with industry content weekly tend to adapt faster when costs shift or trends change",
+      "Consider tapping the source link on any live article to read the full piece — the summary gives you the headline, but the details often contain the real edge",
     ],
   },
   inspection_radar: {

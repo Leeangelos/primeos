@@ -10,6 +10,7 @@ import {
   ChevronDown,
   Sparkles,
   Clock,
+  ExternalLink,
 } from "lucide-react";
 import { EducationInfoIcon } from "@/src/components/education/InfoIcon";
 import type { LucideIcon } from "lucide-react";
@@ -152,7 +153,35 @@ const CONTENT_TYPES: Record<
 export default function DailyEdgePage() {
   const [expandedItem, setExpandedItem] = useState<string | null>(null);
   const [activeFilter, setActiveFilter] = useState<"all" | "scoop" | "didyouknow" | "math" | "story" | "trending">("all");
+  const [liveArticles, setLiveArticles] = useState<
+    Array<{
+      id?: number;
+      source_name: string;
+      source_url?: string;
+      title: string;
+      summary: string;
+      published_at?: string;
+      content_type: string;
+      actionable_tip?: string;
+    }>
+  >([]);
+  const [liveLoading, setLiveLoading] = useState(true);
   const cardRefs = useRef<Record<string, HTMLDivElement | null>>({});
+
+  useEffect(() => {
+    async function fetchLive() {
+      try {
+        const res = await fetch("/api/daily-edge/live");
+        const data = await res.json();
+        setLiveArticles(data.articles || []);
+      } catch {
+        // Silent fail — seed content still shows
+      } finally {
+        setLiveLoading(false);
+      }
+    }
+    fetchLive();
+  }, []);
 
   const todayItem = FEED_ITEMS[0];
 
@@ -180,8 +209,19 @@ export default function DailyEdgePage() {
         </div>
         <div className="flex items-center gap-2">
           <div className="flex items-center gap-1 px-2 py-1 rounded-lg bg-purple-600/20 border border-purple-700/30">
-            <Sparkles className="w-3 h-3 text-purple-400" />
-            <span className="text-[10px] text-purple-400 font-medium">AI Powered</span>
+            {liveArticles.length > 0 ? (
+              <>
+                <span className="w-1.5 h-1.5 rounded-full bg-orange-500 animate-pulse" />
+                <span className="text-[10px] text-orange-400 font-medium">
+                  {liveArticles.length} Live
+                </span>
+              </>
+            ) : (
+              <>
+                <Sparkles className="w-3 h-3 text-purple-400" />
+                <span className="text-[10px] text-purple-400 font-medium">AI Powered</span>
+              </>
+            )}
           </div>
           <EducationInfoIcon metricKey="daily_edge" />
         </div>
@@ -237,6 +277,107 @@ export default function DailyEdgePage() {
           </button>
         ))}
       </div>
+
+      {/* Live articles from RSS */}
+      {liveArticles.length > 0 &&
+        liveArticles
+          .filter(
+            (a) => activeFilter === "all" || a.content_type === activeFilter
+          )
+          .map((article) => {
+            const config =
+              CONTENT_TYPES[article.content_type as keyof typeof CONTENT_TYPES] ||
+              CONTENT_TYPES.scoop;
+            const isExpanded =
+              expandedItem === `live-${article.id ?? article.source_url}`;
+            const Icon = config.icon;
+            return (
+              <div
+                key={article.id ?? article.source_url ?? article.title}
+                className="bg-slate-800 rounded-xl border border-slate-700 mb-3 overflow-hidden"
+              >
+                <button
+                  type="button"
+                  onClick={() =>
+                    setExpandedItem(
+                      isExpanded ? null : `live-${article.id ?? article.source_url}`
+                    )
+                  }
+                  className="w-full text-left p-4"
+                >
+                  <div className="flex items-center gap-2 mb-2">
+                    <div
+                      className={`w-7 h-7 rounded-lg ${config.bgColor} flex items-center justify-center flex-shrink-0`}
+                    >
+                      <Icon className={`w-3.5 h-3.5 ${config.color}`} />
+                    </div>
+                    <span
+                      className={`text-[10px] font-semibold ${config.color} uppercase tracking-wide`}
+                    >
+                      {config.label}
+                    </span>
+                    <span className="flex items-center gap-1 ml-1">
+                      <span className="w-1.5 h-1.5 rounded-full bg-orange-500 animate-pulse" />
+                      <span className="text-[9px] font-bold text-orange-400 uppercase tracking-widest">
+                        LIVE
+                      </span>
+                    </span>
+                    <span className="text-[10px] text-slate-600 ml-auto">
+                      via {article.source_name}
+                    </span>
+                  </div>
+                  <h3 className="text-sm font-semibold text-white mb-1">
+                    {article.title}
+                  </h3>
+                  <p className="text-xs text-slate-400 leading-relaxed line-clamp-2">
+                    {article.summary}
+                  </p>
+                  <div className="flex items-center justify-between mt-2">
+                    <span className="text-[10px] text-slate-600">
+                      {article.published_at
+                        ? new Date(article.published_at).toLocaleDateString(
+                            "en-US",
+                            { month: "short", day: "numeric" }
+                          )
+                        : "Today"}
+                    </span>
+                    <ChevronDown
+                      className={`w-4 h-4 text-slate-500 transition-transform ${isExpanded ? "rotate-180" : ""}`}
+                    />
+                  </div>
+                </button>
+                {isExpanded && (
+                  <div className="px-4 pb-4 border-t border-slate-700 pt-3">
+                    {article.summary && (
+                      <div className="p-3 rounded-lg bg-slate-700/30 mb-3">
+                        <p className="text-xs text-slate-300 leading-relaxed">
+                          {article.summary}
+                        </p>
+                      </div>
+                    )}
+                    {article.source_url && (
+                      <a
+                        href={article.source_url}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="flex items-center gap-1 text-[10px] text-blue-400 hover:text-blue-300 mb-2"
+                      >
+                        <ExternalLink className="w-3 h-3" />
+                        Read full article at {article.source_name}
+                      </a>
+                    )}
+                    {article.actionable_tip && (
+                      <div className="px-3 py-2 rounded-lg bg-[#E65100]/10 border border-[#E65100]/20">
+                        <p className="text-xs text-[#E65100]">
+                          💡 {article.actionable_tip}
+                        </p>
+                      </div>
+                    )}
+                  </div>
+                )}
+              </div>
+            );
+          })}
 
       {/* Feed items */}
       {filteredItems.map((item) => {
@@ -296,11 +437,31 @@ export default function DailyEdgePage() {
         );
       })}
 
-      {/* Bottom — coming soon note */}
+      {/* Bottom note */}
       <div className="bg-slate-800/50 rounded-xl border border-slate-700/50 p-4 mt-4 text-center">
         <Sparkles className="w-5 h-5 text-purple-400 mx-auto mb-2" />
-        <p className="text-xs text-slate-400">Fresh content generated daily based on your data, industry trends, and what operators like you are learning.</p>
-        <p className="text-[10px] text-slate-600 mt-1">Powered by AI · Updated every morning at 6am</p>
+        {liveArticles.length > 0 ? (
+          <>
+            <p className="text-xs text-slate-400">
+              Live content sourced from PMQ Pizza Magazine, Pizza Marketplace, and
+              Nation&apos;s Restaurant News. Updated daily at 6am EST.
+            </p>
+            <p className="text-[10px] text-slate-600 mt-1">
+              {liveArticles.length} live articles · {FEED_ITEMS.length} curated
+              insights
+            </p>
+          </>
+        ) : (
+          <>
+            <p className="text-xs text-slate-400">
+              Fresh content generated daily based on your data, industry trends,
+              and what operators like you are learning.
+            </p>
+            <p className="text-[10px] text-slate-600 mt-1">
+              Powered by AI · Updated every morning at 6am
+            </p>
+          </>
+        )}
       </div>
     </div>
   );

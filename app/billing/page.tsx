@@ -459,6 +459,17 @@ export default function BillingPage() {
         </p>
       </div>
 
+      {/* Partner CTA — intentionally subtle */}
+      <div className="mt-12 mb-8 pl-4 border-l-2 border-amber-600/40">
+        <h3 className="text-sm text-slate-300 font-medium mb-2">Want a Partner in the Room?</h3>
+        <p className="text-xs text-slate-500 leading-relaxed">
+          Some operators reach a point where they want more than a tool on their phone. They want someone who&apos;s been in the stores, knows the numbers, and can help them figure out what&apos;s next — whether that&apos;s growing, optimizing, or planning an exit on their terms.
+        </p>
+        <p className="text-xs text-slate-500 leading-relaxed mt-2">
+          If that&apos;s you, you probably already know who to call.
+        </p>
+      </div>
+
       {/* 8. DEVELOPER TOOLS */}
       <details className="mb-8">
         <summary className="text-[10px] text-slate-600 cursor-pointer py-2">Developer Tools</summary>
