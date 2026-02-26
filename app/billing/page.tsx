@@ -64,11 +64,39 @@ const MISTAKES = [
 const currentStreak = 5;
 const playbooksRead = 8;
 
+const VALUE_OPTIONS = [
+  "Consistency",
+  "Community",
+  "Quality",
+  "Family",
+  "Speed",
+  "Hospitality",
+  "Integrity",
+  "Pride",
+  "Generosity",
+  "Transparency",
+];
+
 export default function BillingPage() {
   const { currentTier, setCurrentTier } = useTier();
   const [expandedMistake, setExpandedMistake] = useState<number | null>(null);
   const [resetToast, setResetToast] = useState<string | null>(null);
   const [daysTracked, setDaysTracked] = useState<number>(0);
+  const [selectedValues, setSelectedValues] = useState<string[]>([]);
+  const [customValue, setCustomValue] = useState<string>("");
+  const [showValues, setShowValues] = useState<boolean>(true);
+
+  useEffect(() => {
+    const saved = localStorage.getItem("primeos_core_values");
+    if (saved) {
+      try {
+        const parsed = JSON.parse(saved) as string[];
+        if (Array.isArray(parsed)) setSelectedValues(parsed);
+      } catch {
+        // ignore
+      }
+    }
+  }, []);
 
   useEffect(() => {
     let cancelled = false;
@@ -254,6 +282,80 @@ export default function BillingPage() {
             </span>
           </div>
         </div>
+      </div>
+
+      {/* CORE VALUES REFLECTION */}
+      <div className="mt-8 mb-8">
+        <button
+          type="button"
+          onClick={() => setShowValues(!showValues)}
+          className="w-full text-left"
+        >
+          <h2 className="font-serif text-lg text-white mb-1">What Do You Stand For?</h2>
+          <p className="text-xs text-slate-400">What do people say about your shop when you&apos;re not in the room?</p>
+        </button>
+
+        {showValues && (
+          <div className="mt-4">
+            <p className="text-xs text-slate-500 mb-3">Pick 1 or 2 words that define your business. No wrong answers.</p>
+
+            <div className="flex flex-wrap gap-2 mb-4">
+              {VALUE_OPTIONS.map((value) => {
+                const isSelected = selectedValues.includes(value);
+                const isDisabled = selectedValues.length >= 2 && !isSelected;
+                return (
+                  <button
+                    key={value}
+                    type="button"
+                    onClick={() => {
+                      if (isSelected) {
+                        const updated = selectedValues.filter((v) => v !== value);
+                        setSelectedValues(updated);
+                        try {
+                          localStorage.setItem("primeos_core_values", JSON.stringify(updated));
+                        } catch {
+                          // ignore
+                        }
+                      } else if (selectedValues.length < 2) {
+                        const updated = [...selectedValues, value];
+                        setSelectedValues(updated);
+                        try {
+                          localStorage.setItem("primeos_core_values", JSON.stringify(updated));
+                        } catch {
+                          // ignore
+                        }
+                      }
+                    }}
+                    disabled={isDisabled}
+                    className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-colors min-h-[44px] touch-manipulation ${
+                      isSelected
+                        ? "bg-[#E65100]/20 border border-[#E65100]/40 text-[#E65100]"
+                        : isDisabled
+                          ? "bg-slate-800/50 border border-slate-700/30 text-slate-600 cursor-not-allowed"
+                          : "bg-slate-800 border border-slate-700 text-slate-400 hover:border-slate-600"
+                    }`}
+                  >
+                    {value}
+                  </button>
+                );
+              })}
+            </div>
+
+            {selectedValues.length > 0 && (
+              <div className="rounded-xl border border-slate-700/50 bg-slate-800/30 p-4 text-center">
+                <p className="text-[10px] text-slate-500 uppercase tracking-wide mb-2">Your Business Stands For</p>
+                <p className="text-lg font-semibold text-white">{selectedValues.join(" & ")}</p>
+                <p className="text-[10px] text-slate-600 mt-2">Does every customer experience feel like this?</p>
+              </div>
+            )}
+
+            {selectedValues.length === 0 && (
+              <div className="rounded-xl border border-dashed border-slate-700/50 p-4 text-center">
+                <p className="text-xs text-slate-600">Tap 1 or 2 words above. There&apos;s no wrong answer.</p>
+              </div>
+            )}
+          </div>
+        )}
       </div>
 
       {/* 6. CLOSING MESSAGE */}
