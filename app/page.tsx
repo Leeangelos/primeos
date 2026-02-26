@@ -5,7 +5,7 @@ import { useMemo, useState, useEffect } from "react";
 import { createPortal } from "react-dom";
 import { BarChart3, Calendar, Check, ChevronDown, ChevronRight, ClipboardList, MapPin, Sparkles, TriangleAlert, AlertTriangle, X } from "lucide-react";
 import { Area, AreaChart, ReferenceLine, ResponsiveContainer } from "recharts";
-import { COLORS, getGradeColor } from "@/src/lib/design-tokens";
+import { COLORS } from "@/src/lib/design-tokens";
 import { useRedAlert } from "@/src/lib/useRedAlert";
 import { EducationInfoIcon } from "@/src/components/education/InfoIcon";
 import { formatPct } from "@/src/lib/formatters";
@@ -49,14 +49,45 @@ type KpiSnapshot = {
 };
 
 const KENT_DAILY_TARGET = 5200;
-const FOOD_COST_TARGET = 31;
-const LABOR_TARGET = 22;
-const PRIME_TARGET = 55;
+
+// Single source of truth: alert thresholds (lower is better for food, labor, prime).
+// Green: under yellow threshold. Yellow: yellow threshold to red threshold. Red: over red threshold.
+const FOOD_COST_YELLOW = 31;
 const FOOD_COST_RED = 33;
+const LABOR_YELLOW = 22;
 const LABOR_RED = 24;
+const PRIME_YELLOW = 55;
 const PRIME_RED = 58;
 
-type RedAlert = { key: string; label: string; message: string };
+type Grade = "green" | "yellow" | "red";
+
+function gradeFoodCost(pct: number): Grade {
+  if (pct < FOOD_COST_YELLOW) return "green";
+  if (pct <= FOOD_COST_RED) return "yellow";
+  return "red";
+}
+
+function gradeLabor(pct: number): Grade {
+  if (pct < LABOR_YELLOW) return "green";
+  if (pct <= LABOR_RED) return "yellow";
+  return "red";
+}
+
+function gradePrime(pct: number): Grade {
+  if (pct < PRIME_YELLOW) return "green";
+  if (pct <= PRIME_RED) return "yellow";
+  return "red";
+}
+
+function gradeSales(sales: number, target: number): Grade {
+  return sales >= target ? "green" : "red";
+}
+
+function gradeToHex(grade: Grade): string {
+  return grade === "green" ? COLORS.grade.green : grade === "yellow" ? COLORS.grade.yellow : COLORS.grade.red;
+}
+
+type AlertItem = { severity: "red" | "yellow"; key: string; label: string; message: string };
 
 type StoreSlug = "kent" | "aurora" | "lindseys" | "all";
 
@@ -178,7 +209,7 @@ export default function HomePage() {
     const prevSum = prev7.reduce((s, r) => s + r.sales, 0);
     const salesTrendPct = prevSum > 0 ? Math.round(((thisSum - prevSum) / prevSum) * 1000) / 10 : 0;
     const foodCostAvg = last7.length > 0 ? Math.round((last7.reduce((s, d) => s + d.foodCost, 0) / last7.length) * 10) / 10 : 0;
-    const foodCostGrade = foodCostAvg <= 31 ? "green" : foodCostAvg <= 33 ? "yellow" : "red";
+    const foodCostGrade = gradeFoodCost(foodCostAvg);
     return { last7Days: last7, salesTrendPct, foodCostAvg, foodCostGrade };
   }, [selectedStore]);
 
@@ -186,57 +217,81 @@ export default function HomePage() {
 
   const heroGrades = useMemo((): string[] => {
     if (!kpi) return [];
-    const toGrade = (hex: string) =>
-      hex === COLORS.grade.red ? "red" : hex === COLORS.grade.yellow ? "yellow" : "green";
     return [
-      toGrade(getGradeColor(kpi.foodCostPct, FOOD_COST_RED, "lower_is_better")),
-      toGrade(getGradeColor(kpi.laborPct, LABOR_RED, "lower_is_better")),
-      toGrade(getGradeColor(kpi.primePct, PRIME_RED, "lower_is_better")),
+      gradeFoodCost(kpi.foodCostPct),
+      gradeLabor(kpi.laborPct),
+      gradePrime(kpi.primePct),
     ];
   }, [kpi]);
   useRedAlert(heroGrades);
 
-  const redMetrics = useMemo((): RedAlert[] => {
-    const list: RedAlert[] = [];
-    if (kpi) {
-      if (getGradeColor(kpi.foodCostPct, FOOD_COST_RED, "lower_is_better") === COLORS.grade.red) {
-        list.push({
-          key: "food_cost",
-          label: `Food Cost (${storeLabel})`,
-          message: `Food cost at ${formatPct(kpi.foodCostPct)} — above 33% target. Tap for playbook.`,
-        });
-      }
-      if (getGradeColor(kpi.laborPct, LABOR_RED, "lower_is_better") === COLORS.grade.red) {
-        list.push({
-          key: "labor_pct",
-          label: `Labor % (${storeLabel})`,
-          message: `Labor at ${formatPct(kpi.laborPct)} — above 24% target. Tap for playbook.`,
-        });
-      }
-      if (getGradeColor(kpi.primePct, PRIME_RED, "lower_is_better") === COLORS.grade.red) {
-        list.push({
-          key: "prime_cost",
-          label: `PRIME % (${storeLabel})`,
-          message: `PRIME at ${formatPct(kpi.primePct)} — above 58% target. Tap for playbook.`,
-        });
-      }
-      if (getGradeColor(kpi.sales / 100, dailyTargetSales / 100, "higher_is_better") === COLORS.grade.red) {
-        list.push({
-          key: "daily_sales",
-          label: `Today's Sales (${storeLabel})`,
-          message: `Sales at $${kpi.sales.toLocaleString()} — below target. Tap for playbook.`,
-        });
-      }
-    }
-    if (usedSeedData) {
+  const alerts = useMemo((): AlertItem[] => {
+    const list: AlertItem[] = [];
+    if (!kpi) return list;
+
+    const foodGrade = gradeFoodCost(kpi.foodCostPct);
+    if (foodGrade === "red") {
       list.push({
+        severity: "red",
         key: "food_cost",
-        label: "Food Cost (Aurora)",
-        message: "LeeAngelo's Aurora food cost at 32.8% for 3 consecutive days. Approaching red. Tap for playbook.",
+        label: `Food Cost (${storeLabel})`,
+        message: `Food cost is too high. You're at ${formatPct(kpi.foodCostPct)}. Goal is under 33%. Tap for playbook.`,
+      });
+    } else if (foodGrade === "yellow") {
+      list.push({
+        severity: "yellow",
+        key: "food_cost",
+        label: `Food Cost (${storeLabel})`,
+        message: `Food cost is creeping up. You're at ${formatPct(kpi.foodCostPct)}. Goal is under 33%. Tap for playbook.`,
       });
     }
+
+    const laborGrade = gradeLabor(kpi.laborPct);
+    if (laborGrade === "red") {
+      list.push({
+        severity: "red",
+        key: "labor_pct",
+        label: `Labor % (${storeLabel})`,
+        message: `Labor cost is too high. You're at ${formatPct(kpi.laborPct)}. Goal is under 24%. Tap for playbook.`,
+      });
+    } else if (laborGrade === "yellow") {
+      list.push({
+        severity: "yellow",
+        key: "labor_pct",
+        label: `Labor % (${storeLabel})`,
+        message: `Labor is getting close. You're at ${formatPct(kpi.laborPct)}. Goal is under 24%. Tap for playbook.`,
+      });
+    }
+
+    const primeGrade = gradePrime(kpi.primePct);
+    if (primeGrade === "red") {
+      list.push({
+        severity: "red",
+        key: "prime_cost",
+        label: `PRIME % (${storeLabel})`,
+        message: `PRIME is too high. You're at ${formatPct(kpi.primePct)}. Goal is under 58%. Tap for playbook.`,
+      });
+    } else if (primeGrade === "yellow") {
+      list.push({
+        severity: "yellow",
+        key: "prime_cost",
+        label: `PRIME % (${storeLabel})`,
+        message: `PRIME is getting close. You're at ${formatPct(kpi.primePct)}. Goal is under 58%. Tap for playbook.`,
+      });
+    }
+
+    const salesGrade = gradeSales(kpi.sales, dailyTargetSales);
+    if (salesGrade === "red") {
+      list.push({
+        severity: "red",
+        key: "daily_sales",
+        label: `Today's Sales (${storeLabel})`,
+        message: `Sales are below target today. You're at $${kpi.sales.toLocaleString()}. Goal is $${(dailyTargetSales / 1000).toFixed(1)}K/day. Tap for playbook.`,
+      });
+    }
+
     return list;
-  }, [kpi, usedSeedData, dailyTargetSales, storeLabel]);
+  }, [kpi, dailyTargetSales, storeLabel]);
 
   const trendArrow = salesTrendPct >= 0 ? "↑" : "↓";
 
@@ -352,7 +407,7 @@ export default function HomePage() {
               <span className="text-xs text-slate-400 uppercase tracking-wide">Food Cost</span>
               <EducationInfoIcon metricKey="food_cost" />
             </div>
-            <div className="text-2xl font-bold tabular-nums" style={{ color: getGradeColor(kpi.foodCostPct, FOOD_COST_TARGET, "lower_is_better") }}>
+            <div className="text-2xl font-bold tabular-nums" style={{ color: gradeToHex(gradeFoodCost(kpi.foodCostPct)) }}>
               {formatPct(kpi.foodCostPct)}
             </div>
             <div className="text-xs text-slate-500">Target: 28–31%{kpi.isYesterday ? " (Yesterday)" : ""}</div>
@@ -362,7 +417,7 @@ export default function HomePage() {
               <span className="text-xs text-slate-400 uppercase tracking-wide">Labor %</span>
               <EducationInfoIcon metricKey="labor_pct" />
             </div>
-            <div className="text-2xl font-bold tabular-nums" style={{ color: getGradeColor(kpi.laborPct, LABOR_TARGET, "lower_is_better") }}>
+            <div className="text-2xl font-bold tabular-nums" style={{ color: gradeToHex(gradeLabor(kpi.laborPct)) }}>
               {formatPct(kpi.laborPct)}
             </div>
             <div className="text-xs text-slate-500">Target: 19–22%{kpi.isYesterday ? " (Yesterday)" : ""}</div>
@@ -372,7 +427,7 @@ export default function HomePage() {
               <span className="text-xs text-slate-400 uppercase tracking-wide">PRIME %</span>
               <EducationInfoIcon metricKey="prime_cost" />
             </div>
-            <div className="text-2xl font-bold tabular-nums" style={{ color: getGradeColor(kpi.primePct, PRIME_TARGET, "lower_is_better") }}>
+            <div className="text-2xl font-bold tabular-nums" style={{ color: gradeToHex(gradePrime(kpi.primePct)) }}>
               {formatPct(kpi.primePct)}
             </div>
             <div className="text-xs text-slate-500">Target: ≤55%{kpi.isYesterday ? " (Yesterday)" : ""}</div>
@@ -512,36 +567,80 @@ export default function HomePage() {
         </Link>
       </div>
 
-      {redMetrics.length > 0 && (
-        <div className="bg-red-950/30 rounded-xl p-4 border border-red-900/50 min-w-0">
-          <div className="flex items-center gap-2 mb-3">
-            <TriangleAlert className="w-4 h-4 text-red-400 shrink-0" aria-hidden />
-            <h3 className="text-sm font-semibold text-red-400 uppercase tracking-wide">Needs Attention</h3>
-          </div>
-          {redMetrics.map((metric) => {
-            const educationKeyForAlert = ALERT_TO_EDUCATION[metric.key] ?? metric.key;
-            return (
-              <button
-                key={`${metric.key}-${metric.label}`}
-                type="button"
-                onClick={() => setEducationKey(educationKeyForAlert)}
-                className="w-full text-left bg-red-600/10 rounded-xl border border-red-700/30 p-3 mb-2 min-h-[44px] active:bg-red-600/20 transition-colors last:mb-0"
+      {/* Alerts section: header + red/yellow cards or "All good" */}
+      <div className="rounded-xl p-4 border min-w-0 border-slate-700 bg-slate-800/50">
+        {alerts.length > 0 ? (
+          <>
+            <div className="flex items-center gap-2 mb-3">
+              <TriangleAlert
+                className={`w-4 h-4 shrink-0 ${alerts.some((a) => a.severity === "red") ? "text-red-400" : "text-amber-400"}`}
+                aria-hidden
+              />
+              <h3
+                className={`text-sm font-semibold uppercase tracking-wide ${
+                  alerts.some((a) => a.severity === "red") ? "text-red-400" : "text-amber-400"
+                }`}
               >
-                <div className="flex items-start justify-between gap-2">
-                  <div className="min-w-0">
-                    <div className="flex items-center gap-2">
-                      <AlertTriangle className="w-4 h-4 text-red-400 flex-shrink-0" aria-hidden />
-                      <span className="text-sm text-red-400 font-medium">{metric.label}</span>
+                {alerts.some((a) => a.severity === "red")
+                  ? "⚠ NEEDS ATTENTION"
+                  : "👀 KEEP AN EYE ON"}
+              </h3>
+            </div>
+            <div className="space-y-2">
+              {alerts.map((alert) => {
+                const educationKeyForAlert = ALERT_TO_EDUCATION[alert.key] ?? alert.key;
+                const isRed = alert.severity === "red";
+                return (
+                  <button
+                    key={`${alert.key}-${alert.label}`}
+                    type="button"
+                    onClick={() => setEducationKey(educationKeyForAlert)}
+                    className={`w-full text-left rounded-xl p-3 min-h-[44px] active:opacity-90 transition-opacity ${
+                      isRed
+                        ? "bg-red-600/10 border border-red-700/30"
+                        : "bg-amber-600/10 border border-amber-700/30"
+                    }`}
+                  >
+                    <div className="flex items-start justify-between gap-2">
+                      <div className="min-w-0">
+                        <div className="flex items-center gap-2">
+                          <AlertTriangle
+                            className={`w-4 h-4 flex-shrink-0 ${isRed ? "text-red-400" : "text-amber-400"}`}
+                            aria-hidden
+                          />
+                          <span
+                            className={`text-sm font-medium ${isRed ? "text-red-400" : "text-amber-400"}`}
+                          >
+                            {alert.label}
+                          </span>
+                        </div>
+                        <p className={`text-xs mt-1 ${isRed ? "text-red-300" : "text-amber-300"}`}>
+                          {alert.message}
+                        </p>
+                      </div>
+                      <span
+                        className={`text-[10px] flex-shrink-0 ${isRed ? "text-red-400/60" : "text-amber-400/60"}`}
+                      >
+                        Tap for playbook →
+                      </span>
                     </div>
-                    <p className="text-xs text-slate-400 mt-1">{metric.message}</p>
-                  </div>
-                  <span className="text-[10px] text-red-400/60 flex-shrink-0">Tap for playbook →</span>
-                </div>
-              </button>
-            );
-          })}
-        </div>
-      )}
+                  </button>
+                );
+              })}
+            </div>
+          </>
+        ) : (
+          <div className="flex items-center gap-2">
+            <span className="text-emerald-400 text-lg" aria-hidden>✅</span>
+            <div>
+              <h3 className="text-sm font-semibold text-emerald-400 uppercase tracking-wide">
+                ✅ ALL GOOD TODAY
+              </h3>
+              <p className="text-xs text-slate-400 mt-0.5">All KPIs within target.</p>
+            </div>
+          </div>
+        )}
+      </div>
 
       {educationKey && EDUCATION_CONTENT[educationKey] && typeof document !== "undefined" && createPortal(
         <>
