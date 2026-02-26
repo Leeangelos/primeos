@@ -134,84 +134,23 @@ export function BottomNav() {
 
   return (
     <>
-      <nav
-        className="bottom-nav fixed bottom-0 left-0 right-0 z-50 bg-slate-900/95 backdrop-blur-sm border-t border-slate-700 pb-[env(safe-area-inset-bottom)]"
-        aria-label="Bottom navigation"
-      >
-        <div className="flex justify-around items-center h-16 min-h-[64px]">
-          {MAIN_TABS.map(({ href, label, Icon }) => {
-            const isActive =
-              href === "/"
-                ? pathname === "/"
-                : pathname === href || pathname.startsWith(href + "/");
-
-            return (
-              <Link
-                key={href}
-                href={href}
-                className="flex flex-col items-center justify-center gap-0.5 min-w-[44px] min-h-[44px] flex-1 max-w-[80px] transition-colors"
-                aria-current={isActive ? "page" : undefined}
-              >
-                {isActive ? (
-                  <div className="flex flex-col items-center gap-0.5 relative">
-                    <div className="relative">
-                      <Icon className="w-5 h-5 text-[#E65100]" aria-hidden />
-                      <div className="absolute -inset-1 bg-orange-500/20 rounded-full blur-sm -z-10" aria-hidden />
-                    </div>
-                    <span className="text-[10px] text-[#E65100] font-medium whitespace-nowrap leading-tight">{label}</span>
-                  </div>
-                ) : (
-                  <div className="flex flex-col items-center gap-0.5">
-                    <Icon className="w-5 h-5 shrink-0 text-slate-500" aria-hidden />
-                    <span className="text-[10px] text-slate-500 font-medium whitespace-nowrap leading-tight">{label}</span>
-                  </div>
-                )}
-              </Link>
-            );
-          })}
-          <button
-            type="button"
-            onClick={() => setMoreOpen((prev) => !prev)}
-            className="flex flex-col items-center justify-center gap-0.5 min-w-[44px] min-h-[44px] flex-1 max-w-[80px] transition-colors"
-            aria-expanded={moreOpen}
-            aria-haspopup="dialog"
-            aria-label="More pages"
-          >
-            {moreOpen ? (
-              <div className="flex flex-col items-center gap-0.5 relative">
-                <div className="relative">
-                  <Menu className="w-5 h-5 text-[#E65100]" aria-hidden />
-                  <div className="absolute -inset-1 bg-orange-500/20 rounded-full blur-sm -z-10" aria-hidden />
-                </div>
-                <span className="text-[10px] text-[#E65100] font-medium whitespace-nowrap leading-tight">More</span>
-              </div>
-            ) : (
-              <div className="flex flex-col items-center gap-0.5">
-                <Menu className="w-5 h-5 shrink-0 text-slate-500" aria-hidden />
-                <span className="text-[10px] text-slate-500 font-medium whitespace-nowrap leading-tight">More</span>
-              </div>
-            )}
-          </button>
-        </div>
-      </nav>
-
-      {/* Backdrop: tap to close (above content, below nav and drawer) */}
+      {/* 1. Backdrop — only when drawer open */}
       {moreOpen && (
         <div
-          className="fixed inset-0 bg-black/40 z-40"
+          className="fixed inset-0 z-40 bg-black/40"
           onClick={() => setMoreOpen(false)}
           aria-hidden
         />
       )}
 
-      {/* More drawer: slides up from above the nav bar; nav stays visible */}
+      {/* 2. More drawer — slides up ABOVE the nav bar */}
       <div
         className={cn(
           "fixed left-0 right-0 z-50 bg-slate-900 border-t border-slate-700 rounded-t-2xl transition-transform duration-300 ease-out",
           moreOpen ? "translate-y-0" : "translate-y-full pointer-events-none"
         )}
         style={{
-          bottom: `calc(${NAV_BAR_HEIGHT} + env(safe-area-inset-bottom, 0px))`,
+          bottom: "calc(4rem + env(safe-area-inset-bottom, 0px))",
           maxHeight: "80vh",
           overflowY: "auto",
         }}
@@ -237,9 +176,8 @@ export function BottomNav() {
         <div className="px-4 pt-2 pb-4">
           <h2 className="text-lg font-bold text-white mb-4">All Tools</h2>
         </div>
-
-        <div className="px-4 py-2 space-y-6 pb-24">
-              <Link href="/" onClick={() => setMoreOpen(false)} className="flex items-center gap-3 px-4 py-3 mb-2 bg-slate-800 rounded-xl border border-slate-700 active:bg-slate-700/50">
+        <div className="px-4 py-2 space-y-6 pb-24" role="region" aria-label="All tools and links">
+          <Link href="/" onClick={() => setMoreOpen(false)} className="flex items-center gap-3 px-4 py-3 mb-2 bg-slate-800 rounded-xl border border-slate-700 active:bg-slate-700/50">
                 <div className="w-8 h-8 rounded-lg bg-slate-800 flex items-center justify-center border border-slate-700">
                   <Home className="w-4 h-4 text-blue-400" />
                 </div>
@@ -315,22 +253,65 @@ export function BottomNav() {
                 setMoreOpen={setMoreOpen}
               />
 
-              <div className="pt-4 border-t border-slate-800 mt-2">
-                <div className="flex justify-center gap-3">
-                  <Link href="/terms" onClick={() => setMoreOpen(false)} className="text-xs text-slate-600 hover:text-slate-400">Terms of Service</Link>
-                  <span className="text-xs text-slate-700">·</span>
-                  <Link href="/privacy" onClick={() => setMoreOpen(false)} className="text-xs text-slate-600 hover:text-slate-400">Privacy Policy</Link>
-                </div>
-                <button
-                  onClick={handleLogout}
-                  className="flex items-center gap-3 w-full px-4 py-3 mt-4 rounded-xl text-red-400 hover:bg-red-600/10 transition-colors"
-                >
-                  <LogOut className="w-5 h-5" />
-                  <span className="text-sm font-medium">Log Out</span>
-                </button>
-              </div>
+          <div className="pt-4 border-t border-slate-800 mt-2">
+            <div className="flex justify-center gap-3">
+              <Link href="/terms" onClick={() => setMoreOpen(false)} className="text-xs text-slate-600 hover:text-slate-400">Terms of Service</Link>
+              <span className="text-xs text-slate-700">·</span>
+              <Link href="/privacy" onClick={() => setMoreOpen(false)} className="text-xs text-slate-600 hover:text-slate-400">Privacy Policy</Link>
             </div>
+            <button
+              type="button"
+              onClick={handleLogout}
+              className="flex items-center gap-3 w-full px-4 py-3 mt-4 rounded-xl text-red-400 hover:bg-red-600/10 transition-colors"
+            >
+              <LogOut className="w-5 h-5" />
+              <span className="text-sm font-medium">Log Out</span>
+            </button>
+          </div>
+        </div>
       </div>
+
+      {/* 3. Nav bar — ALWAYS RENDERED, LAST IN DOM */}
+      <nav
+        className="bottom-nav fixed bottom-0 left-0 right-0 z-50 bg-slate-900 border-t border-slate-800"
+        style={{ paddingBottom: "env(safe-area-inset-bottom, 0px)" }}
+        aria-label="Bottom navigation"
+      >
+        <div className="flex items-center justify-around h-16 px-2">
+          {MAIN_TABS.map(({ href, label, Icon }) => {
+            const isActive =
+              href === "/"
+                ? pathname === "/"
+                : pathname === href || pathname.startsWith(href + "/");
+            return (
+              <Link
+                key={href}
+                href={href}
+                className="flex flex-col items-center justify-center gap-0.5 min-w-[44px] min-h-[44px] flex-1 max-w-[80px] transition-colors"
+                aria-current={isActive ? "page" : undefined}
+              >
+                <Icon className={cn("w-5 h-5 shrink-0", isActive ? "text-[#E65100]" : "text-slate-500")} aria-hidden />
+                <span className={cn("text-[10px] font-medium whitespace-nowrap leading-tight", isActive ? "text-[#E65100]" : "text-slate-500")}>
+                  {label}
+                </span>
+              </Link>
+            );
+          })}
+          <button
+            type="button"
+            onClick={() => setMoreOpen((prev) => !prev)}
+            className="flex flex-col items-center justify-center gap-0.5 min-w-[44px] min-h-[44px] flex-1 max-w-[80px] transition-colors"
+            aria-expanded={moreOpen}
+            aria-haspopup="dialog"
+            aria-label="More pages"
+          >
+            <Menu className={cn("w-5 h-5 shrink-0", moreOpen ? "text-[#E65100]" : "text-slate-500")} aria-hidden />
+            <span className={cn("text-[10px] font-medium whitespace-nowrap leading-tight", moreOpen ? "text-[#E65100]" : "text-slate-500")}>
+              More
+            </span>
+          </button>
+        </div>
+      </nav>
 
       <UpgradeModal
         isOpen={upgradeModal != null}
