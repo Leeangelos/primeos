@@ -601,6 +601,18 @@ export const EDUCATION_CONTENT: Record<string, EducationEntry> = {
       "Consider that AI assistants like ChatGPT now recommend restaurants based on review data — more reviews and higher ratings mean more AI referrals",
     ],
   },
+  wins: {
+    title: "Win Notifications",
+    whatItMeans:
+      "PrimeOS doesn't just tell you when something's wrong — it celebrates when something's right. Win Notifications detect improvements in your numbers automatically: food cost dropping, sales records, tracking streaks, and milestones. Every operator needs wins to stay motivated. The numbers tell the story — and sometimes the story is good.",
+    whenRedPlaybook: [
+      "Consider checking your wins every morning — they're proof that your effort is working",
+      "Consider sharing wins with your team — 'We hit a new sales record Saturday' builds morale",
+      "Consider that streaks matter more than spikes — consistency beats one good day",
+      "Consider using milestone wins as team celebration moments — pizza party at 90 days of tracking",
+      "Consider that the best operators have more green days than red days — wins compound over time",
+    ],
+  },
   daily_edge: {
     title: "The Daily Edge",
     whatItMeans:

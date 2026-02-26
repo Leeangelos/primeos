@@ -11,6 +11,7 @@ import { EducationInfoIcon } from "@/src/components/education/InfoIcon";
 import { formatPct } from "@/src/lib/formatters";
 import { EDUCATION_CONTENT } from "@/src/lib/education-content";
 import { SEED_DAILY_KPIS, SEED_MORNING_BRIEF, SEED_STORES } from "@/src/lib/seed-data";
+import { SEED_WINS } from "@/src/lib/win-engine";
 
 /** Map alert keys to education content keys (for playbook modal). */
 const ALERT_TO_EDUCATION: Record<string, string> = {
@@ -115,6 +116,7 @@ export default function HomePage() {
   const [showEducation, setShowEducation] = useState(false);
   const [educationKey, setEducationKey] = useState<string | null>(null);
   const [showMissingBanner, setShowMissingBanner] = useState(true);
+  const [showAllWins, setShowAllWins] = useState(false);
   const today = todayYYYYMMDD();
   const yesterday = yesterdayYYYYMMDD();
 
@@ -292,6 +294,15 @@ export default function HomePage() {
 
     return list;
   }, [kpi, dailyTargetSales, storeLabel]);
+
+  const wins = useMemo(
+    () =>
+      SEED_WINS.filter(
+        (w) => !w.storeId || w.storeId === "all" || w.storeId === selectedStore
+      ),
+    [selectedStore]
+  );
+  const displayedWins = showAllWins ? wins : wins.slice(0, 3);
 
   const trendArrow = salesTrendPct >= 0 ? "↑" : "↓";
 
@@ -566,6 +577,54 @@ export default function HomePage() {
           <span className="text-xs text-slate-300 text-center leading-tight">This Week&apos;s Schedule</span>
         </Link>
       </div>
+
+      {/* Wins This Week — positive first, above alerts */}
+      {wins.length > 0 && (
+        <div className="mb-4">
+          <div className="flex items-center gap-2 mb-3">
+            <span className="text-base">🎉</span>
+            <h2 className="text-sm font-bold text-white">WINS THIS WEEK</h2>
+            <span className="text-[10px] text-slate-500">({wins.length})</span>
+          </div>
+          {displayedWins.map((win) => (
+            <div
+              key={win.id}
+              className={`mb-2 rounded-xl border p-3 ${
+                win.magnitude === "big"
+                  ? "bg-emerald-600/15 border-emerald-700/30"
+                  : win.magnitude === "medium"
+                    ? "bg-emerald-600/10 border-emerald-700/20"
+                    : "bg-slate-800 border-slate-700"
+              }`}
+            >
+              <div className="flex items-start gap-2">
+                <span className="text-lg flex-shrink-0 mt-0.5">{win.emoji}</span>
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center gap-2">
+                    <span className="text-xs font-semibold text-white">{win.title}</span>
+                    {win.magnitude === "big" && (
+                      <span className="text-[9px] px-1.5 py-0.5 rounded-full bg-emerald-600/30 text-emerald-400 font-medium">
+                        BIG WIN
+                      </span>
+                    )}
+                  </div>
+                  <p className="text-[11px] text-slate-400 mt-0.5 leading-relaxed">{win.body}</p>
+                  <span className="text-[10px] text-slate-600 mt-1 block">{win.date}</span>
+                </div>
+              </div>
+            </div>
+          ))}
+          {wins.length > 3 && (
+            <button
+              type="button"
+              onClick={() => setShowAllWins(!showAllWins)}
+              className="w-full text-center py-2 text-xs text-slate-500"
+            >
+              {showAllWins ? "Show less" : `Show ${wins.length - 3} more wins`}
+            </button>
+          )}
+        </div>
+      )}
 
       {/* Alerts section: header + red/yellow cards or "All good" */}
       <div className="rounded-xl p-4 border min-w-0 border-slate-700 bg-slate-800/50">

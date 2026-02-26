@@ -17,7 +17,17 @@ import {
   formatNotificationTime,
   AppNotification,
 } from "@/src/lib/notifications";
+import { SEED_WINS } from "@/src/lib/win-engine";
 import { useRouter } from "next/navigation";
+
+function winDateToIso(dateStr: string): string {
+  const now = new Date();
+  if (dateStr === "Today") return now.toISOString();
+  if (dateStr === "Yesterday") return new Date(now.getTime() - 86400000).toISOString();
+  const match = dateStr.match(/^(\d+) days ago$/);
+  if (match) return new Date(now.getTime() - parseInt(match[1], 10) * 86400000).toISOString();
+  return now.toISOString();
+}
 
 export function NotificationCenter() {
   const [isOpen, setIsOpen] = useState(false);
@@ -30,7 +40,24 @@ export function NotificationCenter() {
   }, []);
 
   useEffect(() => {
-    setNotifications(generateNotifications());
+    const regular = generateNotifications();
+    const winNotifications: AppNotification[] = SEED_WINS.map((win) => ({
+      id: win.id,
+      store_id: win.storeId ?? "kent",
+      type: "win" as const,
+      title: win.title,
+      message: win.body.length > 80 ? win.body.slice(0, 77) + "..." : win.body,
+      link: "/",
+      is_read: false,
+      created_at: winDateToIso(win.date),
+      icon_color: "text-emerald-400",
+      isWin: true,
+      displayTime: win.date,
+    }));
+    const combined = [...winNotifications, ...regular].sort(
+      (a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
+    );
+    setNotifications(combined);
   }, []);
 
   const unreadCount = notifications.filter((n) => !n.is_read).length;
@@ -129,12 +156,20 @@ export function NotificationCenter() {
                         key={n.id}
                         type="button"
                         onClick={() => handleTap(n)}
-                        className={`w-full text-left p-4 flex gap-3 transition-colors hover:bg-slate-800/50 ${!n.is_read ? "bg-slate-800/30" : ""}`}
+                        className={`w-full text-left p-4 flex gap-3 transition-colors hover:bg-slate-800/50 ${
+                          n.isWin ? "bg-emerald-600/10 border-l-2 border-emerald-700/30" : ""
+                        } ${!n.is_read && !n.isWin ? "bg-slate-800/30" : ""}`}
                       >
                         <div
-                          className={`w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0 ${!n.is_read ? "bg-slate-700" : "bg-slate-800"}`}
+                          className={`w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0 ${
+                            n.isWin ? "bg-emerald-600/20" : !n.is_read ? "bg-slate-700" : "bg-slate-800"
+                          }`}
                         >
-                          <Icon className={`w-4 h-4 ${n.icon_color}`} />
+                          {n.isWin ? (
+                            <span className="text-base" role="img" aria-label="Win">🎉</span>
+                          ) : (
+                            <Icon className={`w-4 h-4 ${n.icon_color}`} />
+                          )}
                         </div>
                         <div className="flex-1 min-w-0">
                           <div className="flex items-center gap-2">
@@ -143,7 +178,7 @@ export function NotificationCenter() {
                             >
                               {n.title}
                             </span>
-                            {!n.is_read && (
+                            {!n.is_read && !n.isWin && (
                               <div className="w-2 h-2 rounded-full bg-blue-400 flex-shrink-0" />
                             )}
                           </div>
@@ -153,7 +188,7 @@ export function NotificationCenter() {
                             {n.message}
                           </p>
                           <span className="text-[10px] text-slate-600 mt-1 block">
-                            {formatNotificationTime(n.created_at)}
+                            {n.displayTime ?? formatNotificationTime(n.created_at)}
                           </span>
                         </div>
                         <ChevronRight className="w-4 h-4 text-slate-600 flex-shrink-0 mt-1" />

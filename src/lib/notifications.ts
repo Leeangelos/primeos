@@ -3,13 +3,17 @@
 export interface AppNotification {
   id: string;
   store_id: string;
-  type: "red_kpi" | "missing_entry" | "vendor_increase" | "overtime_risk" | "invoice_alert" | "data_gap" | "system";
+  type: "red_kpi" | "missing_entry" | "vendor_increase" | "overtime_risk" | "invoice_alert" | "data_gap" | "system" | "win";
   title: string;
   message: string;
   link: string;
   is_read: boolean;
   created_at: string;
   icon_color: string;
+  /** Win notifications get green styling in the drawer */
+  isWin?: boolean;
+  /** When set, show this instead of formatNotificationTime(created_at) */
+  displayTime?: string;
 }
 
 function hoursAgo(now: Date, h: number): string {
