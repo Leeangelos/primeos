@@ -156,7 +156,7 @@ const NET_PROFIT_PLAYBOOK = [
   "If GP is healthy but net is low, your fixed cost structure is the problem. Consider running the occupancy, insurance, and utilities playbooks.",
   "If GP is also weak, many operators find it helpful to address variable costs first. Food cost and labor improvements show up in days. Fixed cost savings take months to renegotiate.",
   "Consider calculating your monthly break-even: total fixed costs ÷ GP margin %. Example: $28,720 ÷ 0.45 = $63,822 minimum monthly revenue.",
-  "Consider building a 90-day plan: target 1 point improvement in GP margin per month while holding fixed costs flat. At $148K revenue, 1 point = $1,482/month straight to the bottom line.",
+  "Consider building a 90-day plan: target 1 point improvement in GP margin per month while holding fixed costs flat. At $148K revenue, 1 point = $1,482/month straight to Net Profit.",
 ];
 
 export default function ActualPnlPage() {
@@ -383,13 +383,13 @@ export default function ActualPnlPage() {
           <div className="bg-slate-800 rounded-xl border border-slate-700 p-4 mt-4">
             <h4 className="text-sm font-semibold text-slate-400 uppercase tracking-wide mb-3">Why This Matters</h4>
             <p className="text-sm text-slate-300 leading-relaxed mb-3">
-              Your GP P&L shows what you control daily — food, labor, disposables. But between gross profit and your
+              Your GP P&L shows what you control daily — food, labor, disposables. But between Gross Profit and your
               bank account, there&apos;s a gap. Rent. Insurance. Utilities. Loan payments. That gap is your fixed cost
               burden, and most operators don&apos;t see it clearly until tax time.
             </p>
             <p className="text-sm text-slate-300 leading-relaxed">
               Upload your CPA&apos;s monthly financials and PrimeOS maps every line item, calculates your real net
-              profit, and shows you exactly where the money goes between GP and the bottom line.
+              profit, and shows you exactly where the money goes between Gross Profit and Net Profit.
             </p>
           </div>
         </>

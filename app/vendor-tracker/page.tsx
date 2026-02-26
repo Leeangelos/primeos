@@ -785,7 +785,7 @@ export default function VendorTrackerPage() {
               <div className="text-sm text-red-400 font-medium">${rentPerSqft.toFixed(2)}</div>
             </div>
             <div className="bg-slate-700/50 rounded-lg p-2 text-center flex flex-col items-center gap-0.5">
-              <div className="text-xs text-slate-500">Profit/sq ft</div>
+              <div className="text-xs text-slate-500">Net Profit/sq ft</div>
               <div className="text-sm text-white font-medium">${profitPerSqft.toFixed(2)}</div>
               <EducationInfoIcon metricKey="revenue_per_sqft" size="sm" />
             </div>

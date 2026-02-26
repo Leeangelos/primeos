@@ -39,7 +39,7 @@ export const EDUCATION_CONTENT: Record<string, EducationEntry> = {
   prime_cost: {
     title: "Prime Cost %",
     whatItMeans:
-      "Labor % + Food Cost % (sometimes includes disposables). The number that decides whether you make money. Target: 55–58%. Above 60% and you're giving back profit. Every point over 55% on a $50K week is about $500 left on the table. Prime is the lever you control — portioning, scheduling, waste, and purchasing.",
+      "Labor % + Food Cost % (sometimes includes disposables). The number that decides whether you make money. Target: 55–58%. Above 60% and you're giving back Gross Profit. Every point over 55% on a $50K week is about $500 left on the table. Prime is the lever you control — portioning, scheduling, waste, and purchasing.",
     whenRedPlaybook: [
       "Consider identifying which leg is high — labor or food — and attack that first; don't spread effort thin",
       "Consider locking in a 2-week schedule at target labor % and avoid adding shifts without a sales spike",
@@ -82,7 +82,7 @@ export const EDUCATION_CONTENT: Record<string, EducationEntry> = {
     whenRedPlaybook: [
       "Consider running a mix report: what % of orders are premium vs value? Shift mix with boards and training",
       "Consider checking add-on attach rate — drinks, sides, desserts; one more add-on per ticket moves the needle",
-      "Consider auditing size mix — are you defaulting to medium? Large and family sizes carry margin",
+      "Consider auditing size mix — are you defaulting to medium? Large and family sizes carry Gross Margin",
       "Consider reviewing discounts and comps — every comp is a full ticket loss; tighten approval and track reasons",
       "Consider testing a limited-time offer or bundle — one strong LTO can lift ticket for the whole period",
     ],
@@ -104,7 +104,7 @@ export const EDUCATION_CONTENT: Record<string, EducationEntry> = {
   cogs: {
     title: "Cost of Goods Sold",
     whatItMeans:
-      "Total cost of food, beverage, and packaging used to produce what you sold. COGS ÷ Sales = food cost %. COGS goes up with higher prices from vendors, waste, over-portioning, or theft. It's the direct cost of putting product on the plate. Track it weekly — by the time the accountant tells you, the month is gone.",
+      "Food + Labor + Disposables (PRIME Cost). In PrimeOS, COGS means the total cost of what you control daily: food, beverage, packaging (disposables), and labor. PRIME ÷ Sales = prime cost %. COGS goes up with higher prices from vendors, waste, over-portioning, or theft. Track it weekly — by the time the accountant tells you, the month is gone.",
     whenRedPlaybook: [
       "Consider comparing COGS to receiving and invoices — are you paying for more than you're ringing?",
       "Consider reconciling inventory: beginning + purchases − ending should match COGS; big variance = waste or shrink",
@@ -117,13 +117,13 @@ export const EDUCATION_CONTENT: Record<string, EducationEntry> = {
   gross_profit: {
     title: "Gross Profit",
     whatItMeans:
-      "Sales minus COGS. What's left after the cost of the product. Gross profit pays for labor, rent, and everything else. Gross margin (gross profit ÷ sales) should be 65–70%+ in pizza. If gross profit drops, either sales dropped or COGS rose — or both. This is the first line of defense before fixed costs.",
+      "Sales minus COGS (food + labor + disposables). What's left after the cost of the product. Gross Profit pays for rent and everything else. Gross Margin (Gross Profit ÷ sales) should be 65–70%+ in pizza. If Gross Profit drops, either sales dropped or COGS rose — or both. This is the first line of defense before fixed costs.",
     whenRedPlaybook: [
       "Consider separating the impact: did sales fall or COGS rise? Focus on the right lever",
       "If COGS rose, consider running the food cost and COGS playbooks — vendor prices, waste, portioning",
       "If sales fell, look at transaction count and ticket — traffic, mix, or pricing",
-      "Consider comparing gross profit by store or day-part — one weak segment can drag the whole number",
-      "Consider locking in food cost and then lifting ticket and traffic — gross profit grows from both sides",
+      "Consider comparing Gross Profit by store or day-part — one weak segment can drag the whole number",
+      "Consider locking in food cost and then lifting ticket and traffic — Gross Profit grows from both sides",
     ],
   },
 
@@ -219,12 +219,12 @@ export const EDUCATION_CONTENT: Record<string, EducationEntry> = {
   party_orders: {
     title: "Catering & Large Order Margins & Upsell",
     whatItMeans:
-      "Party and catering orders are prepaid, predictable, and bulk-prepped — typically 15–20% higher margin than walk-in. You prep efficiently, staff precisely, and avoid waste. A shop doing 4 parties per weekend at $400 avg = $6,400/month in premium revenue. Upsell strategy: always quote a package (e.g. pizza + wings + drinks) first; add-ons like salads, desserts, and premium toppings lift the ticket. Consider establishing a deposit (e.g. 25–50%) to lock the date; balance due on pickup or delivery. Track repeat party customers — they're your best referral source.",
+      "Party and catering orders are prepaid, predictable, and bulk-prepped — typically 15–20% higher Gross Margin than walk-in. You prep efficiently, staff precisely, and avoid waste. A shop doing 4 parties per weekend at $400 avg = $6,400/month in premium revenue. Upsell strategy: always quote a package (e.g. pizza + wings + drinks) first; add-ons like salads, desserts, and premium toppings lift the ticket. Consider establishing a deposit (e.g. 25–50%) to lock the date; balance due on pickup or delivery. Track repeat party customers — they're your best referral source.",
     whenRedPlaybook: [
       "Consider checking: do customers know you do parties? Consider adding it to menu, bags, and social.",
       "Consider reviewing pricing vs other catering options; make ordering dead simple (one form, one call).",
       "Consider following up on every completed party for a review and referral.",
-      "Consider tracking repeat party customers and margin by order size.",
+      "Consider tracking repeat party customers and Gross Margin by order size.",
     ],
   },
 
@@ -262,7 +262,7 @@ export const EDUCATION_CONTENT: Record<string, EducationEntry> = {
       "Consider breaking fees: delivery vs commission vs marketing — which line item grew? Consider renegotiating or reducing that",
       "Consider auditing promos and boost participation — every unnecessary boost raises effective commission",
       "Consider adding packaging and tablet costs to your DoorDash P&L — true cost is often 5–8 points higher",
-      "Consider comparing effective rate to in-store margin — if you keep more in-store, push pickup and own delivery",
+      "Consider comparing effective rate to in-store Gross Margin — if you keep more in-store, push pickup and own delivery",
       "Consider tracking what you keep (after all fees, packaging, and ads) — that's the number that pays the bills",
     ],
   },
@@ -296,7 +296,7 @@ export const EDUCATION_CONTENT: Record<string, EducationEntry> = {
   net_profit: {
     title: "Net Profit",
     whatItMeans:
-      "What's actually left after every single expense is paid — food, labor, disposables, rent, insurance, utilities, loans, marketing, everything. This is your real take-home before taxes and owner distributions. Most independent pizzerias operate at 5-12% net profit. Below 5% and you're one bad month from trouble.",
+      "What's actually left after every single expense is paid — food, labor, disposables, rent, insurance, utilities, loans, marketing, everything. This is your real take-home before taxes and owner distributions. Most independent pizzerias operate at 5-12% Net Profit. Below 5% and you're one bad month from trouble.",
     whenRedPlaybook: [
       "Consider identifying the biggest gap: is it GP (variable costs) or fixed costs dragging you down?",
       "If GP is healthy but net is low, your fixed cost structure is the problem — consider focusing on the occupancy, insurance, and utilities playbooks",
@@ -428,7 +428,7 @@ export const EDUCATION_CONTENT: Record<string, EducationEntry> = {
       "Consider comparing your average price to competitors within a 3-mile radius",
       "Consider whether your average ticket aligns with your average menu price — if ticket is much lower, customers may be choosing only cheaper items",
       "Consider whether a modest price increase on your top 10 sellers would significantly affect volume",
-      "Consider your food cost target — menu prices must support the margin you need",
+      "Consider your food cost target — menu prices must support the Gross Margin you need",
       "Consider testing premium items or add-ons that naturally raise the average without changing base prices",
     ],
   },
@@ -500,7 +500,7 @@ export const EDUCATION_CONTENT: Record<string, EducationEntry> = {
     whenRedPlaybook: [
       "Consider calculating your total cost per delivery order: food cost + labor + packaging + platform commission",
       "Consider whether orders on high-commission platforms are profitable after all costs",
-      "Consider raising delivery menu prices on high-commission platforms to protect margins",
+      "Consider raising delivery menu prices on high-commission platforms to protect Gross Margin",
       "Consider promoting direct ordering (your website) where commission is lowest",
       "Consider reducing menu items available on the most expensive platforms to limit exposure",
     ],
@@ -508,7 +508,7 @@ export const EDUCATION_CONTENT: Record<string, EducationEntry> = {
   net_revenue_per_order: {
     title: "Net Revenue per Order",
     whatItMeans:
-      "The money you actually keep per order after the platform takes their commission. This is the number that matters — not gross revenue. A platform sending you 300 orders at $13/net each is worth more than one sending 100 orders at $14/net each. But if your food cost per order is $8, the first platform only nets you $5 profit while the second nets $6.",
+      "The money you actually keep per order after the platform takes their commission. This is the number that matters — not gross revenue. A platform sending you 300 orders at $13/net each is worth more than one sending 100 orders at $14/net each. But if your food cost per order is $8, the first platform only nets you $5 Gross Profit per order while the second nets $6.",
     whenRedPlaybook: [
       "Consider comparing net/order across platforms — the difference compounds over hundreds of orders per month",
       "Consider whether low net/order platforms are worth the volume they bring",

@@ -325,7 +325,7 @@ export default function RolodexPage() {
                 ✕
               </button>
               <h3 className="text-base font-semibold text-brand mb-1">🎓 Owner-Controlled Vendor List</h3>
-              <p className="text-xs text-muted mb-4">Why your contact list is a profit lever.</p>
+              <p className="text-xs text-muted mb-4">Why your contact list is a Gross Profit lever.</p>
               <div className="space-y-3 text-sm">
                 <div>
                   <h4 className="font-medium text-white mb-1">Why Owner-Controlled Vendor Lists Matter</h4>

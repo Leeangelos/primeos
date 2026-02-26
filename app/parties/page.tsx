@@ -60,7 +60,7 @@ export default function PartiesPage() {
           <h1 className="text-lg font-semibold sm:text-2xl">Catering & Large Orders</h1>
           <EducationInfoIcon metricKey="party_orders" />
         </div>
-        <p className="text-xs text-muted">Catering and event orders. Margins and upsell strategy.</p>
+        <p className="text-xs text-muted">Catering and event orders. Gross Margins and upsell strategy.</p>
       </div>
 
       {/* Upcoming */}

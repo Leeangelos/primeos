@@ -1137,7 +1137,7 @@ function DailyPageContent() {
                   </div>
                   <div>
                     <h4 className="font-medium text-white mb-1">Why It Matters</h4>
-                    <p className="text-muted text-xs leading-relaxed">If PRIME is 60% and fixed costs are 30%, profit = 10%. Drop PRIME to 55% and profit doubles to 15%. On $5K/day, every point = $50/day = $1,500/month.</p>
+                    <p className="text-muted text-xs leading-relaxed">If PRIME is 60% and fixed costs are 30%, Net Profit = 10%. Drop PRIME to 55% and Net Profit doubles to 15%. On $5K/day, every point = $50/day = $1,500/month.</p>
                   </div>
                   <div className="rounded-lg border border-red-500/30 bg-red-500/5 p-3">
                     <h4 className="font-medium text-red-400 text-xs mb-2">📕 When PRIME Goes RED</h4>
@@ -1268,11 +1268,11 @@ function DailyPageContent() {
                 <div className="space-y-3 text-sm">
                   <div>
                     <h4 className="font-medium text-white mb-1">How It's Calculated</h4>
-                    <p className="text-muted text-xs leading-relaxed">GP % = 100% − PRIME %. If PRIME is 55%, GP is 45%. This is the money left to cover rent, insurance, utilities, and profit.</p>
+                    <p className="text-muted text-xs leading-relaxed">GP % = 100% − PRIME %. If PRIME is 55%, GP is 45%. This is the money left to cover rent, insurance, utilities, and Net Profit.</p>
                   </div>
                   <div>
                     <h4 className="font-medium text-white mb-1">Why It Matters</h4>
-                    <p className="text-muted text-xs leading-relaxed">Most pizzerias have 25-35% in fixed costs. If GP is 45% and fixed costs are 30%, net profit is 15%. If GP drops to 40%, net profit is 10% — a 33% pay cut to the business. Every point of GP is a point of profit.</p>
+                    <p className="text-muted text-xs leading-relaxed">Most pizzerias have 25-35% in fixed costs. If GP is 45% and fixed costs are 30%, Net Profit is 15%. If GP drops to 40%, Net Profit is 10% — a 33% pay cut to the business. Every point of GP is a point of Net Profit.</p>
                   </div>
                   <div className="rounded-lg border border-red-500/30 bg-red-500/5 p-3">
                     <h4 className="font-medium text-red-400 text-xs mb-2">📕 When GP Goes RED (&lt; 40%)</h4>
@@ -1281,7 +1281,7 @@ function DailyPageContent() {
                       <li>Consider checking which component is dragging PRIME up: labor, food, or disposables.</li>
                       <li>Consider running the PRIME playbook for whichever component is over target.</li>
                       <li>Consider reviewing pricing — when was your last menu price increase?</li>
-                      <li>Consider calculating: every 1% GP improvement on $100K/month = $1,000/month more to the bottom line.</li>
+                      <li>Consider calculating: every 1% GP improvement on $100K/month = $1,000/month more to Net Profit.</li>
                     </ol>
                   </div>
                 </div>

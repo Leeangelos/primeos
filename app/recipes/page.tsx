@@ -82,7 +82,7 @@ export default function RecipesPage() {
             i
           </button>
         </div>
-        <p className="text-xs text-muted">Theoretical food cost and margin by recipe.</p>
+        <p className="text-xs text-muted">Theoretical food cost and Gross Margin by recipe.</p>
 
         {/* Search */}
         <input
@@ -159,7 +159,7 @@ export default function RecipesPage() {
                   Sell: <span className="text-white font-semibold tabular-nums">${r.menu_price.toFixed(2)}</span>
                 </span>
                 <span className="text-sm text-slate-300">
-                  Margin:{" "}
+                  Gross Margin:{" "}
                   <span className="text-white font-semibold tabular-nums">{margin}%</span>
                   <span className="inline-flex align-middle ml-0.5" onClick={(e) => e.stopPropagation()}>
                     <EducationInfoIcon metricKey="gross_profit" />
@@ -171,7 +171,7 @@ export default function RecipesPage() {
         })}
       </div>
 
-      {/* Recipe detail modal — ingredients, costs, total, sell price, margin */}
+      {/* Recipe detail modal — ingredients, costs, total, sell price, Gross Margin */}
       {selected && typeof document !== "undefined" &&
         createPortal(
           <div
@@ -262,7 +262,7 @@ export default function RecipesPage() {
                   </div>
                   <div className="flex justify-between items-center text-sm">
                     <span className="text-slate-400">
-                      Actual margin
+                      Actual Gross Margin
                       <span className="inline-flex align-middle ml-1">
                         <EducationInfoIcon metricKey="gross_profit" />
                       </span>

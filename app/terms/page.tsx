@@ -132,7 +132,7 @@ export default function TermsPage() {
 
         <Section number="10" title="Limitation of Liability">
           <p>
-            To the maximum extent permitted by law, Ambition & Legacy LLC shall not be liable for any indirect, incidental, special, consequential, or punitive damages, including but not limited to loss of profits, data, business opportunities, or goodwill, arising from your use of PrimeOS.
+            To the maximum extent permitted by law, Ambition & Legacy LLC shall not be liable for any indirect, incidental, special, consequential, or punitive damages, including but not limited to loss of net profits, data, business opportunities, or goodwill, arising from your use of PrimeOS.
           </p>
           <p>
             Ambition & Legacy LLC&apos;s total liability to you for any claims arising from your use of PrimeOS shall not exceed the amount you paid to Ambition & Legacy LLC in the twelve (12) months preceding the claim.

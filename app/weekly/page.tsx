@@ -866,7 +866,7 @@ function WeeklyPageContent() {
                   </div>
                   <div>
                     <h4 className="font-medium text-white mb-1">What PRIME Grading Means</h4>
-                    <p className="text-muted text-xs leading-relaxed">PRIME is graded against your target (e.g. 55% for LeeAngelo's). At or below = you're good. Above = you're giving back profit. Every point over target on a $50K week is about $500 left on the table. The cockpit shows you the week's grade so you know whether to celebrate or act.</p>
+                    <p className="text-muted text-xs leading-relaxed">PRIME is graded against your target (e.g. 55% for LeeAngelo's). At or below = you're good. Above = you're giving back Gross Profit. Every point over target on a $50K week is about $500 left on the table. The cockpit shows you the week's grade so you know whether to celebrate or act.</p>
                   </div>
                 </div>
               </div>
@@ -877,7 +877,7 @@ function WeeklyPageContent() {
                 <p className="text-xs text-muted mb-4">The number that matters most.</p>
                 <div className="space-y-3 text-sm">
                   <div><h4 className="font-medium text-white mb-1">How It's Calculated</h4><p className="text-muted text-xs leading-relaxed">PRIME % = (Labor + Food + Disposables) ÷ Net Sales × 100. These are your controllable costs — the number you can actually move.</p></div>
-                  <div><h4 className="font-medium text-white mb-1">Why It Matters</h4><p className="text-muted text-xs leading-relaxed">If PRIME is 60% and fixed costs are 30%, profit = 10%. Drop PRIME to 55% and profit doubles to 15%. On $5K/day, every point = $50/day = $1,500/month.</p></div>
+                  <div><h4 className="font-medium text-white mb-1">Why It Matters</h4><p className="text-muted text-xs leading-relaxed">If PRIME is 60% and fixed costs are 30%, Net Profit = 10%. Drop PRIME to 55% and Net Profit doubles to 15%. On $5K/day, every point = $50/day = $1,500/month.</p></div>
                 </div>
               </div>
             )}

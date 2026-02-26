@@ -56,7 +56,7 @@ const MISTAKES = [
     iconColor: "text-purple-400",
     title: "Nobody taught us how to read our own numbers",
     story:
-      "Our accountant sent P&Ls that looked like a foreign language. We'd nod and say 'looks good' when we had no idea what gross profit margin meant or why it mattered. PrimeOS explains every number in plain English because if you don't understand it, you can't fix it.",
+      "Our accountant sent P&Ls that looked like a foreign language. We'd nod and say 'looks good' when we had no idea what Gross Profit margin meant or why it mattered. PrimeOS explains every number in plain English because if you don't understand it, you can't fix it.",
     feature: "Training Guide",
   },
 ];

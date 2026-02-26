@@ -195,7 +195,7 @@ export default function TrainingPage() {
           },
           {
             name: "PRIME Cost %",
-            def: "Food + Disposables + Labor ÷ Total Sales × 100. The three costs you control daily. Target: ≤55%. If PRIME is 60% and fixed costs are 30%, profit is 10%. Drop PRIME to 55%, profit doubles to 15%.",
+            def: "Food + Disposables + Labor ÷ Total Sales × 100. The three costs you control daily. Target: ≤55%. If PRIME is 60% and fixed costs are 30%, Net Profit is 10%. Drop PRIME to 55%, Net Profit doubles to 15%.",
           },
           {
             name: "SLPH (Sales per Labor Hour)",
@@ -332,7 +332,7 @@ export default function TrainingPage() {
 
       <CollapsibleSection title="How to Read Your GP P&L">
         <p className="mb-3">
-          Your GP P&L (Gross Profit Profit & Loss) shows the money you control daily: Revenue minus Food, Labor, and Disposables.
+          Your GP P&L (Gross Profit & Loss) shows the money you control daily: Revenue minus Food, Labor, and Disposables.
         </p>
         <p className="mb-3">
           Revenue at the top. Subtract COGS (food + disposables). Subtract Labor. What&apos;s left is Gross Profit.
@@ -341,14 +341,14 @@ export default function TrainingPage() {
           GP is NOT your take-home pay. Rent, insurance, utilities, loan payments, and other fixed costs still come out. That&apos;s what the Actual P&L shows.
         </p>
         <p className="mb-0">
-          If GP is 38% and your fixed costs are 28% of revenue, your net profit is 10%. Every point you improve GP drops straight to the bottom line.
+          If GP is 38% and your fixed costs are 28% of revenue, your Net Profit is 10%. Every point you improve GP drops straight to Net Profit.
         </p>
       </CollapsibleSection>
 
       <CollapsibleSection title="How to Read Your Actual P&L">
         <div className="rounded-lg border border-blue-900/50 bg-blue-950/30 p-4">
           <p className="mb-3">
-            Coming in Phase 2. Upload your CPA&apos;s monthly financials and PrimeOS will show you the gap between your GP P&L and your actual net profit.
+            Coming in Phase 2. Upload your CPA&apos;s monthly financials and PrimeOS will show you the gap between your GP P&L and your actual Net Profit.
           </p>
           <p className="mb-0">
             The gap is your fixed cost burden — rent, insurance, utilities, loans, misc. Most operators never see this number clearly until it&apos;s too late.
