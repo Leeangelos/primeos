@@ -16,6 +16,7 @@ import {
 } from "@/src/lib/competitor-data";
 import { MENU_DATA } from "@/src/lib/menu-data";
 import { SEED_STORES } from "@/src/lib/seed-data";
+import { getStoreLocation } from "@/src/lib/store-locations";
 import { EducationInfoIcon } from "@/src/components/education/InfoIcon";
 import { DataDisclaimer } from "@/src/components/ui/DataDisclaimer";
 import DataSourceBadge from "@/src/components/ui/DataSourceBadge";
@@ -259,6 +260,11 @@ export default function CompetitorIntelPage() {
 
       {view === "overview" && (
         <>
+          {placesLoading && !storeProfile && (
+            <div className="bg-slate-800 rounded-xl border border-slate-700 p-4 mb-4">
+              <p className="text-xs text-slate-500 animate-pulse">Loading your store data...</p>
+            </div>
+          )}
           {storeProfile && (
             <div className="bg-[#E65100]/10 border border-[#E65100]/30 rounded-xl p-4 mb-4">
               <div className="flex items-center gap-2 mb-2">
@@ -275,31 +281,40 @@ export default function CompetitorIntelPage() {
                   </span>
                 )}
               </div>
-              <p className="text-sm font-semibold text-white">{storeProfile.name}</p>
-              <p className="text-[10px] text-slate-500 mb-3">{storeProfile.address}</p>
-              <div className="flex items-center gap-4">
-                <div>
-                  <span className="text-2xl font-bold text-white">{storeProfile.rating ?? "—"}</span>
-                  <span className="text-xs text-slate-400 ml-1">/ 5.0</span>
-                </div>
-                <div className="text-xs text-slate-400">{storeProfile.reviewCount} reviews</div>
+              <p className="text-sm font-semibold text-white">
+                {(storeProfile.name?.trim() || getStoreLocation(selectedStore === "all" ? "kent" : selectedStore)?.name) ?? "Your store"}
+              </p>
+              {storeProfile.address && (
+                <p className="text-[10px] text-slate-500 mb-3">{storeProfile.address}</p>
+              )}
+              <div className="flex flex-wrap items-center gap-x-2 gap-y-1 mb-3">
+                <span className="text-2xl font-bold text-white">
+                  ⭐ {storeProfile.rating != null ? storeProfile.rating : "—"}
+                </span>
+                <span className="text-xs text-slate-400">/ 5.0</span>
+                {storeProfile.reviewCount != null && (
+                  <span className="text-xs text-slate-400">· ({storeProfile.reviewCount} reviews)</span>
+                )}
                 {storeProfile.googleMapsUrl && (
-                  <a
-                    href={storeProfile.googleMapsUrl}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="ml-auto text-[10px] text-blue-400 underline"
-                  >
-                    View on Google
-                  </a>
+                  <>
+                    <span className="text-xs text-slate-600">·</span>
+                    <a
+                      href={storeProfile.googleMapsUrl}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="text-[10px] text-blue-400 underline"
+                    >
+                      View on Google
+                    </a>
+                  </>
                 )}
               </div>
 
               {liveCompetitors.length > 0 && (
-                <div className="mt-3 pt-3 border-t border-[#E65100]/20">
+                <div className="pt-3 border-t border-[#E65100]/20">
                   {(() => {
                     const allRatings = [
-                      { name: "You", rating: storeProfile.rating ?? 0, reviews: storeProfile.reviewCount },
+                      { name: "You", rating: storeProfile.rating ?? 0, reviews: storeProfile.reviewCount ?? 0 },
                       ...liveCompetitors
                         .filter((c) => c.rating !== null)
                         .map((c) => ({ name: c.name, rating: c.rating!, reviews: c.reviewCount })),
