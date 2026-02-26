@@ -12,6 +12,7 @@ import { formatPct } from "@/src/lib/formatters";
 import { EDUCATION_CONTENT } from "@/src/lib/education-content";
 import { SEED_DAILY_KPIS, SEED_MORNING_BRIEF, SEED_STORES } from "@/src/lib/seed-data";
 import { SEED_WINS } from "@/src/lib/win-engine";
+import { calculateOperatorScore } from "@/src/lib/score-engine";
 
 /** Map alert keys to education content keys (for playbook modal). */
 const ALERT_TO_EDUCATION: Record<string, string> = {
@@ -308,6 +309,7 @@ export default function HomePage() {
 
   const selectedStoreName = getStoreLabel(selectedStore);
   const stores = STORE_OPTIONS.map((opt) => ({ id: opt.slug, name: opt.name }));
+  const score = calculateOperatorScore();
 
   return (
     <div className="space-y-6">
@@ -576,6 +578,51 @@ export default function HomePage() {
           <Calendar className="w-6 h-6 text-amber-400 shrink-0" aria-hidden />
           <span className="text-xs text-slate-300 text-center leading-tight">This Week&apos;s Schedule</span>
         </Link>
+      </div>
+
+      <div className="mb-4">
+        <div
+          className={`rounded-xl border p-4 ${
+            score.overall >= 80
+              ? "bg-emerald-600/10 border-emerald-700/20"
+              : score.overall >= 60
+                ? "bg-amber-600/10 border-amber-700/20"
+                : "bg-red-600/10 border-red-700/20"
+          }`}
+        >
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-[10px] text-slate-500 uppercase tracking-wide mb-1">Business Health Score</p>
+              <div className="flex items-baseline gap-2">
+                <span className={`text-3xl font-bold ${score.color}`}>{score.overall}</span>
+                <span className="text-xs text-slate-400">/ 100</span>
+              </div>
+              <p className={`text-xs font-medium mt-1 ${score.color}`}>{score.label}</p>
+            </div>
+            <div className="text-right">
+              <p className="text-[9px] text-slate-600 leading-relaxed max-w-[140px]">
+                Based on 6 weeks of data across financials, reputation, and operations.
+              </p>
+            </div>
+          </div>
+
+          {/* Mini category bars */}
+          <div className="mt-3 pt-3 border-t border-slate-700/30 grid grid-cols-5 gap-1">
+            {score.categories.map((cat) => (
+              <div key={cat.name} className="text-center">
+                <div className="h-1 rounded-full bg-slate-700 mb-1">
+                  <div
+                    className={`h-1 rounded-full ${
+                      cat.score >= 80 ? "bg-emerald-400" : cat.score >= 60 ? "bg-amber-400" : "bg-red-400"
+                    }`}
+                    style={{ width: `${cat.score}%` }}
+                  />
+                </div>
+                <p className="text-[8px] text-slate-600 leading-tight">{cat.name.split(" ")[0]}</p>
+              </div>
+            ))}
+          </div>
+        </div>
       </div>
 
       {/* Wins This Week — positive first, above alerts */}

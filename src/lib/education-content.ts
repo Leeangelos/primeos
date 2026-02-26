@@ -637,4 +637,17 @@ export const EDUCATION_CONTENT: Record<string, EducationEntry> = {
       "Consider that correcting violations on site during an inspection shows responsiveness — inspectors note this positively",
     ],
   },
+
+  operator_score: {
+    title: "Operator Score",
+    whatItMeans:
+      "Your Operator Score is a composite of everything PrimeOS tracks — financial performance, online reputation, operational consistency, vendor health, and team systems. It's weighted to reflect what matters most to the long-term health of an independent pizzeria. A single number that tells you how the whole business is doing, not just one piece of it.",
+    whenRedPlaybook: [
+      "Consider focusing on the lowest-scoring category first — small improvements in a weak area move the needle more than perfecting a strong one",
+      "Consider that consistency matters more than perfection — operators who track daily and stay aware tend to improve steadily over weeks",
+      "Consider that reputation is 20% of your score because it directly affects whether new customers walk through the door",
+      "Consider reviewing your vendor health quarterly — pricing drift is invisible until you look at the trend",
+      "Consider that operators who track all five dimensions consistently tend to make faster, more confident decisions about their business — whether that's growing, optimizing, or planning their next chapter",
+    ],
+  },
 };

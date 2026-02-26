@@ -4,6 +4,7 @@ import { useState, useEffect } from "react";
 import { TrendingUp, BookOpen, Trophy, ChevronDown, Flame, Target, DollarSign } from "lucide-react";
 import { useTier } from "@/src/lib/tier-context";
 import { createClient } from "@/lib/supabase";
+import { calculateOperatorScore } from "@/src/lib/score-engine";
 
 const DEMO_TIERS = [
   { id: "free", label: "Free", color: "text-slate-400" },
@@ -82,9 +83,11 @@ export default function BillingPage() {
   const [expandedMistake, setExpandedMistake] = useState<number | null>(null);
   const [resetToast, setResetToast] = useState<string | null>(null);
   const [daysTracked, setDaysTracked] = useState<number>(0);
+  const [showScoreBreakdown, setShowScoreBreakdown] = useState<boolean>(false);
   const [selectedValues, setSelectedValues] = useState<string[]>([]);
   const [customValue, setCustomValue] = useState<string>("");
   const [showValues, setShowValues] = useState<boolean>(true);
+  const score = calculateOperatorScore();
 
   useEffect(() => {
     const saved = localStorage.getItem("primeos_core_values");
@@ -282,6 +285,88 @@ export default function BillingPage() {
             </span>
           </div>
         </div>
+      </div>
+
+      <div className="mt-8 mb-8">
+        <h2 className="font-serif text-lg text-white mb-1">Your Operator Score</h2>
+        <p className="text-xs text-slate-400 mb-4">
+          A complete picture of your business health — not just one number, but everything PrimeOS tracks.
+        </p>
+
+        {/* Score hero */}
+        <div
+          className={`rounded-xl border p-5 text-center mb-4 ${
+            score.overall >= 80
+              ? "bg-emerald-600/10 border-emerald-700/20"
+              : score.overall >= 60
+                ? "bg-amber-600/10 border-amber-700/20"
+                : "bg-red-600/10 border-red-700/20"
+          }`}
+        >
+          <p className={`text-5xl font-bold ${score.color}`}>{score.overall}</p>
+          <p className={`text-sm font-medium mt-1 ${score.color}`}>{score.label}</p>
+          <p className="text-[10px] text-slate-600 mt-2">Based on 6 weeks of data across 5 dimensions</p>
+        </div>
+
+        {/* Category breakdown */}
+        <button
+          type="button"
+          onClick={() => setShowScoreBreakdown(!showScoreBreakdown)}
+          className="w-full flex items-center justify-between py-2 mb-2"
+        >
+          <span className="text-xs text-slate-400">See full breakdown</span>
+          <ChevronDown
+            className={`w-4 h-4 text-slate-500 transition-transform ${showScoreBreakdown ? "rotate-180" : ""}`}
+          />
+        </button>
+
+        {showScoreBreakdown && (
+          <div className="space-y-3">
+            {score.categories.map((cat) => (
+              <div key={cat.name} className="bg-slate-800 rounded-xl border border-slate-700 p-4">
+                <div className="flex items-center justify-between mb-2">
+                  <p className="text-xs font-semibold text-white">{cat.name}</p>
+                  <div className="flex items-center gap-2">
+                    <span
+                      className={`text-sm font-bold ${
+                        cat.score >= 80 ? "text-emerald-400" : cat.score >= 60 ? "text-amber-400" : "text-red-400"
+                      }`}
+                    >
+                      {cat.score}
+                    </span>
+                    <span className="text-[9px] text-slate-600">{Math.round(cat.weight * 100)}% weight</span>
+                  </div>
+                </div>
+                {/* Progress bar */}
+                <div className="h-1.5 rounded-full bg-slate-700 mb-3">
+                  <div
+                    className={`h-1.5 rounded-full transition-all ${
+                      cat.score >= 80 ? "bg-emerald-400" : cat.score >= 60 ? "bg-amber-400" : "bg-red-400"
+                    }`}
+                    style={{ width: `${cat.score}%` }}
+                  />
+                </div>
+                {/* Drivers */}
+                {cat.drivers.map((driver, i) => (
+                  <div key={i} className="flex items-start gap-2 mb-1.5">
+                    <span
+                      className={`text-[10px] mt-0.5 ${
+                        driver.impact === "up"
+                          ? "text-emerald-400"
+                          : driver.impact === "down"
+                            ? "text-amber-400"
+                            : "text-slate-500"
+                      }`}
+                    >
+                      {driver.impact === "up" ? "↑" : driver.impact === "down" ? "↓" : "—"}
+                    </span>
+                    <p className="text-[11px] text-slate-400 leading-relaxed">{driver.text}</p>
+                  </div>
+                ))}
+              </div>
+            ))}
+          </div>
+        )}
       </div>
 
       {/* CORE VALUES REFLECTION */}
