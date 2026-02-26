@@ -59,15 +59,17 @@ export function usePlacesData(storeId: string): PlacesData {
       if (nearbyRes.ok) {
         const nearbyData = await nearbyRes.json();
         const filtered = (nearbyData.competitors || []).filter(
-          (c: Competitor) =>
-            !c.name.toLowerCase().includes("leeangelo") &&
-            !c.name.toLowerCase().includes("lindsey")
+          (c: Competitor) => {
+            const nameLower = c.name.toLowerCase();
+            if (nameLower.includes("leeangelo") || nameLower.includes("lindsey's pizza")) return false;
+            return true;
+          }
         );
         setCompetitors(filtered);
       }
 
       const findRes = await fetch(
-        `/api/places/find-store?query=${encodeURIComponent(store.name + " " + store.city + " OH")}&lat=${store.lat}&lng=${store.lng}`
+        `/api/places/find-store?query=${encodeURIComponent(store.name + " " + store.address + " " + store.city + " OH")}&lat=${store.lat}&lng=${store.lng}`
       );
       if (findRes.ok) {
         const findData = await findRes.json();
@@ -109,7 +111,7 @@ export function useAllStoreProfiles(): {
       for (const store of STORE_LOCATIONS) {
         try {
           const findRes = await fetch(
-            `/api/places/find-store?query=${encodeURIComponent(store.name + " " + store.city + " OH")}&lat=${store.lat}&lng=${store.lng}`
+            `/api/places/find-store?query=${encodeURIComponent(store.name + " " + store.address + " " + store.city + " OH")}&lat=${store.lat}&lng=${store.lng}`
           );
           if (findRes.ok) {
             const findData = await findRes.json();
