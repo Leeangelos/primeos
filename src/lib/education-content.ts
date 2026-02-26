@@ -7,6 +7,7 @@ export type EducationEntry = {
   title: string;
   whatItMeans: string;
   whenRedPlaybook: string[];
+  whyItMatters?: string;
 };
 
 export const EDUCATION_CONTENT: Record<string, EducationEntry> = {
@@ -616,15 +617,15 @@ export const EDUCATION_CONTENT: Record<string, EducationEntry> = {
   daily_edge: {
     title: "The Daily Edge",
     whatItMeans:
-      "The Daily Edge is your personalized intelligence feed. Every morning at 6am, PrimeOS pulls the latest articles from the most trusted pizza industry publications — PMQ Pizza Magazine, Pizza Marketplace, and Nation's Restaurant News — filters them for what matters to independent operators, and delivers them to your feed before your competition sees them. Combined with curated insights tailored to your store data, you get both live industry intelligence and personalized operational guidance in one place.",
+      "The Daily Edge is your personal data briefing. Every day, PrimeOS reads your actual store numbers — sales, food cost, labor hours, overtime, vendor spend, delivery economics, Google ratings — and surfaces what changed, what is trending, and what the math says. This is not generic content. These are your numbers, your trends, your locations. When FoodTec and Hillcrest data connect, every number becomes real-time. Until then, PrimeOS uses realistic baseline data so you can see exactly how it works. Live industry articles from PMQ Pizza Magazine, Pizza Marketplace, and Nation's Restaurant News are pulled every morning at 6am and shown at the top of your feed with a LIVE badge.",
+    whyItMatters:
+      "The operators who win are the ones who see what changed before it becomes a problem. A food cost spike caught on day one costs you $45. Caught on day thirty, it cost you $1,350. The Daily Edge puts the signal in front of you every morning so nothing hides. PrimeOS does not tell you what to do. It shows you the data and the math. You make the call.",
     whenRedPlaybook: [
-      "Consider spending 3 minutes every morning reading The Daily Edge before your shift — it compounds over time",
-      "Consider sharing relevant insights with your team — The Math cards are great conversation starters at shift meetings",
-      "Consider acting on one actionable insight per week — small changes compound into big results",
-      "Consider that Operator Stories come from real independent operators — their lessons can save you from their mistakes",
-      "Consider saving insights that resonate — PrimeOS will track which content types you engage with most and show you more of what matters",
-      "Consider bookmarking the sources that resonate most — operators who engage with industry content weekly tend to adapt faster when costs shift or trends change",
-      "Consider tapping the source link on any live article to read the full piece — the summary gives you the headline, but the details often contain the real edge",
+      "The Daily Edge rotates different data scoops every day based on what your numbers are doing — food cost trends, labor hours, overtime, vendor spend, delivery mix, ticket averages, and cross-location comparisons",
+      "Each scoop is pure math from your stores — no opinions, no advice, just facts and trends so you can make your own decisions",
+      "Live industry articles from PMQ, Pizza Marketplace, and NRN appear at the top with an orange LIVE badge — these are real articles from the most trusted pizza publications, filtered for what matters to independent operators",
+      "The data scoops change every day because your numbers change every day — open The Daily Edge every morning and you will never see the same feed twice",
+      "Tap any card to expand the full breakdown with detailed math showing exactly how the numbers were calculated",
     ],
   },
   inspection_radar: {
