@@ -601,4 +601,16 @@ export const EDUCATION_CONTENT: Record<string, EducationEntry> = {
       "Consider that AI assistants like ChatGPT now recommend restaurants based on review data — more reviews and higher ratings mean more AI referrals",
     ],
   },
+  daily_edge: {
+    title: "The Daily Edge",
+    whatItMeans:
+      "The Daily Edge is your personalized intelligence feed. Every day, PrimeOS surfaces insights, industry news, calculations, and lessons from other operators — all relevant to running your business. Think of it as a business coach that reads everything so you don't have to. The content is tailored to your store data, your market, and your stage of growth.",
+    whenRedPlaybook: [
+      "Consider spending 3 minutes every morning reading The Daily Edge before your shift — it compounds over time",
+      "Consider sharing relevant insights with your team — The Math cards are great conversation starters at shift meetings",
+      "Consider acting on one actionable insight per week — small changes compound into big results",
+      "Consider that Operator Stories come from real independent operators — their lessons can save you from their mistakes",
+      "Consider saving insights that resonate — PrimeOS will track which content types you engage with most and show you more of what matters",
+    ],
+  },
 };

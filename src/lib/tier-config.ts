@@ -12,7 +12,7 @@ export const TIERS = {
   starter: {
     name: "Starter",
     price: 79,
-    routes: ["/", "/daily", "/weekly", "/monthly", "/training", "/billing", "/terms", "/privacy", "/brief", "/pnl", "/schedule"],
+    routes: ["/", "/daily", "/weekly", "/monthly", "/training", "/billing", "/terms", "/privacy", "/brief", "/pnl", "/schedule", "/daily-edge"],
   },
   operator: {
     name: "Operator",

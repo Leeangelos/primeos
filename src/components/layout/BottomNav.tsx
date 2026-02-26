@@ -21,6 +21,7 @@ import {
   Truck,
   Heart,
   BookOpen,
+  Newspaper,
   Package,
   FileText,
   UtensilsCrossed,
@@ -248,6 +249,7 @@ export function BottomNav() {
                 items={[
                   { href: "/vendor-settings", icon: Settings, label: "Vendor Settings", desc: "Manage vendors and platforms", color: "text-slate-400" },
                   { href: "/rolodex", icon: BookUser, label: "Trusted Rolodex", desc: "Vendors, repairs, contacts", color: "text-teal-400" },
+                  { href: "/daily-edge", icon: Newspaper, label: "The Daily Edge", desc: "Daily intelligence feed", color: "text-blue-400" },
                   { href: "/training", icon: GraduationCap, label: "Training Guide", desc: "Learn every metric", color: "text-indigo-400" },
                 ]}
                 pathname={pathname}
