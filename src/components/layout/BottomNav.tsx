@@ -35,6 +35,7 @@ import {
   LucideIcon,
   Settings,
   LogOut,
+  Shield,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { createClient } from "@/lib/supabase";
@@ -195,6 +196,7 @@ export function BottomNav() {
                   { href: "/weekly", icon: BarChart3, label: "Weekly Snapshot", desc: "Week-over-week trends", color: "text-emerald-400" },
                   { href: "/monthly", icon: Calendar, label: "Monthly Summary", desc: "Monthly P&L rollup", color: "text-amber-400" },
                   { href: "/schedule", icon: Clock, label: "Smart Schedule", desc: "Shifts and labor planning", color: "text-cyan-400" },
+                  { href: "/inspection-radar", icon: Shield, label: "Inspection Radar", desc: "Inspector activity near you", color: "text-blue-400" },
                   { href: "/tasks", icon: CheckSquare, label: "Manager Tasks", desc: "Assign and track team tasks", color: "text-orange-400" },
                   { href: "/chat", icon: MessageCircle, label: "Team Chat", desc: "Internal messaging", color: "text-pink-400" },
                 ]}

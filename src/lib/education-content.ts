@@ -625,4 +625,16 @@ export const EDUCATION_CONTENT: Record<string, EducationEntry> = {
       "Consider saving insights that resonate — PrimeOS will track which content types you engage with most and show you more of what matters",
     ],
   },
+  inspection_radar: {
+    title: "Health Inspection Radar",
+    whatItMeans:
+      "Health inspectors in Ohio work in territories and follow routes. When multiple restaurants near you get inspected in a short period, the inspector is likely working through your area. PrimeOS tracks publicly posted inspection records from Portage County and Stark County and calculates whether activity near your location is above normal. Ohio uses a violations-based system — inspectors document critical and non-critical violations, not a point score. Critical violations are those more likely to contribute to foodborne illness if left uncorrected.",
+    whenRedPlaybook: [
+      "Consider running through the Pre-Inspection Checklist with your team before every shift when the threat level is elevated or higher",
+      "Consider that the most common critical violations in pizza restaurants are temperature control, handwashing access, and date labeling — all preventable with daily habits",
+      "Consider that inspection records are public — your customers, competitors, and local media can see them anytime",
+      "Consider assigning one person per shift to do a quick walk-through of the checklist items — it takes 5 minutes and builds the habit",
+      "Consider that correcting violations on site during an inspection shows responsiveness — inspectors note this positively",
+    ],
+  },
 };

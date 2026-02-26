@@ -41,6 +41,7 @@ export const TIERS = {
       "/actual-pnl",
       "/tasks",
       "/chat",
+      "/inspection-radar",
     ],
   },
   owner: {
