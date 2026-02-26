@@ -589,4 +589,16 @@ export const EDUCATION_CONTENT: Record<string, EducationEntry> = {
       "Consider that review volume matters — aim for at least 10 new reviews per month per location",
     ],
   },
+  reputation: {
+    title: "Online Reputation",
+    whatItMeans:
+      "Your online reputation is how the world sees your business before they ever walk in the door. 93% of customers read reviews before choosing a restaurant. A 0.5-star difference on Google can mean 20-30% more or fewer customers finding you. PrimeOS monitors every platform so you see what your customers are saying — and what they're saying about your competitors.",
+    whenRedPlaybook: [
+      "Consider responding to every negative review within 24 hours — a professional response builds trust with everyone who reads it later",
+      "Consider that 1-star reviews hurt less when diluted by hundreds of 5-star reviews — focus on volume",
+      "Consider asking happy customers to review you — a receipt note, counter sign, or delivery follow-up text can double your review rate",
+      "Consider monitoring competitor reviews for complaints you can address in your marketing — their weakness is your opportunity",
+      "Consider that AI assistants like ChatGPT now recommend restaurants based on review data — more reviews and higher ratings mean more AI referrals",
+    ],
+  },
 };

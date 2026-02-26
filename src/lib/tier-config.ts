@@ -35,6 +35,7 @@ export const TIERS = {
       "/menu-intelligence",
       "/vendor-tracker",
       "/competitor-intel",
+      "/reputation",
       "/food-cost-analysis",
       "/sales",
       "/actual-pnl",

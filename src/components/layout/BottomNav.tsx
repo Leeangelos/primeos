@@ -234,6 +234,7 @@ export function BottomNav() {
                 items={[
                   { href: "/people", icon: Users, label: "People Economics", desc: "CAC, LTV, churn tracking", color: "text-cyan-400" },
                   { href: "/marketing", icon: Target, label: "Ad Accountability", desc: "ROAS and campaign tracking", color: "text-rose-400" },
+                  { href: "/reputation", icon: MessageCircle, label: "Do We Suck?", desc: "Reviews and reputation", color: "text-pink-400" },
                   { href: "/competitor-intel", icon: Target, label: "Competitor Intel", desc: "Market position and alerts", color: "text-violet-400" },
                   { href: "/parties", icon: Gift, label: "Catering & Large Orders", desc: "Catering and event orders", color: "text-fuchsia-400" },
                   { href: "/merch", icon: ShoppingBag, label: "Team Merch", desc: "Staff gear and ordering", color: "text-orange-400" },
