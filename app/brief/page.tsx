@@ -441,7 +441,7 @@ export default function BriefPage() {
               </div>
               <div>
                 <h4 className="font-medium text-white mb-1">How AI Analyzes Your Numbers Overnight</h4>
-                <p className="text-muted text-xs leading-relaxed">Claude reads your daily KPIs — sales, labor, food, disposables, voids, waste — and compares them to your targets and to prior periods. It flags what's off and why it might be. No more digging through rows. The brief is your 60-second debrief so you can walk in and say "check the walk-in" or "who was on the make line Tuesday?" instead of guessing.</p>
+                <p className="text-muted text-xs leading-relaxed">Claude reads your daily KPIs — sales, labor, food, disposables, voids, waste — and compares them to benchmarks and to prior periods. It flags what's off and why it might be. No more digging through rows. The brief is your 60-second debrief so you can walk in and say "check the walk-in" or "who was on the make line Tuesday?" instead of guessing.</p>
               </div>
               <div className="rounded-lg border border-red-500/30 bg-red-500/5 p-3">
                 <h4 className="font-medium text-red-400 text-xs mb-2">📕 When the Brief Says You're Over</h4>

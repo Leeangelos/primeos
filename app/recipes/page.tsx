@@ -308,11 +308,11 @@ export default function RecipesPage() {
                 <div>
                   <h4 className="font-medium text-white mb-1">Theoretical vs Actual</h4>
                   <p className="text-muted text-xs leading-relaxed">
-                    Theoretical food cost = what it SHOULD cost based on your recipes. Actual food cost = what you actually spent (purchases ÷ sales). The gap between these two = overportioning + waste + theft + spoilage.
+                    Theoretical food cost = what it would cost based on your recipes. Actual food cost = what you actually spent (purchases ÷ sales). The gap between these two = overportioning + waste + theft + spoilage.
                   </p>
                 </div>
                 <div>
-                  <h4 className="font-medium text-white mb-1">Target Food Cost by Item</h4>
+                  <h4 className="font-medium text-white mb-1">Theoretical Food Cost by Item</h4>
                   <p className="text-muted text-xs leading-relaxed">
                     Pizzas: 25–30%. Appetizers: 20–28%. Subs: 28–32%. If any item is over 33%, either raise the price or re-engineer the recipe.
                   </p>

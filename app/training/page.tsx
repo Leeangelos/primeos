@@ -53,7 +53,7 @@ export default function TrainingPage() {
     <div className="space-y-2 pb-28">
       <div className="mb-6">
         <h1 className="text-lg font-semibold sm:text-2xl text-white">Training Guide</h1>
-        <p className="text-sm text-slate-400 mt-1">Everything you need to run your numbers in 90 seconds a day.</p>
+        <p className="text-sm text-slate-400 mt-1">Everything to run your numbers in 90 seconds a day.</p>
       </div>
 
       <CollapsibleSection title="Add PrimeOS to Your Phone" defaultOpen={true}>
@@ -187,19 +187,19 @@ export default function TrainingPage() {
         {[
           {
             name: "Food Cost %",
-            def: "Total Food Purchases ÷ Total Sales × 100. How much of every dollar goes to food. Target: 28–31%. Every point over target on $5,000/day = $50/day = $1,500/month = $18,000/year.",
+            def: "Total Food Purchases ÷ Total Sales × 100. How much of every dollar goes to food. Industry benchmark: 28–31%. Every point over that range on $5,000/day = $50/day = $1,500/month = $18,000/year.",
           },
           {
             name: "Labor %",
-            def: "Total Labor Cost ÷ Total Sales × 100. How much of every dollar goes to wages. Target: 19–21% (no overtime). Includes hourly wages, not salary or benefits.",
+            def: "Total Labor Cost ÷ Total Sales × 100. How much of every dollar goes to wages. Industry benchmark: 19–21% (no overtime). Includes hourly wages, not salary or benefits.",
           },
           {
             name: "PRIME Cost %",
-            def: "Food + Disposables + Labor ÷ Total Sales × 100. The three costs you control daily. Target: ≤55%. If PRIME is 60% and fixed costs are 30%, Net Profit is 10%. Drop PRIME to 55%, Net Profit doubles to 15%.",
+            def: "Food + Disposables + Labor ÷ Total Sales × 100. The three costs you control daily. Industry benchmark: ≤55%. If PRIME is 60% and fixed costs are 30%, Net Profit is 10%. At 55% PRIME, Net Profit doubles to 15%.",
           },
           {
             name: "SLPH (Sales per Labor Hour)",
-            def: "Total Sales ÷ Total Labor Hours. How productive is every hour you're paying for. Target: ≥$65. Below $55 = overstaffed. Above $80 = understaffed and burning out your team.",
+            def: "Total Sales ÷ Total Labor Hours. How productive is every hour you're paying for. Industry benchmark: ≥$65. Below $55 often indicates overstaffing. Above $80 can mean the team is stretched thin.",
           },
           {
             name: "Average Ticket",
@@ -207,11 +207,11 @@ export default function TrainingPage() {
           },
           {
             name: "Void %",
-            def: "Total Voids ÷ Total Sales × 100. Voided orders as a percentage of sales. Target: <1%. Above 2% = either training issue or theft. Check void reasons and who's voiding.",
+            def: "Total Voids ÷ Total Sales × 100. Voided orders as a percentage of sales. Industry benchmark: <1%. Above 2% is worth watching — check void reasons and who's voiding.",
           },
           {
             name: "Waste %",
-            def: "Total Waste ÷ Total Food Purchases × 100. Food thrown away vs food bought. Target: <3%. Track by category — dough waste, prepped ingredients past shelf life, dropped/remade orders.",
+            def: "Total Waste ÷ Total Food Purchases × 100. Food thrown away vs food bought. Industry benchmark: <3%. Track by category — dough waste, prepped ingredients past shelf life, dropped/remade orders.",
           },
           {
             name: "Gross Profit %",
@@ -227,11 +227,11 @@ export default function TrainingPage() {
           },
           {
             name: "Churn Rate",
-            def: "Employees who leave ÷ Total headcount per quarter. Target: <15% quarterly. Above 25% = crisis. Every departure costs $2,800–$4,200 to replace plus the productivity loss during training.",
+            def: "Employees who leave ÷ Total headcount per quarter. Industry benchmark: <15% quarterly. Above 25% is worth watching. Every departure costs $2,800–$4,200 to replace plus the productivity loss during training.",
           },
           {
             name: "Marketing ROAS",
-            def: "Return on Ad Spend. Revenue attributed to a campaign ÷ cost of the campaign. Target: 3–5x. Below 2x = the campaign is losing money after food and labor costs.",
+            def: "Return on Ad Spend. Revenue attributed to a campaign ÷ cost of the campaign. Industry benchmark: 3–5x. Below 2x the campaign is below break-even after food and labor costs.",
           },
           {
             name: "AOV (Average Order Value)",
@@ -239,7 +239,7 @@ export default function TrainingPage() {
           },
           {
             name: "Occupancy %",
-            def: "Rent ÷ Total Revenue × 100. What percentage of your sales goes to rent. Target: ≤6%. At 8% on $40K/month revenue, you're paying $3,200 for a space that should cost $2,400 at your volume — or you need to grow sales to $53,333/month to hit 6%.",
+            def: "Rent ÷ Total Revenue × 100. What percentage of your sales goes to rent. Industry benchmark: ≤6%. At 8% on $40K/month revenue, that's $3,200 for a space that at 6% would be $2,400 at that volume — growing sales to $53,333/month would bring occupancy to 6%.",
           },
         ].map(({ name, def }) => (
           <div key={name} className="bg-slate-700/50 rounded-lg p-3 mb-2">
@@ -351,14 +351,14 @@ export default function TrainingPage() {
             Coming in Phase 2. Upload your CPA&apos;s monthly financials and PrimeOS will show you the gap between your GP P&L and your actual Net Profit.
           </p>
           <p className="mb-0">
-            The gap is your fixed cost burden — rent, insurance, utilities, loans, misc. Most operators never see this number clearly until it&apos;s too late.
+            The gap is your fixed cost burden — rent, insurance, utilities, loans, misc. Most operators don&apos;t see this number clearly until options are more limited.
           </p>
         </div>
       </CollapsibleSection>
 
       <CollapsibleSection title="The Morning Brief">
         <p className="mb-3">
-          Every morning, PrimeOS AI reads yesterday&apos;s numbers and writes you a plain-English summary. No jargon. No charts to interpret. Just: here&apos;s what happened, here&apos;s what&apos;s good, here&apos;s what needs attention, and here&apos;s what&apos;s coming up.
+          Every morning, PrimeOS AI reads yesterday&apos;s numbers and writes you a plain-English summary. No jargon. No charts to interpret. Just: here&apos;s what happened, here&apos;s what&apos;s good, here&apos;s what&apos;s worth watching, and here&apos;s what&apos;s coming up.
         </p>
         <p className="mb-3">
           The Brief pulls from your daily KPIs, weekly trends, employee data, and local events (planned). It&apos;s like having a business partner who reviewed everything before you woke up.

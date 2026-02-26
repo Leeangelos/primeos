@@ -39,7 +39,7 @@ const FOOD_COST_DATA: Record<string, { month: string; theoretical: number; actua
 
 // Top variance items — what's causing the gap
 const VARIANCE_ITEMS = [
-  { item: "Large Cheese Pizza", theoreticalCost: 4.2, actualAvgCost: 4.85, unitsSold: 840, variance: 546, cause: "Cheese overportioning — avg 14.2oz vs target 12oz" },
+  { item: "Large Cheese Pizza", theoreticalCost: 4.2, actualAvgCost: 4.85, unitsSold: 840, variance: 546, cause: "Cheese overportioning — avg 14.2oz vs recipe 12oz" },
   { item: "Traditional Wings 10pc", theoreticalCost: 5.8, actualAvgCost: 6.45, unitsSold: 320, variance: 208, cause: "Wing prices up 8% from Hillcrest; recipe cost not updated" },
   { item: "Supreme Pizza Large", theoreticalCost: 6.1, actualAvgCost: 6.9, unitsSold: 280, variance: 224, cause: "Topping overload — new employees not following portion guide" },
   { item: "Pepperoni Roll", theoreticalCost: 3.4, actualAvgCost: 3.95, unitsSold: 180, variance: 99, cause: "Pepperoni price increase not reflected in recipe" },

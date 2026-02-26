@@ -225,7 +225,7 @@ export function getCockpitIssues(slug: CockpitStoreSlug, dailyRows: DailyCompute
   if (primeOverDates.length > 0) {
     issues.push({
       type: "prime_over",
-      message: `${primeOverDates.length} day(s) PRIME exceeded target: ${primeOverDates.join(", ")}`,
+      message: `${primeOverDates.length} day(s) PRIME above benchmark: ${primeOverDates.join(", ")}`,
       count: primeOverDates.length,
       date: primeOverDates[0],
     });
@@ -233,7 +233,7 @@ export function getCockpitIssues(slug: CockpitStoreSlug, dailyRows: DailyCompute
   if (laborOutsideDates.length > 0) {
     issues.push({
       type: "labor_outside",
-      message: `Labor outside target on ${laborOutsideDates.length} day(s): ${laborOutsideDates.join(", ")}`,
+      message: `Labor outside typical range on ${laborOutsideDates.length} day(s): ${laborOutsideDates.join(", ")}`,
       count: laborOutsideDates.length,
       date: laborOutsideDates[0],
     });
@@ -250,7 +250,7 @@ export function getCockpitIssues(slug: CockpitStoreSlug, dailyRows: DailyCompute
     issues.push({
       type: "worst_prime_day",
       date: worstDay.date,
-      message: `Worst PRIME variance: ${worstDay.date} (+${worstDay.variance.toFixed(1)}% vs target)`,
+      message: `Worst PRIME variance: ${worstDay.date} (+${worstDay.variance.toFixed(1)}% vs benchmark)`,
     });
   }
   return issues;

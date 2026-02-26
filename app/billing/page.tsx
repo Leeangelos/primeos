@@ -142,7 +142,7 @@ export default function BillingPage() {
       <div className="bg-slate-800 rounded-2xl border border-slate-700 p-5 mb-4">
         <h2 className="text-sm font-semibold text-white mb-3">Here&apos;s the truth</h2>
         <p className="text-sm text-slate-300 leading-relaxed mb-3">
-          You&apos;re not doing anything wrong. You&apos;re just running your business without seeing the full picture. Most operators are. You&apos;re making decisions based on gut feeling when the numbers are right there — you just couldn&apos;t see them until now.
+          PrimeOS holds up the mirror — we don&apos;t tell you what to see. Many operators make decisions based on gut when the numbers are right there; now you can see them.
         </p>
         <p className="text-sm text-slate-300 leading-relaxed">
           PrimeOS puts every number in front of you, in plain English, in 90 seconds a day. No accounting degree needed. No consultants. Just your data, explained like a friend who happens to know the math.

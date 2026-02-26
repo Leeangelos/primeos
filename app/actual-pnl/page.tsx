@@ -156,7 +156,7 @@ const NET_PROFIT_PLAYBOOK = [
   "If GP is healthy but net is low, your fixed cost structure is the problem. Consider running the occupancy, insurance, and utilities playbooks.",
   "If GP is also weak, many operators find it helpful to address variable costs first. Food cost and labor improvements show up in days. Fixed cost savings take months to renegotiate.",
   "Consider calculating your monthly break-even: total fixed costs ÷ GP margin %. Example: $28,720 ÷ 0.45 = $63,822 minimum monthly revenue.",
-  "Consider building a 90-day plan: target 1 point improvement in GP margin per month while holding fixed costs flat. At $148K revenue, 1 point = $1,482/month straight to Net Profit.",
+  "Consider building a 90-day plan: many operators aim for 1 point improvement in GP margin per month while holding fixed costs flat. At $148K revenue, 1 point = $1,482/month straight to Net Profit.",
 ];
 
 export default function ActualPnlPage() {
@@ -500,7 +500,7 @@ export default function ActualPnlPage() {
                 actual={formatPct(pnl.rentPct)}
                 target="≤6%"
                 status="green"
-                detail={`${formatDollars(pnl.rent)}/mo on ${formatDollars(pnl.revenue)} revenue. You're within target.`}
+                detail={`${formatDollars(pnl.rent)}/mo on ${formatDollars(pnl.revenue)} revenue. Within the typical range.`}
               />
               <BenchmarkRow
                 label="Insurance"

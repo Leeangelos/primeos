@@ -219,7 +219,7 @@ function DailyPageContent() {
       if (laborPct < 10 && laborPct > 0) {
         newWarnings.push({
           field: "labor",
-          message: `Labor at ${formatPctShared(laborPct)} seems too low. Are all employees accounted for?`,
+          message: `Labor at ${formatPctShared(laborPct)} is below the typical range. Are all employees accounted for?`,
           severity: "warning",
         });
       }
@@ -650,7 +650,7 @@ function DailyPageContent() {
               >
                 {prime.value}
               </div>
-              <div className="mt-3 sm:mt-5 text-xs text-muted/70">Target: {prime.target}</div>
+              <div className="mt-3 sm:mt-5 text-xs text-muted/70">Benchmark: {prime.target}</div>
               {rolling && rolling.primePct != null && (
                 <div className="text-xs text-muted/60 mt-1">7-day avg: {rolling.primePct}%</div>
               )}
@@ -696,7 +696,7 @@ function DailyPageContent() {
                   >
                     {value}
                   </div>
-                  <div className="mt-1 text-[11px] text-muted/70">Target: {target}</div>
+                  <div className="mt-1 text-[11px] text-muted/70">Benchmark: {target}</div>
                   {rolling && label === "Labor %" && rolling.laborPct != null && (
                     <div className="text-xs text-muted/60 mt-1">7-day avg: {rolling.laborPct}%</div>
                   )}
@@ -1160,7 +1160,7 @@ function DailyPageContent() {
                 <div className="space-y-3 text-sm">
                   <div>
                     <h4 className="font-medium text-white mb-1">How It's Calculated</h4>
-                    <p className="text-muted text-xs leading-relaxed">Labor % = Total Labor Dollars ÷ Net Sales × 100. Target: 19-21%. On $5K/day, every point over = $50/day = $1,500/month.</p>
+                    <p className="text-muted text-xs leading-relaxed">Labor % = Total Labor Dollars ÷ Net Sales × 100. Benchmark: 19-21%. On $5K/day, every point over = $50/day = $1,500/month.</p>
                   </div>
                   <div>
                     <h4 className="font-medium text-white mb-1">Why It Matters</h4>
@@ -1187,7 +1187,7 @@ function DailyPageContent() {
                 <div className="space-y-3 text-sm">
                   <div>
                     <h4 className="font-medium text-white mb-1">How It's Calculated</h4>
-                    <p className="text-muted text-xs leading-relaxed">Food+Disp % = (Food Purchases + Disposables) ÷ Net Sales × 100. Target: ≤35%. Note: this uses a 7-day rolling average to smooth delivery-day spikes.</p>
+                    <p className="text-muted text-xs leading-relaxed">Food+Disp % = (Food Purchases + Disposables) ÷ Net Sales × 100. Benchmark: ≤35%. Note: this uses a 7-day rolling average to smooth delivery-day spikes.</p>
                   </div>
                   <div>
                     <h4 className="font-medium text-white mb-1">Why It Matters</h4>
@@ -1214,11 +1214,11 @@ function DailyPageContent() {
                 <div className="space-y-3 text-sm">
                   <div>
                     <h4 className="font-medium text-white mb-1">How It's Calculated</h4>
-                    <p className="text-muted text-xs leading-relaxed">SLPH = Net Sales ÷ Total Labor Hours. Target: $80+. This tells you how productive each hour of labor is.</p>
+                    <p className="text-muted text-xs leading-relaxed">SLPH = Net Sales ÷ Total Labor Hours. Benchmark: $80+. This tells you how productive each hour of labor is.</p>
                   </div>
                   <div>
                     <h4 className="font-medium text-white mb-1">Why It Matters</h4>
-                    <p className="text-muted text-xs leading-relaxed">SLPH connects sales volume to staffing. A slow Tuesday with the same staff as Friday means you're paying people to stand around. The goal isn't minimum staffing — it's optimal staffing.</p>
+                    <p className="text-muted text-xs leading-relaxed">SLPH connects sales volume to staffing. A slow Tuesday with the same staff as Friday means you're paying people to stand around. The aim isn't minimum staffing — it's optimal staffing for your volume.</p>
                   </div>
                   <div className="rounded-lg border border-red-500/30 bg-red-500/5 p-3">
                     <h4 className="font-medium text-red-400 text-xs mb-2">📕 When SLPH Goes RED (&lt; 65)</h4>
@@ -1241,7 +1241,7 @@ function DailyPageContent() {
                 <div className="space-y-3 text-sm">
                   <div>
                     <h4 className="font-medium text-white mb-1">How It's Calculated</h4>
-                    <p className="text-muted text-xs leading-relaxed">Voids % = Void Dollars ÷ Net Sales × 100. Target: &lt; 2%. Voids include cancelled orders, remakes, and manager comps.</p>
+                    <p className="text-muted text-xs leading-relaxed">Voids % = Void Dollars ÷ Net Sales × 100. Benchmark: &lt; 2%. Voids include cancelled orders, remakes, and manager comps.</p>
                   </div>
                   <div>
                     <h4 className="font-medium text-white mb-1">Why It Matters</h4>
@@ -1295,7 +1295,7 @@ function DailyPageContent() {
                 <div className="space-y-3 text-sm">
                   <div>
                     <h4 className="font-medium text-white mb-1">How It's Calculated</h4>
-                    <p className="text-muted text-xs leading-relaxed">Waste % = Waste Dollars ÷ Net Sales × 100. Target: &lt; 1.5%. Waste includes expired product, dropped/burned food, and overprepped items.</p>
+                    <p className="text-muted text-xs leading-relaxed">Waste % = Waste Dollars ÷ Net Sales × 100. Benchmark: &lt; 1.5%. Waste includes expired product, dropped/burned food, and overprepped items.</p>
                   </div>
                   <div>
                     <h4 className="font-medium text-white mb-1">Why It Matters</h4>

@@ -472,7 +472,7 @@ function WeeklyPageContent() {
                     : "—"}
                 </span>
                 <span className="text-sm text-muted">
-                  Target: {data.hero.target_label}
+                  Benchmark: {data.hero.target_label}
                 </span>
                 <span
                   className={
@@ -485,7 +485,7 @@ function WeeklyPageContent() {
                 </span>
                 {data.hero.variance_pct != null && (
                   <span className="text-sm">
-                    Variance vs target:{" "}
+                    Variance vs benchmark:{" "}
                     {data.hero.variance_pct >= 0 ? "+" : ""}
                     {formatPct(data.hero.variance_pct)}
                   </span>
@@ -605,7 +605,7 @@ function WeeklyPageContent() {
                       : "—"}
                   </div>
                   <div className="text-xs text-muted">
-                    Target: {data.secondary.labor_target} •{" "}
+                    Benchmark: {data.secondary.labor_target} •{" "}
                     {data.secondary.labor_status}
                     {data.secondary.labor_wow != null &&
                       ` • WoW ${data.secondary.labor_wow >= 0 ? "+" : ""}${formatPct(data.secondary.labor_wow)}`}
@@ -629,7 +629,7 @@ function WeeklyPageContent() {
                       : "—"}
                   </div>
                   <div className="text-xs text-muted">
-                    Target: {data.secondary.food_disp_target} •{" "}
+                    Benchmark: {data.secondary.food_disp_target} •{" "}
                     {data.secondary.food_disp_status}
                     {data.secondary.food_disp_wow != null &&
                       ` • WoW ${data.secondary.food_disp_wow >= 0 ? "+" : ""}${formatPct(data.secondary.food_disp_wow)}`}
@@ -653,7 +653,7 @@ function WeeklyPageContent() {
                       : "—"}
                   </div>
                   <div className="text-xs text-muted">
-                    Target: {data.secondary.slph_target} •{" "}
+                    Benchmark: {data.secondary.slph_target} •{" "}
                     {data.secondary.slph_status}
                     {data.secondary.slph_wow != null &&
                       ` • WoW ${data.secondary.slph_wow >= 0 ? "+" : ""}${data.secondary.slph_wow.toFixed(0)}`}
@@ -710,7 +710,7 @@ function WeeklyPageContent() {
               const count = i.count ?? 0;
               if (i.type === "prime_over") return `PRIME over target ${count} of ${DAYS_IN_WEEK} days`;
               if (i.type === "labor_outside") return `Labor outside target ${count} of ${DAYS_IN_WEEK} days`;
-              if (i.type === "slph_below") return `SLPH below target ${count} of ${DAYS_IN_WEEK} days`;
+              if (i.type === "slph_below") return `SLPH below benchmark ${count} of ${DAYS_IN_WEEK} days`;
               return i.message;
             }
             const byStore = new Map<string, typeof data.issues>();
@@ -862,11 +862,11 @@ function WeeklyPageContent() {
                   </div>
                   <div>
                     <h4 className="font-medium text-white mb-1">How to Read the Snapshot</h4>
-                <p className="text-muted text-xs leading-relaxed">Top number is Weekly PRIME %. Below that you see labor %, food+disposables %, and SLPH by store. Green = on target. Red = over. Tap any metric's (i) for the full playbook. Use the store filter to see one location or all. Tap a day to open daily entry and review the numbers that drove the week red.</p>
+                <p className="text-muted text-xs leading-relaxed">Top number is Weekly PRIME %. Below that you see labor %, food+disposables %, and SLPH by store. Green = within typical range. Red = above benchmark. Tap any metric's (i) for the full playbook. Use the store filter to see one location or all. Tap a day to open daily entry and review the numbers that drove the week red.</p>
                   </div>
                   <div>
                     <h4 className="font-medium text-white mb-1">What PRIME Grading Means</h4>
-                    <p className="text-muted text-xs leading-relaxed">PRIME is graded against your target (e.g. 55% for LeeAngelo's). At or below = you're good. Above = you're giving back Gross Profit. Every point over target on a $50K week is about $500 left on the table. The cockpit shows you the week's grade so you know whether to celebrate or act.</p>
+                    <p className="text-muted text-xs leading-relaxed">PRIME is graded against the industry benchmark (e.g. 55% for LeeAngelo's). At or below benchmark is typical. Above benchmark, each point on a $50K week is about $500 in Gross Profit. The cockpit shows the week's grade for context.</p>
                   </div>
                 </div>
               </div>
@@ -886,7 +886,7 @@ function WeeklyPageContent() {
                 <h3 className="text-base font-semibold text-brand mb-1">🎓 Labor %</h3>
                 <p className="text-xs text-muted mb-4">Your biggest controllable expense.</p>
                 <div className="space-y-3 text-sm">
-                  <div><h4 className="font-medium text-white mb-1">How It's Calculated</h4><p className="text-muted text-xs leading-relaxed">Labor % = Total Labor Dollars ÷ Net Sales × 100. Target: 19-21%. On $5K/day, every point over = $50/day = $1,500/month.</p></div>
+                  <div><h4 className="font-medium text-white mb-1">How It's Calculated</h4><p className="text-muted text-xs leading-relaxed">Labor % = Total Labor Dollars ÷ Net Sales × 100. Benchmark: 19-21%. On $5K/day, every point over = $50/day = $1,500/month.</p></div>
                 </div>
               </div>
             )}
@@ -895,7 +895,7 @@ function WeeklyPageContent() {
                 <h3 className="text-base font-semibold text-brand mb-1">🎓 Food + Disposables %</h3>
                 <p className="text-xs text-muted mb-4">Where money disappears without anyone noticing.</p>
                 <div className="space-y-3 text-sm">
-                  <div><h4 className="font-medium text-white mb-1">How It's Calculated</h4><p className="text-muted text-xs leading-relaxed">Food+Disp % = (Food Purchases + Disposables) ÷ Net Sales × 100. Target: ≤35%. Uses 7-day rolling average to smooth delivery-day spikes.</p></div>
+                  <div><h4 className="font-medium text-white mb-1">How It's Calculated</h4><p className="text-muted text-xs leading-relaxed">Food+Disp % = (Food Purchases + Disposables) ÷ Net Sales × 100. Benchmark: ≤35%. Uses 7-day rolling average to smooth delivery-day spikes.</p></div>
                 </div>
               </div>
             )}
@@ -904,7 +904,7 @@ function WeeklyPageContent() {
                 <h3 className="text-base font-semibold text-brand mb-1">🎓 SLPH</h3>
                 <p className="text-xs text-muted mb-4">Sales per Labor Hour — are you optimally staffed?</p>
                 <div className="space-y-3 text-sm">
-                  <div><h4 className="font-medium text-white mb-1">How It's Calculated</h4><p className="text-muted text-xs leading-relaxed">SLPH = Net Sales ÷ Total Labor Hours. Target: $80+. Below 65 means too many people for the volume.</p></div>
+                  <div><h4 className="font-medium text-white mb-1">How It's Calculated</h4><p className="text-muted text-xs leading-relaxed">SLPH = Net Sales ÷ Total Labor Hours. Benchmark: $80+. Below 65 often means too many people for the volume.</p></div>
                 </div>
               </div>
             )}

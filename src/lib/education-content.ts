@@ -13,7 +13,7 @@ export const EDUCATION_CONTENT: Record<string, EducationEntry> = {
   food_cost: {
     title: "Food Cost %",
     whatItMeans:
-      "Total Food Purchases ÷ Total Sales × 100. On $5,000/day in sales, every single point above your target costs you $50 per day — that's $1,500 per month and $18,000 per year walking out the door. Target range: 28–31%. Above 33% is red — something is wrong and it's costing you real money.",
+      "Total Food Purchases ÷ Total Sales × 100. On $5,000/day in sales, every single point above the industry benchmark costs about $50 per day — $1,500 per month and $18,000 per year. Industry benchmark: 28–31%. Above 33% is red — worth watching.",
     whenRedPlaybook: [
       "Consider checking last 3 vendor deliveries for price increases — suppliers raise prices quietly",
       "Consider weighing 10 cheese portions on 16-inch pies against your recipe spec — this is where most waste hides",
@@ -26,7 +26,7 @@ export const EDUCATION_CONTENT: Record<string, EducationEntry> = {
   labor_pct: {
     title: "Labor %",
     whatItMeans:
-      "Total Labor Dollars ÷ Net Sales × 100. Your biggest controllable cost. Target: 19–21% for full-service, 18–20% for QSR. On $5K/day, every point over target is $50/day — $1,500/month. Labor creeps when you overstaff slow days, don't cut when sales drop, or carry too many managers on the clock.",
+      "Total Labor Dollars ÷ Net Sales × 100. The biggest controllable cost. Industry benchmark: 19–21% for full-service, 18–20% for QSR. On $5K/day, every point over that range is about $50/day — $1,500/month. Labor creeps when slow days are overstaffed, sales drop without cutting hours, or too many managers are on the clock.",
     whenRedPlaybook: [
       "Consider comparing scheduled hours to sales by day-part — adjust overlap where sales don't justify it",
       "Consider auditing manager hours: are they on the floor or in the office? Every manager hour should earn its keep",
@@ -39,7 +39,7 @@ export const EDUCATION_CONTENT: Record<string, EducationEntry> = {
   prime_cost: {
     title: "Prime Cost %",
     whatItMeans:
-      "Labor % + Food Cost % (sometimes includes disposables). The number that decides whether you make money. Target: 55–58%. Above 60% and you're giving back Gross Profit. Every point over 55% on a $50K week is about $500 left on the table. Prime is the lever you control — portioning, scheduling, waste, and purchasing.",
+      "Labor % + Food Cost % (sometimes includes disposables). The number that drives whether the store makes money. Industry benchmark: 55–58%. Above 60%, Gross Profit shrinks. Every point over 55% on a $50K week is about $500. Prime is the lever operators control — portioning, scheduling, waste, and purchasing.",
     whenRedPlaybook: [
       "Consider identifying which leg is high — labor or food — and attack that first; don't spread effort thin",
       "Consider locking in a 2-week schedule at target labor % and avoid adding shifts without a sales spike",
@@ -52,7 +52,7 @@ export const EDUCATION_CONTENT: Record<string, EducationEntry> = {
   slph: {
     title: "Sales per Labor Hour",
     whatItMeans:
-      "Net Sales ÷ Total Labor Hours. How much revenue each labor hour produces. Target: $65–$85+ depending on concept. Below $60 and you're either overstaffed or under-selling. SLPH tells you if your labor is productive — same hours with higher SLPH means better deployment or stronger sales, not more bodies.",
+      "Net Sales ÷ Total Labor Hours. How much revenue each labor hour produces. Industry benchmark: $65–$85+ depending on concept. Below $60 often indicates overstaffing or under-selling. SLPH shows whether labor is productive — same hours with higher SLPH usually means better deployment or stronger sales, not more bodies.",
     whenRedPlaybook: [
       "Consider mapping labor hours to day-parts — find the hours where SLPH collapses and trim or redeploy",
       "Consider checking if slow days have the same headcount as busy days — spread labor to match demand",
@@ -65,12 +65,12 @@ export const EDUCATION_CONTENT: Record<string, EducationEntry> = {
   labor_optimization: {
     title: "Labor & Schedule Optimization",
     whatItMeans:
-      "Every shift is a financial decision. Labor optimization means right-sizing staff to demand: match scheduled hours to projected sales so labor % stays on target (e.g. ≤21%) and SLPH stays strong ($65–$85+). Build the schedule around day-part demand, reduce overlap (especially closer/driver), and use projected sales by day-of-week so you see the impact before the week starts — not after.",
+      "Every shift is a financial decision. Labor optimization means right-sizing staff to demand: match scheduled hours to projected sales so labor % stays within the typical range (e.g. ≤21%) and SLPH stays strong ($65–$85+). Build the schedule around day-part demand, reduce overlap (especially closer/driver), and use projected sales by day-of-week to see the impact before the week starts — not after.",
     whenRedPlaybook: [
       "Consider comparing scheduled hours to sales by day-part — adjust overlap where sales don't justify it",
       "Consider checking start times vs first ticket — if you're open at 11, labor at 9 may be waste",
       "Consider whether you need both a mid-shift and a closer. One 10–close might be cheaper",
-      "Consider building SLPH targets by day of week; Mon/Tue need different staffing than Fri/Sat",
+      "Consider building SLPH benchmarks by day of week; Mon/Tue often need different staffing than Fri/Sat",
       "Consider reviewing projected labor % before publishing — trim one shift and see the impact",
     ],
   },
@@ -91,7 +91,7 @@ export const EDUCATION_CONTENT: Record<string, EducationEntry> = {
   transaction_count: {
     title: "Transaction Count",
     whatItMeans:
-      "Number of customer transactions (checks or orders) in the period. Traffic. It's the top of the funnel — no transactions, no sales. Compare to same day last week and last year. Transaction count plus average ticket equals sales; if sales are flat, you need to know whether it's traffic or ticket (or both) that's off.",
+      "Number of customer transactions (checks or orders) in the period. Traffic. It's the top of the funnel — no transactions, no sales. Compare to same day last week and last year. Transaction count plus average ticket equals sales; if sales are flat, it helps to know whether traffic or ticket (or both) is off.",
     whenRedPlaybook: [
       "Consider comparing transactions by day-part — which day-part dropped? That's where to look (operations, marketing, or competition)",
       "Consider checking for POS or integration errors — double rings, voided orders, or missed channels can undercount",
@@ -130,7 +130,7 @@ export const EDUCATION_CONTENT: Record<string, EducationEntry> = {
   daily_sales: {
     title: "Daily Sales",
     whatItMeans:
-      "Total net sales for the day. The top line. Daily sales drive everything — labor targets, food cost targets, and whether you make money. Compare to same day last week and last year. One bad day is a blip; a pattern of down days is a trend. Track the number, then break it into transactions and ticket to know why it moved.",
+      "Total net sales for the day. The top line. Daily sales drive everything — labor and food cost benchmarks, and whether the store makes money. Compare to same day last week and last year. One bad day is a blip; a pattern of down days is a trend. Track the number, then break it into transactions and ticket to know why it moved.",
     whenRedPlaybook: [
       "Consider breaking daily sales into transactions × ticket — which one dropped? That's your focus",
       "Consider comparing to weather, events, and holidays — external factors explain some variance",
@@ -169,7 +169,7 @@ export const EDUCATION_CONTENT: Record<string, EducationEntry> = {
   churn_rate: {
     title: "Employee Churn Rate",
     whatItMeans:
-      "Percentage of employees who leave in a period (e.g. 90 days). Churn rate = (exits ÷ average headcount) × 100. Above 25% quarterly is red — you're bleeding talent and money. Every exit costs $2,800–$4,200 to replace. High churn means constant recruiting, constant training, and weaker operations. Fix churn before scaling hiring.",
+      "Percentage of employees who leave in a period (e.g. 90 days). Churn rate = (exits ÷ average headcount) × 100. Above 25% quarterly is red — worth watching. Every exit costs $2,800–$4,200 to replace. High churn means constant recruiting, constant training, and weaker operations. Many operators address churn before scaling hiring.",
     whenRedPlaybook: [
       "Consider pulling exit reasons for last 90 days — group by scheduling, pay, management, personal; attack the biggest bucket",
       "Consider comparing churn by location — if one store is high, it's usually management or culture",
@@ -182,12 +182,12 @@ export const EDUCATION_CONTENT: Record<string, EducationEntry> = {
   marketing_roas: {
     title: "Marketing ROAS",
     whatItMeans:
-      "Return on Ad Spend. Revenue attributed to ads ÷ Ad Spend. If you spend $500 on Meta and attribute $2,500 in revenue, ROAS = 5x. For pizza, 3x+ is strong; 1–3x is okay; below 1x you're losing money. ROAS tells you which channels and campaigns earn their keep. Blended ROAS across all spend is your overall marketing efficiency.",
+      "Return on Ad Spend. Revenue attributed to ads ÷ Ad Spend. If you spend $500 on Meta and attribute $2,500 in revenue, ROAS = 5x. For pizza, 3x+ is strong; 1–3x is okay; below 1x the campaign is below break-even. ROAS shows which channels and campaigns earn their keep. Blended ROAS across all spend is overall marketing efficiency.",
     whenRedPlaybook: [
       "Consider pausing or reducing spend on campaigns or channels below 1x ROAS — they're costing money",
       "Consider breaking ROAS by campaign and creative — double down on what works, pause what doesn't",
       "Consider checking attribution — are you counting first-touch, last-touch, or blended? Be consistent",
-      "Consider comparing ROAS to LTV/CAC — if CAC from ads is too high, improve offer or targeting",
+      "Consider comparing ROAS to LTV/CAC — if CAC from ads is high, consider refining offer or targeting",
       "Consider testing one variable at a time (audience, creative, offer) so you know what moved the number",
     ],
   },
@@ -270,10 +270,10 @@ export const EDUCATION_CONTENT: Record<string, EducationEntry> = {
   gp_vs_net_profit: {
     title: "GP vs Net Profit",
     whatItMeans:
-      "Your GP P&L shows what you control daily — food, labor, disposables. Your Actual P&L shows everything — rent, insurance, utilities, loans, marketing, miscellaneous. The gap between them is your fixed cost burden. Most operators track GP but never see the full picture until tax season. By then it's too late to fix.",
+      "Your GP P&L shows what you control daily — food, labor, disposables. Your Actual P&L shows everything — rent, insurance, utilities, loans, marketing, miscellaneous. The gap between them is your fixed cost burden. Most operators track GP but don't see the full picture until tax season. By then options are more limited.",
     whenRedPlaybook: [
       "Consider listing fixed cost line items and their percentage of revenue — rent, insurance, utilities, loan payments, marketing, misc",
-      "Consider comparing occupancy (rent ÷ revenue) to the 6% target — if you're at 8%, it may help to grow sales or consider renegotiating",
+      "Consider comparing occupancy (rent ÷ revenue) to the 6% industry benchmark — if occupancy is at 8%, growing sales or renegotiating may help",
       "Consider shopping insurance annually — get 3 quotes every renewal. Most operators overpay by 15-20% because they auto-renew",
       "Consider auditing utilities — LED lighting, programmable thermostats, and fixing the walk-in door seal can cut 10-15%",
       "Consider reviewing loan terms — refinancing at even 1% lower rate saves thousands per year on a $200K note",
@@ -283,9 +283,9 @@ export const EDUCATION_CONTENT: Record<string, EducationEntry> = {
   occupancy_pct: {
     title: "Occupancy % (Rent)",
     whatItMeans:
-      "Rent ÷ Total Revenue × 100. What percentage of every dollar you make goes to your landlord. Target: ≤6% of revenue. At 8% on $40,000/month revenue, you're paying $3,200 for a space that should cost $2,400 at your sales volume — or you need to grow revenue to $53,333/month to bring occupancy down to 6%.",
+      "Rent ÷ Total Revenue × 100. What percentage of every dollar you make goes to your landlord. Industry benchmark: ≤6% of revenue. At 8% on $40,000/month revenue, that's $3,200 for a space that at 6% would be $2,400 at that volume — growing revenue to $53,333/month would bring occupancy down to 6%.",
     whenRedPlaybook: [
-      "Consider calculating your break-even occupancy: current rent ÷ 0.06 = the monthly revenue you need to hit 6%",
+      "Consider calculating break-even occupancy: current rent ÷ 0.06 = the monthly revenue that would hit 6%",
       "If the gap is more than 15% above current sales, consider renegotiating rent before trying to grow into it",
       "Consider renegotiating at lease renewal — come with your P&L showing the occupancy burden. Landlords prefer a stable tenant at lower rent over vacancy",
       "Consider if your space is right-sized — paying for square footage you don't use is dead money",
@@ -296,13 +296,13 @@ export const EDUCATION_CONTENT: Record<string, EducationEntry> = {
   net_profit: {
     title: "Net Profit",
     whatItMeans:
-      "What's actually left after every single expense is paid — food, labor, disposables, rent, insurance, utilities, loans, marketing, everything. This is your real take-home before taxes and owner distributions. Most independent pizzerias operate at 5-12% Net Profit. Below 5% and you're one bad month from trouble.",
+      "What's actually left after every single expense is paid — food, labor, disposables, rent, insurance, utilities, loans, marketing, everything. This is your real take-home before taxes and owner distributions. Most independent pizzerias operate at 5-12% Net Profit. Below 5%, one bad month can create pressure.",
     whenRedPlaybook: [
       "Consider identifying the biggest gap: is it GP (variable costs) or fixed costs dragging you down?",
       "If GP is healthy but net is low, your fixed cost structure is the problem — consider focusing on the occupancy, insurance, and utilities playbooks",
       "If GP is also weak, many operators find it helpful to address variable costs first — they respond faster. Food cost and labor improvements show up in days, not months",
       "Consider calculating your monthly break-even: total fixed costs ÷ GP margin % = minimum monthly revenue needed",
-      "Consider building a 90-day improvement plan: target 1 point improvement in GP per month while holding fixed costs flat",
+      "Consider building a 90-day improvement plan: many operators aim for 1 point improvement in GP per month while holding fixed costs flat",
     ],
   },
 
@@ -322,7 +322,7 @@ export const EDUCATION_CONTENT: Record<string, EducationEntry> = {
   disposables_pct: {
     title: "Disposables & Packaging %",
     whatItMeans:
-      "Total disposable supplies (boxes, bags, cups, napkins, gloves, foil) as a percentage of sales. Target: 3–5%. Often overlooked but adds up — on $5,000/day, every extra point costs $50/day or $1,500/month.",
+      "Total disposable supplies (boxes, bags, cups, napkins, gloves, foil) as a percentage of sales. Industry benchmark: 3–5%. Often overlooked but adds up — on $5,000/day, every extra point is about $50/day or $1,500/month.",
     whenRedPlaybook: [
       "Consider auditing box usage — are staff using 16-inch boxes for 12-inch pizzas?",
       "Consider checking if delivery mix increased — more delivery means more packaging per order",
@@ -335,12 +335,12 @@ export const EDUCATION_CONTENT: Record<string, EducationEntry> = {
   avg_daily_sales: {
     title: "Average Daily Sales",
     whatItMeans:
-      "Total sales for the period divided by number of operating days. Smooths out high and low days to show your true daily run rate. Use this to set daily targets and spot when you're trending above or below your baseline.",
+      "Total sales for the period divided by number of operating days. Smooths out high and low days to show your true daily run rate. Use this to compare to your baseline and spot when you're trending above or below it.",
     whenRedPlaybook: [
       "Consider comparing this period to the same period last year for seasonality",
       "Consider reviewing whether any closures or short days dragged down the average",
       "Consider checking if a specific day of the week is consistently underperforming",
-      "Consider whether marketing or promotions are needed to boost slow days",
+      "Consider whether marketing or promotions could help slow days",
       "Consider evaluating hours of operation — are you open during your highest-demand windows?",
     ],
   },
@@ -348,9 +348,9 @@ export const EDUCATION_CONTENT: Record<string, EducationEntry> = {
   insurance_pct: {
     title: "Insurance %",
     whatItMeans:
-      "Total insurance premiums as a percentage of revenue. Target: 1.5–2.5% of revenue. Includes general liability, workers comp, property, and auto if applicable. Many operators overpay by 15–20% because they auto-renew without shopping.",
+      "Total insurance premiums as a percentage of revenue. Industry benchmark: 1.5–2.5% of revenue. Includes general liability, workers comp, property, and auto if applicable. Many operators overpay by 15–20% because they auto-renew without shopping.",
     whenRedPlaybook: [
-      "Consider getting 3 competitive quotes at your next renewal — don't auto-renew",
+      "Consider getting 3 competitive quotes at your next renewal; many operators save by shopping instead of auto-renewing",
       "Consider bundling policies (GL + property + auto) for multi-policy discounts",
       "Consider reviewing your workers comp classification — incorrect codes can cost thousands",
       "Consider raising deductibles if your claims history is clean — lower premiums immediately",
@@ -361,7 +361,7 @@ export const EDUCATION_CONTENT: Record<string, EducationEntry> = {
   utilities_pct: {
     title: "Utilities %",
     whatItMeans:
-      "Total utility costs (electric, gas, water, trash, internet, phone) as a percentage of revenue. Target: 3–5% of revenue. The walk-in cooler and ovens are your biggest draws — maintenance directly impacts this number.",
+      "Total utility costs (electric, gas, water, trash, internet, phone) as a percentage of revenue. Industry benchmark: 3–5% of revenue. The walk-in cooler and ovens are the biggest draws — maintenance directly impacts this number.",
     whenRedPlaybook: [
       "Consider checking walk-in cooler door seals — a bad seal can add $200+/month to electric",
       "Consider switching to LED lighting throughout — pays for itself in 3–6 months",
@@ -374,7 +374,7 @@ export const EDUCATION_CONTENT: Record<string, EducationEntry> = {
   total_employees: {
     title: "Total Employees",
     whatItMeans:
-      "Headcount across all locations and roles. Drives labor cost, scheduling, and turnover metrics. Track active vs termed and compare to sales to see if you're right-sized for volume.",
+      "Headcount across all locations and roles. Drives labor cost, scheduling, and turnover metrics. Track active vs termed and compare to sales to see if headcount matches volume.",
     whenRedPlaybook: [
       "Consider comparing headcount to same period last year — are you carrying more people for the same sales?",
       "Consider reviewing role mix — too many managers or leads can push labor % up",
@@ -428,7 +428,7 @@ export const EDUCATION_CONTENT: Record<string, EducationEntry> = {
       "Consider comparing your average price to competitors within a 3-mile radius",
       "Consider whether your average ticket aligns with your average menu price — if ticket is much lower, customers may be choosing only cheaper items",
       "Consider whether a modest price increase on your top 10 sellers would significantly affect volume",
-      "Consider your food cost target — menu prices must support the Gross Margin you need",
+      "Consider the food cost benchmark — menu prices need to support the Gross Margin that works for your concept",
       "Consider testing premium items or add-ons that naturally raise the average without changing base prices",
     ],
   },
@@ -448,7 +448,7 @@ export const EDUCATION_CONTENT: Record<string, EducationEntry> = {
   vendor_price_change: {
     title: "Vendor Price Change",
     whatItMeans:
-      "The percentage change in a vendor's cost from one period to the next. Small increases (1-3%) are normal inflation. Increases over 5% deserve attention. Increases over 10% are a red flag that needs immediate review — either the vendor raised prices, you're ordering more, or both.",
+      "The percentage change in a vendor's cost from one period to the next. Small increases (1-3%) are normal inflation. Increases over 5% deserve attention. Increases over 10% are a red flag that are worth reviewing — either the vendor raised prices, you're ordering more, or both.",
     whenRedPlaybook: [
       "Consider requesting an itemized breakdown of the price increase from the vendor",
       "Consider comparing the increase to food inflation indexes (USDA reports monthly)",
@@ -474,7 +474,7 @@ export const EDUCATION_CONTENT: Record<string, EducationEntry> = {
     whatItMeans:
       "Monthly rent divided by monthly revenue. This tells you what percentage of every dollar goes to your landlord. Industry benchmark: 6-8% is healthy, 8-10% is manageable, over 10% is a red flag. Unlike food and labor which you control daily, rent is locked into a lease — so this number is really about whether your revenue justifies your space.",
     whenRedPlaybook: [
-      "Consider that high occupancy cost is usually a revenue problem, not a rent problem — the fix is more sales, not cheaper space",
+      "Consider that high occupancy cost is often a revenue story — many operators address it by growing sales rather than moving",
       "Consider extending hours, adding catering, or increasing marketing to drive revenue up",
       "Consider subleasing unused space or times (breakfast/lunch if you're dinner-only)",
       "Consider negotiating rent reduction at lease renewal using your revenue data as leverage",
@@ -520,7 +520,7 @@ export const EDUCATION_CONTENT: Record<string, EducationEntry> = {
   competitor_intelligence: {
     title: "Competitor Intelligence",
     whatItMeans:
-      "Understanding your competitive landscape helps you price correctly and spot opportunities. You don't need to be the cheapest — you need to know where you sit in your market. PrimeOS monitors your local competition so you can make informed pricing and marketing decisions instead of guessing.",
+      "Understanding your competitive landscape helps with pricing and spotting opportunities. Operators don't have to be the cheapest — knowing where you sit in your market helps. PrimeOS monitors your local competition so you can make informed pricing and marketing decisions instead of guessing.",
     whenRedPlaybook: [
       "Consider that a new competitor opening nearby is not a reason to panic or cut prices",
       "Consider doubling down on your strengths — speed, quality, customer relationships, community presence",
@@ -532,7 +532,7 @@ export const EDUCATION_CONTENT: Record<string, EducationEntry> = {
   market_position: {
     title: "Market Price Position",
     whatItMeans:
-      "Where your prices sit relative to local competitors. Being above market average is fine if your quality, speed, and reputation support it. Being below market average means you may be leaving revenue on the table. The goal is intentional pricing — knowing where you are and why.",
+      "Where your prices sit relative to local competitors. Being above market average is fine if your quality, speed, and reputation support it. Being below market average means you may be leaving revenue on the table. Intentional pricing means knowing where you are and why.",
     whenRedPlaybook: [
       "Consider testing a small price increase on your top 5 sellers — even $0.50 per item can add $500+/month",
       "Consider whether your food quality and customer experience justify a premium position",

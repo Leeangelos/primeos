@@ -237,14 +237,14 @@ export default function HomePage() {
         severity: "red",
         key: "food_cost",
         label: `Food Cost (${storeLabel})`,
-        message: `Food cost is too high. You're at ${formatPct(kpi.foodCostPct)}. Goal is under 33%. Tap for playbook.`,
+        message: `Food cost is above the industry benchmark. You're at ${formatPct(kpi.foodCostPct)}. Benchmark: under 33%. Tap for playbook.`,
       });
     } else if (foodGrade === "yellow") {
       list.push({
         severity: "yellow",
         key: "food_cost",
         label: `Food Cost (${storeLabel})`,
-        message: `Food cost is creeping up. You're at ${formatPct(kpi.foodCostPct)}. Goal is under 33%. Tap for playbook.`,
+        message: `Food cost is creeping up. You're at ${formatPct(kpi.foodCostPct)}. Benchmark: under 33%. Tap for playbook.`,
       });
     }
 
@@ -254,14 +254,14 @@ export default function HomePage() {
         severity: "red",
         key: "labor_pct",
         label: `Labor % (${storeLabel})`,
-        message: `Labor cost is too high. You're at ${formatPct(kpi.laborPct)}. Goal is under 24%. Tap for playbook.`,
+        message: `Labor cost is above the industry benchmark. You're at ${formatPct(kpi.laborPct)}. Benchmark: under 24%. Tap for playbook.`,
       });
     } else if (laborGrade === "yellow") {
       list.push({
         severity: "yellow",
         key: "labor_pct",
         label: `Labor % (${storeLabel})`,
-        message: `Labor is getting close. You're at ${formatPct(kpi.laborPct)}. Goal is under 24%. Tap for playbook.`,
+        message: `Labor is getting close to the benchmark. You're at ${formatPct(kpi.laborPct)}. Benchmark: under 24%. Tap for playbook.`,
       });
     }
 
@@ -271,14 +271,14 @@ export default function HomePage() {
         severity: "red",
         key: "prime_cost",
         label: `PRIME % (${storeLabel})`,
-        message: `PRIME is too high. You're at ${formatPct(kpi.primePct)}. Goal is under 58%. Tap for playbook.`,
+        message: `PRIME is above the industry benchmark. You're at ${formatPct(kpi.primePct)}. Benchmark: under 58%. Tap for playbook.`,
       });
     } else if (primeGrade === "yellow") {
       list.push({
         severity: "yellow",
         key: "prime_cost",
         label: `PRIME % (${storeLabel})`,
-        message: `PRIME is getting close. You're at ${formatPct(kpi.primePct)}. Goal is under 58%. Tap for playbook.`,
+        message: `PRIME is getting close to the benchmark. You're at ${formatPct(kpi.primePct)}. Benchmark: under 58%. Tap for playbook.`,
       });
     }
 
@@ -288,7 +288,7 @@ export default function HomePage() {
         severity: "red",
         key: "daily_sales",
         label: `Today's Sales (${storeLabel})`,
-        message: `Sales are below target today. You're at $${kpi.sales.toLocaleString()}. Goal is $${(dailyTargetSales / 1000).toFixed(1)}K/day. Tap for playbook.`,
+        message: `Sales are below the typical range today. You're at $${kpi.sales.toLocaleString()}. Benchmark: $${(dailyTargetSales / 1000).toFixed(1)}K/day. Tap for playbook.`,
       });
     }
 
@@ -410,7 +410,7 @@ export default function HomePage() {
               ${kpi.sales.toLocaleString("en-US", { maximumFractionDigits: 0 })}
             </div>
             <div className="text-xs text-slate-500">
-              Target: ${(dailyTargetSales / 1000).toFixed(1)}K/day{kpi.isYesterday ? " (Yesterday)" : ""}
+              Benchmark: ${(dailyTargetSales / 1000).toFixed(1)}K/day{kpi.isYesterday ? " (Yesterday)" : ""}
             </div>
           </div>
           <div className="bg-slate-800 rounded-xl p-4 border border-slate-700 min-w-0">
@@ -421,7 +421,7 @@ export default function HomePage() {
             <div className="text-2xl font-bold tabular-nums" style={{ color: gradeToHex(gradeFoodCost(kpi.foodCostPct)) }}>
               {formatPct(kpi.foodCostPct)}
             </div>
-            <div className="text-xs text-slate-500">Target: 28–31%{kpi.isYesterday ? " (Yesterday)" : ""}</div>
+            <div className="text-xs text-slate-500">Benchmark: 28–31%{kpi.isYesterday ? " (Yesterday)" : ""}</div>
           </div>
           <div className="bg-slate-800 rounded-xl p-4 border border-slate-700 min-w-0">
             <div className="flex items-center justify-between mb-1">
@@ -431,7 +431,7 @@ export default function HomePage() {
             <div className="text-2xl font-bold tabular-nums" style={{ color: gradeToHex(gradeLabor(kpi.laborPct)) }}>
               {formatPct(kpi.laborPct)}
             </div>
-            <div className="text-xs text-slate-500">Target: 19–22%{kpi.isYesterday ? " (Yesterday)" : ""}</div>
+            <div className="text-xs text-slate-500">Benchmark: 19–22%{kpi.isYesterday ? " (Yesterday)" : ""}</div>
           </div>
           <div className="bg-slate-800 rounded-xl p-4 border border-slate-700 min-w-0">
             <div className="flex items-center justify-between mb-1">
@@ -441,7 +441,7 @@ export default function HomePage() {
             <div className="text-2xl font-bold tabular-nums" style={{ color: gradeToHex(gradePrime(kpi.primePct)) }}>
               {formatPct(kpi.primePct)}
             </div>
-            <div className="text-xs text-slate-500">Target: ≤55%{kpi.isYesterday ? " (Yesterday)" : ""}</div>
+            <div className="text-xs text-slate-500">Benchmark: ≤55%{kpi.isYesterday ? " (Yesterday)" : ""}</div>
           </div>
         </div>
       ) : (
@@ -452,7 +452,7 @@ export default function HomePage() {
               <EducationInfoIcon metricKey="daily_sales" />
             </div>
             <div className="text-2xl font-bold text-slate-500">—</div>
-            <div className="text-xs text-slate-500">Target: ${(dailyTargetSales / 1000).toFixed(1)}K/day</div>
+            <div className="text-xs text-slate-500">Benchmark: ${(dailyTargetSales / 1000).toFixed(1)}K/day</div>
           </div>
           <div className="bg-slate-800 rounded-xl p-4 border border-slate-700 min-w-0">
             <div className="flex items-center justify-between mb-1">
@@ -460,7 +460,7 @@ export default function HomePage() {
               <EducationInfoIcon metricKey="food_cost" />
             </div>
             <div className="text-2xl font-bold text-slate-500">—</div>
-            <div className="text-xs text-slate-500">Target: 28–31%</div>
+            <div className="text-xs text-slate-500">Benchmark: 28–31%</div>
           </div>
           <div className="bg-slate-800 rounded-xl p-4 border border-slate-700 min-w-0">
             <div className="flex items-center justify-between mb-1">
@@ -468,7 +468,7 @@ export default function HomePage() {
               <EducationInfoIcon metricKey="labor_pct" />
             </div>
             <div className="text-2xl font-bold text-slate-500">—</div>
-            <div className="text-xs text-slate-500">Target: 19–22%</div>
+            <div className="text-xs text-slate-500">Benchmark: 19–22%</div>
           </div>
           <div className="bg-slate-800 rounded-xl p-4 border border-slate-700 min-w-0">
             <div className="flex items-center justify-between mb-1">
@@ -476,7 +476,7 @@ export default function HomePage() {
               <EducationInfoIcon metricKey="prime_cost" />
             </div>
             <div className="text-2xl font-bold text-slate-500">—</div>
-            <div className="text-xs text-slate-500">Target: ≤55%</div>
+            <div className="text-xs text-slate-500">Benchmark: ≤55%</div>
           </div>
         </div>
       )}

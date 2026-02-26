@@ -287,7 +287,7 @@ export default function ReputationPage() {
             <div className="w-full h-2 bg-slate-700 rounded-full overflow-hidden">
               <div className="h-full bg-amber-400 rounded-full" style={{ width: "62%" }} />
             </div>
-            <p className="text-xs text-slate-500 mt-2">You&apos;ve responded to 62% of negative reviews. Goal: 100% within 24 hours. Every response is visible to future customers.</p>
+            <p className="text-xs text-slate-500 mt-2">You&apos;ve responded to 62% of negative reviews. Industry benchmark: many operators aim to respond to 100% within 24 hours. Every response is visible to future customers.</p>
           </div>
 
           <div className="bg-slate-800 rounded-xl border border-slate-700 p-4 mb-4">

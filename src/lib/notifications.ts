@@ -32,7 +32,7 @@ export function generateNotifications(): AppNotification[] {
     store_id: "aurora",
     type: "red_kpi",
     title: "Food Cost RED — Aurora",
-    message: "LeeAngelo's Aurora food cost hit 32.8% yesterday. Target is under 30%. This is the 3rd consecutive day above target.",
+    message: "LeeAngelo's Aurora food cost hit 32.8% yesterday. Industry benchmark is under 30%. This is the 3rd consecutive day above that benchmark.",
     link: "/daily",
     is_read: false,
     created_at: hoursAgo(now, 2),

@@ -767,7 +767,7 @@ export default function VendorTrackerPage() {
               >
                 {formatPct(occPct)}
               </div>
-              <div className="text-[10px] text-slate-600">Target: 6–8%</div>
+              <div className="text-[10px] text-slate-600">Benchmark: 6–8%</div>
             </div>
             <div>
               <div className="text-xs text-slate-500">Lease Renewal</div>
