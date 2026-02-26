@@ -143,11 +143,11 @@ export function BottomNav() {
         />
       )}
 
-      {/* 2. More drawer — slides up ABOVE the nav bar */}
+      {/* 2. More drawer — slides up ABOVE the nav bar; z-[61] so above nav when open; fully hidden when closed */}
       <div
         className={cn(
-          "fixed left-0 right-0 z-50 bg-slate-900 border-t border-slate-700 rounded-t-2xl transition-transform duration-300 ease-out",
-          moreOpen ? "translate-y-0" : "translate-y-full pointer-events-none"
+          "fixed left-0 right-0 z-[61] bg-slate-900 border-t border-slate-700 rounded-t-2xl transition-[transform,opacity] duration-300 ease-out",
+          moreOpen ? "translate-y-0 opacity-100 visible" : "translate-y-full pointer-events-none opacity-0 invisible"
         )}
         style={{
           bottom: "calc(4rem + env(safe-area-inset-bottom, 0px))",
@@ -271,9 +271,9 @@ export function BottomNav() {
         </div>
       </div>
 
-      {/* 3. Nav bar — ALWAYS RENDERED, LAST IN DOM */}
+      {/* 3. Nav bar — ALWAYS RENDERED, LAST IN DOM; z-[60] above common z-50 overlays */}
       <nav
-        className="bottom-nav fixed bottom-0 left-0 right-0 z-50 bg-slate-900 border-t border-slate-800"
+        className="bottom-nav fixed bottom-0 left-0 right-0 z-[60] bg-slate-900 border-t border-slate-800"
         style={{ paddingBottom: "env(safe-area-inset-bottom, 0px)" }}
         aria-label="Bottom navigation"
       >
