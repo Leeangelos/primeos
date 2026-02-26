@@ -131,7 +131,7 @@ export const SEED_SALES_CHANNEL_PCT: Record<string, number> = {
   doordash: 12,
 };
 
-// ============ WEEKLY COCKPIT (last 8 weeks — Kent, improvement arc) ============
+// ============ WEEKLY SNAPSHOT (last 8 weeks — Kent, improvement arc) ============
 export type SeedWeeklyCockpit = {
   week_start: string;
   store_id: string;

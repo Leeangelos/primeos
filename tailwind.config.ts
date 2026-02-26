@@ -8,6 +8,9 @@ const config: Config = {
   ],
   theme: {
     extend: {
+      fontFamily: {
+        serif: ["Playfair Display", "Georgia", "serif"],
+      },
       colors: {
         bg: "rgb(var(--bg) / <alpha-value>)",
         panel: "rgb(var(--panel) / <alpha-value>)",

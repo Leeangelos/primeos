@@ -318,9 +318,9 @@ export default function TrainingPage() {
         </div>
       </CollapsibleSection>
 
-      <CollapsibleSection title="How to Read Your Weekly Cockpit">
+      <CollapsibleSection title="How to Read Your Weekly Snapshot">
         <p className="mb-3">
-          The Weekly Cockpit shows this week vs last week for every KPI. Three columns: This Week, Last Week, Change.
+          The Weekly Snapshot shows this week vs last week for every KPI. Three columns: This Week, Last Week, Change.
         </p>
         <p className="mb-3">
           Green change = improving. Red change = getting worse. The direction matters more than the absolute number — a food cost of 31% that was 34% last week is a win, even though 31% is still yellow.

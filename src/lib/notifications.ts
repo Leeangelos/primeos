@@ -123,7 +123,7 @@ export function generateNotifications(): AppNotification[] {
     id: "n-9",
     store_id: "kent",
     type: "system",
-    title: "Weekly Cockpit Ready — Kent",
+    title: "Weekly Snapshot Ready — Kent",
     message: "Your Week 8 cockpit is ready. Sales up 4.2% vs last week. Tap to review.",
     link: "/weekly",
     is_read: true,

@@ -1,9 +1,9 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { Sparkles, Check } from "lucide-react";
+import { TrendingUp, BookOpen, Trophy, ChevronDown, Flame, Target, DollarSign } from "lucide-react";
 import { useTier } from "@/src/lib/tier-context";
-import { getTierLabel, TIERS } from "@/src/lib/tier-config";
+import { createClient } from "@/lib/supabase";
 
 const DEMO_TIERS = [
   { id: "free", label: "Free", color: "text-slate-400" },
@@ -13,20 +13,95 @@ const DEMO_TIERS = [
   { id: "enterprise", label: "Enterprise", color: "text-purple-400" },
 ] as const;
 
-function FeatureRow({ text }: { text: string }) {
-  return (
-    <li className="flex items-start gap-2">
-      <Check className="w-4 h-4 text-emerald-400 mt-0.5 flex-shrink-0" aria-hidden />
-      <span className="text-sm text-slate-300">{text}</span>
-    </li>
-  );
-}
+const MISTAKES = [
+  {
+    icon: DollarSign,
+    bgColor: "bg-red-600/20",
+    iconColor: "text-red-400",
+    title: "We were bleeding $5,100/month on food cost",
+    story:
+      "Our food cost was 34% — we thought it was 30%. Cheese overportioning on every pizza (14oz instead of 12oz target), unrecorded employee meals, and a Hillcrest price increase on mozzarella that went unnoticed for 4 months. On 300+ pizzas a day, those 2 extra ounces added up to $1,200/month just on cheese.",
+    feature: "Food Cost Analysis",
+  },
+  {
+    icon: Flame,
+    bgColor: "bg-amber-600/20",
+    iconColor: "text-amber-400",
+    title: "Overtime was eating our labor budget alive",
+    story:
+      "One location was at 28% labor while the others were at 22%. The difference? Two employees were consistently hitting 48+ hours because the schedule wasn't being watched. Nobody noticed because 'they always work hard.' Hard work shouldn't cost you $2,800/month in unnecessary overtime.",
+    feature: "Schedule",
+  },
+  {
+    icon: Target,
+    bgColor: "bg-blue-600/20",
+    iconColor: "text-blue-400",
+    title: "Our CC processor was overcharging us",
+    story:
+      "We were quoted 2.6% processing. Actual effective rate? 3.8%. On $45,000/month in card transactions, that's $540/month — $6,480/year — just gone. We only caught it because PrimeOS calculated the effective rate from our actual settlement data.",
+    feature: "Vendor Tracker",
+  },
+  {
+    icon: TrendingUp,
+    bgColor: "bg-emerald-600/20",
+    iconColor: "text-emerald-400",
+    title: "We had no idea what 'good' looked like",
+    story:
+      "Is 31% food cost good? Is 23% labor okay? We had no benchmarks, no targets, no grades. We were guessing every single day. The day we set targets and graded ourselves honestly was the day everything changed. Green means breathe. Red means dig in. That simple.",
+    feature: "Daily KPIs",
+  },
+  {
+    icon: BookOpen,
+    bgColor: "bg-purple-600/20",
+    iconColor: "text-purple-400",
+    title: "Nobody taught us how to read our own numbers",
+    story:
+      "Our accountant sent P&Ls that looked like a foreign language. We'd nod and say 'looks good' when we had no idea what gross profit margin meant or why it mattered. PrimeOS explains every number in plain English because if you don't understand it, you can't fix it.",
+    feature: "Training Guide",
+  },
+];
+
+const currentStreak = 5;
+const playbooksRead = 8;
 
 export default function BillingPage() {
   const { currentTier, setCurrentTier } = useTier();
-  const [selectedPlan, setSelectedPlan] = useState<string | null>(null);
-  const [confirmationMessage, setConfirmationMessage] = useState<string | null>(null);
+  const [expandedMistake, setExpandedMistake] = useState<number | null>(null);
   const [resetToast, setResetToast] = useState<string | null>(null);
+  const [daysTracked, setDaysTracked] = useState<number>(0);
+
+  useEffect(() => {
+    let cancelled = false;
+    async function loadDaysTracked() {
+      try {
+        const supabase = createClient();
+        const { data: storeRow } = await supabase.from("stores").select("id").limit(1).maybeSingle();
+        if (cancelled || !storeRow?.id) {
+          if (!cancelled) setDaysTracked(0);
+          return;
+        }
+        const { data: rows, error } = await supabase
+          .from("daily_kpis")
+          .select("business_date")
+          .eq("store_id", storeRow.id);
+        if (cancelled) return;
+        if (error || !rows) {
+          setDaysTracked(0);
+          return;
+        }
+        const distinctDates = new Set(rows.map((r) => r.business_date));
+        setDaysTracked(distinctDates.size);
+      } catch {
+        if (!cancelled) setDaysTracked(0);
+      }
+    }
+    loadDaysTracked();
+    return () => { cancelled = true; };
+  }, []);
+
+  const toggleMistake = (i: number) => {
+    setExpandedMistake((prev) => (prev === i ? null : i));
+  };
 
   const handleReset = (keys: string[], label: string) => {
     keys.forEach((key) => {
@@ -42,353 +117,240 @@ export default function BillingPage() {
     }, 300);
   };
 
-  useEffect(() => {
-    if (!confirmationMessage) return;
-    const t = setTimeout(() => setConfirmationMessage(null), 2500);
-    return () => clearTimeout(t);
-  }, [confirmationMessage]);
-
-  const handleStartPlan = () => {
-    if (!selectedPlan) return;
-    setCurrentTier(selectedPlan);
-    setSelectedPlan(null);
-    setConfirmationMessage(`${getTierLabel(selectedPlan)} plan activated!`);
-    window.scrollTo({ top: 0, behavior: "smooth" });
-  };
-
-  const priceLabel = (tierKey: string) => {
-    const price = TIERS[tierKey as keyof typeof TIERS]?.price;
-    return price != null ? `$${price}/mo` : "Custom";
-  };
-
   return (
-    <div className="space-y-4 pb-28">
+    <div className="space-y-6 pb-28">
       {resetToast && (
         <div
-          className="fixed z-50 bg-emerald-600/20 border border-emerald-700/30 rounded-xl px-4 py-2.5 shadow-lg left-1/2 -translate-x-1/2"
+          className="fixed z-50 bg-slate-700/90 border border-slate-600 rounded-xl px-4 py-2.5 shadow-lg left-1/2 -translate-x-1/2"
           style={{ top: "calc(4rem + env(safe-area-inset-top, 0px))" }}
         >
-          <p className="text-xs text-emerald-400 font-medium">{resetToast} reset — reloading...</p>
-        </div>
-      )}
-      <div className="mb-2">
-        <h1 className="text-lg font-semibold sm:text-2xl text-white">Choose Your Plan</h1>
-        <p className="text-sm text-slate-400 mt-1">Every tier pays for itself in the first week.</p>
-      </div>
-
-      {confirmationMessage && (
-        <div className="bg-emerald-950/50 rounded-xl border border-emerald-700/50 p-3 mb-4 flex items-center gap-2">
-          <Check className="w-4 h-4 text-emerald-400 shrink-0" aria-hidden />
-          <span className="text-sm font-medium text-emerald-400">{confirmationMessage}</span>
+          <p className="text-xs text-slate-200 font-medium">{resetToast} reset — reloading...</p>
         </div>
       )}
 
-      {/* Trial / Active plan banner — Enterprise: no trial; Owner: trial; others: plan active */}
-      {currentTier === "enterprise" ? (
-        <div className="bg-emerald-950/30 rounded-xl border border-emerald-800/50 p-4 mb-6">
-          <div className="flex items-center gap-2 mb-1">
-            <Check className="w-4 h-4 text-emerald-400" aria-hidden />
-            <span className="text-sm font-semibold text-emerald-400">Enterprise — Full Access</span>
-          </div>
-          <p className="text-sm text-slate-300">Demo: all pages unlocked. Use the switcher below to simulate lower tiers.</p>
-        </div>
-      ) : currentTier === "owner" ? (
-        <div className="bg-blue-950/30 rounded-xl border border-blue-800/50 p-4 mb-6">
-          <div className="flex items-center gap-2 mb-1">
-            <Sparkles className="w-4 h-4 text-blue-400" aria-hidden />
-            <span className="text-sm font-semibold text-blue-400">30-Day Free Trial Active</span>
-          </div>
-          <p className="text-sm text-slate-300">You have full access to everything. After your trial, choose the plan that fits.</p>
-          <p className="text-xs text-slate-500 mt-1">Trial ends March 24, 2026</p>
-        </div>
-      ) : (
-        <div className="bg-emerald-950/30 rounded-xl border border-emerald-800/50 p-4 mb-6">
-          <div className="flex items-center gap-2 mb-1">
-            <Check className="w-4 h-4 text-emerald-400" aria-hidden />
-            <span className="text-sm font-semibold text-emerald-400">{getTierLabel(currentTier)} Plan Active</span>
-          </div>
-          <p className="text-sm text-slate-300">You&apos;re on the {getTierLabel(currentTier)} plan.</p>
-        </div>
-      )}
-
-      {/* Tier 1 — Free */}
-      <div className="bg-slate-800 rounded-xl border border-slate-700 p-5 mb-4 relative">
-        {currentTier === "free" && (
-          <div className="absolute -top-3 right-4 bg-slate-600 text-white text-xs font-bold px-3 py-1 rounded-full">CURRENT</div>
-        )}
-        <div className="flex justify-between items-start mb-3">
-          <div>
-            <h3 className="text-lg font-bold text-white">Free</h3>
-            <p className="text-xs text-slate-400">After 30-day trial</p>
-          </div>
-          <div className="text-right">
-            <span className="text-2xl font-bold text-white">$0</span>
-            <span className="text-xs text-slate-500">/mo</span>
-          </div>
-        </div>
-        <ul className="space-y-2 mb-4">
-          <FeatureRow text="Daily KPIs + Grading" />
-          <FeatureRow text="Weekly Cockpit" />
-          <FeatureRow text="Training Guide" />
-          <FeatureRow text="Education previews (upgrade for full playbooks)" />
-        </ul>
-        <button type="button" className="w-full py-3 rounded-xl bg-slate-700 text-slate-300 text-sm font-semibold">
-          Current Plan After Trial
-        </button>
+      {/* 1. HERO MESSAGE */}
+      <div className="mb-8 pt-4">
+        <h1 className="font-serif text-3xl font-bold text-white">
+          We Built This Because We Needed It.
+        </h1>
+        <p className="text-slate-400 text-base mt-3 max-w-prose leading-relaxed">
+          Not because we saw a market opportunity. Because we were bleeding money we couldn&apos;t see, and nobody had built the thing that showed us where it was going.
+        </p>
       </div>
 
-      {/* Tier 2 — Starter */}
-      <div className="bg-slate-800 rounded-xl border border-slate-700 p-5 mb-4 relative">
-        {currentTier === "starter" && (
-          <div className="absolute -top-3 right-4 bg-slate-600 text-white text-xs font-bold px-3 py-1 rounded-full">CURRENT</div>
-        )}
-        <div className="flex justify-between items-start mb-3">
-          <div>
-            <h3 className="text-lg font-bold text-white">Starter</h3>
-            <p className="text-xs text-slate-400">For operators getting serious</p>
-          </div>
-          <div className="text-right">
-            <span className="text-2xl font-bold text-white">$79</span>
-            <span className="text-xs text-slate-500">/mo</span>
-          </div>
-        </div>
-        <ul className="space-y-2 mb-4">
-          <FeatureRow text="Everything in Free" />
-          <FeatureRow text="Morning Brief (AI)" />
-          <FeatureRow text="Full playbooks on all metrics" />
-          <FeatureRow text="GP P&L" />
-          <FeatureRow text="Smart Schedule" />
-        </ul>
-        <button
-          type="button"
-          onClick={() => setSelectedPlan(selectedPlan === "starter" ? null : "starter")}
-          className={`w-full py-3 rounded-xl text-sm font-semibold transition-colors ${
-            selectedPlan === "starter"
-              ? "bg-[#E65100] text-white ring-2 ring-[#E65100] ring-offset-2 ring-offset-slate-800"
-              : "bg-blue-600 hover:bg-blue-500 text-white"
-          }`}
-        >
-          {selectedPlan === "starter" ? "Selected — Start below" : "Upgrade to Starter"}
-        </button>
-      </div>
-
-      {/* Tier 3 — Operator (Most Popular) */}
-      <div className="bg-slate-800 rounded-xl border-2 border-[#E65100] p-5 mb-4 relative scale-[1.02] shadow-lg shadow-orange-500/10">
-        <div className="absolute -top-3 left-1/2 -translate-x-1/2 bg-[#E65100] text-white text-xs font-bold px-4 py-1.5 rounded-full">
-          MOST POPULAR
-        </div>
-        {currentTier === "operator" && (
-          <div className="absolute -top-3 right-4 bg-slate-600 text-white text-xs font-bold px-3 py-1 rounded-full">CURRENT</div>
-        )}
-        <div className="flex justify-between items-start mb-3 mt-1">
-          <div>
-            <h3 className="text-lg font-bold text-white">Operator</h3>
-            <p className="text-xs text-slate-400">The full daily toolkit</p>
-          </div>
-          <div className="text-right">
-            <span className="text-2xl font-bold text-white">$149</span>
-            <span className="text-xs text-slate-500">/mo</span>
-          </div>
-        </div>
-        <ul className="space-y-2 mb-4">
-          <FeatureRow text="Everything in Starter" />
-          <FeatureRow text="Recipes + Food Costing" />
-          <FeatureRow text="Inventory Tracking" />
-          <FeatureRow text="Invoice Scanner (AI OCR)" />
-          <FeatureRow text="Sales Report + Comparisons" />
-          <FeatureRow text="Actual P&L (CPA Upload)" />
-          <FeatureRow text="Manager Tasks" />
-          <FeatureRow text="Team Chat" />
-        </ul>
-        <button
-          type="button"
-          onClick={() => setSelectedPlan(selectedPlan === "operator" ? null : "operator")}
-          className={`w-full py-3 rounded-xl text-sm font-semibold transition-colors ${
-            selectedPlan === "operator"
-              ? "bg-[#E65100] text-white ring-2 ring-[#E65100] ring-offset-2 ring-offset-slate-800"
-              : "bg-[#E65100] hover:bg-orange-600 text-white"
-          }`}
-        >
-          {selectedPlan === "operator" ? "Selected — Start below" : "Upgrade to Operator"}
-        </button>
-      </div>
-
-      {/* Tier 4 — Owner (Best Value) */}
-      <div className="bg-slate-800 rounded-xl border-2 border-emerald-600 p-5 mb-4 relative">
-        <div className="absolute -top-3 left-1/2 -translate-x-1/2 bg-emerald-600 text-white text-xs font-bold px-4 py-1.5 rounded-full">BEST VALUE</div>
-        {currentTier === "owner" && (
-          <div className="absolute -top-3 right-4 bg-slate-600 text-white text-xs font-bold px-3 py-1 rounded-full">CURRENT</div>
-        )}
-        <div className="flex justify-between items-start mb-3 mt-1">
-          <div>
-            <h3 className="text-lg font-bold text-white">Owner</h3>
-            <p className="text-xs text-slate-400">Everything unlocked</p>
-          </div>
-          <div className="text-right">
-            <span className="text-2xl font-bold text-white">$249</span>
-            <span className="text-xs text-slate-500">/mo</span>
-          </div>
-        </div>
-        <ul className="space-y-2 mb-4">
-          <FeatureRow text="Everything in Operator" />
-          <FeatureRow text="People Economics + CAC/LTV" />
-          <FeatureRow text="Marketing ROI + ROAS" />
-          <FeatureRow text="DoorDash Economics" />
-          <FeatureRow text="Catering & Large Orders" />
-          <FeatureRow text="Hiring Pipeline" />
-          <FeatureRow text="Local Intelligence" />
-          <FeatureRow text="Team Merch Store" />
-          <FeatureRow text="Trusted Rolodex" />
-        </ul>
-        <button
-          type="button"
-          onClick={() => setSelectedPlan(selectedPlan === "owner" ? null : "owner")}
-          className={`w-full py-3 rounded-xl text-sm font-semibold transition-colors ${
-            selectedPlan === "owner"
-              ? "bg-[#E65100] text-white ring-2 ring-[#E65100] ring-offset-2 ring-offset-slate-800"
-              : "bg-blue-600 hover:bg-blue-500 text-white"
-          }`}
-        >
-          {selectedPlan === "owner" ? "Selected — Start below" : "Upgrade to Owner"}
-        </button>
-      </div>
-
-      {/* Tier 5 — Enterprise */}
-      <div className="bg-slate-800 rounded-xl border border-slate-700 p-5 mb-4 relative">
-        {currentTier === "enterprise" && (
-          <div className="absolute -top-3 right-4 bg-slate-600 text-white text-xs font-bold px-3 py-1 rounded-full">CURRENT</div>
-        )}
-        <div className="flex justify-between items-start mb-3">
-          <div>
-            <h3 className="text-lg font-bold text-white">Enterprise</h3>
-            <p className="text-xs text-slate-400">Multi-location groups + franchises</p>
-          </div>
-          <div className="text-right">
-            <span className="text-lg font-bold text-slate-400">Custom</span>
-          </div>
-        </div>
-        <ul className="space-y-2 mb-4">
-          <FeatureRow text="Everything in Owner" />
-          <FeatureRow text="Multi-location leaderboard" />
-          <FeatureRow text="Intelligence Platform + benchmarking" />
-          <FeatureRow text="Franchise toolkit" />
-          <FeatureRow text="Dedicated onboarding + support" />
-        </ul>
-        <button type="button" className="w-full py-3 rounded-xl bg-slate-700 hover:bg-slate-600 text-white text-sm font-semibold transition-colors">
-          Let&apos;s Talk
-        </button>
-      </div>
-
-      {/* Why Operators Upgrade */}
-      <div className="bg-slate-800 rounded-xl border border-slate-700 p-4 mt-2">
-        <h4 className="text-sm font-semibold text-slate-400 uppercase tracking-wide mb-3">Why Operators Upgrade</h4>
+      {/* 2. THE TRUTH CARD */}
+      <div className="bg-slate-800 rounded-2xl border border-slate-700 p-5 mb-4">
+        <h2 className="text-sm font-semibold text-white mb-3">Here&apos;s the truth</h2>
         <p className="text-sm text-slate-300 leading-relaxed mb-3">
-          The average independent pizzeria wastes $18,000/year on food cost overruns they can&apos;t see. PrimeOS catches it in the first week. The Operator plan pays for itself before your second billing cycle.
+          You&apos;re not doing anything wrong. You&apos;re just running your business without seeing the full picture. Most operators are. You&apos;re making decisions based on gut feeling when the numbers are right there — you just couldn&apos;t see them until now.
         </p>
         <p className="text-sm text-slate-300 leading-relaxed">
-          Cancel anytime. No contracts. No setup fees. If PrimeOS doesn&apos;t save you more than it costs, you shouldn&apos;t be paying for it.
+          PrimeOS puts every number in front of you, in plain English, in 90 seconds a day. No accounting degree needed. No consultants. Just your data, explained like a friend who happens to know the math.
         </p>
       </div>
 
-      {/* Cancel plan */}
-      <div className="text-center py-4">
-        <p className="text-xs text-slate-600">
-          To cancel your plan, contact <a href="mailto:support@primeos.com" className="text-slate-500 underline">support@primeos.com</a>
+      {/* 3. CASE STUDY */}
+      <div className="bg-slate-800 rounded-2xl border border-slate-700 p-5 mb-4">
+        <h2 className="font-serif text-sm font-semibold text-white mb-3">A story that might sound familiar</h2>
+        <p className="text-sm text-slate-300 leading-relaxed mb-3">
+          A 3-location pizza operator in Northeast Ohio was doing $1.5 million a year. Busy every night. Staff worked hard. By all appearances, things were fine.
+        </p>
+        <p className="text-sm text-slate-300 leading-relaxed mb-3">
+          But the books told a different story. Food cost was running 34% — they thought it was 30%. That gap? $5,100 a month walking out the back door. Cheese overportioning. Unrecorded comps. A vendor price increase nobody caught for 4 months.
+        </p>
+        <p className="text-sm text-slate-300 leading-relaxed mb-3">
+          Labor looked &quot;fine&quot; at 24% until they realized one location was at 28% because of unchecked overtime. That&apos;s $2,800 a month in overtime they didn&apos;t know existed.
+        </p>
+        <p className="text-sm text-slate-300 leading-relaxed mb-3">
+          In 60 days of tracking with PrimeOS, they found $7,900 a month in leaks. Same staff. Same menu. Same customers. Just visibility.
+        </p>
+        <p className="text-sm text-[#E65100] font-medium">
+          That operator is the person who built this app. These were our mistakes. We built PrimeOS so you don&apos;t have to make them.
         </p>
       </div>
 
-      <div className="bg-slate-700/50 rounded-xl p-4 mt-6 mb-4">
-        <p className="text-xs text-slate-500 uppercase tracking-wide mb-2">Demo: Switch Tier</p>
-        <p className="text-xs text-slate-400 mb-3">Tap any tier to switch immediately. Lock icons and upgrade prompts update for demos.</p>
-        <div className="flex flex-wrap gap-2 items-center">
-          {DEMO_TIERS.map((tier) => {
-            const isActive = currentTier === tier.id;
-            return (
+      {/* 4. THE MISTAKES WE MADE */}
+      <div className="bg-slate-800 rounded-2xl border border-slate-700 p-5 mb-4">
+        <h2 className="font-serif text-sm font-semibold text-white mb-4">The Mistakes We Made (So You Don&apos;t Have To)</h2>
+        {MISTAKES.map((mistake, i) => {
+          const Icon = mistake.icon;
+          return (
+            <div key={i} className="mb-2">
               <button
-                key={tier.id}
                 type="button"
-                onClick={() => {
-                  setCurrentTier(tier.id);
-                  try {
-                    localStorage.setItem("primeos-demo-tier", tier.id);
-                  } catch {
-                    // ignore
-                  }
-                }}
-                className={`px-3 py-2 rounded-lg text-xs font-medium transition-colors flex items-center gap-1.5 min-h-[44px] ${
-                  isActive ? "bg-slate-600 text-white ring-2 ring-white/50" : `bg-slate-700 hover:bg-slate-600 hover:text-slate-300 ${tier.color}`
-                }`}
+                onClick={() => toggleMistake(i)}
+                className="w-full text-left"
               >
-                <span>{tier.label}</span>
-                {isActive && <span className="bg-slate-500 text-white text-[10px] font-bold px-1.5 py-0.5 rounded">CURRENT</span>}
+                <div className="flex items-center justify-between p-3 rounded-xl bg-slate-700/30 hover:bg-slate-700/50 transition-colors">
+                  <div className="flex items-center gap-3">
+                    <div className={`w-8 h-8 rounded-lg ${mistake.bgColor} flex items-center justify-center flex-shrink-0`}>
+                      <Icon className={`w-4 h-4 ${mistake.iconColor}`} />
+                    </div>
+                    <span className="text-sm text-white">{mistake.title}</span>
+                  </div>
+                  <ChevronDown
+                    className={`w-4 h-4 text-slate-500 transition-transform flex-shrink-0 ${expandedMistake === i ? "rotate-180" : ""}`}
+                  />
+                </div>
               </button>
-            );
-          })}
+              {expandedMistake === i && (
+                <div className="px-3 pb-3 pt-2">
+                  <p className="text-xs text-slate-400 leading-relaxed mb-2">{mistake.story}</p>
+                  <div className="flex items-center gap-2 px-3 py-2 rounded-lg bg-[#E65100]/10 border border-[#E65100]/20">
+                    <span className="text-xs text-[#E65100]">
+                      💡 PrimeOS now catches this automatically on the {mistake.feature} page
+                    </span>
+                  </div>
+                </div>
+              )}
+            </div>
+          );
+        })}
+      </div>
+
+      {/* 5. YOUR PROGRESS */}
+      <div className="bg-slate-800 rounded-2xl border border-slate-700 p-5 mb-4">
+        <div className="flex items-center gap-2 mb-4">
+          <Trophy className="w-5 h-5 text-amber-400" />
+          <h2 className="text-sm font-semibold text-white">Your Progress</h2>
         </div>
-        <button
-          type="button"
-          onClick={() => {
-            setCurrentTier("enterprise");
-            try {
-              localStorage.setItem("primeos-demo-tier", "enterprise");
-            } catch {
-              // ignore
-            }
-          }}
-          className="w-full py-2 rounded-lg bg-purple-600/20 border border-purple-700/30 text-purple-400 text-xs font-medium mt-2"
-        >
-          Reset to Enterprise (Full Access)
-        </button>
-        <div className="flex flex-wrap gap-2 items-center mt-3 pt-3 border-t border-slate-600">
-          <button
-            type="button"
-            onClick={() => handleReset(["primeos-tos-accepted", "primeos-tos-accepted-at"], "Terms of Service")}
-            className="px-3 py-2 rounded-lg text-xs font-medium bg-slate-700 text-slate-400 active:bg-slate-600 touch-manipulation min-h-[44px]"
+        <div className="grid grid-cols-3 gap-3 mb-4">
+          <div className="text-center">
+            <div className="text-2xl font-bold text-white">{daysTracked}</div>
+            <div className="text-[10px] text-slate-500 mt-0.5">Days Tracked</div>
+          </div>
+          <div className="text-center">
+            <div className="text-2xl font-bold text-[#E65100]">{currentStreak}</div>
+            <div className="text-[10px] text-slate-500 mt-0.5">Day Streak 🔥</div>
+          </div>
+          <div className="text-center">
+            <div className="text-2xl font-bold text-amber-400">{playbooksRead}</div>
+            <div className="text-[10px] text-slate-500 mt-0.5">Playbooks Read</div>
+          </div>
+        </div>
+        <div className="space-y-2">
+          <div
+            className={`flex items-center gap-3 px-3 py-2 rounded-lg ${daysTracked >= 7 ? "bg-amber-600/10 border border-amber-700/30" : "bg-slate-700/30 border border-slate-700"}`}
           >
-            Reset TOS
-          </button>
-          <button
-            type="button"
-            onClick={() => handleReset(["primeos-consent-dismissed"], "Cookie Consent")}
-            className="px-3 py-2 rounded-lg text-xs font-medium bg-slate-700 text-slate-400 active:bg-slate-600 touch-manipulation min-h-[44px]"
+            <span className="text-sm">{daysTracked >= 7 ? "✅" : "⬜"}</span>
+            <span className={`text-xs ${daysTracked >= 7 ? "text-amber-400" : "text-slate-500"}`}>
+              First week — you showed up 7 days straight
+            </span>
+          </div>
+          <div
+            className={`flex items-center gap-3 px-3 py-2 rounded-lg ${daysTracked >= 30 ? "bg-amber-600/10 border border-amber-700/30" : "bg-slate-700/30 border border-slate-700"}`}
           >
-            Reset Consent
-          </button>
-          <button
-            type="button"
-            onClick={() => handleReset(["primeos-notification-prompt-dismissed"], "Notifications")}
-            className="px-3 py-2 rounded-lg text-xs font-medium bg-slate-700 text-slate-400 active:bg-slate-600 touch-manipulation min-h-[44px]"
+            <span className="text-sm">{daysTracked >= 30 ? "✅" : "⬜"}</span>
+            <span className={`text-xs ${daysTracked >= 30 ? "text-amber-400" : "text-slate-500"}`}>
+              30 days — you know more than 90% of operators
+            </span>
+          </div>
+          <div
+            className={`flex items-center gap-3 px-3 py-2 rounded-lg ${daysTracked >= 90 ? "bg-amber-600/10 border border-amber-700/30" : "bg-slate-700/30 border border-slate-700"}`}
           >
-            Reset Notifications
-          </button>
-          <button
-            type="button"
-            onClick={() => handleReset(["primeos-a2hs-dismissed"], "Add to Home Screen")}
-            className="px-3 py-2 rounded-lg text-xs font-medium bg-slate-700 text-slate-400 active:bg-slate-600 touch-manipulation min-h-[44px]"
-          >
-            Reset A2HS
-          </button>
+            <span className="text-sm">{daysTracked >= 90 ? "✅" : "⬜"}</span>
+            <span className={`text-xs ${daysTracked >= 90 ? "text-amber-400" : "text-slate-500"}`}>
+              90 days — this is a habit now. Your business will never be the same.
+            </span>
+          </div>
         </div>
       </div>
 
-      {/* Sticky checkout bar */}
-      {selectedPlan && selectedPlan !== "enterprise" && (
-        <div className="fixed bottom-20 left-0 right-0 z-40 bg-slate-800 border-t border-slate-700 px-4 py-3 flex items-center justify-between">
-          <div>
-            <p className="text-sm text-white font-semibold">
-              {getTierLabel(selectedPlan)} Plan — {priceLabel(selectedPlan)}
-            </p>
-            <p className="text-xs text-slate-400">30-day free trial included</p>
+      {/* 6. CLOSING MESSAGE */}
+      <div className="text-center mb-6 px-4">
+        <p className="text-sm text-slate-400 leading-relaxed mb-2">Driven by gratitude. Give without expectation.</p>
+        <p className="text-sm text-slate-400 leading-relaxed mb-4">Community above competition.</p>
+        <p className="font-serif text-sm text-[#E65100] font-semibold">We want you to win.</p>
+      </div>
+
+      {/* 7. PARTNER BADGE */}
+      <div className="bg-slate-800 rounded-xl border border-slate-700 p-4 mb-6">
+        <div className="text-xs text-slate-500 uppercase tracking-widest mb-2">Partner Program</div>
+        <h3 className="text-white font-semibold text-base">You May Already Have Access</h3>
+        <p className="text-slate-400 text-sm mt-2 leading-relaxed">
+          Some operators receive PrimeOS through their existing business relationships. If you think that might be you — it probably is. Ask whoever keeps your walk-in stocked.
+        </p>
+      </div>
+
+      {/* 8. DEVELOPER TOOLS */}
+      <details className="mb-8">
+        <summary className="text-[10px] text-slate-600 cursor-pointer py-2">Developer Tools</summary>
+        <div className="mt-2 p-3 rounded-xl bg-slate-800 border border-slate-700 space-y-2">
+          <p className="text-xs text-slate-500 uppercase tracking-wide mb-2">Demo: Switch Tier</p>
+          <p className="text-xs text-slate-400 mb-3">For internal demos only. Tier gating can be simulated here.</p>
+          <div className="flex flex-wrap gap-2 items-center">
+            {DEMO_TIERS.map((tier) => {
+              const isActive = currentTier === tier.id;
+              return (
+                <button
+                  key={tier.id}
+                  type="button"
+                  onClick={() => {
+                    setCurrentTier(tier.id);
+                    try {
+                      localStorage.setItem("primeos-demo-tier", tier.id);
+                    } catch {
+                      // ignore
+                    }
+                  }}
+                  className={`px-3 py-2 rounded-lg text-xs font-medium transition-colors flex items-center gap-1.5 min-h-[44px] ${
+                    isActive ? "bg-slate-600 text-white ring-2 ring-white/50" : `bg-slate-700 hover:bg-slate-600 hover:text-slate-300 ${tier.color}`
+                  }`}
+                >
+                  <span>{tier.label}</span>
+                  {isActive && (
+                    <span className="bg-slate-500 text-white text-[10px] font-bold px-1.5 py-0.5 rounded">CURRENT</span>
+                  )}
+                </button>
+              );
+            })}
           </div>
           <button
             type="button"
-            onClick={handleStartPlan}
-            className="px-5 py-2.5 bg-[#E65100] hover:bg-orange-600 text-white text-sm font-semibold rounded-xl transition-colors"
+            onClick={() => {
+              setCurrentTier("enterprise");
+              try {
+                localStorage.setItem("primeos-demo-tier", "enterprise");
+              } catch {
+                // ignore
+              }
+            }}
+            className="w-full py-2 rounded-lg bg-purple-600/20 border border-purple-700/30 text-purple-400 text-xs font-medium mt-2"
           >
-            Start Plan
+            Reset to Enterprise (Full Access)
           </button>
+          <div className="flex flex-wrap gap-2 items-center mt-3 pt-3 border-t border-slate-600">
+            <button
+              type="button"
+              onClick={() => handleReset(["primeos-tos-accepted", "primeos-tos-accepted-at"], "Terms of Service")}
+              className="px-3 py-2 rounded-lg text-xs font-medium bg-slate-700 text-slate-400 active:bg-slate-600 touch-manipulation min-h-[44px]"
+            >
+              Reset TOS
+            </button>
+            <button
+              type="button"
+              onClick={() => handleReset(["primeos-consent-dismissed"], "Cookie Consent")}
+              className="px-3 py-2 rounded-lg text-xs font-medium bg-slate-700 text-slate-400 active:bg-slate-600 touch-manipulation min-h-[44px]"
+            >
+              Reset Consent
+            </button>
+            <button
+              type="button"
+              onClick={() => handleReset(["primeos-notification-prompt-dismissed"], "Notifications")}
+              className="px-3 py-2 rounded-lg text-xs font-medium bg-slate-700 text-slate-400 active:bg-slate-600 touch-manipulation min-h-[44px]"
+            >
+              Reset Notifications
+            </button>
+            <button
+              type="button"
+              onClick={() => handleReset(["primeos-a2hs-dismissed"], "Add to Home Screen")}
+              className="px-3 py-2 rounded-lg text-xs font-medium bg-slate-700 text-slate-400 active:bg-slate-600 touch-manipulation min-h-[44px]"
+            >
+              Reset A2HS
+            </button>
+          </div>
         </div>
-      )}
+      </details>
     </div>
   );
 }

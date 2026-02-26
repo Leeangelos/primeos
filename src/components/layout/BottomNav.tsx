@@ -9,7 +9,6 @@ import {
   Sparkles,
   GraduationCap,
   Menu,
-  Lock,
   BarChart3,
   Calendar,
   Clock,
@@ -20,7 +19,7 @@ import {
   TrendingUp,
   Building2,
   Truck,
-  CreditCard,
+  Heart,
   BookOpen,
   Package,
   FileText,
@@ -38,16 +37,7 @@ import {
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { createClient } from "@/lib/supabase";
-import { getRequiredTier } from "@/src/lib/tier-config";
-import { useTier } from "@/src/lib/tier-context";
 import { UpgradeModal } from "@/src/components/layout/UpgradeModal";
-
-function hasAccess(route: string, userTier: string): boolean {
-  const tierOrder = ["free", "starter", "operator", "owner", "enterprise"];
-  const userTierIndex = tierOrder.indexOf(userTier);
-  const requiredTierIndex = tierOrder.indexOf(getRequiredTier(route));
-  return userTierIndex >= requiredTierIndex;
-}
 
 const MAIN_TABS = [
   { href: "/", label: "Home", Icon: LayoutDashboard },
@@ -68,20 +58,13 @@ function NavSection({
   title,
   items,
   pathname,
-  currentTier,
-  openUpgradeModal,
   setMoreOpen,
 }: {
   title: string;
   items: NavItem[];
   pathname: string;
-  currentTier: string;
-  openUpgradeModal: (requiredTier: string, pageName: string) => void;
   setMoreOpen: (open: boolean) => void;
 }) {
-  const tierOrder = ["free", "starter", "operator", "owner", "enterprise"];
-  const userIndex = tierOrder.indexOf(currentTier);
-
   return (
     <div>
       <h3 className="text-xs text-slate-500 uppercase tracking-wider font-semibold mb-2">{title}</h3>
@@ -89,28 +72,6 @@ function NavSection({
         {items.map((item) => {
           const Icon = item.icon;
           const isActive = pathname === item.href || pathname.startsWith(item.href + "/");
-          const requiredIndex = tierOrder.indexOf(getRequiredTier(item.href));
-          const locked = userIndex < requiredIndex;
-
-          if (locked) {
-            return (
-              <button
-                key={item.href}
-                type="button"
-                onClick={() => openUpgradeModal(getRequiredTier(item.href), item.label)}
-                className="w-full flex items-center gap-3 px-4 py-3 active:bg-slate-700/50"
-              >
-                <div className="w-8 h-8 rounded-lg bg-slate-700/50 flex items-center justify-center">
-                  <Icon className="w-4 h-4 text-slate-600" />
-                </div>
-                <div className="flex-1 text-left">
-                  <div className="text-sm text-slate-500">{item.label}</div>
-                  <div className="text-xs text-slate-600">{item.desc}</div>
-                </div>
-                <Lock className="w-3.5 h-3.5 text-slate-600" />
-              </button>
-            );
-          }
 
           return (
             <Link
@@ -143,7 +104,6 @@ const NAV_BAR_HEIGHT = "4rem"; /* h-16 */
 export function BottomNav() {
   const pathname = usePathname();
   const router = useRouter();
-  const { currentTier } = useTier();
   const [moreOpen, setMoreOpen] = useState(false);
   const [dragStart, setDragStart] = useState<number | null>(null);
   const [upgradeModal, setUpgradeModal] = useState<{ requiredTier: string; pageName: string } | null>(null);
@@ -178,44 +138,12 @@ export function BottomNav() {
         className="bottom-nav fixed bottom-0 left-0 right-0 z-50 bg-slate-900/95 backdrop-blur-sm border-t border-slate-700 pb-[env(safe-area-inset-bottom)]"
         aria-label="Bottom navigation"
       >
-        {currentTier === "owner" && (
-          <Link
-            href="/billing"
-            className="block w-full bg-blue-950/80 backdrop-blur-sm border-t border-blue-900/50 px-4 py-1.5 text-center"
-          >
-            <span className="text-xs text-blue-400">30-day free trial · Full access · </span>
-            <span className="text-xs text-blue-300 font-medium underline">Choose plan</span>
-          </Link>
-        )}
         <div className="flex justify-around items-center h-16 min-h-[64px]">
           {MAIN_TABS.map(({ href, label, Icon }) => {
             const isActive =
               href === "/"
                 ? pathname === "/"
                 : pathname === href || pathname.startsWith(href + "/");
-            const canAccess = hasAccess(href, currentTier);
-            const isBriefLocked = href === "/brief" && !canAccess;
-
-            if (isBriefLocked) {
-              return (
-                <button
-                  key={href}
-                  type="button"
-                  onClick={() => openUpgrade("starter", "Morning Brief")}
-                  className={cn(
-                    "flex flex-col items-center justify-center gap-0.5 min-w-[44px] min-h-[44px] flex-1 max-w-[80px] transition-colors relative",
-                    "text-slate-500"
-                  )}
-                  aria-label={`${label} (upgrade required)`}
-                >
-                  <span className="relative inline-block">
-                    <Icon className="w-5 h-5 shrink-0" aria-hidden />
-                    <Lock className="absolute -bottom-0.5 -right-0.5 w-3 h-3 text-slate-500" aria-hidden />
-                  </span>
-                  <span className="text-[10px] font-medium whitespace-nowrap leading-tight">{label}</span>
-                </button>
-              );
-            }
 
             return (
               <Link
@@ -325,15 +253,13 @@ export function BottomNav() {
                 items={[
                   { href: "/daily", icon: ClipboardList, label: "Daily KPIs", desc: "Enter today's numbers", color: "text-blue-400" },
                   { href: "/brief", icon: Sparkles, label: "Morning Brief", desc: "AI summary of yesterday", color: "text-purple-400" },
-                  { href: "/weekly", icon: BarChart3, label: "Weekly Cockpit", desc: "Week-over-week trends", color: "text-emerald-400" },
+                  { href: "/weekly", icon: BarChart3, label: "Weekly Snapshot", desc: "Week-over-week trends", color: "text-emerald-400" },
                   { href: "/monthly", icon: Calendar, label: "Monthly Summary", desc: "Monthly P&L rollup", color: "text-amber-400" },
                   { href: "/schedule", icon: Clock, label: "Smart Schedule", desc: "Shifts and labor planning", color: "text-cyan-400" },
                   { href: "/tasks", icon: CheckSquare, label: "Manager Tasks", desc: "Assign and track team tasks", color: "text-orange-400" },
                   { href: "/chat", icon: MessageCircle, label: "Team Chat", desc: "Internal messaging", color: "text-pink-400" },
                 ]}
                 pathname={pathname}
-                currentTier={currentTier}
-                openUpgradeModal={openUpgrade}
                 setMoreOpen={setMoreOpen}
               />
 
@@ -346,11 +272,9 @@ export function BottomNav() {
                   { href: "/vendor-tracker", icon: Building2, label: "Vendor Tracker", desc: "Costs, trends, and alerts", color: "text-rose-400" },
                   { href: "/sales", icon: TrendingUp, label: "Sales Report", desc: "Revenue comparisons", color: "text-blue-400" },
                   { href: "/doordash", icon: Truck, label: "Delivery Economics", desc: "Platform costs and comparison", color: "text-red-400" },
-                  { href: "/billing", icon: CreditCard, label: "Billing", desc: "Plans and payments", color: "text-slate-400" },
+                  { href: "/billing", icon: Heart, label: "Our Story", desc: "Why we built this", color: "text-[#E65100]" },
                 ]}
                 pathname={pathname}
-                currentTier={currentTier}
-                openUpgradeModal={openUpgrade}
                 setMoreOpen={setMoreOpen}
               />
 
@@ -364,8 +288,6 @@ export function BottomNav() {
                   { href: "/food-cost-analysis", icon: Scale, label: "Food Cost Analysis", desc: "Theoretical vs actual variance", color: "text-pink-400" },
                 ]}
                 pathname={pathname}
-                currentTier={currentTier}
-                openUpgradeModal={openUpgrade}
                 setMoreOpen={setMoreOpen}
               />
 
@@ -379,8 +301,6 @@ export function BottomNav() {
                   { href: "/merch", icon: ShoppingBag, label: "Team Merch", desc: "Staff gear and ordering", color: "text-orange-400" },
                 ]}
                 pathname={pathname}
-                currentTier={currentTier}
-                openUpgradeModal={openUpgrade}
                 setMoreOpen={setMoreOpen}
               />
 
@@ -392,8 +312,6 @@ export function BottomNav() {
                   { href: "/training", icon: GraduationCap, label: "Training Guide", desc: "Learn every metric", color: "text-indigo-400" },
                 ]}
                 pathname={pathname}
-                currentTier={currentTier}
-                openUpgradeModal={openUpgrade}
                 setMoreOpen={setMoreOpen}
               />
 

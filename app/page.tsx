@@ -559,7 +559,7 @@ export default function HomePage() {
         </Link>
         <Link href="/weekly" className="bg-slate-800 rounded-xl p-3 border border-slate-700 flex flex-col items-center justify-center gap-2 min-h-[44px] active:bg-slate-700 transition-colors min-w-[44px]">
           <BarChart3 className="w-6 h-6 text-emerald-400 shrink-0" aria-hidden />
-          <span className="text-xs text-slate-300 text-center leading-tight">Weekly Cockpit</span>
+          <span className="text-xs text-slate-300 text-center leading-tight">Weekly Snapshot</span>
         </Link>
         <Link href="/schedule" className="bg-slate-800 rounded-xl p-3 border border-slate-700 flex flex-col items-center justify-center gap-2 min-h-[44px] active:bg-slate-700 transition-colors min-w-[44px]">
           <Calendar className="w-6 h-6 text-amber-400 shrink-0" aria-hidden />
@@ -682,7 +682,7 @@ export default function HomePage() {
         </Link>
         <Link href="/weekly" className="block">
           <div className="dashboard-surface rounded-lg border border-border/50 p-4 hover:border-brand/30 transition-colors">
-            <div className="text-sm font-medium">Weekly Cockpit</div>
+            <div className="text-sm font-medium">Weekly Snapshot</div>
             <div className="text-xs text-muted mt-1">Trends + comparisons</div>
           </div>
         </Link>

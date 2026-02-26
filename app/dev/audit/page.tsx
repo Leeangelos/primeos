@@ -15,7 +15,7 @@ type RouteConfig = {
 const ROUTES: RouteConfig[] = [
   { path: "/", label: "Home", status: "demo" },
   { path: "/daily", label: "Daily KPI", status: "demo" },
-  { path: "/weekly", label: "Weekly Cockpit", status: "demo" },
+  { path: "/weekly", label: "Weekly Snapshot", status: "demo" },
   { path: "/monthly", label: "Monthly P&L", status: "demo" },
   { path: "/brief", label: "Morning Brief", status: "demo" },
   { path: "/pnl", label: "GP P&L", status: "demo" },

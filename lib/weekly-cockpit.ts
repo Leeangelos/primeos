@@ -1,5 +1,5 @@
 /**
- * Weekly cockpit: week math, KPI aggregation from daily_kpis, rule-based flags.
+ * Weekly snapshot: week math, KPI aggregation from daily_kpis, rule-based flags.
  * DB columns: net_sales, labor_dollars, labor_hours, food_dollars, disposables_dollars, voids_dollars, waste_dollars, customers.
  */
 
