@@ -212,6 +212,7 @@ export function BottomNav() {
                   { href: "/gl-upload", icon: FileSpreadsheet, label: "GL Upload", desc: "General Ledger import", color: "text-cyan-400" },
                   { href: "/vendor-tracker", icon: Building2, label: "Vendor Tracker", desc: "Costs, trends, and alerts", color: "text-rose-400" },
                   { href: "/sales", icon: TrendingUp, label: "Sales Report", desc: "Revenue comparisons", color: "text-blue-400" },
+                  { href: "/valuation", icon: TrendingUp, label: "What's It Worth?", desc: "Business valuation estimator", color: "text-amber-400" },
                   { href: "/doordash", icon: Truck, label: "Delivery Economics", desc: "Platform costs and comparison", color: "text-red-400" },
                   { href: "/billing", icon: Heart, label: "Our Story", desc: "Why we built this", color: "text-[#E65100]" },
                 ]}

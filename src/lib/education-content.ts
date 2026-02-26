@@ -650,4 +650,17 @@ export const EDUCATION_CONTENT: Record<string, EducationEntry> = {
       "Consider that operators who track all five dimensions consistently tend to make faster, more confident decisions about their business — whether that's growing, optimizing, or planning their next chapter",
     ],
   },
+
+  valuation: {
+    title: "Business Valuation",
+    whatItMeans:
+      "This is an estimate of what your business could be worth based on restaurant industry standards published by BizBuySell, SCORE, and the U.S. Small Business Administration. It uses Seller's Discretionary Earnings (SDE) — what the business generates for its owner — multiplied by industry-standard factors. SDE multiples for independent restaurants typically range from 1.5× to 3.5× depending on operating history, locations, cost efficiency, and systems. The range reflects the variability that exists in any real-world valuation. This is informational only — not an appraisal.",
+    whenRedPlaybook: [
+      "Consider that knowing your valuation isn't just about selling — it shows you what you've actually built in concrete terms",
+      "Consider that PRIME cost is the single biggest lever on your valuation — every point you reduce it increases your SDE directly",
+      "Consider that multiple locations, strong systems, and operating history all increase buyer confidence and therefore your multiple — these are documented factors that BizBuySell and SCORE track",
+      "Consider that reputation directly affects valuation — businesses with strong online ratings command higher multiples according to industry brokerages",
+      "Consider that some operators use this number as a goal. Others use it as a starting point for a conversation. Either way — now you know",
+    ],
+  },
 };

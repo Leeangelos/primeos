@@ -76,6 +76,7 @@ export const TIERS = {
       "/rolodex",
       "/vendor-settings",
       "/gl-upload",
+      "/valuation",
     ],
   },
   enterprise: {
