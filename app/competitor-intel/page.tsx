@@ -265,79 +265,72 @@ export default function CompetitorIntelPage() {
               <p className="text-xs text-slate-500 animate-pulse">Loading your store data...</p>
             </div>
           )}
-          {storeProfile && (
-            <div className="bg-[#E65100]/10 border border-[#E65100]/30 rounded-xl p-4 mb-4">
-              <div className="flex items-center gap-2 mb-2">
-                <div className="px-2 py-0.5 rounded bg-[#E65100]/20">
-                  <span className="text-[9px] font-bold text-[#E65100] uppercase tracking-wide">Your Store</span>
+          {storeProfile && (() => {
+            console.log("storeProfile:", JSON.stringify(storeProfile, null, 2));
+            return (
+              <div className="bg-[#E65100]/10 border border-[#E65100]/30 rounded-xl p-4 mb-4">
+                {/* Badge row */}
+                <div className="flex items-center gap-2 mb-2">
+                  <div className="px-2 py-0.5 rounded bg-[#E65100]/20">
+                    <span className="text-[9px] font-bold text-[#E65100] uppercase tracking-wide">Your Store</span>
+                  </div>
+                  {storeProfile.isOpen === true && (
+                    <span className="text-[9px] px-1.5 py-0.5 rounded bg-emerald-600/20 text-emerald-400">Open Now</span>
+                  )}
+                  {storeProfile.isOpen === false && (
+                    <span className="text-[9px] px-1.5 py-0.5 rounded bg-red-600/20 text-red-400">Closed</span>
+                  )}
                 </div>
-                {storeProfile.isOpen !== null && (
-                  <span
-                    className={`text-[9px] px-1.5 py-0.5 rounded ${
-                      storeProfile.isOpen ? "bg-emerald-600/20 text-emerald-400" : "bg-red-600/20 text-red-400"
-                    }`}
-                  >
-                    {storeProfile.isOpen ? "Open Now" : "Closed"}
+
+                {/* Store name */}
+                <p className="text-sm font-semibold text-white mb-0.5">
+                  {storeProfile.name || getStoreLocation(selectedStore === "all" ? "kent" : selectedStore)?.name || "Your Store"}
+                </p>
+
+                {/* Address */}
+                <p className="text-[10px] text-slate-500 mb-3">
+                  {storeProfile.address || getStoreLocation(selectedStore === "all" ? "kent" : selectedStore)?.address || ""}
+                </p>
+
+                {/* Rating row — ALWAYS visible */}
+                <div className="flex items-center gap-2 flex-wrap">
+                  <span className="text-2xl font-bold text-white">
+                    ⭐ {storeProfile.rating != null ? storeProfile.rating : "—"}
                   </span>
-                )}
-              </div>
-              <p className="text-sm font-semibold text-white">
-                {(storeProfile.name?.trim() || getStoreLocation(selectedStore === "all" ? "kent" : selectedStore)?.name) ?? "Your store"}
-              </p>
-              {storeProfile.address && (
-                <p className="text-[10px] text-slate-500 mb-3">{storeProfile.address}</p>
-              )}
-              <div className="flex flex-wrap items-center gap-x-2 gap-y-1 mb-3">
-                <span className="text-2xl font-bold text-white">
-                  ⭐ {storeProfile.rating != null ? storeProfile.rating : "—"}
-                </span>
-                <span className="text-xs text-slate-400">/ 5.0</span>
-                {storeProfile.reviewCount != null && (
-                  <span className="text-xs text-slate-400">· ({storeProfile.reviewCount} reviews)</span>
-                )}
-                {storeProfile.googleMapsUrl && (
-                  <>
-                    <span className="text-xs text-slate-600">·</span>
-                    <a
-                      href={storeProfile.googleMapsUrl}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="text-[10px] text-blue-400 underline"
-                    >
+                  <span className="text-xs text-slate-400">/ 5.0</span>
+                  <span className="text-xs text-slate-400">
+                    · {storeProfile.reviewCount != null ? storeProfile.reviewCount : 0} reviews
+                  </span>
+                  {storeProfile.googleMapsUrl && (
+                    <a href={storeProfile.googleMapsUrl} target="_blank" rel="noopener noreferrer" className="text-[10px] text-blue-400 underline ml-auto">
                       View on Google
                     </a>
-                  </>
+                  )}
+                </div>
+
+                {/* Market Position */}
+                {liveCompetitors.length > 0 && storeProfile.rating != null && (
+                  <div className="mt-3 pt-3 border-t border-[#E65100]/20">
+                    {(() => {
+                      const allRatings = [
+                        { name: "You", rating: storeProfile.rating ?? 0, reviews: storeProfile.reviewCount ?? 0 },
+                        ...liveCompetitors.filter(c => c.rating !== null).map(c => ({ name: c.name, rating: c.rating!, reviews: c.reviewCount }))
+                      ].sort((a, b) => b.rating - a.rating || b.reviews - a.reviews);
+                      const yourPosition = allRatings.findIndex(r => r.name === "You") + 1;
+                      return (
+                        <div className="flex items-center justify-between">
+                          <p className="text-xs text-slate-400">
+                            Market Position: <span className="text-white font-semibold">#{yourPosition}</span> of {allRatings.length} nearby
+                          </p>
+                          {yourPosition === 1 && <span className="text-[9px] px-1.5 py-0.5 rounded bg-emerald-600/20 text-emerald-400">Top Rated</span>}
+                        </div>
+                      );
+                    })()}
+                  </div>
                 )}
               </div>
-
-              {liveCompetitors.length > 0 && (
-                <div className="pt-3 border-t border-[#E65100]/20">
-                  {(() => {
-                    const allRatings = [
-                      { name: "You", rating: storeProfile.rating ?? 0, reviews: storeProfile.reviewCount ?? 0 },
-                      ...liveCompetitors
-                        .filter((c) => c.rating !== null)
-                        .map((c) => ({ name: c.name, rating: c.rating!, reviews: c.reviewCount })),
-                    ].sort((a, b) => b.rating - a.rating || b.reviews - a.reviews);
-                    const yourPosition = allRatings.findIndex((r) => r.name === "You") + 1;
-                    return (
-                      <div className="flex items-center justify-between">
-                        <p className="text-xs text-slate-400">
-                          Market Position: <span className="text-white font-semibold">#{yourPosition}</span> of{" "}
-                          {allRatings.length} pizza restaurants within 5 miles
-                        </p>
-                        {yourPosition === 1 && (
-                          <span className="text-[9px] px-1.5 py-0.5 rounded bg-emerald-600/20 text-emerald-400">
-                            Top Rated
-                          </span>
-                        )}
-                      </div>
-                    );
-                  })()}
-                </div>
-              )}
-            </div>
-          )}
+            );
+          })()}
 
           {competitorInsights.themes.length > 0 && (
             <div className="bg-slate-800 rounded-xl border border-slate-700 p-4 mb-4">
