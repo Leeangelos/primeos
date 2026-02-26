@@ -11,6 +11,8 @@ import {
 } from "lucide-react";
 import { SEED_STORES } from "@/src/lib/seed-data";
 import { EducationInfoIcon } from "@/src/components/education/InfoIcon";
+import DataSourceBadge from "@/src/components/ui/DataSourceBadge";
+import { useAllStoreProfiles } from "@/src/hooks/usePlacesData";
 
 // Store reputation data
 const REPUTATION_DATA: Record<
@@ -109,6 +111,9 @@ export default function ReputationPage() {
   const [expandedReview, setExpandedReview] = useState<string | null>(null);
   const [reviewFilter, setReviewFilter] = useState<"all" | "positive" | "neutral" | "negative">("all");
 
+  const { profiles: googleProfiles, loading: profilesLoading } = useAllStoreProfiles();
+  const googleData = selectedStore === "all" ? null : googleProfiles[selectedStore] ?? null;
+
   const storeData = useMemo(() => {
     if (selectedStore === "all") {
       const stores = ["kent", "aurora", "lindseys"] as const;
@@ -135,8 +140,20 @@ export default function ReputationPage() {
         tripadvisor: { ...tripadvisor, rating: Math.round((tripadvisor.rating / n) * 10) / 10 },
       };
     }
-    return REPUTATION_DATA[selectedStore] ?? REPUTATION_DATA.kent;
-  }, [selectedStore]);
+    const base = REPUTATION_DATA[selectedStore] ?? REPUTATION_DATA.kent;
+    if (googleData && selectedStore !== "all") {
+      return {
+        ...base,
+        google: {
+          rating: googleData.rating ?? base.google.rating,
+          reviewCount: googleData.reviewCount ?? base.google.reviewCount,
+          trend: base.google.trend,
+          recentChange: base.google.recentChange,
+        },
+      };
+    }
+    return base;
+  }, [selectedStore, googleData]);
 
   const sentimentScore = useMemo(() => {
     if (selectedStore === "all") {
@@ -157,16 +174,35 @@ export default function ReputationPage() {
     );
   }, [storeData]);
 
+  const googleReviews = useMemo(() => {
+    if (!googleData?.reviews?.length || selectedStore === "all") return [];
+    return googleData.reviews.map((r, i) => ({
+      id: `google-live-${i}`,
+      store_id: selectedStore,
+      platform: "Google" as const,
+      author: r.author,
+      rating: r.rating,
+      snippet: r.text,
+      date: r.time,
+      sentiment: r.rating >= 4 ? "positive" : r.rating === 3 ? "neutral" : "negative",
+    }));
+  }, [googleData, selectedStore]);
+
+  const allReviewsForStore = useMemo(
+    () => [...googleReviews, ...RECENT_REVIEWS],
+    [googleReviews]
+  );
+
   const filteredReviews = useMemo(() => {
-    let list = RECENT_REVIEWS.filter((r) => selectedStore === "all" || r.store_id === selectedStore);
+    let list = allReviewsForStore.filter((r) => selectedStore === "all" || r.store_id === selectedStore);
     if (reviewFilter === "positive") list = list.filter((r) => r.sentiment === "positive");
     else if (reviewFilter === "neutral") list = list.filter((r) => r.sentiment === "neutral");
     else if (reviewFilter === "negative") list = list.filter((r) => r.sentiment === "negative");
     return list;
-  }, [selectedStore, reviewFilter]);
+  }, [selectedStore, reviewFilter, allReviewsForStore]);
 
-  const positiveCount = useMemo(() => RECENT_REVIEWS.filter((r) => r.sentiment === "positive" && (selectedStore === "all" || r.store_id === selectedStore)).length, [selectedStore]);
-  const negativeCount = useMemo(() => RECENT_REVIEWS.filter((r) => r.sentiment === "negative" && (selectedStore === "all" || r.store_id === selectedStore)).length, [selectedStore]);
+  const positiveCount = useMemo(() => allReviewsForStore.filter((r) => r.sentiment === "positive" && (selectedStore === "all" || r.store_id === selectedStore)).length, [selectedStore, allReviewsForStore]);
+  const negativeCount = useMemo(() => allReviewsForStore.filter((r) => r.sentiment === "negative" && (selectedStore === "all" || r.store_id === selectedStore)).length, [selectedStore, allReviewsForStore]);
 
   const storeAlerts = useMemo(
     () => REPUTATION_ALERTS.filter((a) => selectedStore === "all" || a.store_id === selectedStore),
@@ -206,6 +242,8 @@ export default function ReputationPage() {
           ))}
         </select>
       </div>
+
+      {googleData && <div className="mb-2"><DataSourceBadge source="google" lastUpdated="Live" /></div>}
 
       {/* THE METER — Hero */}
       <div className="bg-slate-800 rounded-2xl border border-slate-700 p-5 mb-4 text-center">

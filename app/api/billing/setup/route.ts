@@ -1,12 +1,15 @@
 import { NextResponse } from "next/server";
 import Stripe from "stripe";
 
-const stripe = new Stripe(process.env.STRIPE_SECRET_KEY || "", {
-  apiVersion: "2024-12-18.acacia" as any,
-});
+const stripe = process.env.STRIPE_SECRET_KEY
+  ? new Stripe(process.env.STRIPE_SECRET_KEY, { apiVersion: "2023-10-16" as any })
+  : null;
 
 // Creates the PrimeOS product and price in Stripe if they don't exist
 export async function POST() {
+  if (!stripe) {
+    return NextResponse.json({ error: "Stripe not configured" }, { status: 500 });
+  }
   try {
     // Check if product already exists
     const products = await stripe.products.list({ limit: 10 });

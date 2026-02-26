@@ -18,6 +18,8 @@ import { MENU_DATA } from "@/src/lib/menu-data";
 import { SEED_STORES } from "@/src/lib/seed-data";
 import { EducationInfoIcon } from "@/src/components/education/InfoIcon";
 import { DataDisclaimer } from "@/src/components/ui/DataDisclaimer";
+import DataSourceBadge from "@/src/components/ui/DataSourceBadge";
+import { usePlacesData } from "@/src/hooks/usePlacesData";
 
 const STORE_OPTIONS = [
   { value: "all", label: "All Locations" },
@@ -45,7 +47,13 @@ export default function CompetitorIntelPage() {
   const [expandedCompetitor, setExpandedCompetitor] = useState<string | null>(null);
   const [view, setView] = useState<"overview" | "alerts" | "pricing">("overview");
 
-  const competitors = useMemo(() => getCompetitorsByStore(selectedStore), [selectedStore]);
+  const { competitors: liveCompetitors, storeProfile, loading: placesLoading, error: placesError } = usePlacesData(
+    selectedStore === "all" ? "kent" : selectedStore
+  );
+  const existingSeedCompetitors = useMemo(() => getCompetitorsByStore(selectedStore), [selectedStore]);
+  const competitors = existingSeedCompetitors;
+  const competitorsToShow = liveCompetitors.length > 0 ? liveCompetitors : existingSeedCompetitors;
+  const isLiveData = liveCompetitors.length > 0;
   const alerts = useMemo(() => {
     const list = getAlertsByStore(selectedStore);
     return [...list].sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
@@ -97,6 +105,12 @@ export default function CompetitorIntelPage() {
         </select>
       </div>
 
+      <div className="flex items-center gap-2 mb-2 flex-wrap">
+        {isLiveData && <DataSourceBadge source="google" lastUpdated="Live" />}
+        {!isLiveData && placesLoading && <span className="text-[10px] text-slate-500">Loading live data...</span>}
+        {!isLiveData && !placesLoading && <DataSourceBadge source="manual" lastUpdated="Seed data" />}
+      </div>
+
       <div className="flex bg-slate-800 rounded-lg p-0.5 border border-slate-700 mb-4">
         {(["overview", "alerts", "pricing"] as const).map((tab) => (
           <button
@@ -114,6 +128,17 @@ export default function CompetitorIntelPage() {
 
       {view === "overview" && (
         <>
+          {selectedStore !== "all" && storeProfile && (
+            <div className="bg-slate-800 rounded-xl border border-slate-700 p-4 mb-3">
+              <p className="text-[10px] text-slate-500 uppercase tracking-wide mb-1">Your Google Rating</p>
+              <div className="flex items-center gap-2">
+                <span className="text-2xl font-bold text-white">{storeProfile.rating ?? "—"}</span>
+                <span className="text-xs text-slate-400">/ 5.0</span>
+                <span className="text-xs text-slate-500">({storeProfile.reviewCount} reviews)</span>
+              </div>
+            </div>
+          )}
+
           <div className="bg-slate-800 rounded-xl border border-slate-700 p-4 mb-4">
             <h3 className="text-sm font-semibold text-white mb-3">Your Market Position</h3>
             {selectedStore === "all" ? (
@@ -146,7 +171,34 @@ export default function CompetitorIntelPage() {
             )}
           </div>
 
-          {competitors.map((comp) => (
+          {isLiveData
+            ? (competitorsToShow as typeof liveCompetitors).map((comp) => (
+            <div key={comp.placeId} className="bg-slate-800 rounded-xl border border-slate-700 p-3 mb-2">
+              <div className="flex items-center justify-between">
+                <div className="flex-1 min-w-0">
+                  <div className="text-sm font-medium text-white">{comp.name}</div>
+                  <div className="flex items-center gap-2 mt-0.5 flex-wrap">
+                    <span className="text-xs text-slate-500">{comp.distance.toFixed(1)} mi</span>
+                    {comp.isOpen !== null && (
+                      <span className={`text-[10px] ${comp.isOpen ? "text-emerald-500" : "text-slate-500"}`}>
+                        {comp.isOpen ? "Open" : "Closed"}
+                      </span>
+                    )}
+                  </div>
+                </div>
+                <div className="flex items-center gap-1 shrink-0">
+                  <Star className="w-3.5 h-3.5 text-amber-400 fill-amber-400" />
+                  <span className="text-sm text-white font-medium">{comp.rating ?? "—"}</span>
+                  <span className="text-xs text-slate-500">({comp.reviewCount})</span>
+                </div>
+              </div>
+              <div className="flex items-center gap-2 text-xs text-slate-400 mt-2">
+                <MapPin className="w-3 h-3 shrink-0" />
+                <span>{comp.address}</span>
+              </div>
+            </div>
+          ))
+            : existingSeedCompetitors.map((comp) => (
             <div key={comp.id} className="bg-slate-800 rounded-xl border border-slate-700 p-3 mb-2">
               <button type="button" onClick={() => toggleExpand(comp.id)} className="w-full text-left">
                 <div className="flex items-center justify-between">
