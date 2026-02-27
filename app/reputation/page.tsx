@@ -13,6 +13,7 @@ import { SEED_STORES } from "@/src/lib/seed-data";
 import { EducationInfoIcon } from "@/src/components/education/InfoIcon";
 import DataSourceBadge from "@/src/components/ui/DataSourceBadge";
 import { useAllStoreProfiles } from "@/src/hooks/usePlacesData";
+import { SEED_REPUTATION_KPIS_BY_STORE } from "@/src/lib/seed-data";
 
 // Store reputation data
 const REPUTATION_DATA: Record<
@@ -217,6 +218,20 @@ export default function ReputationPage() {
     return idx >= 0 ? idx + 1 : 0;
   }, [marketData, selectedStore]);
 
+  const reputationKpis = useMemo(() => {
+    if (selectedStore === "all") {
+      const stores = ["kent", "aurora", "lindseys"] as const;
+      const avgResponse = Math.round(
+        stores.reduce((s, id) => s + (SEED_REPUTATION_KPIS_BY_STORE[id]?.responseRatePct ?? 0), 0) / stores.length
+      );
+      const avgAi = Math.round(
+        stores.reduce((s, id) => s + (SEED_REPUTATION_KPIS_BY_STORE[id]?.aiVisibilityScore ?? 0), 0) / stores.length
+      );
+      return { responseRatePct: avgResponse, aiVisibilityScore: avgAi };
+    }
+    return SEED_REPUTATION_KPIS_BY_STORE[selectedStore] ?? SEED_REPUTATION_KPIS_BY_STORE.kent;
+  }, [selectedStore]);
+
   return (
     <div className="space-y-4 pb-28 min-w-0 overflow-x-hidden">
       {/* Header */}
@@ -228,19 +243,41 @@ export default function ReputationPage() {
         <EducationInfoIcon metricKey="reputation" />
       </div>
 
-      <div className="flex items-center gap-2 mb-4">
-        <label className="text-xs text-slate-500">Store:</label>
-        <select
-          value={selectedStore}
-          onChange={(e) => setSelectedStore(e.target.value)}
-          className="dashboard-input rounded-lg border border-slate-600 bg-black/30 px-3 py-2 text-sm text-white focus:border-brand/60 focus:outline-none"
-        >
-          {STORE_OPTIONS.map((o) => (
-            <option key={o.value} value={o.value}>
-              {o.label}
-            </option>
-          ))}
-        </select>
+      <div className="mb-4">
+        <div className="flex items-center gap-2">
+          <label className="text-xs text-slate-500 shrink-0">Store:</label>
+          <select
+            value={selectedStore}
+            onChange={(e) => setSelectedStore(e.target.value)}
+            className="dashboard-input sm:hidden rounded-lg border border-slate-600 bg-black/30 px-3 py-2 text-sm text-white focus:border-brand/60 focus:outline-none"
+          >
+            {STORE_OPTIONS.map((o) => (
+              <option key={o.value} value={o.value}>
+                {o.label}
+              </option>
+            ))}
+          </select>
+        </div>
+
+        <div className="hidden sm:flex flex-wrap gap-2 mt-2">
+          {STORE_OPTIONS.map((o) => {
+            const isActive = selectedStore === o.value;
+            return (
+              <button
+                key={o.value}
+                type="button"
+                onClick={() => setSelectedStore(o.value)}
+                className={`px-3 py-2 rounded-lg text-xs font-medium transition-colors border min-h-[44px] ${
+                  isActive
+                    ? "bg-[#E65100]/15 text-[#E65100] border-[#E65100]/50 ring-2 ring-[#E65100] shadow-[0_0_8px_rgba(230,81,0,0.5)]"
+                    : "bg-slate-800 text-slate-400 border-slate-700 hover:text-slate-300"
+                }`}
+              >
+                {o.label}
+              </button>
+            );
+          })}
+        </div>
       </div>
 
       {googleData && <div className="mb-2"><DataSourceBadge source="google" lastUpdated="Live" /></div>}
@@ -320,12 +357,17 @@ export default function ReputationPage() {
           <div className="bg-slate-800 rounded-xl border border-slate-700 p-4 mb-4">
             <div className="flex items-center justify-between mb-2">
               <span className="text-sm font-semibold text-white">Response Rate</span>
-              <span className="text-sm font-bold text-amber-400">62%</span>
+              <span className={`text-sm font-bold ${reputationKpis.responseRatePct >= 80 ? "text-emerald-400" : reputationKpis.responseRatePct >= 70 ? "text-amber-400" : "text-red-400"}`}>
+                {reputationKpis.responseRatePct}%
+              </span>
             </div>
             <div className="w-full h-2 bg-slate-700 rounded-full overflow-hidden">
-              <div className="h-full bg-amber-400 rounded-full" style={{ width: "62%" }} />
+              <div
+                className={`h-full rounded-full ${reputationKpis.responseRatePct >= 80 ? "bg-emerald-400" : reputationKpis.responseRatePct >= 70 ? "bg-amber-400" : "bg-red-400"}`}
+                style={{ width: `${reputationKpis.responseRatePct}%` }}
+              />
             </div>
-            <p className="text-xs text-slate-500 mt-2">You&apos;ve responded to 62% of negative reviews. Industry benchmark: many operators aim to respond to 100% within 24 hours. Every response is visible to future customers.</p>
+            <p className="text-xs text-slate-500 mt-2">You&apos;ve responded to {reputationKpis.responseRatePct}% of negative reviews. Benchmark: aim for 100% within 24 hours. Every response is visible to future customers.</p>
           </div>
 
           <div className="bg-slate-800 rounded-xl border border-slate-700 p-4 mb-4">
@@ -333,8 +375,17 @@ export default function ReputationPage() {
               <Eye className="w-4 h-4 text-purple-400" />
               <span className="text-sm font-semibold text-white">AI Visibility</span>
               <span className="text-[10px] px-2 py-0.5 rounded bg-purple-600/20 text-purple-400">Beta</span>
+              <span className={`ml-auto text-xs font-semibold ${reputationKpis.aiVisibilityScore >= 70 ? "text-emerald-400" : reputationKpis.aiVisibilityScore >= 55 ? "text-amber-400" : "text-red-400"}`}>
+                {reputationKpis.aiVisibilityScore}/100
+              </span>
             </div>
             <p className="text-xs text-slate-400 mb-3">How your business appears when people ask AI assistants for pizza recommendations.</p>
+            <div className="w-full h-2 bg-slate-700 rounded-full overflow-hidden mb-3">
+              <div
+                className={`h-full ${reputationKpis.aiVisibilityScore >= 70 ? "bg-emerald-400" : reputationKpis.aiVisibilityScore >= 55 ? "bg-amber-400" : "bg-red-400"}`}
+                style={{ width: `${reputationKpis.aiVisibilityScore}%` }}
+              />
+            </div>
             <div className="space-y-2">
               <div className="flex items-center justify-between p-2 rounded-lg bg-slate-700/30">
                 <span className="text-xs text-slate-400">ChatGPT</span>

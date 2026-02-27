@@ -24,6 +24,18 @@ export const STORE_BENCHMARKS: Record<string, StoreBenchmarks> = {
   lindseys: { foodCostTargetPct: 35, laborTargetPct: 30, primeTargetPct: 58 },
 };
 
+/** Reputation KPIs used on Do We Suck? page. */
+export type ReputationKpis = {
+  responseRatePct: number;
+  aiVisibilityScore: number; // 0-100
+};
+
+export const SEED_REPUTATION_KPIS_BY_STORE: Record<string, ReputationKpis> = {
+  kent: { responseRatePct: 85, aiVisibilityScore: 72 },
+  aurora: { responseRatePct: 78, aiVisibilityScore: 65 },
+  lindseys: { responseRatePct: 62, aiVisibilityScore: 48 },
+};
+
 // ============ HELPERS ============
 function daysAgo(n: number): string {
   const d = new Date();

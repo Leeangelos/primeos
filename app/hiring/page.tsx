@@ -1,5 +1,5 @@
-import { ComingSoonPhase2 } from "@/src/components/ComingSoonPhase2";
+import { Phase2Placeholder } from "@/src/components/Phase2Placeholder";
 
 export default function HiringPage() {
-  return <ComingSoonPhase2 />;
+  return <Phase2Placeholder />;
 }

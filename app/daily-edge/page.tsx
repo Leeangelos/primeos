@@ -43,14 +43,24 @@ const CONTENT_TYPES: Record<
 
 export default function DailyEdgePage() {
   const selectedStore = "kent";
-  const dataScoops = useMemo(
-    () => getDailyScoops(selectedStore),
-    [selectedStore]
-  );
-  const FEED_ITEMS: FeedItem[] = dataScoops.map((scoop) => ({
+  const dataScoops = useMemo(() => getDailyScoops(selectedStore), [selectedStore]);
+
+  // Hero uses the top scoop of the day; feed below skips it.
+  const heroItem: FeedItem | null = dataScoops[0]
+    ? { ...dataScoops[0], actionable: undefined }
+    : null;
+  const FEED_ITEMS: FeedItem[] = dataScoops.slice(1).map((scoop) => ({
     ...scoop,
     actionable: undefined,
   }));
+
+  const FILTER_PILL_LABELS: Record<FeedItem["type"], string> = {
+    scoop: "Scoop",
+    didyouknow: "Did You Know",
+    math: "Math",
+    story: "Story",
+    trending: "Trending",
+  };
 
   const [expandedItem, setExpandedItem] = useState<string | null>(null);
   const [activeFilter, setActiveFilter] = useState<"all" | "scoop" | "didyouknow" | "math" | "story" | "trending">("all");
@@ -84,7 +94,7 @@ export default function DailyEdgePage() {
     fetchLive();
   }, []);
 
-  const todayItem = FEED_ITEMS[0] ?? null;
+  const todayItem = heroItem;
 
   useEffect(() => {
     if (expandedItem && cardRefs.current[expandedItem]) {
@@ -96,9 +106,10 @@ export default function DailyEdgePage() {
   }, [expandedItem]);
 
   const filteredItems = useMemo(() => {
-    const list = activeFilter === "all" ? FEED_ITEMS : FEED_ITEMS.filter((item) => item.type === activeFilter);
-    return list.filter((item) => item.id !== (todayItem?.id ?? ""));
-  }, [activeFilter, todayItem?.id]);
+    return activeFilter === "all"
+      ? FEED_ITEMS
+      : FEED_ITEMS.filter((item) => item.type === activeFilter);
+  }, [activeFilter, FEED_ITEMS]);
 
   return (
     <div className="space-y-4 pb-28 min-w-0 overflow-x-hidden">
@@ -156,12 +167,14 @@ export default function DailyEdgePage() {
       )}
 
       {/* Filter pills */}
-      <div className="flex gap-2 overflow-x-auto pb-2 mb-4 scrollbar-hide">
+      <div className="flex flex-wrap gap-2 mb-4">
         <button
           type="button"
           onClick={() => setActiveFilter("all")}
-          className={`flex-shrink-0 px-3 py-1.5 rounded-lg text-xs font-medium transition-colors ${
-            activeFilter === "all" ? "bg-slate-700 text-white" : "bg-slate-800 text-slate-500 border border-slate-700"
+          className={`px-3 py-1.5 text-sm rounded-full border transition-colors ${
+            activeFilter === "all"
+              ? "bg-[#E65100] text-white border-[#E65100]"
+              : "bg-transparent text-zinc-600 dark:text-zinc-400 border-zinc-300 dark:border-zinc-600"
           }`}
         >
           All
@@ -171,12 +184,14 @@ export default function DailyEdgePage() {
             key={key}
             type="button"
             onClick={() => setActiveFilter(key)}
-            className={`flex-shrink-0 flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium transition-colors border ${
-              activeFilter === key ? `${config.bgColor} ${config.color} ${config.borderColor}` : "bg-slate-800 text-slate-500 border-slate-700"
+            className={`flex items-center gap-1.5 px-3 py-1.5 text-sm rounded-full border transition-colors ${
+              activeFilter === key
+                ? "bg-[#E65100] text-white border-[#E65100]"
+                : "bg-transparent text-zinc-600 dark:text-zinc-400 border-zinc-300 dark:border-zinc-600"
             }`}
           >
             <span>{config.emoji}</span>
-            <span>{config.label}</span>
+            <span>{FILTER_PILL_LABELS[key]}</span>
           </button>
         ))}
       </div>
@@ -350,7 +365,7 @@ export default function DailyEdgePage() {
               Nation&apos;s Restaurant News. Updated daily at 6am EST.
             </p>
             <p className="text-[10px] text-slate-600 mt-1">
-              {liveArticles.length} live articles &middot; {FEED_ITEMS.length} data scoops from your stores
+              {liveArticles.length} live articles &middot; {dataScoops.length} data scoops from your stores
             </p>
           </>
         ) : (
