@@ -385,6 +385,38 @@
       .status-error {
         color: #f97373;
       }
+
+      .stats-bar {
+        display: grid;
+        grid-template-columns: 1fr;
+        gap: 1rem;
+        text-align: center;
+        justify-items: center;
+        margin: 0 auto;
+        max-width: 44rem;
+      }
+      @media (min-width: 480px) {
+        .stats-bar {
+          grid-template-columns: repeat(3, minmax(0, 1fr));
+        }
+      }
+      .stat-number {
+        font-size: 1.5rem;
+        font-weight: 700;
+        color: var(--accent);
+        letter-spacing: -0.02em;
+      }
+      .stat-label {
+        font-size: 0.75rem;
+        color: #71717a;
+        margin-top: 0.25rem;
+      }
+      .stats-source {
+        margin-top: 0.75rem;
+        text-align: center;
+        font-size: 0.75rem;
+        color: #52525b;
+      }
     </style>
   </head>
   <body>
@@ -439,8 +471,9 @@
                   </h3>
                 </div>
                 <p class="card-body">
-                  You think it's 30%. It might be 37%. You won't know until the
-                  end of the month — and by then you've been bleeding for 30
+                  You think it's 30%. It might be 37%. Food costs are now 35%
+                  above pre-pandemic levels. You won't know your real number
+                  until end of month — and by then you've been bleeding for 30
                   days.
                 </p>
               </article>
@@ -463,11 +496,33 @@
                   <h3 class="card-title">You're figuring it out alone.</h3>
                 </div>
                 <p class="card-body">
-                  No one teaches you how to read your own numbers. No one shows
-                  you where the leaks are. You're inside your four walls
-                  guessing — and guessing is expensive.
+                  42% of operators weren't profitable last year. No one teaches
+                  you how to read your own numbers. No one shows you where the
+                  leaks are. You're inside your four walls guessing — and
+                  guessing is expensive.
                 </p>
               </article>
+            </div>
+          </section>
+
+          <!-- STATS BAR -->
+          <section class="section center">
+            <div class="stats-bar">
+              <div class="stat-item">
+                <div class="stat-number">9,500+</div>
+                <div class="stat-label">Independent restaurants closed in 2025</div>
+              </div>
+              <div class="stat-item">
+                <div class="stat-number">82%</div>
+                <div class="stat-label">of operators report higher food costs</div>
+              </div>
+              <div class="stat-item">
+                <div class="stat-number">42%</div>
+                <div class="stat-label">of operators weren't profitable</div>
+              </div>
+            </div>
+            <div class="stats-source text-zinc-600 text-xs">
+              Sources: NRA State of the Industry 2025, Technomic 2025, U.S. Bureau of Labor Statistics
             </div>
           </section>
 
@@ -483,6 +538,9 @@
                 Menu pricing gaps. Overtime that shouldn't exist. Delivery fees
                 eating your margins. Vendors creeping up 2% and hoping you
                 won't notice.
+              </p>
+              <p class="text-zinc-600 text-xs" style="margin: 0.75rem auto 0; max-width: 34rem; font-size: 0.75rem; color: #52525b;">
+                Sources: National Restaurant Association 2025 State of the Industry Report, Toast 2025 State of Restaurants Report, Technomic 2025
               </p>
             </div>
           </section>
