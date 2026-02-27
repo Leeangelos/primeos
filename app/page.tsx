@@ -13,6 +13,7 @@ import { EDUCATION_CONTENT } from "@/src/lib/education-content";
 import { SEED_DAILY_KPIS, SEED_MORNING_BRIEF, SEED_MORNING_BRIEF_BY_STORE, SEED_STORES, STORE_BENCHMARKS } from "@/src/lib/seed-data";
 import { SEED_WINS } from "@/src/lib/win-engine";
 import { calculateOperatorScore } from "@/src/lib/score-engine";
+import { WinNotifications } from "@/src/components/ui/WinNotifications";
 
 /** Map alert keys to education content keys (for playbook modal). */
 const ALERT_TO_EDUCATION: Record<string, string> = {
@@ -478,6 +479,8 @@ export default function HomePage() {
         <PillarPill emoji="👥" label="People" grade={pillarGrades.people} metricKey="pillar_people" />
         <PillarPill emoji="📊" label="Performance" grade={pillarGrades.performance} metricKey="pillar_performance" />
       </div>
+
+      <WinNotifications storeId={selectedStore} />
 
       {showMissingBanner && (
         <div className="bg-amber-600/10 rounded-xl border border-amber-700/30 p-3 mb-4 flex items-start justify-between">

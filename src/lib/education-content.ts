@@ -1225,4 +1225,14 @@ export const EDUCATION_CONTENT: Record<string, EducationEntry> = {
       "Consider making your Morning Brief the first thing you open before you open the store.",
     ],
   },
+  win_notifications: {
+    title: "Win Notifications",
+    whatItMeans:
+      "Win Notifications highlight when your metrics hit positive thresholds. These are the moments your operation is running well — and they deserve recognition.",
+    whyItMatters:
+      "Celebrating wins is not just feel-good. Operators who track positive trends are 3 to 4 times more likely to sustain them. Knowing what good looks like helps you repeat it.",
+    whenRedPlaybook: [
+      "Consider sharing wins with your team. When the crew sees that food cost hit 29% or PRIME broke 60%, they know their work matters.",
+    ],
+  },
 };
