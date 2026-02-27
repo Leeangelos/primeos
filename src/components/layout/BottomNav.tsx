@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
-import { useState, useCallback, useEffect } from "react";
+import { useState, useCallback, useEffect, useRef } from "react";
 import {
   LayoutDashboard,
   ClipboardList,
@@ -40,6 +40,7 @@ import {
 import { cn } from "@/lib/utils";
 import { createClient } from "@/lib/supabase";
 import { UpgradeModal } from "@/src/components/layout/UpgradeModal";
+import { useTheme } from "@/src/lib/theme-context";
 
 const MAIN_TABS = [
   { href: "/", label: "Home", Icon: LayoutDashboard },
@@ -61,16 +62,24 @@ function NavSection({
   items,
   pathname,
   setMoreOpen,
+  isLight,
 }: {
   title: string;
   items: NavItem[];
   pathname: string;
   setMoreOpen: (open: boolean) => void;
+  isLight?: boolean;
 }) {
   return (
     <div>
-      <h3 className="text-xs text-slate-500 uppercase tracking-wider font-semibold mb-2">{title}</h3>
-      <div className="bg-slate-800 rounded-xl border border-slate-700 overflow-hidden divide-y divide-slate-700/50">
+      <h3 className={cn(
+        "text-xs uppercase tracking-wider font-semibold mb-2",
+        isLight ? "text-zinc-600" : "text-slate-500"
+      )}>{title}</h3>
+      <div className={cn(
+        "rounded-xl overflow-hidden divide-y",
+        isLight ? "bg-white border border-zinc-200 divide-zinc-200" : "bg-slate-800 border border-slate-700 divide-slate-700/50"
+      )}>
         {items.map((item) => {
           const Icon = item.icon;
           const isActive = pathname === item.href || pathname.startsWith(item.href + "/");
@@ -81,16 +90,19 @@ function NavSection({
               href={item.href}
               onClick={() => setMoreOpen(false)}
               className={cn(
-                "flex items-center gap-3 px-4 py-3 active:bg-slate-700/50",
-                isActive ? "bg-orange-950/20" : ""
+                "flex items-center gap-3 px-4 py-3 active:opacity-90",
+                isLight ? (isActive ? "bg-orange-50" : "active:bg-zinc-100") : (isActive ? "bg-orange-950/20" : "active:bg-slate-700/50")
               )}
             >
-              <div className="w-8 h-8 rounded-lg bg-slate-800 flex items-center justify-center border border-slate-700">
+              <div className={cn(
+                "w-8 h-8 rounded-lg flex items-center justify-center border",
+                isLight ? "bg-zinc-100 border-zinc-200" : "bg-slate-800 border-slate-700"
+              )}>
                 <Icon className={cn("w-4 h-4", item.color)} />
               </div>
               <div className="flex-1">
-                <div className="text-sm text-white">{item.label}</div>
-                <div className="text-xs text-slate-500">{item.desc}</div>
+                <div className={cn("text-sm font-medium", isLight ? "text-zinc-900" : "text-white")}>{item.label}</div>
+                <div className={cn("text-xs", isLight ? "text-zinc-600" : "text-slate-500")}>{item.desc}</div>
               </div>
               {isActive && <div className="w-1.5 h-1.5 rounded-full bg-orange-500" />}
             </Link>
@@ -106,8 +118,10 @@ const NAV_BAR_HEIGHT = "4rem"; /* h-16 */
 export function BottomNav() {
   const pathname = usePathname();
   const router = useRouter();
+  const { theme } = useTheme();
+  const isLight = theme === "light";
   const [moreOpen, setMoreOpen] = useState(false);
-  const [dragStart, setDragStart] = useState<number | null>(null);
+  const dragStartYRef = useRef<number | null>(null);
   const [upgradeModal, setUpgradeModal] = useState<{ requiredTier: string; pageName: string } | null>(null);
 
   const closeMore = useCallback(() => setMoreOpen(false), []);
@@ -148,47 +162,65 @@ export function BottomNav() {
       {/* 2. More drawer — slides up ABOVE the nav bar; z-[61] so above nav when open; fully hidden when closed */}
       <div
         className={cn(
-          "fixed left-0 right-0 z-[61] bg-slate-900 border-t border-slate-700 rounded-t-2xl transition-[transform,opacity] duration-300 ease-out",
+          "fixed left-0 right-0 z-[61] rounded-t-2xl transition-[transform,opacity] duration-300 ease-out border-t",
+          isLight ? "bg-white border-zinc-200" : "bg-slate-900 border-slate-700",
           moreOpen ? "translate-y-0 opacity-100 visible" : "translate-y-full pointer-events-none opacity-0 invisible"
         )}
         style={{
           bottom: "calc(4rem + env(safe-area-inset-bottom, 0px))",
           maxHeight: "80vh",
           overflowY: "auto",
+          paddingTop: "env(safe-area-inset-top, 0px)",
+          paddingLeft: "env(safe-area-inset-left, 0px)",
+          paddingRight: "env(safe-area-inset-right, 0px)",
         }}
         aria-hidden={!moreOpen}
       >
         {/* Drag handle: pull down to close */}
         <div
-          className="flex justify-center pt-3 pb-1 bg-slate-900 sticky top-0 z-10 border-b border-slate-800 touch-none"
-          onTouchStart={(e) => setDragStart(e.touches[0].clientY)}
+          className={cn(
+            "flex justify-center pt-3 pb-1 sticky top-0 z-10 border-b touch-none",
+            isLight ? "bg-white border-zinc-200" : "bg-slate-900 border-slate-800"
+          )}
+          onTouchStart={(e) => { dragStartYRef.current = e.touches[0].clientY; }}
           onTouchMove={(e) => {
-            if (dragStart !== null) {
-              const diff = e.touches[0].clientY - dragStart;
+            if (dragStartYRef.current !== null) {
+              const diff = e.touches[0].clientY - dragStartYRef.current;
               if (diff > 50) {
                 setMoreOpen(false);
-                setDragStart(null);
+                dragStartYRef.current = null;
               }
             }
           }}
-          onTouchEnd={() => setDragStart(null)}
+          onTouchEnd={() => { dragStartYRef.current = null; }}
         >
-          <div className="w-10 h-1 rounded-full bg-slate-600" />
+          <div className={cn("w-10 h-1 rounded-full", isLight ? "bg-zinc-300" : "bg-slate-600")} />
         </div>
         <div className="px-4 pt-2 pb-4">
-          <h2 className="text-lg font-bold text-white mb-4">All Tools</h2>
+          <h2 className={cn("text-lg font-bold mb-4", isLight ? "text-zinc-900" : "text-white")}>All Tools</h2>
         </div>
         <div className="px-4 py-2 space-y-6 pb-24" role="region" aria-label="All tools and links">
-          <Link href="/" onClick={() => setMoreOpen(false)} className="flex items-center gap-3 px-4 py-3 mb-2 bg-slate-800 rounded-xl border border-slate-700 active:bg-slate-700/50">
-                <div className="w-8 h-8 rounded-lg bg-slate-800 flex items-center justify-center border border-slate-700">
-                  <Home className="w-4 h-4 text-blue-400" />
-                </div>
-                <div className="flex-1">
-                  <div className="text-sm text-white font-medium">Home Dashboard</div>
-                  <div className="text-xs text-slate-500">Back to overview</div>
-                </div>
-              </Link>
+          <Link
+            href="/"
+            onClick={() => setMoreOpen(false)}
+            className={cn(
+              "flex items-center gap-3 px-4 py-3 mb-2 rounded-xl border active:opacity-90",
+              isLight ? "bg-zinc-50 border-zinc-200 active:bg-zinc-100" : "bg-slate-800 border-slate-700 active:bg-slate-700/50"
+            )}
+          >
+            <div className={cn(
+              "w-8 h-8 rounded-lg flex items-center justify-center border",
+              isLight ? "bg-white border-zinc-200" : "bg-slate-800 border-slate-700"
+            )}>
+              <Home className="w-4 h-4 text-blue-400" />
+            </div>
+            <div className="flex-1">
+              <div className={cn("text-sm font-medium", isLight ? "text-zinc-900" : "text-white")}>Home Dashboard</div>
+              <div className={cn("text-xs", isLight ? "text-zinc-600" : "text-slate-500")}>Back to overview</div>
+            </div>
+          </Link>
               <NavSection
+                isLight={isLight}
                 title="Daily Operations"
                 items={[
                   { href: "/daily", icon: ClipboardList, label: "Daily KPIs", desc: "Enter today's numbers", color: "text-blue-400" },
@@ -205,6 +237,7 @@ export function BottomNav() {
               />
 
               <NavSection
+                isLight={isLight}
                 title="Financial"
                 items={[
                   { href: "/pnl", icon: DollarSign, label: "GP P&L", desc: "Gross profit tracking", color: "text-emerald-400" },
@@ -221,6 +254,7 @@ export function BottomNav() {
               />
 
               <NavSection
+                isLight={isLight}
                 title="Kitchen & Inventory"
                 items={[
                   { href: "/recipes", icon: BookOpen, label: "Recipes", desc: "Food costing and portions", color: "text-amber-400" },
@@ -234,6 +268,7 @@ export function BottomNav() {
               />
 
               <NavSection
+                isLight={isLight}
                 title="People & Marketing"
                 items={[
                   { href: "/people", icon: Users, label: "People Economics", desc: "CAC, LTV, churn tracking", color: "text-cyan-400" },
@@ -248,6 +283,7 @@ export function BottomNav() {
               />
 
               <NavSection
+                isLight={isLight}
                 title="Resources"
                 items={[
                   { href: "/vendor-settings", icon: Settings, label: "Vendor Settings", desc: "Manage vendors and platforms", color: "text-slate-400" },
@@ -259,16 +295,16 @@ export function BottomNav() {
                 setMoreOpen={setMoreOpen}
               />
 
-          <div className="pt-4 border-t border-slate-800 mt-2">
+          <div className={cn("pt-4 border-t mt-2", isLight ? "border-zinc-200" : "border-slate-800")}>
             <div className="flex justify-center gap-3">
-              <Link href="/terms" onClick={() => setMoreOpen(false)} className="text-xs text-slate-600 hover:text-slate-400">Terms of Service</Link>
-              <span className="text-xs text-slate-700">·</span>
-              <Link href="/privacy" onClick={() => setMoreOpen(false)} className="text-xs text-slate-600 hover:text-slate-400">Privacy Policy</Link>
+              <Link href="/terms" onClick={() => setMoreOpen(false)} className={cn("text-xs hover:underline", isLight ? "text-zinc-600 hover:text-zinc-800" : "text-slate-600 hover:text-slate-400")}>Terms of Service</Link>
+              <span className={cn("text-xs", isLight ? "text-zinc-500" : "text-slate-700")}>·</span>
+              <Link href="/privacy" onClick={() => setMoreOpen(false)} className={cn("text-xs hover:underline", isLight ? "text-zinc-600 hover:text-zinc-800" : "text-slate-600 hover:text-slate-400")}>Privacy Policy</Link>
             </div>
             <button
               type="button"
               onClick={handleLogout}
-              className="flex items-center gap-3 w-full px-4 py-3 mt-4 rounded-xl text-red-400 hover:bg-red-600/10 transition-colors"
+              className="flex items-center gap-3 w-full px-4 py-3 mt-4 rounded-xl text-red-500 hover:bg-red-500/10 transition-colors"
             >
               <LogOut className="w-5 h-5" />
               <span className="text-sm font-medium">Log Out</span>
@@ -279,7 +315,7 @@ export function BottomNav() {
 
       {/* 3. Nav bar — ALWAYS RENDERED, LAST IN DOM; z-[60] above common z-50 overlays */}
       <nav
-        className="bottom-nav fixed bottom-0 left-0 right-0 z-[60] bg-slate-900 border-t border-slate-800"
+        className="bottom-nav fixed bottom-0 left-0 right-0 z-[60] bg-zinc-900 border-t border-zinc-800"
         style={{ paddingBottom: "env(safe-area-inset-bottom, 0px)" }}
         aria-label="Bottom navigation"
       >
@@ -296,8 +332,8 @@ export function BottomNav() {
                 className="flex flex-col items-center justify-center gap-0.5 min-w-[44px] min-h-[44px] flex-1 max-w-[80px] transition-colors"
                 aria-current={isActive ? "page" : undefined}
               >
-                <Icon className={cn("w-5 h-5 shrink-0", isActive ? "text-[#E65100]" : "text-slate-500")} aria-hidden />
-                <span className={cn("text-[10px] font-medium whitespace-nowrap leading-tight", isActive ? "text-[#E65100]" : "text-slate-500")}>
+                <Icon className={cn("w-5 h-5 shrink-0", isActive ? "text-[#E65100]" : "text-zinc-400")} aria-hidden />
+                <span className={cn("text-[10px] font-medium whitespace-nowrap leading-tight", isActive ? "text-[#E65100]" : "text-zinc-400")}>
                   {label}
                 </span>
               </Link>
@@ -311,8 +347,8 @@ export function BottomNav() {
             aria-haspopup="dialog"
             aria-label="More pages"
           >
-            <Menu className={cn("w-5 h-5 shrink-0", moreOpen ? "text-[#E65100]" : "text-slate-500")} aria-hidden />
-            <span className={cn("text-[10px] font-medium whitespace-nowrap leading-tight", moreOpen ? "text-[#E65100]" : "text-slate-500")}>
+            <Menu className={cn("w-5 h-5 shrink-0", moreOpen ? "text-[#E65100]" : "text-zinc-400")} aria-hidden />
+            <span className={cn("text-[10px] font-medium whitespace-nowrap leading-tight", moreOpen ? "text-[#E65100]" : "text-zinc-400")}>
               More
             </span>
           </button>

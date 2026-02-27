@@ -198,11 +198,12 @@ body {
 .light-mode header .text-slate-500 { color: #64748b !important; }
 
 .light-mode .bottom-nav {
-  background-color: #0f172a !important;
-  border-color: #1e293b !important;
+  background-color: #18181b !important; /* zinc-900 — always dark */
+  border-color: #27272a !important;
 }
 .light-mode .bottom-nav * { color: inherit; }
-.light-mode .bottom-nav .text-slate-500 { color: #94a3b8 !important; }
+.light-mode .bottom-nav .text-slate-500,
+.light-mode .bottom-nav .text-zinc-400 { color: #a1a1aa !important; } /* visible gray on dark bar */
 .light-mode .bottom-nav .text-\[#E65100\] { color: #E65100 !important; }
 
 /* ——— Body and main wrapper: light background ——— */
@@ -229,16 +230,24 @@ body {
 .light-mode main .bg-slate-700\/50 { background-color: rgba(241,245,249,0.7) !important; }
 .light-mode main .bg-slate-900\/95 { background-color: #f8fafc !important; }
 
-.light-mode main .border-slate-700 { border-color: #e2e8f0 !important; }
+.light-mode main .border-slate-700,
+.light-mode main .border-zinc-700 { border-color: #e2e8f0 !important; }
 .light-mode main .border-slate-700\/50 { border-color: rgba(226,232,240,0.7) !important; }
-.light-mode main .border-slate-800 { border-color: #e2e8f0 !important; }
-.light-mode main .border-slate-600 { border-color: #cbd5e1 !important; }
+.light-mode main .border-slate-800,
+.light-mode main .border-zinc-800 { border-color: #e2e8f0 !important; }
+.light-mode main .border-slate-600,
+.light-mode main .border-zinc-600 { border-color: #cbd5e1 !important; }
 
 .light-mode main .text-white { color: #0f172a !important; }
-.light-mode main .text-slate-300 { color: #334155 !important; }
-.light-mode main .text-slate-400 { color: #475569 !important; }
-.light-mode main .text-slate-500 { color: #64748b !important; }
-.light-mode main .text-slate-600 { color: #64748b !important; }
+.light-mode main .text-slate-300,
+.light-mode main .text-zinc-300 { color: #334155 !important; }
+.light-mode main .text-slate-400,
+.light-mode main .text-zinc-400,
+.light-mode main .text-gray-400 { color: #52525b !important; } /* zinc-600 for contrast */
+.light-mode main .text-slate-500,
+.light-mode main .text-zinc-500 { color: #64748b !important; }
+.light-mode main .text-slate-600,
+.light-mode main .text-zinc-600 { color: #64748b !important; }
 
 /* ——— Daily KPI / Morning Brief: dashboard classes (same look as other pages) ——— */
 .light-mode main .dashboard-toolbar {

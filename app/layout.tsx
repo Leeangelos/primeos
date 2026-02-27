@@ -64,7 +64,7 @@ export default function RootLayout({
             <TOSGate>
               <AuthProvider>
                 <AuthGuard>
-                  <div className="mx-auto max-w-6xl px-4 py-4">
+                  <div className="mx-auto max-w-6xl px-4 py-4 pl-[max(1rem,env(safe-area-inset-left))] pr-[max(1rem,env(safe-area-inset-right))]">
                     <AppNav />
                     <NotificationPrompt />
                     <AddToHomeScreenPrompt />

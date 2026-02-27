@@ -312,7 +312,7 @@ export default function HomePage() {
   const score = calculateOperatorScore();
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 pb-28">
       <div className="relative mb-4">
         <button
           type="button"

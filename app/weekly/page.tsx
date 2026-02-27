@@ -315,7 +315,7 @@ function WeeklyPageContent() {
   }
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 pb-28">
       {shareToast && (
         <div
           className="fixed z-50 bg-emerald-600/20 border border-emerald-700/30 rounded-xl px-4 py-2.5 shadow-lg left-1/2 -translate-x-1/2"

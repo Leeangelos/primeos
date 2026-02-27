@@ -105,7 +105,7 @@ function MerchContent() {
   const brandBadge = (b: string) => b === "lindseys" ? "bg-purple-500/15 text-purple-400" : "bg-orange-500/15 text-orange-400";
 
   return (
-    <div className="space-y-5">
+    <div className="space-y-5 pb-28">
       {checkoutToast && (
         <div className="fixed top-16 left-1/2 -translate-x-1/2 z-50 bg-slate-800 border border-slate-700 rounded-xl px-4 py-2.5 shadow-lg shadow-black/30">
           <p className="text-xs text-slate-300">Checkout not available in this demo.</p>

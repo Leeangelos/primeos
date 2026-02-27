@@ -208,7 +208,7 @@ export default function DevAuditPage() {
   }, [results]);
 
   return (
-    <div className="space-y-6 p-4 max-w-4xl mx-auto">
+    <div className="space-y-6 p-4 max-w-4xl mx-auto pb-28">
       <div>
         <h1 className="text-xl font-bold text-white">Dev Audit — 375px Checklist</h1>
         <p className="text-xs text-slate-500 mt-1">
