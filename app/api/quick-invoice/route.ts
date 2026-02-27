@@ -20,17 +20,20 @@ export async function POST(req: NextRequest) {
 
   const supabase = await getClientForRoute();
 
-  const { error } = await supabase.from("invoices").insert({
+  const payload = {
     vendor_name,
     invoice_date,
     total,
     notes: notes || null,
     status: "pending",
     source: "manual",
-  });
+  };
+
+  const { error } = await supabase.from("invoices").insert(payload);
 
   if (error) {
-    return NextResponse.json({ ok: false, error: error.message }, { status: 500 });
+    console.error("quick-invoice insert error", { error, payload });
+    return NextResponse.json({ ok: false, error: error.message, details: error }, { status: 500 });
   }
 
   return NextResponse.json({ ok: true }, { status: 200 });

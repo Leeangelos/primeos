@@ -199,6 +199,14 @@ body {
 
 /* Bottom nav colors are controlled in `BottomNav.tsx` (no global overrides). */
 
+@supports (-webkit-touch-callout: none) {
+  .bottom-nav-fixed {
+    position: fixed;
+    bottom: 0;
+    transform: translateZ(0);
+  }
+}
+
 /* ——— Body and main wrapper: light background ——— */
 .light-mode body {
   background-color: #f8fafc !important;

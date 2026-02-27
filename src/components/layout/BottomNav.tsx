@@ -399,7 +399,7 @@ export function BottomNav() {
 
       {/* 3. Nav bar — ALWAYS RENDERED, LAST IN DOM; z-[60] above common z-50 overlays */}
       <nav
-        className="bottom-nav fixed bottom-0 left-0 right-0 z-[60] bg-zinc-900 border-t border-zinc-800"
+        className="bottom-nav bottom-nav-fixed fixed bottom-0 left-0 right-0 z-[60] bg-zinc-900 border-t border-zinc-800"
         style={{ paddingBottom: "env(safe-area-inset-bottom, 0px)" }}
         aria-label="Bottom navigation"
       >
