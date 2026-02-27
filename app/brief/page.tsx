@@ -257,7 +257,20 @@ export default function BriefPage() {
           </button>
           <div className="flex-1 text-center min-h-[44px] flex items-center justify-center min-w-0">
             <div className="text-sm font-medium text-white">{formatDateLong(date)}</div>
+            {date === yesterday && (
+              <p className="text-xs text-zinc-500 dark:text-zinc-400 mt-0.5">Showing your most recent complete business day</p>
+            )}
           </div>
+          {date !== today && (
+            <button
+              type="button"
+              onClick={() => setDate(today)}
+              className="min-h-[44px] px-3 py-2 rounded-lg border border-[#E65100]/50 bg-[#E65100]/10 text-[#E65100] text-sm font-medium hover:bg-[#E65100]/20 transition-colors shrink-0"
+              aria-label="Jump to today"
+            >
+              Today
+            </button>
+          )}
           <button
             type="button"
             onClick={() => setDate(nextDay(date))}

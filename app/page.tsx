@@ -10,7 +10,7 @@ import { useRedAlert } from "@/src/lib/useRedAlert";
 import { EducationInfoIcon } from "@/src/components/education/InfoIcon";
 import { formatPct } from "@/src/lib/formatters";
 import { EDUCATION_CONTENT } from "@/src/lib/education-content";
-import { SEED_DAILY_KPIS, SEED_MORNING_BRIEF, SEED_STORES } from "@/src/lib/seed-data";
+import { SEED_DAILY_KPIS, SEED_MORNING_BRIEF, SEED_MORNING_BRIEF_BY_STORE, SEED_STORES, STORE_BENCHMARKS } from "@/src/lib/seed-data";
 import { SEED_WINS } from "@/src/lib/win-engine";
 import { calculateOperatorScore } from "@/src/lib/score-engine";
 
@@ -51,38 +51,36 @@ type KpiSnapshot = {
 };
 
 const KENT_DAILY_TARGET = 5200;
-
-// Single source of truth: alert thresholds (lower is better for food, labor, prime).
-// Green: under yellow threshold. Yellow: yellow threshold to red threshold. Red: over red threshold.
-const FOOD_COST_YELLOW = 31;
-const FOOD_COST_RED = 33;
-const LABOR_YELLOW = 22;
-const LABOR_RED = 24;
-const PRIME_YELLOW = 55;
-const PRIME_RED = 58;
+const WARNING_BAND_PCT = 3;
 
 type Grade = "green" | "yellow" | "red";
 
-function gradeFoodCost(pct: number): Grade {
-  if (pct < FOOD_COST_YELLOW) return "green";
-  if (pct <= FOOD_COST_RED) return "yellow";
+/** Cost metrics (Food %, Labor %, PRIME %): green <= target, amber target < x <= target+3, red > target+3 */
+function gradeCost(value: number, target: number): Grade {
+  if (value <= target) return "green";
+  if (value <= target + WARNING_BAND_PCT) return "yellow";
   return "red";
 }
 
-function gradeLabor(pct: number): Grade {
-  if (pct < LABOR_YELLOW) return "green";
-  if (pct <= LABOR_RED) return "yellow";
-  return "red";
+function gradeFoodCost(pct: number, target: number): Grade {
+  return gradeCost(pct, target);
 }
 
-function gradePrime(pct: number): Grade {
-  if (pct < PRIME_YELLOW) return "green";
-  if (pct <= PRIME_RED) return "yellow";
-  return "red";
+function gradeLabor(pct: number, target: number): Grade {
+  return gradeCost(pct, target);
+}
+
+function gradePrime(pct: number, target: number): Grade {
+  return gradeCost(pct, target);
 }
 
 function gradeSales(sales: number, target: number): Grade {
   return sales >= target ? "green" : "red";
+}
+
+function getBenchmarksForStore(storeSlug: StoreSlug): { foodCostTargetPct: number; laborTargetPct: number; primeTargetPct: number } {
+  const key = storeSlug === "all" ? "kent" : storeSlug;
+  return STORE_BENCHMARKS[key] ?? STORE_BENCHMARKS.kent;
 }
 
 function gradeToHex(grade: Grade): string {
@@ -203,6 +201,8 @@ export default function HomePage() {
     return SEED_STORES.find((s) => s.slug === selectedStore)?.avgDailySales ?? KENT_DAILY_TARGET;
   }, [selectedStore]);
 
+  const benchmarks = useMemo(() => getBenchmarksForStore(selectedStore), [selectedStore]);
+
   const { last7Days, salesTrendPct, foodCostAvg, foodCostGrade } = useMemo(() => {
     const store = storeSlugForFetch(selectedStore);
     const forStore = SEED_DAILY_KPIS.filter((r) => r.store_id === store);
@@ -212,74 +212,74 @@ export default function HomePage() {
     const prevSum = prev7.reduce((s, r) => s + r.sales, 0);
     const salesTrendPct = prevSum > 0 ? Math.round(((thisSum - prevSum) / prevSum) * 1000) / 10 : 0;
     const foodCostAvg = last7.length > 0 ? Math.round((last7.reduce((s, d) => s + d.foodCost, 0) / last7.length) * 10) / 10 : 0;
-    const foodCostGrade = gradeFoodCost(foodCostAvg);
+    const foodCostGrade = gradeFoodCost(foodCostAvg, benchmarks.foodCostTargetPct);
     return { last7Days: last7, salesTrendPct, foodCostAvg, foodCostGrade };
-  }, [selectedStore]);
+  }, [selectedStore, benchmarks.foodCostTargetPct]);
 
   const storeLabel = selectedStore === "all" ? "All" : getStoreLabel(selectedStore);
 
   const heroGrades = useMemo((): string[] => {
     if (!kpi) return [];
     return [
-      gradeFoodCost(kpi.foodCostPct),
-      gradeLabor(kpi.laborPct),
-      gradePrime(kpi.primePct),
+      gradeFoodCost(kpi.foodCostPct, benchmarks.foodCostTargetPct),
+      gradeLabor(kpi.laborPct, benchmarks.laborTargetPct),
+      gradePrime(kpi.primePct, benchmarks.primeTargetPct),
     ];
-  }, [kpi]);
+  }, [kpi, benchmarks]);
   useRedAlert(heroGrades);
 
   const alerts = useMemo((): AlertItem[] => {
     const list: AlertItem[] = [];
     if (!kpi) return list;
 
-    const foodGrade = gradeFoodCost(kpi.foodCostPct);
+    const foodGrade = gradeFoodCost(kpi.foodCostPct, benchmarks.foodCostTargetPct);
     if (foodGrade === "red") {
       list.push({
         severity: "red",
         key: "food_cost",
         label: `Food Cost (${storeLabel})`,
-        message: `Food cost is above the industry benchmark. You're at ${formatPct(kpi.foodCostPct)}. Benchmark: under 33%. Tap for playbook.`,
+        message: `Food cost is above the benchmark. You're at ${formatPct(kpi.foodCostPct)}. Target: ≤${benchmarks.foodCostTargetPct}%. Tap for playbook.`,
       });
     } else if (foodGrade === "yellow") {
       list.push({
         severity: "yellow",
         key: "food_cost",
         label: `Food Cost (${storeLabel})`,
-        message: `Food cost is creeping up. You're at ${formatPct(kpi.foodCostPct)}. Benchmark: under 33%. Tap for playbook.`,
+        message: `Food cost is creeping up. You're at ${formatPct(kpi.foodCostPct)}. Target: ≤${benchmarks.foodCostTargetPct}%. Tap for playbook.`,
       });
     }
 
-    const laborGrade = gradeLabor(kpi.laborPct);
+    const laborGrade = gradeLabor(kpi.laborPct, benchmarks.laborTargetPct);
     if (laborGrade === "red") {
       list.push({
         severity: "red",
         key: "labor_pct",
         label: `Labor % (${storeLabel})`,
-        message: `Labor cost is above the industry benchmark. You're at ${formatPct(kpi.laborPct)}. Benchmark: under 24%. Tap for playbook.`,
+        message: `Labor cost is above the benchmark. You're at ${formatPct(kpi.laborPct)}. Target: ≤${benchmarks.laborTargetPct}%. Tap for playbook.`,
       });
     } else if (laborGrade === "yellow") {
       list.push({
         severity: "yellow",
         key: "labor_pct",
         label: `Labor % (${storeLabel})`,
-        message: `Labor is getting close to the benchmark. You're at ${formatPct(kpi.laborPct)}. Benchmark: under 24%. Tap for playbook.`,
+        message: `Labor is getting close to the benchmark. You're at ${formatPct(kpi.laborPct)}. Target: ≤${benchmarks.laborTargetPct}%. Tap for playbook.`,
       });
     }
 
-    const primeGrade = gradePrime(kpi.primePct);
+    const primeGrade = gradePrime(kpi.primePct, benchmarks.primeTargetPct);
     if (primeGrade === "red") {
       list.push({
         severity: "red",
         key: "prime_cost",
         label: `PRIME % (${storeLabel})`,
-        message: `PRIME is above the industry benchmark. You're at ${formatPct(kpi.primePct)}. Benchmark: under 58%. Tap for playbook.`,
+        message: `PRIME is above the benchmark. You're at ${formatPct(kpi.primePct)}. Target: ≤${benchmarks.primeTargetPct}%. Tap for playbook.`,
       });
     } else if (primeGrade === "yellow") {
       list.push({
         severity: "yellow",
         key: "prime_cost",
         label: `PRIME % (${storeLabel})`,
-        message: `PRIME is getting close to the benchmark. You're at ${formatPct(kpi.primePct)}. Benchmark: under 58%. Tap for playbook.`,
+        message: `PRIME is getting close to the benchmark. You're at ${formatPct(kpi.primePct)}. Target: ≤${benchmarks.primeTargetPct}%. Tap for playbook.`,
       });
     }
 
@@ -294,7 +294,7 @@ export default function HomePage() {
     }
 
     return list;
-  }, [kpi, dailyTargetSales, storeLabel]);
+  }, [kpi, dailyTargetSales, storeLabel, benchmarks]);
 
   const wins = useMemo(
     () =>
@@ -403,48 +403,72 @@ export default function HomePage() {
         </div>
       ) : kpi ? (
         <div className="grid grid-cols-2 gap-3 min-w-0">
-          <div className="bg-slate-800 rounded-xl p-4 border border-slate-700 min-w-0">
-            <div className="flex items-center justify-between mb-1">
-              <span className="text-xs text-slate-400 uppercase tracking-wide">Today&apos;s Sales</span>
-              <EducationInfoIcon metricKey="daily_sales" />
-            </div>
-            <div className="text-2xl font-bold tabular-nums text-emerald-400">
-              ${kpi.sales.toLocaleString("en-US", { maximumFractionDigits: 0 })}
-            </div>
-            <div className="text-xs text-slate-500">
-              Benchmark: ${(dailyTargetSales / 1000).toFixed(1)}K/day{kpi.isYesterday ? " (Yesterday)" : ""}
-            </div>
-          </div>
-          <div className="bg-slate-800 rounded-xl p-4 border border-slate-700 min-w-0">
-            <div className="flex items-center justify-between mb-1">
-              <span className="text-xs text-slate-400 uppercase tracking-wide">Food Cost</span>
-              <EducationInfoIcon metricKey="food_cost" />
-            </div>
-            <div className="text-2xl font-bold tabular-nums" style={{ color: gradeToHex(gradeFoodCost(kpi.foodCostPct)) }}>
-              {formatPct(kpi.foodCostPct)}
-            </div>
-            <div className="text-xs text-slate-500">Benchmark: 28–31%{kpi.isYesterday ? " (Yesterday)" : ""}</div>
-          </div>
-          <div className="bg-slate-800 rounded-xl p-4 border border-slate-700 min-w-0">
-            <div className="flex items-center justify-between mb-1">
-              <span className="text-xs text-slate-400 uppercase tracking-wide">Labor %</span>
-              <EducationInfoIcon metricKey="labor_pct" />
-            </div>
-            <div className="text-2xl font-bold tabular-nums" style={{ color: gradeToHex(gradeLabor(kpi.laborPct)) }}>
-              {formatPct(kpi.laborPct)}
-            </div>
-            <div className="text-xs text-slate-500">Benchmark: 19–22%{kpi.isYesterday ? " (Yesterday)" : ""}</div>
-          </div>
-          <div className="bg-slate-800 rounded-xl p-4 border border-slate-700 min-w-0">
-            <div className="flex items-center justify-between mb-1">
-              <span className="text-xs text-slate-400 uppercase tracking-wide">PRIME %</span>
-              <EducationInfoIcon metricKey="prime_cost" />
-            </div>
-            <div className="text-2xl font-bold tabular-nums" style={{ color: gradeToHex(gradePrime(kpi.primePct)) }}>
-              {formatPct(kpi.primePct)}
-            </div>
-            <div className="text-xs text-slate-500">Benchmark: ≤55%{kpi.isYesterday ? " (Yesterday)" : ""}</div>
-          </div>
+          {(() => {
+            const salesGrade = gradeSales(kpi.sales, dailyTargetSales);
+            const salesBorder = gradeToHex(salesGrade);
+            return (
+              <div className="bg-slate-800 rounded-xl p-4 border-l-4 min-w-0 border-slate-700" style={{ borderLeftColor: salesBorder }}>
+                <div className="flex items-center justify-between mb-1">
+                  <span className="text-xs text-slate-400 uppercase tracking-wide">Today&apos;s Sales</span>
+                  <EducationInfoIcon metricKey="daily_sales" />
+                </div>
+                <div className="text-2xl font-bold tabular-nums" style={{ color: salesGrade === "green" ? COLORS.grade.green : COLORS.grade.red }}>
+                  ${kpi.sales.toLocaleString("en-US", { maximumFractionDigits: 0 })}
+                </div>
+                <div className="text-xs text-slate-500">
+                  Target: ${(dailyTargetSales / 1000).toFixed(1)}K/day{kpi.isYesterday ? " (Yesterday)" : ""}
+                </div>
+              </div>
+            );
+          })()}
+          {(() => {
+            const grade = gradeFoodCost(kpi.foodCostPct, benchmarks.foodCostTargetPct);
+            const borderColor = gradeToHex(grade);
+            return (
+              <div className="bg-slate-800 rounded-xl p-4 border-l-4 min-w-0 border-slate-700" style={{ borderLeftColor: borderColor }}>
+                <div className="flex items-center justify-between mb-1">
+                  <span className="text-xs text-slate-400 uppercase tracking-wide">Food Cost</span>
+                  <EducationInfoIcon metricKey="food_cost" />
+                </div>
+                <div className="text-2xl font-bold tabular-nums" style={{ color: borderColor }}>
+                  {formatPct(kpi.foodCostPct)}
+                </div>
+                <div className="text-xs text-slate-500">Target: ≤{benchmarks.foodCostTargetPct}%{kpi.isYesterday ? " (Yesterday)" : ""}</div>
+              </div>
+            );
+          })()}
+          {(() => {
+            const grade = gradeLabor(kpi.laborPct, benchmarks.laborTargetPct);
+            const borderColor = gradeToHex(grade);
+            return (
+              <div className="bg-slate-800 rounded-xl p-4 border-l-4 min-w-0 border-slate-700" style={{ borderLeftColor: borderColor }}>
+                <div className="flex items-center justify-between mb-1">
+                  <span className="text-xs text-slate-400 uppercase tracking-wide">Labor %</span>
+                  <EducationInfoIcon metricKey="labor_pct" />
+                </div>
+                <div className="text-2xl font-bold tabular-nums" style={{ color: borderColor }}>
+                  {formatPct(kpi.laborPct)}
+                </div>
+                <div className="text-xs text-slate-500">Target: ≤{benchmarks.laborTargetPct}%{kpi.isYesterday ? " (Yesterday)" : ""}</div>
+              </div>
+            );
+          })()}
+          {(() => {
+            const grade = gradePrime(kpi.primePct, benchmarks.primeTargetPct);
+            const borderColor = gradeToHex(grade);
+            return (
+              <div className="bg-slate-800 rounded-xl p-4 border-l-4 min-w-0 border-slate-700" style={{ borderLeftColor: borderColor }}>
+                <div className="flex items-center justify-between mb-1">
+                  <span className="text-xs text-slate-400 uppercase tracking-wide">PRIME %</span>
+                  <EducationInfoIcon metricKey="prime_cost" />
+                </div>
+                <div className="text-2xl font-bold tabular-nums" style={{ color: borderColor }}>
+                  {formatPct(kpi.primePct)}
+                </div>
+                <div className="text-xs text-slate-500">Target: ≤{benchmarks.primeTargetPct}%{kpi.isYesterday ? " (Yesterday)" : ""}</div>
+              </div>
+            );
+          })()}
         </div>
       ) : (
         <div className="grid grid-cols-2 gap-3 min-w-0">
@@ -454,7 +478,7 @@ export default function HomePage() {
               <EducationInfoIcon metricKey="daily_sales" />
             </div>
             <div className="text-2xl font-bold text-slate-500">—</div>
-            <div className="text-xs text-slate-500">Benchmark: ${(dailyTargetSales / 1000).toFixed(1)}K/day</div>
+            <div className="text-xs text-slate-500">Target: ${(dailyTargetSales / 1000).toFixed(1)}K/day</div>
           </div>
           <div className="bg-slate-800 rounded-xl p-4 border border-slate-700 min-w-0">
             <div className="flex items-center justify-between mb-1">
@@ -462,7 +486,7 @@ export default function HomePage() {
               <EducationInfoIcon metricKey="food_cost" />
             </div>
             <div className="text-2xl font-bold text-slate-500">—</div>
-            <div className="text-xs text-slate-500">Benchmark: 28–31%</div>
+            <div className="text-xs text-slate-500">Target: ≤{benchmarks.foodCostTargetPct}%</div>
           </div>
           <div className="bg-slate-800 rounded-xl p-4 border border-slate-700 min-w-0">
             <div className="flex items-center justify-between mb-1">
@@ -470,7 +494,7 @@ export default function HomePage() {
               <EducationInfoIcon metricKey="labor_pct" />
             </div>
             <div className="text-2xl font-bold text-slate-500">—</div>
-            <div className="text-xs text-slate-500">Benchmark: 19–22%</div>
+            <div className="text-xs text-slate-500">Target: ≤{benchmarks.laborTargetPct}%</div>
           </div>
           <div className="bg-slate-800 rounded-xl p-4 border border-slate-700 min-w-0">
             <div className="flex items-center justify-between mb-1">
@@ -478,7 +502,7 @@ export default function HomePage() {
               <EducationInfoIcon metricKey="prime_cost" />
             </div>
             <div className="text-2xl font-bold text-slate-500">—</div>
-            <div className="text-xs text-slate-500">Benchmark: ≤55%</div>
+            <div className="text-xs text-slate-500">Target: ≤{benchmarks.primeTargetPct}%</div>
           </div>
         </div>
       )}
@@ -522,7 +546,7 @@ export default function HomePage() {
                       <stop offset="100%" stopColor="#22c55e" stopOpacity={0} />
                     </linearGradient>
                   </defs>
-                  <ReferenceLine y={33} stroke="#ef4444" strokeDasharray="3 3" strokeWidth={1} />
+                  <ReferenceLine y={benchmarks.foodCostTargetPct} stroke="#ef4444" strokeDasharray="3 3" strokeWidth={1} />
                   <Area type="monotone" dataKey="foodCost" stroke="#22c55e" fill="url(#foodCostFill)" strokeWidth={2} dot={false} isAnimationActive={false} />
                 </AreaChart>
               </ResponsiveContainer>
@@ -544,16 +568,19 @@ export default function HomePage() {
             Today, {new Date(today + "T12:00:00Z").toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })}
           </span>
         </div>
-        {SEED_MORNING_BRIEF ? (
-          <>
-            <p className="text-sm text-slate-300 leading-relaxed line-clamp-3">
-              {firstSentences(SEED_MORNING_BRIEF, 3)}
-            </p>
-            <Link href="/brief" className="inline-flex items-center gap-1 text-sm text-blue-400 hover:text-blue-300 mt-3">
-              Read full brief <ChevronRight className="w-4 h-4 shrink-0" aria-hidden />
-            </Link>
-          </>
-        ) : (
+        {(() => {
+          const briefForStore = selectedStore === "all" ? SEED_MORNING_BRIEF : (SEED_MORNING_BRIEF_BY_STORE[selectedStore] ?? SEED_MORNING_BRIEF);
+          return briefForStore ? (
+            <>
+              <p className="text-sm text-slate-300 leading-relaxed line-clamp-3">
+                {firstSentences(briefForStore, 3)}
+              </p>
+              <Link href="/brief" className="inline-flex items-center gap-1 text-sm text-blue-400 hover:text-blue-300 mt-3">
+                Read full brief <ChevronRight className="w-4 h-4 shrink-0" aria-hidden />
+              </Link>
+            </>
+          ) : null;
+        })() ?? (
           <>
             <p className="text-sm text-slate-300 leading-relaxed">
               Your morning brief generates after daily KPIs are entered. Enter today&apos;s numbers to unlock.

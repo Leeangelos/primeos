@@ -11,6 +11,19 @@ export const SEED_STORES = [
   { id: "lindseys", name: "Lindsey's", slug: "lindseys", avgDailySales: 2600 },
 ] as const;
 
+/** Per-store KPI targets (Food Cost %, Labor %, PRIME % max). Used for grading and alerts. */
+export type StoreBenchmarks = {
+  foodCostTargetPct: number;
+  laborTargetPct: number;
+  primeTargetPct: number;
+};
+
+export const STORE_BENCHMARKS: Record<string, StoreBenchmarks> = {
+  kent: { foodCostTargetPct: 33, laborTargetPct: 28, primeTargetPct: 55 },
+  aurora: { foodCostTargetPct: 33, laborTargetPct: 28, primeTargetPct: 55 },
+  lindseys: { foodCostTargetPct: 35, laborTargetPct: 30, primeTargetPct: 58 },
+};
+
 // ============ HELPERS ============
 function daysAgo(n: number): string {
   const d = new Date();

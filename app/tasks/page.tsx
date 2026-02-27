@@ -202,9 +202,19 @@ export default function TasksPage() {
           })}
         </div>
 
-        <div className="flex items-center justify-center gap-2">
+        <div className="flex items-center justify-center gap-2 flex-wrap">
           <button type="button" onClick={() => setDate(prevDay(date))} className="min-h-[44px] min-w-[44px] flex items-center justify-center rounded-lg border border-border/50 bg-black/30 text-muted hover:text-white transition-colors" aria-label="Previous day">←</button>
           <span className="text-sm font-medium min-w-[140px] text-center min-h-[44px] flex items-center justify-center">{formatDate(date)}</span>
+          {date !== todayYYYYMMDD() && (
+            <button
+              type="button"
+              onClick={() => setDate(todayYYYYMMDD())}
+              className="min-h-[44px] px-3 py-2 rounded-lg border border-[#E65100]/50 bg-[#E65100]/10 text-[#E65100] text-sm font-medium hover:bg-[#E65100]/20 transition-colors"
+              aria-label="Jump to today"
+            >
+              Today
+            </button>
+          )}
           <button type="button" onClick={() => setDate(nextDay(date))} className="min-h-[44px] min-w-[44px] flex items-center justify-center rounded-lg border border-border/50 bg-black/30 text-muted hover:text-white transition-colors" aria-label="Next day">→</button>
         </div>
 

@@ -265,7 +265,7 @@ function DailyPageContent() {
     }
 
     const daysOld = Math.floor((today.getTime() - entryDate.getTime()) / 86400000);
-    if (daysOld > 7) {
+    if (daysOld >= 7) {
       newWarnings.push({
         field: "date",
         message: `You're entering data for ${daysOld} days ago. Make sure this is intentional.`,
@@ -592,6 +592,16 @@ function DailyPageContent() {
                 {new Date(businessDate + "T12:00:00Z").toLocaleDateString("en-US", { weekday: "short", month: "short", day: "numeric", year: "numeric" })}
               </div>
             </div>
+            {businessDate !== todayYYYYMMDD() && (
+              <button
+                type="button"
+                onClick={() => setBusinessDate(todayYYYYMMDD())}
+                className="min-h-[44px] px-3 py-2 rounded-lg border border-[#E65100]/50 bg-[#E65100]/10 text-[#E65100] text-sm font-medium hover:bg-[#E65100]/20 transition-colors shrink-0"
+                aria-label="Jump to today"
+              >
+                Today
+              </button>
+            )}
             <button
               type="button"
               onClick={() => setBusinessDate(nextDay(businessDate))}
