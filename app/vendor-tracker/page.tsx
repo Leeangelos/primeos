@@ -340,105 +340,110 @@ export default function VendorTrackerPage() {
 
       {showQuickInvoice && (
         <>
-          <div className="fixed inset-0 bg-black/60 z-50" onClick={() => setShowQuickInvoice(false)} />
-          <div className="fixed inset-x-0 bottom-0 z-50 bg-slate-800 rounded-t-2xl border-t border-slate-700 p-5 pb-28 max-h-[80vh] overflow-y-auto animate-slide-up">
-            <div className="w-10 h-1 bg-slate-600 rounded-full mx-auto mb-4" />
-            <h3 className="text-lg font-bold text-white mb-4">Log Invoice</h3>
-
-            <div className="space-y-3">
+          <div className="fixed inset-0 bg-black/60 z-40" onClick={() => setShowQuickInvoice(false)} />
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+            <div className="bg-zinc-900 border border-zinc-700 rounded-2xl p-6 w-full max-w-md space-y-4">
+              <h3 className="text-lg font-bold text-white">Log Invoice</h3>
               <div>
-                <label className="text-xs text-slate-500 mb-1 block">Vendor Name</label>
+                <label className="text-sm text-zinc-400">Vendor Name</label>
                 <input
                   type="text"
                   value={quickVendorName}
                   onChange={(e) => setQuickVendorName(e.target.value)}
-                  className="w-full bg-slate-700 border border-slate-600 rounded-xl text-sm text-white h-11 px-3"
-                  placeholder="e.g., Hillcrest Foods"
+                  placeholder="Vendor name"
+                  className="w-full mt-1 bg-zinc-800 border border-zinc-700 rounded-lg px-4 py-3 text-white text-sm focus:outline-none focus:ring-2 focus:ring-[#E65100]/50"
                 />
               </div>
               <div>
-                <label className="text-xs text-slate-500 mb-1 block">Invoice Date</label>
+                <label className="text-sm text-zinc-400">Invoice Date</label>
                 <input
                   type="date"
                   value={quickInvoiceDate}
                   onChange={(e) => setQuickInvoiceDate(e.target.value)}
-                  className="w-full bg-slate-700 border border-slate-600 rounded-xl text-sm text-white h-11 px-3"
+                  className="w-full mt-1 bg-zinc-800 border border-zinc-700 rounded-lg px-4 py-3 text-white text-sm focus:outline-none focus:ring-2 focus:ring-[#E65100]/50"
                 />
               </div>
               <div>
-                <label className="text-xs text-slate-500 mb-1 block">Total Amount</label>
-                <div className="relative">
-                  <span className="absolute left-3 top-1/2 -translate-y-1/2 text-xs text-slate-400">$</span>
-                  <input
-                    type="number"
-                    inputMode="decimal"
-                    value={quickTotal}
-                    onChange={(e) => setQuickTotal(e.target.value)}
-                    className="w-full bg-slate-700 border border-slate-600 rounded-xl text-sm text-white h-11 pl-6 pr-3"
-                    placeholder="0.00"
-                  />
-                </div>
+                <label className="text-sm text-zinc-400">Total Amount ($)</label>
+                <input
+                  type="number"
+                  step="0.01"
+                  value={quickTotal}
+                  onChange={(e) => setQuickTotal(e.target.value)}
+                  placeholder="0.00"
+                  className="w-full mt-1 bg-zinc-800 border border-zinc-700 rounded-lg px-4 py-3 text-white text-sm focus:outline-none focus:ring-2 focus:ring-[#E65100]/50"
+                />
               </div>
               <div>
-                <label className="text-xs text-slate-500 mb-1 block">Notes (optional)</label>
+                <label className="text-sm text-zinc-400">Notes (optional)</label>
                 <input
                   type="text"
                   value={quickNotes}
                   onChange={(e) => setQuickNotes(e.target.value)}
-                  className="w-full bg-slate-700 border border-slate-600 rounded-xl text-sm text-white h-11 px-3"
-                  placeholder="e.g., Food order, paper goods"
+                  placeholder="Optional notes"
+                  className="w-full mt-1 bg-zinc-800 border border-zinc-700 rounded-lg px-4 py-3 text-white text-sm focus:outline-none focus:ring-2 focus:ring-[#E65100]/50"
                 />
               </div>
-              <button
-                type="button"
-                disabled={
-                  quickSaving ||
-                  !quickVendorName.trim() ||
-                  !quickInvoiceDate ||
-                  quickTotal.trim() === "" ||
-                  Number.isNaN(Number(quickTotal))
-                }
-                onClick={async () => {
-                  if (
+              <div className="flex gap-3 pt-2">
+                <button
+                  type="button"
+                  onClick={() => setShowQuickInvoice(false)}
+                  className="flex-1 py-3 rounded-xl border border-zinc-700 text-zinc-400 text-sm"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="button"
+                  disabled={
+                    quickSaving ||
                     !quickVendorName.trim() ||
                     !quickInvoiceDate ||
                     quickTotal.trim() === "" ||
                     Number.isNaN(Number(quickTotal))
-                  )
-                    return;
-                  try {
-                    setQuickSaving(true);
-                    setQuickToast("idle");
-                    const res = await fetch("/api/quick-invoice", {
-                      method: "POST",
-                      headers: { "Content-Type": "application/json" },
-                      body: JSON.stringify({
-                        vendor_name: quickVendorName.trim(),
-                        invoice_date: quickInvoiceDate,
-                        total: Number(quickTotal),
-                        notes: quickNotes.trim() || null,
-                      }),
-                    });
-                    if (!res.ok) {
-                      setQuickToast("error");
-                    } else {
-                      setQuickToast("saved");
-                      setShowQuickInvoice(false);
-                      setQuickVendorName("");
-                      setQuickTotal("");
-                      setQuickNotes("");
-                    }
-                  } catch {
-                    setQuickToast("error");
-                  } finally {
-                    setQuickSaving(false);
-                    setTimeout(() => setQuickToast("idle"), 3000);
                   }
-                }}
-                className="w-full mt-2 rounded-xl py-3 text-sm font-semibold text-white bg-[#E65100] hover:bg-[#f97316] disabled:bg-slate-700 disabled:text-slate-400 disabled:cursor-not-allowed transition-colors"
-              >
-                {quickSaving ? "Saving..." : "Save Invoice"}
-              </button>
+                  onClick={async () => {
+                    if (
+                      !quickVendorName.trim() ||
+                      !quickInvoiceDate ||
+                      quickTotal.trim() === "" ||
+                      Number.isNaN(Number(quickTotal))
+                    ) {
+                      return;
+                    }
+                    try {
+                      setQuickSaving(true);
+                      setQuickToast("idle");
+                      const res = await fetch("/api/quick-invoice", {
+                        method: "POST",
+                        headers: { "Content-Type": "application/json" },
+                        body: JSON.stringify({
+                          vendor_name: quickVendorName.trim(),
+                          invoice_date: quickInvoiceDate,
+                          total: Number(quickTotal),
+                          notes: quickNotes.trim() || null,
+                        }),
+                      });
+                      if (!res.ok) {
+                        setQuickToast("error");
+                      } else {
+                        setQuickToast("saved");
+                        setShowQuickInvoice(false);
+                        setQuickVendorName("");
+                        setQuickTotal("");
+                        setQuickNotes("");
+                      }
+                    } catch {
+                      setQuickToast("error");
+                    } finally {
+                      setQuickSaving(false);
+                      setTimeout(() => setQuickToast("idle"), 3000);
+                    }
+                  }}
+                  className="flex-1 py-3 rounded-xl bg-[#E65100] text-white font-semibold text-sm disabled:bg-slate-700 disabled:text-slate-400 disabled:cursor-not-allowed transition-colors"
+                >
+                  {quickSaving ? "Saving..." : "Save Invoice"}
+                </button>
+              </div>
             </div>
           </div>
         </>
