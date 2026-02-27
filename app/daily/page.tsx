@@ -127,6 +127,7 @@ function InlineStatus({
 }
 
 type SaveStatus = "idle" | "saving" | "saved" | "error";
+type TeamEnergy = "low" | "medium" | "high" | null;
 
 function isValidCockpitStore(s: string | null): s is CockpitStoreSlug {
   return s === "kent" || s === "aurora" || s === "lindseys";
@@ -155,6 +156,12 @@ function DailyPageContent() {
   const [entry, setEntry] = useState<any>(null); // current day's data from API
   const [warnings, setWarnings] = useState<WarningItem[]>([]);
   const [storeChangeWarning, setStoreChangeWarning] = useState<string | null>(null);
+  const [pulseRecognized, setPulseRecognized] = useState<boolean | null>(null);
+  const [pulseCallouts, setPulseCallouts] = useState<boolean | null>(null);
+  const [pulseCalloutCount, setPulseCalloutCount] = useState<string>("");
+  const [pulseEnergy, setPulseEnergy] = useState<TeamEnergy>(null);
+  const [pulseSaving, setPulseSaving] = useState(false);
+  const [pulseToast, setPulseToast] = useState<"idle" | "saved" | "error">("idle");
 
   function validateEntries() {
     const newWarnings: WarningItem[] = [];
@@ -298,6 +305,38 @@ function DailyPageContent() {
     if (d && /^\d{4}-\d{2}-\d{2}$/.test(d)) setBusinessDate(d);
   }, [searchParams]);
   /* eslint-enable react-hooks/set-state-in-effect */
+
+  const teamPulseHasSelection =
+    pulseRecognized !== null || pulseCallouts !== null || pulseEnergy !== null;
+
+  const handleSaveTeamPulse = useCallback(async () => {
+    if (!teamPulseHasSelection || pulseSaving) return;
+    try {
+      setPulseSaving(true);
+      setPulseToast("idle");
+      const res = await fetch("/api/manager-checkin", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          location_id: storeId,
+          date: businessDate,
+          recognized_team: pulseRecognized,
+          callouts: pulseCallouts ? Number(pulseCalloutCount) || 0 : null,
+          energy_level: pulseEnergy ?? "medium",
+        }),
+      });
+      if (!res.ok) {
+        setPulseToast("error");
+      } else {
+        setPulseToast("saved");
+      }
+    } catch {
+      setPulseToast("error");
+    } finally {
+      setPulseSaving(false);
+      setTimeout(() => setPulseToast("idle"), 3000);
+    }
+  }, [teamPulseHasSelection, pulseSaving, storeId, businessDate, pulseRecognized, pulseCallouts, pulseCalloutCount, pulseEnergy]);
 
   /* eslint-disable react-hooks/set-state-in-effect -- load entry when store/date change */
   useEffect(() => {
@@ -528,6 +567,20 @@ function DailyPageContent() {
   return (
     <>
       <div className="space-y-5 min-w-0 overflow-x-hidden pb-28">
+      {pulseToast !== "idle" && (
+        <div
+          className={cn(
+            "fixed bottom-20 left-4 right-4 z-50 rounded-xl px-4 py-2.5 text-center border",
+            pulseToast === "saved"
+              ? "bg-emerald-600/20 border-emerald-700/50 text-emerald-300"
+              : "bg-red-600/20 border-red-700/50 text-red-300"
+          )}
+        >
+          <p className="text-xs font-medium">
+            {pulseToast === "saved" ? "Team Pulse saved" : "Could not save Team Pulse"}
+          </p>
+        </div>
+      )}
       {/* Toolbar */}
       <div className={`dashboard-toolbar p-3 sm:p-5 space-y-3 ${getStoreColor(storeId).glow}`}>
         <div className="flex items-center justify-between gap-2 flex-wrap">
@@ -1092,6 +1145,152 @@ function DailyPageContent() {
               </div>
             </div>
           )}
+
+          <div className="mt-6 space-y-3">
+            <div className="flex items-center justify-between gap-2">
+              <div>
+                <div className="flex items-center gap-2">
+                  <h3 className="text-sm font-medium text-slate-100">Team Pulse Today</h3>
+                  <EducationInfoIcon metricKey="team_pulse" />
+                </div>
+                <p className="text-xs text-slate-500 mt-0.5">60 seconds. How&apos;s your crew?</p>
+              </div>
+            </div>
+
+            <div className="rounded-2xl bg-zinc-900 border border-zinc-800 p-4 space-y-4">
+              <div className="space-y-2">
+                <p className="text-xs text-slate-300">
+                  Did you recognize a team member by name today for specific work?
+                </p>
+                <div className="flex gap-2">
+                  <button
+                    type="button"
+                    onClick={() => setPulseRecognized(true)}
+                    className={cn(
+                      "flex-1 rounded-lg border px-3 py-2 text-xs font-medium",
+                      pulseRecognized === true
+                        ? "border-emerald-500 bg-emerald-500/10 text-emerald-300"
+                        : "border-slate-700 bg-slate-900 text-slate-400"
+                    )}
+                  >
+                    Yes
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setPulseRecognized(false)}
+                    className={cn(
+                      "flex-1 rounded-lg border px-3 py-2 text-xs font-medium",
+                      pulseRecognized === false
+                        ? "border-slate-500 bg-slate-800 text-slate-200"
+                        : "border-slate-700 bg-slate-900 text-slate-400"
+                    )}
+                  >
+                    No
+                  </button>
+                </div>
+              </div>
+
+              <div className="space-y-2">
+                <p className="text-xs text-slate-300">
+                  Any call-outs or no-shows today?
+                </p>
+                <div className="flex gap-2 items-center">
+                  <button
+                    type="button"
+                    onClick={() => setPulseCallouts(true)}
+                    className={cn(
+                      "flex-1 rounded-lg border px-3 py-2 text-xs font-medium",
+                      pulseCallouts === true
+                        ? "border-amber-500 bg-amber-500/10 text-amber-300"
+                        : "border-slate-700 bg-slate-900 text-slate-400"
+                    )}
+                  >
+                    Yes
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setPulseCallouts(false)}
+                    className={cn(
+                      "flex-1 rounded-lg border px-3 py-2 text-xs font-medium",
+                      pulseCallouts === false
+                        ? "border-slate-500 bg-slate-800 text-slate-200"
+                        : "border-slate-700 bg-slate-900 text-slate-400"
+                    )}
+                  >
+                    No
+                  </button>
+                  {pulseCallouts === true && (
+                    <input
+                      type="number"
+                      inputMode="numeric"
+                      min={0}
+                      max={10}
+                      value={pulseCalloutCount}
+                      onChange={(e) => setPulseCalloutCount(e.target.value)}
+                      className="w-16 rounded-lg border border-slate-700 bg-slate-900 text-xs text-white px-2 py-2"
+                      placeholder="#"
+                    />
+                  )}
+                </div>
+              </div>
+
+              <div className="space-y-2">
+                <p className="text-xs text-slate-300">
+                  Team energy today:
+                </p>
+                <div className="flex gap-2">
+                  <button
+                    type="button"
+                    onClick={() => setPulseEnergy("low")}
+                    className={cn(
+                      "flex-1 rounded-lg border px-3 py-2 text-xs font-medium flex items-center justify-center gap-1",
+                      pulseEnergy === "low"
+                        ? "border-red-500 bg-red-500/10 text-red-300"
+                        : "border-slate-700 bg-slate-900 text-slate-400"
+                    )}
+                  >
+                    <span aria-hidden>🔴</span>
+                    <span>Low</span>
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setPulseEnergy("medium")}
+                    className={cn(
+                      "flex-1 rounded-lg border px-3 py-2 text-xs font-medium flex items-center justify-center gap-1",
+                      pulseEnergy === "medium"
+                        ? "border-amber-500 bg-amber-500/10 text-amber-300"
+                        : "border-slate-700 bg-slate-900 text-slate-400"
+                    )}
+                  >
+                    <span aria-hidden>🟡</span>
+                    <span>Medium</span>
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setPulseEnergy("high")}
+                    className={cn(
+                      "flex-1 rounded-lg border px-3 py-2 text-xs font-medium flex items-center justify-center gap-1",
+                      pulseEnergy === "high"
+                        ? "border-emerald-500 bg-emerald-500/10 text-emerald-300"
+                        : "border-slate-700 bg-slate-900 text-slate-400"
+                    )}
+                  >
+                    <span aria-hidden>🟢</span>
+                    <span>High</span>
+                  </button>
+                </div>
+              </div>
+
+              <button
+                type="button"
+                onClick={handleSaveTeamPulse}
+                disabled={!teamPulseHasSelection || pulseSaving}
+                className="w-full mt-2 rounded-xl py-3 text-sm font-semibold text-white bg-[#E65100] hover:bg-[#f97316] disabled:bg-slate-700 disabled:text-slate-400 disabled:cursor-not-allowed transition-colors"
+              >
+                {pulseSaving ? "Saving..." : "Save Team Pulse"}
+              </button>
+            </div>
+          </div>
         </div>
       </div>
       </div>

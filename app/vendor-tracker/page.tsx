@@ -74,6 +74,13 @@ export default function VendorTrackerPage() {
   const [entryInvoice, setEntryInvoice] = useState("");
   const [addedEntries, setAddedEntries] = useState<VendorCost[]>([]);
   const [saveToast, setSaveToast] = useState(false);
+  const [showQuickInvoice, setShowQuickInvoice] = useState(false);
+  const [quickVendorName, setQuickVendorName] = useState("");
+  const [quickInvoiceDate, setQuickInvoiceDate] = useState(() => new Date().toISOString().split("T")[0]);
+  const [quickTotal, setQuickTotal] = useState("");
+  const [quickNotes, setQuickNotes] = useState("");
+  const [quickSaving, setQuickSaving] = useState(false);
+  const [quickToast, setQuickToast] = useState<"idle" | "saved" | "error">("idle");
 
   const storeVendors = useMemo(() => getVendorsByStore(selectedStore), [selectedStore]);
   const allCosts = useMemo(() => [...VENDOR_COSTS, ...addedEntries], [addedEntries]);
@@ -214,9 +221,15 @@ export default function VendorTrackerPage() {
 
   return (
     <div className="space-y-4 pb-28 min-w-0 overflow-x-hidden">
-      {saveToast && (
+      {(saveToast || quickToast !== "idle") && (
         <div className="fixed bottom-20 left-4 right-4 z-50 bg-emerald-600/20 border border-emerald-700/50 rounded-xl px-4 py-2.5 shadow-lg text-center">
-          <p className="text-xs text-emerald-300 font-medium">Vendor entry saved</p>
+          <p className="text-xs text-emerald-300 font-medium">
+            {quickToast === "saved"
+              ? "Invoice logged"
+              : quickToast === "error"
+                ? "Could not log invoice"
+                : "Vendor entry saved"}
+          </p>
         </div>
       )}
 
@@ -325,13 +338,128 @@ export default function VendorTrackerPage() {
         </>
       )}
 
+      {showQuickInvoice && (
+        <>
+          <div className="fixed inset-0 bg-black/60 z-50" onClick={() => setShowQuickInvoice(false)} />
+          <div className="fixed inset-x-0 bottom-0 z-50 bg-slate-800 rounded-t-2xl border-t border-slate-700 p-5 pb-28 max-h-[80vh] overflow-y-auto animate-slide-up">
+            <div className="w-10 h-1 bg-slate-600 rounded-full mx-auto mb-4" />
+            <h3 className="text-lg font-bold text-white mb-4">Log Invoice</h3>
+
+            <div className="space-y-3">
+              <div>
+                <label className="text-xs text-slate-500 mb-1 block">Vendor Name</label>
+                <input
+                  type="text"
+                  value={quickVendorName}
+                  onChange={(e) => setQuickVendorName(e.target.value)}
+                  className="w-full bg-slate-700 border border-slate-600 rounded-xl text-sm text-white h-11 px-3"
+                  placeholder="e.g., Hillcrest Foods"
+                />
+              </div>
+              <div>
+                <label className="text-xs text-slate-500 mb-1 block">Invoice Date</label>
+                <input
+                  type="date"
+                  value={quickInvoiceDate}
+                  onChange={(e) => setQuickInvoiceDate(e.target.value)}
+                  className="w-full bg-slate-700 border border-slate-600 rounded-xl text-sm text-white h-11 px-3"
+                />
+              </div>
+              <div>
+                <label className="text-xs text-slate-500 mb-1 block">Total Amount</label>
+                <div className="relative">
+                  <span className="absolute left-3 top-1/2 -translate-y-1/2 text-xs text-slate-400">$</span>
+                  <input
+                    type="number"
+                    inputMode="decimal"
+                    value={quickTotal}
+                    onChange={(e) => setQuickTotal(e.target.value)}
+                    className="w-full bg-slate-700 border border-slate-600 rounded-xl text-sm text-white h-11 pl-6 pr-3"
+                    placeholder="0.00"
+                  />
+                </div>
+              </div>
+              <div>
+                <label className="text-xs text-slate-500 mb-1 block">Notes (optional)</label>
+                <input
+                  type="text"
+                  value={quickNotes}
+                  onChange={(e) => setQuickNotes(e.target.value)}
+                  className="w-full bg-slate-700 border border-slate-600 rounded-xl text-sm text-white h-11 px-3"
+                  placeholder="e.g., Food order, paper goods"
+                />
+              </div>
+              <button
+                type="button"
+                disabled={
+                  quickSaving ||
+                  !quickVendorName.trim() ||
+                  !quickInvoiceDate ||
+                  quickTotal.trim() === "" ||
+                  Number.isNaN(Number(quickTotal))
+                }
+                onClick={async () => {
+                  if (
+                    !quickVendorName.trim() ||
+                    !quickInvoiceDate ||
+                    quickTotal.trim() === "" ||
+                    Number.isNaN(Number(quickTotal))
+                  )
+                    return;
+                  try {
+                    setQuickSaving(true);
+                    setQuickToast("idle");
+                    const res = await fetch("/api/quick-invoice", {
+                      method: "POST",
+                      headers: { "Content-Type": "application/json" },
+                      body: JSON.stringify({
+                        vendor_name: quickVendorName.trim(),
+                        invoice_date: quickInvoiceDate,
+                        total: Number(quickTotal),
+                        notes: quickNotes.trim() || null,
+                      }),
+                    });
+                    if (!res.ok) {
+                      setQuickToast("error");
+                    } else {
+                      setQuickToast("saved");
+                      setShowQuickInvoice(false);
+                      setQuickVendorName("");
+                      setQuickTotal("");
+                      setQuickNotes("");
+                    }
+                  } catch {
+                    setQuickToast("error");
+                  } finally {
+                    setQuickSaving(false);
+                    setTimeout(() => setQuickToast("idle"), 3000);
+                  }
+                }}
+                className="w-full mt-2 rounded-xl py-3 text-sm font-semibold text-white bg-[#E65100] hover:bg-[#f97316] disabled:bg-slate-700 disabled:text-slate-400 disabled:cursor-not-allowed transition-colors"
+              >
+                {quickSaving ? "Saving..." : "Save Invoice"}
+              </button>
+            </div>
+          </div>
+        </>
+      )}
+
       {/* SECTION 1: HEADER */}
       <div className="flex items-center justify-between mb-4">
         <div>
           <h1 className="text-xl font-bold text-white">Vendor Tracker</h1>
           <p className="text-xs text-slate-400 mt-0.5">Where every dollar goes</p>
         </div>
-        <EducationInfoIcon metricKey="vendor_total_spend" />
+        <div className="flex items-center gap-2">
+          <button
+            type="button"
+            onClick={() => setShowQuickInvoice(true)}
+            className="hidden sm:inline-flex items-center gap-1 rounded-lg border border-amber-600/40 bg-amber-500/10 px-3 py-1.5 text-[11px] font-medium text-amber-300 hover:bg-amber-500/20"
+          >
+            Log Invoice
+          </button>
+          <EducationInfoIcon metricKey="vendor_total_spend" />
+        </div>
       </div>
 
       <div className="flex flex-wrap items-center gap-3">

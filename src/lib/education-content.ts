@@ -1235,4 +1235,14 @@ export const EDUCATION_CONTENT: Record<string, EducationEntry> = {
       "Consider sharing wins with your team. When the crew sees that food cost hit 29% or PRIME broke 60%, they know their work matters.",
     ],
   },
+  team_pulse: {
+    title: "Team Pulse",
+    whatItMeans:
+      "Team Pulse is a 60-second daily check-in on the human side of your operation. It tracks whether you recognized someone, dealt with attendance issues, and how the overall team energy felt that shift.",
+    whyItMatters:
+      "Operators who recognize team members daily see 23% lower turnover. Tracking call-outs reveals patterns — if the same day of the week has issues, that is a scheduling problem, not a people problem.",
+    whenRedPlaybook: [
+      "Consider making Team Pulse part of your closing routine. 60 seconds at the end of shift while the day is fresh.",
+    ],
+  },
 };
