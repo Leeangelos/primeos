@@ -990,16 +990,6 @@ export default function VendorTrackerPage() {
         </div>
       )}
 
-      <button
-        type="button"
-        onClick={() => setShowAddEntry(true)}
-        className="fixed right-4 z-50 w-14 h-14 rounded-full bg-[#E65100] hover:bg-orange-600 shadow-lg flex items-center justify-center transition-colors text-white"
-        style={{ bottom: "calc(5rem + env(safe-area-inset-bottom, 0px))" }}
-        aria-label="Quick vendor entry"
-      >
-        <Plus className="w-6 h-6" />
-      </button>
-
       <DataDisclaimer confidence="high" details="12 months of vendor cost data loaded. Trends require 2+ months." />
     </div>
   );

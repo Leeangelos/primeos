@@ -475,7 +475,7 @@ export default function HomePage() {
       </div>
 
       <div className="w-full min-w-0">
-        <p className="text-xs font-semibold uppercase tracking-widest text-zinc-500 mb-2">
+        <p className="text-base md:text-lg font-bold text-white mb-2">
           3 Pillars of Success
         </p>
         <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
