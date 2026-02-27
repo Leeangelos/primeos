@@ -63,6 +63,7 @@ type Message = {
   store_id: string | null;
   channel: string;
   sender_name: string;
+  sender_email?: string | null;
   sender_role: string | null;
   message: string;
   is_pinned: boolean;
@@ -301,7 +302,7 @@ export default function ChatPage() {
 
 function MessageBlock({ m, isAnnouncements }: { m: Message; isAnnouncements: boolean }) {
   const roleStyle = ROLE_STYLE[m.sender_role ?? ""] ?? ROLE_STYLE.team;
-  const senderDisplay = getSenderDisplay(m.sender_name);
+  const senderDisplay = getSenderDisplay(m.sender_email ?? m.sender_name ?? "");
   const messageColor = isAnnouncements || m.is_announcement ? "border-amber-500/40 bg-amber-500/5" : senderDisplay.bg;
   const avatarColor = senderDisplay.avatar;
   const textColor = senderDisplay.text;

@@ -108,7 +108,7 @@ function MerchContent() {
     <div className="space-y-5 pb-28">
       {checkoutToast && (
         <div className="fixed bottom-20 left-4 right-4 z-50 bg-slate-800 border border-slate-700 rounded-xl px-4 py-2.5 shadow-lg text-center">
-          <p className="text-xs text-slate-300">Demo Mode — Checkout available in Phase 2.</p>
+          <p className="text-xs text-slate-300">Demo Mode — Merch checkout is coming in Phase 2.</p>
         </div>
       )}
       <div className="dashboard-toolbar p-3 sm:p-5 space-y-3">
@@ -152,13 +152,12 @@ function MerchContent() {
         <div className="rounded-lg border border-amber-500/50 bg-amber-500/10 p-5 text-center text-sm text-amber-400">Checkout canceled. Your cart is still here.</div>
       )}
 
-      {/* Fixed floating cart bubble — stays visible while scrolling, above nav */}
+      {/* Fixed floating cart bubble — above nav, does not cover product grid */}
       {cartCount > 0 && (
         <button
           type="button"
           onClick={() => setShowCart(true)}
-          className="fixed right-4 z-50 w-14 h-14 rounded-full bg-[#E65100] hover:bg-orange-600 shadow-lg flex items-center justify-center text-white transition-colors"
-          style={{ bottom: "calc(5rem + env(safe-area-inset-bottom, 0px))" }}
+          className="fixed bottom-20 right-4 z-30 w-14 h-14 rounded-full bg-[#E65100] hover:bg-orange-600 shadow-lg flex items-center justify-center text-white transition-colors"
           aria-label={`Cart (${cartCount} items)`}
         >
           <ShoppingCart className="w-6 h-6" />
@@ -175,7 +174,7 @@ function MerchContent() {
           ))}
         </div>
       ) : (
-        <div className="space-y-3">
+        <div className="space-y-3 pb-24">
           {/* Packages first — Hormozi style */}
           {filtered.filter((i) => i.category === "package").length > 0 && (
             <div className="space-y-3">
@@ -337,7 +336,7 @@ function MerchContent() {
                   type="button"
                   onClick={() => {
                     setCheckoutToast(true);
-                    setTimeout(() => setCheckoutToast(false), 2000);
+                    setTimeout(() => setCheckoutToast(false), 3000);
                   }}
                   className="w-full py-3 rounded-xl bg-[#E65100] hover:bg-orange-600 text-white text-sm font-semibold mt-4 transition-colors"
                 >

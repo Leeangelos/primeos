@@ -474,6 +474,7 @@ export default function HomePage() {
         </div>
       </div>
 
+      <div key={selectedStore} className="space-y-6">
       <div className="w-full min-w-0">
         <p className="text-base md:text-lg font-bold text-[#E65100] drop-shadow-[0_0_8px_rgba(230,81,0,0.4)] mb-2">
           3 Pillars of Success
@@ -629,6 +630,8 @@ export default function HomePage() {
           </div>
         </div>
       )}
+
+      </div>
 
       <div className="bg-slate-800 rounded-xl p-4 border border-slate-700 min-w-0">
         <h3 className="text-sm font-semibold text-slate-400 uppercase tracking-wide mb-3">7-Day Trend</h3>

@@ -12,17 +12,16 @@ export function AppNav() {
     <header className="sticky top-0 left-0 right-0 z-40 bg-slate-900/95 backdrop-blur-sm border-b border-slate-700" style={{ paddingTop: "env(safe-area-inset-top, 0px)" }}>
       <div className="h-14 px-4 flex items-center justify-between">
         <div className="flex items-center gap-2">
-          {session && (
-            <button
-              type="button"
-              onClick={() => signOut()}
-              className="p-1.5 rounded-lg hover:bg-slate-700/50 transition-colors text-zinc-400 hover:text-white"
-              aria-label="Sign out"
-              title="Sign out"
-            >
-              <ArrowRightFromLine className="w-4 h-4 rotate-180" />
-            </button>
-          )}
+          <button
+            type="button"
+            onClick={() => session && signOut()}
+            disabled={!session}
+            className="p-1.5 rounded-lg hover:bg-slate-700/50 transition-colors text-zinc-400 hover:text-white disabled:opacity-70 disabled:pointer-events-none"
+            aria-label="Sign out"
+            title="Sign out"
+          >
+            <ArrowRightFromLine className="w-4 h-4 rotate-180" />
+          </button>
           <span className="text-lg font-bold text-white">PrimeOS</span>
         </div>
         <div className="flex items-center gap-2">

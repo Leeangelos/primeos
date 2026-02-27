@@ -205,7 +205,11 @@ export function BottomNav() {
           )}
         >
           <div
-            className="flex justify-center pt-3 pb-1 touch-none"
+            role="button"
+            tabIndex={0}
+            className="flex justify-center pt-3 pb-1 touch-none cursor-pointer select-none"
+            onClick={() => closeMore()}
+            onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); closeMore(); } }}
             onTouchStart={(e) => { dragStartYRef.current = e.touches[0].clientY; }}
             onTouchMove={(e) => {
               if (dragStartYRef.current !== null) {
@@ -217,6 +221,7 @@ export function BottomNav() {
               }
             }}
             onTouchEnd={() => { dragStartYRef.current = null; }}
+            aria-label="Close drawer"
           >
             <div className={cn("w-10 h-1 rounded-full", isLight ? "bg-zinc-300" : "bg-slate-600")} />
           </div>
@@ -429,6 +434,7 @@ export function BottomNav() {
         <div className="flex items-center justify-around h-16 px-2">
           <Link
             href="/"
+            onClick={closeMore}
             className="flex flex-col items-center justify-center gap-0.5 min-w-[44px] min-h-[44px] flex-1 max-w-[80px] transition-colors"
             aria-current={isHomeActive ? "page" : undefined}
           >
@@ -437,6 +443,7 @@ export function BottomNav() {
           </Link>
           <Link
             href="/daily"
+            onClick={closeMore}
             className="flex flex-col items-center justify-center gap-0.5 min-w-[44px] min-h-[44px] flex-1 max-w-[80px] transition-colors"
             aria-current={isDailyActive ? "page" : undefined}
           >
@@ -445,6 +452,7 @@ export function BottomNav() {
           </Link>
           <Link
             href="/brief"
+            onClick={closeMore}
             className="flex flex-col items-center justify-center gap-0.5 min-w-[44px] min-h-[44px] flex-1 max-w-[80px] transition-colors"
             aria-current={isBriefActive ? "page" : undefined}
           >
@@ -453,6 +461,7 @@ export function BottomNav() {
           </Link>
           <Link
             href="/training"
+            onClick={closeMore}
             className="flex flex-col items-center justify-center gap-0.5 min-w-[44px] min-h-[44px] flex-1 max-w-[80px] transition-colors"
             aria-current={isGuideActive ? "page" : undefined}
           >

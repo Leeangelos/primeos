@@ -244,11 +244,11 @@ body {
 .light-mode main .text-zinc-300 { color: #334155 !important; }
 .light-mode main .text-slate-400,
 .light-mode main .text-zinc-400,
-.light-mode main .text-gray-400 { color: #52525b !important; } /* zinc-600 for contrast */
+.light-mode main .text-gray-400 { color: #52525b !important; } /* zinc-600 minimum for body text */
 .light-mode main .text-slate-500,
-.light-mode main .text-zinc-500 { color: #64748b !important; }
+.light-mode main .text-zinc-500 { color: #3f3f46 !important; } /* zinc-700 minimum for labels */
 .light-mode main .text-slate-600,
-.light-mode main .text-zinc-600 { color: #64748b !important; }
+.light-mode main .text-zinc-600 { color: #3f3f46 !important; }
 
 /* ——— Daily KPI / Morning Brief: dashboard classes (same look as other pages) ——— */
 .light-mode main .dashboard-toolbar {
