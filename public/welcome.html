@@ -1,0 +1,518 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <title>PrimeOS — Stop Running Blind</title>
+    <meta
+      name="description"
+      content="PrimeOS gives independent pizzeria operators complete visibility into their business in 90 seconds a day."
+    />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <style>
+      :root {
+        --bg: #020617;
+        --bg-card: #020617;
+        --bg-card-soft: #0b1120;
+        --border-subtle: #1f2937;
+        --text: #f9fafb;
+        --text-subtle: #9ca3af;
+        --text-muted: #6b7280;
+        --accent: #e65100;
+        --accent-soft: #f57c00;
+      }
+      * {
+        box-sizing: border-box;
+      }
+      body {
+        margin: 0;
+        min-height: 100vh;
+        font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI",
+          sans-serif;
+        background-color: var(--bg);
+        color: var(--text);
+      }
+      a {
+        color: inherit;
+        text-decoration: none;
+      }
+      .page {
+        min-height: 100vh;
+        display: flex;
+        flex-direction: column;
+      }
+      .container {
+        width: 100%;
+        max-width: 64rem;
+        margin-left: auto;
+        margin-right: auto;
+        padding-left: 1rem;
+        padding-right: 1rem;
+      }
+      header {
+        border-bottom: 1px solid rgba(24, 24, 27, 0.75);
+      }
+      .header-inner {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 1rem 0;
+      }
+      .brand {
+        font-size: 0.875rem;
+        font-weight: 600;
+        letter-spacing: -0.02em;
+      }
+      .login-link {
+        font-size: 0.875rem;
+        font-weight: 500;
+        color: var(--text-subtle);
+        transition: color 150ms ease;
+      }
+      .login-link:hover {
+        color: var(--text);
+      }
+      main {
+        padding-top: 2.5rem;
+        padding-bottom: 4rem;
+      }
+      .stack {
+        display: flex;
+        flex-direction: column;
+        gap: 5rem;
+      }
+      @media (min-width: 768px) {
+        main {
+          padding-top: 3.5rem;
+          padding-bottom: 6rem;
+        }
+        .stack {
+          gap: 6rem;
+        }
+      }
+      .hero-title {
+        font-size: 1.875rem;
+        line-height: 1.2;
+        font-weight: 700;
+        letter-spacing: -0.03em;
+        margin: 0 0 1rem;
+        text-align: center;
+      }
+      @media (min-width: 768px) {
+        .hero-title {
+          font-size: 3rem;
+          text-align: left;
+        }
+      }
+      .hero-subtitle {
+        margin: 0;
+        font-size: 1.125rem;
+        color: var(--text-subtle);
+        max-width: 36rem;
+      }
+      .hero-subtitle-wrap {
+        text-align: center;
+      }
+      @media (min-width: 768px) {
+        .hero-subtitle-wrap {
+          text-align: left;
+        }
+      }
+      .hero-cta-row {
+        margin-top: 2rem;
+        display: flex;
+        justify-content: center;
+      }
+      @media (min-width: 768px) {
+        .hero-cta-row {
+          justify-content: flex-start;
+        }
+      }
+      .btn-primary {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        width: 100%;
+        max-width: 18rem;
+        padding: 1rem 2rem;
+        border-radius: 0.75rem;
+        font-size: 1.125rem;
+        font-weight: 600;
+        background-color: var(--accent);
+        color: #ffffff;
+        box-shadow: 0 10px 25px rgba(0, 0, 0, 0.4);
+        transition: background-color 150ms ease, transform 150ms ease,
+          box-shadow 150ms ease;
+      }
+      .btn-primary:hover {
+        background-color: var(--accent-soft);
+        transform: translateY(-1px);
+        box-shadow: 0 14px 30px rgba(0, 0, 0, 0.6);
+      }
+      .section-title {
+        font-size: 1.5rem;
+        font-weight: 700;
+        margin: 0 0 1rem;
+      }
+      @media (min-width: 768px) {
+        .section-title {
+          font-size: 1.875rem;
+        }
+      }
+      .section-text-lg {
+        font-size: 1.125rem;
+        color: var(--text-subtle);
+      }
+      .section {
+        margin: 0;
+      }
+      .pain-grid {
+        display: grid;
+        grid-template-columns: 1fr;
+        gap: 1.5rem;
+      }
+      @media (min-width: 768px) {
+        .pain-grid {
+          grid-template-columns: repeat(2, minmax(0, 1fr));
+        }
+      }
+      .card {
+        border-radius: 1.25rem;
+        background-color: var(--bg-card-soft);
+        border: 1px solid var(--border-subtle);
+        padding: 1.25rem 1.25rem;
+        display: flex;
+        flex-direction: column;
+        gap: 0.75rem;
+      }
+      .card-header {
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+      }
+      .card-icon {
+        width: 2.25rem;
+        height: 2.25rem;
+        border-radius: 0.75rem;
+        background: rgba(15, 23, 42, 0.9);
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        color: var(--accent);
+        font-size: 1rem;
+      }
+      .card-title {
+        margin: 0;
+        font-size: 0.95rem;
+        font-weight: 600;
+      }
+      .card-body {
+        margin: 0;
+        font-size: 0.875rem;
+        line-height: 1.6;
+        color: var(--text-subtle);
+      }
+      .cost-section {
+        border-radius: 1.75rem;
+        padding: 3rem 1.5rem;
+        text-align: center;
+        background: radial-gradient(circle at top left, #111827, #020617);
+        border: 1px solid #111827;
+      }
+      .cost-lead {
+        font-size: 1.125rem;
+        color: #e5e7eb;
+        margin: 0 0 0.75rem;
+      }
+      .cost-number {
+        font-size: 3rem;
+        font-weight: 800;
+        letter-spacing: -0.05em;
+        color: var(--accent);
+        margin: 0 0 0.75rem;
+      }
+      @media (min-width: 768px) {
+        .cost-number {
+          font-size: 3.75rem;
+        }
+      }
+      .cost-tagline {
+        margin: 0;
+        font-size: 1.125rem;
+        color: #e5e7eb;
+      }
+      .cost-detail {
+        margin: 1rem auto 0;
+        max-width: 34rem;
+        font-size: 0.9rem;
+        color: var(--text-muted);
+      }
+      .features-grid {
+        display: grid;
+        grid-template-columns: 1fr;
+        gap: 1.5rem;
+      }
+      @media (min-width: 768px) {
+        .features-grid {
+          grid-template-columns: repeat(3, minmax(0, 1fr));
+        }
+      }
+      .feature-card {
+        border-radius: 1.25rem;
+        background-color: var(--bg-card-soft);
+        border: 1px solid var(--border-subtle);
+        padding: 1.5rem 1.25rem;
+        display: flex;
+        flex-direction: column;
+        gap: 0.75rem;
+      }
+      .feature-icon {
+        width: 2.5rem;
+        height: 2.5rem;
+        border-radius: 0.9rem;
+        background: rgba(15, 23, 42, 0.9);
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        color: var(--accent);
+        font-size: 1.1rem;
+      }
+      .feature-title {
+        margin: 0;
+        font-size: 0.95rem;
+        font-weight: 600;
+      }
+      .feature-body {
+        margin: 0;
+        font-size: 0.875rem;
+        line-height: 1.6;
+        color: var(--text-subtle);
+      }
+      .center {
+        text-align: center;
+      }
+      .text-muted {
+        color: var(--text-muted);
+      }
+      .footer {
+        border-top: 1px solid var(--border-subtle);
+        padding-top: 2.5rem;
+        margin-top: 1rem;
+        text-align: center;
+        font-size: 0.875rem;
+        color: var(--text-muted);
+      }
+      .footer-links {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        gap: 1rem;
+        font-size: 0.75rem;
+        margin-top: 0.75rem;
+      }
+      .footer-link {
+        color: var(--text-muted);
+      }
+      .footer-link:hover {
+        color: var(--text-subtle);
+        text-decoration: underline;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="page">
+      <header>
+        <div class="container header-inner">
+          <span class="brand">PrimeOS</span>
+          <a href="/login" class="login-link">Log In</a>
+        </div>
+      </header>
+
+      <main>
+        <div class="container stack">
+          <!-- SECTION 1 — HERO -->
+          <section class="section">
+            <div class="hero-subtitle-wrap">
+              <h1 class="hero-title">
+                You're Leaving Money on the Table. Every. Single. Day.
+              </h1>
+              <p class="hero-subtitle">
+                And you don't even know how much.
+              </p>
+            </div>
+            <div class="hero-cta-row">
+              <a
+                class="btn-primary"
+                href="mailto:hello@getprimeos.com?subject=PrimeOS%20Access%20Request"
+              >
+                Request Access
+              </a>
+            </div>
+          </section>
+
+          <!-- SECTION 2 — THE PAIN -->
+          <section class="section">
+            <h2 class="section-title">Sound Familiar?</h2>
+            <div class="pain-grid">
+              <article class="card">
+                <div class="card-header">
+                  <div class="card-icon">🔍</div>
+                  <h3 class="card-title">
+                    You check 10 places for one answer.
+                  </h3>
+                </div>
+                <p class="card-body">
+                  POS for sales. A spreadsheet for labor. A folder for
+                  invoices. Your head for everything else. By the time you find
+                  the number, the moment's gone.
+                </p>
+              </article>
+
+              <article class="card">
+                <div class="card-header">
+                  <div class="card-icon">📉</div>
+                  <h3 class="card-title">
+                    You don't know your real food cost.
+                  </h3>
+                </div>
+                <p class="card-body">
+                  You think it's 30%. It might be 37%. You won't know until the
+                  end of the month — and by then you've been bleeding for 30
+                  days.
+                </p>
+              </article>
+
+              <article class="card">
+                <div class="card-header">
+                  <div class="card-icon">👁️</div>
+                  <h3 class="card-title">You're invisible online.</h3>
+                </div>
+                <p class="card-body">
+                  The chain down the street has 847 Google reviews. You have
+                  43. They show up first. You don't show up at all. And you
+                  didn't even know it was a problem.
+                </p>
+              </article>
+
+              <article class="card">
+                <div class="card-header">
+                  <div class="card-icon">👤</div>
+                  <h3 class="card-title">You're figuring it out alone.</h3>
+                </div>
+                <p class="card-body">
+                  No one teaches you how to read your own numbers. No one shows
+                  you where the leaks are. You're inside your four walls
+                  guessing — and guessing is expensive.
+                </p>
+              </article>
+            </div>
+          </section>
+
+          <!-- SECTION 3 — THE COST -->
+          <section class="section">
+            <div class="cost-section">
+              <p class="cost-lead">
+                The average independent operator is bleeding
+              </p>
+              <p class="cost-number">$4,000 – $8,000</p>
+              <p class="cost-tagline">per month in leaks they can't see.</p>
+              <p class="cost-detail">
+                Menu pricing gaps. Overtime that shouldn't exist. Delivery fees
+                eating your margins. Vendors creeping up 2% and hoping you
+                won't notice.
+              </p>
+            </div>
+          </section>
+
+          <!-- SECTION 4 — THE SOLUTION -->
+          <section class="section">
+            <div>
+              <h2 class="section-title">
+                One Platform. Complete Picture. 90 Seconds a Day.
+              </h2>
+              <p class="section-text-lg">
+                PrimeOS gives independent pizzeria operators complete visibility
+                into their business. Inside and outside. Every day it makes you
+                a little smarter than yesterday.
+              </p>
+            </div>
+            <div class="features-grid">
+              <article class="feature-card">
+                <div class="feature-icon">📊</div>
+                <h3 class="feature-title">See Everything</h3>
+                <p class="feature-body">
+                  Sales, labor, food cost, vendors, delivery economics,
+                  competitor intel, online reputation — one place.
+                </p>
+              </article>
+
+              <article class="feature-card">
+                <div class="feature-icon">📘</div>
+                <h3 class="feature-title">Understand Everything</h3>
+                <p class="feature-body">
+                  Every number has an education layer. What it means. Why it
+                  matters. What to consider. PrimeOS teaches you to read your
+                  own business.
+                </p>
+              </article>
+
+              <article class="feature-card">
+                <div class="feature-icon">📈</div>
+                <h3 class="feature-title">Act on Everything</h3>
+                <p class="feature-body">
+                  Daily scoops pulled from your actual data. Different insights
+                  every day because your numbers change every day. No advice.
+                  Just your math.
+                </p>
+              </article>
+            </div>
+          </section>
+
+          <!-- SECTION 5 — RISK REVERSAL -->
+          <section class="section center">
+            <h2 class="section-title">It's free.</h2>
+            <p class="section-text-lg">
+              Not freemium. Not a trial. Not "free for 14 days then we charge
+              you."
+            </p>
+            <p class="text-muted" style="max-width: 36rem; margin: 0.75rem auto 0;">
+              PrimeOS is provided free through your food distributor. No credit
+              card. No catch. Your distributor invests in your success because
+              when you win, they win.
+            </p>
+          </section>
+
+          <!-- SECTION 6 — CTA -->
+          <section class="section center">
+            <h2 class="section-title">Stop Running Blind.</h2>
+            <div class="hero-cta-row" style="justify-content: center;">
+              <a
+                class="btn-primary"
+                href="mailto:hello@getprimeos.com?subject=PrimeOS%20Access%20Request"
+              >
+                Request Access
+              </a>
+            </div>
+            <p class="text-muted" style="margin-top: 0.75rem; font-size: 0.875rem;">
+              Built by a pizzeria operator who got tired of guessing.
+            </p>
+          </section>
+
+          <!-- SECTION 7 — FOOTER -->
+          <footer class="footer">
+            <p>
+              Driven by gratitude. Give without expectation. Community above
+              competition.
+            </p>
+            <p>© 2026 Ambition &amp; Legacy LLC · Kent, Ohio</p>
+            <div class="footer-links">
+              <a href="/terms" class="footer-link">Terms</a>
+              <span>·</span>
+              <a href="/privacy" class="footer-link">Privacy</a>
+            </div>
+          </footer>
+        </div>
+      </main>
+    </div>
+  </body>
+</html>
+
