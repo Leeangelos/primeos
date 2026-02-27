@@ -284,8 +284,11 @@ export default function ReputationPage() {
 
       {/* THE METER — Hero */}
       <div className="bg-slate-800 rounded-2xl border border-slate-700 p-5 mb-4 text-center">
-        <div className="text-6xl font-bold mb-1" style={{ color: sentimentScore >= 85 ? "#34d399" : sentimentScore >= 70 ? "#fbbf24" : "#f87171" }}>
-          {sentimentScore}%
+        <div className="flex items-center justify-center gap-2 mb-1">
+          <div className="text-6xl font-bold" style={{ color: sentimentScore >= 85 ? "#34d399" : sentimentScore >= 70 ? "#fbbf24" : "#f87171" }}>
+            {sentimentScore}%
+          </div>
+          <EducationInfoIcon metricKey="sentiment_score" size="sm" />
         </div>
         <div className="text-sm text-slate-400 mb-3">of the internet says</div>
         <div
@@ -311,8 +314,9 @@ export default function ReputationPage() {
           ))}
         </div>
 
-        <div className="mt-4 pt-3 border-t border-slate-700">
+        <div className="mt-4 pt-3 border-t border-slate-700 flex items-center gap-2">
           <span className="text-xs text-slate-500">{totalReviews} total reviews across all platforms</span>
+          <EducationInfoIcon metricKey="platform_breakdown" size="sm" />
         </div>
       </div>
 
@@ -356,7 +360,10 @@ export default function ReputationPage() {
 
           <div className="bg-slate-800 rounded-xl border border-slate-700 p-4 mb-4">
             <div className="flex items-center justify-between mb-2">
-              <span className="text-sm font-semibold text-white">Response Rate</span>
+              <span className="text-sm font-semibold text-white flex items-center gap-2">
+                Response Rate
+                <EducationInfoIcon metricKey="response_rate" size="sm" />
+              </span>
               <span className={`text-sm font-bold ${reputationKpis.responseRatePct >= 80 ? "text-emerald-400" : reputationKpis.responseRatePct >= 70 ? "text-amber-400" : "text-red-400"}`}>
                 {reputationKpis.responseRatePct}%
               </span>
@@ -374,6 +381,7 @@ export default function ReputationPage() {
             <div className="flex items-center gap-2 mb-3">
               <Eye className="w-4 h-4 text-purple-400" />
               <span className="text-sm font-semibold text-white">AI Visibility</span>
+              <EducationInfoIcon metricKey="ai_visibility_score" size="sm" />
               <span className="text-[10px] px-2 py-0.5 rounded bg-purple-600/20 text-purple-400">Beta</span>
               <span className={`ml-auto text-xs font-semibold ${reputationKpis.aiVisibilityScore >= 70 ? "text-emerald-400" : reputationKpis.aiVisibilityScore >= 55 ? "text-amber-400" : "text-red-400"}`}>
                 {reputationKpis.aiVisibilityScore}/100
@@ -452,7 +460,10 @@ export default function ReputationPage() {
       {activeTab === "market" && (
         <>
           <div className="bg-slate-800 rounded-xl border border-slate-700 p-4 mb-4">
-            <h3 className="text-sm font-semibold text-white mb-3">Google Rating — Your Market</h3>
+            <div className="flex items-center gap-2 mb-3">
+              <h3 className="text-sm font-semibold text-white">Google Rating — Your Market</h3>
+              <EducationInfoIcon metricKey="market_comparison" size="sm" />
+            </div>
             {marketData.map((shop, i) => {
               const isYou = shop.name.includes("LeeAngelo") || shop.name.includes("Lindsey");
               return (

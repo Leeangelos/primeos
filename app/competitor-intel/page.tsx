@@ -298,9 +298,11 @@ export default function CompetitorIntelPage() {
                     ⭐ {storeProfile.rating != null ? storeProfile.rating : "—"}
                   </span>
                   <span className="text-xs text-slate-400">/ 5.0</span>
+                  <EducationInfoIcon metricKey="google_rating" size="sm" />
                   <span className="text-xs text-slate-400">
                     · {storeProfile.reviewCount != null ? storeProfile.reviewCount : 0} reviews
                   </span>
+                  <EducationInfoIcon metricKey="review_count" size="sm" />
                   {storeProfile.googleMapsUrl && (
                     <a href={storeProfile.googleMapsUrl} target="_blank" rel="noopener noreferrer" className="text-[10px] text-blue-400 underline ml-auto">
                       View on Google
@@ -367,7 +369,10 @@ export default function CompetitorIntelPage() {
             )}
 
           <div className="bg-slate-800 rounded-xl border border-slate-700 p-4 mb-4">
-            <h3 className="text-sm font-semibold text-white mb-3">Your Market Position</h3>
+            <div className="flex items-center gap-2 mb-3">
+              <h3 className="text-sm font-semibold text-white">Your Market Position</h3>
+              <EducationInfoIcon metricKey="competitor_price_comparison" size="sm" />
+            </div>
             {selectedStore === "all" ? (
               <p className="text-xs text-slate-400">Select a store to see your market position vs local competitors.</p>
             ) : (

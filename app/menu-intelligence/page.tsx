@@ -225,6 +225,10 @@ export default function MenuIntelligencePage() {
 
       {view === "menu" && (
         <div className="space-y-2">
+          <div className="flex items-center gap-2 mb-2">
+            <h3 className="text-sm font-semibold text-white">Menu</h3>
+            <EducationInfoIcon metricKey="menu_item_margin" size="sm" />
+          </div>
           {categories.map((cat) => {
             const isOpen = openCategories.has(cat);
             const catItems = itemsByCategory.get(cat) ?? [];
@@ -298,7 +302,7 @@ export default function MenuIntelligencePage() {
             <h3 className="text-sm font-semibold text-white">
               Cross-Location Price Comparison
             </h3>
-            <EducationInfoIcon metricKey="menu_price_comparison" />
+            <EducationInfoIcon metricKey="menu_compare" />
           </div>
           {comparableWithGaps.map((item) => (
             <div
@@ -387,7 +391,7 @@ export default function MenuIntelligencePage() {
           <div className="space-y-3">
             <div className="flex items-center gap-2">
               <h3 className="text-sm font-semibold text-white">Menu Price vs Actual Charge</h3>
-              <EducationInfoIcon metricKey="menu_pricing_gap" />
+              <EducationInfoIcon metricKey="menu_gap_pct" />
             </div>
             {filtered.length > 0 ? (
               <>

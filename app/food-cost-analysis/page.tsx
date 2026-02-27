@@ -110,7 +110,10 @@ export default function FoodCostAnalysisPage() {
 
       {/* THE GAP — Hero Card */}
       <div className="bg-slate-800 rounded-xl border border-slate-700 p-4 mb-4">
-        <h3 className="text-xs text-slate-500 uppercase tracking-wide mb-3">The Variance Gap</h3>
+        <div className="flex items-center gap-2 mb-3">
+        <h3 className="text-xs text-slate-500 uppercase tracking-wide">The Variance Gap</h3>
+        <EducationInfoIcon metricKey="variance_gap" size="sm" />
+      </div>
 
         <div className="grid grid-cols-3 gap-3 mb-3">
           <div>
@@ -119,7 +122,10 @@ export default function FoodCostAnalysisPage() {
             <div className="text-[10px] text-slate-600">{formatPct(theoreticalPct)} of revenue</div>
           </div>
           <div>
-            <div className="text-xs text-slate-500">Actual</div>
+            <div className="flex items-center gap-1">
+              <span className="text-xs text-slate-500">Actual</span>
+              <EducationInfoIcon metricKey="actual_food_cost" size="sm" />
+            </div>
             <div className="text-lg text-red-400 font-bold">{formatDollars(actual)}</div>
             <div className="text-[10px] text-slate-600">{formatPct(actualPct)} of revenue</div>
           </div>
@@ -216,7 +222,10 @@ export default function FoodCostAnalysisPage() {
 
       {/* Cross-Location Comparison */}
       <div className="bg-slate-800 rounded-xl border border-slate-700 p-4 mb-4">
-        <h3 className="text-sm font-semibold text-white mb-3">By Location — Latest Month</h3>
+        <div className="flex items-center gap-2 mb-3">
+        <h3 className="text-sm font-semibold text-white">By Location — Latest Month</h3>
+        <EducationInfoIcon metricKey="cross_location_comparison" size="sm" />
+      </div>
         {(["kent", "aurora", "lindseys"] as const).map((storeId) => {
           const d = FOOD_COST_DATA[storeId];
           const latest = d[d.length - 1];

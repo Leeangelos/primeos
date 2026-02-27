@@ -175,6 +175,7 @@ export default function InvoicesPage() {
           <div className="flex items-center gap-2">
             <h1 className="text-lg font-semibold sm:text-2xl">Invoice Scanner</h1>
             <EducationInfoIcon metricKey="invoice_scanning" />
+            <EducationInfoIcon metricKey="vendor_matching" size="sm" />
           </div>
           <ExportButton
             pageName="Invoices"

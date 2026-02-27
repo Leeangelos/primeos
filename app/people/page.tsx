@@ -133,14 +133,14 @@ export default function PeoplePage() {
             <div>
               <div className="flex items-center gap-1.5 text-slate-400 text-xs uppercase tracking-wide mb-1">
                 Avg tenure
-                <EducationInfoIcon metricKey="employee_ltv" />
+                <EducationInfoIcon metricKey="employee_tenure" size="sm" />
               </div>
               <div className="text-xl font-bold text-white tabular-nums">{avgTenure} mo</div>
             </div>
             <div>
               <div className="flex items-center gap-1.5 text-slate-400 text-xs uppercase tracking-wide mb-1">
                 Quarterly churn rate
-                <EducationInfoIcon metricKey="churn_rate" />
+                <EducationInfoIcon metricKey="employee_churn" size="sm" />
               </div>
               <div className={cn("text-xl font-bold tabular-nums", churnColor)}>
                 {formatPct(QUARTERLY_CHURN_RATE)}
@@ -149,7 +149,7 @@ export default function PeoplePage() {
             <div>
               <div className="flex items-center gap-1.5 text-slate-400 text-xs uppercase tracking-wide mb-1">
                 CAC spent this quarter
-                <EducationInfoIcon metricKey="employee_cac" />
+                <EducationInfoIcon metricKey="employee_acquisition_cost" size="sm" />
               </div>
               <div className="text-xl font-bold text-red-400 tabular-nums">
                 ${CAC_SPENT_THIS_QUARTER.toLocaleString()}
@@ -160,7 +160,7 @@ export default function PeoplePage() {
         <div className="bg-slate-800 rounded-xl border border-slate-700 p-4 mt-3">
           <div className="flex items-center justify-between mb-2">
             <h3 className="text-xs text-slate-500 uppercase tracking-wide">Pay Rates</h3>
-            <EducationInfoIcon metricKey="employee_cac" size="sm" />
+            <EducationInfoIcon metricKey="pay_rate" size="sm" />
           </div>
           <div className="text-lg font-bold text-white mb-2">
             ${payRates.blendedAvg}/hr <span className="text-xs text-slate-400 font-normal">blended average</span>

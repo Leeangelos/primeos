@@ -579,15 +579,13 @@ export const EDUCATION_CONTENT: Record<string, EducationEntry> = {
     ],
   },
   google_rating: {
-    title: "Google Rating & Reviews",
+    title: "Google Rating",
     whatItMeans:
-      "Your Google rating directly impacts how many new customers find you. A 4.5 vs 4.0 rating can mean 20-30% more clicks from Google Maps. Review count matters too — a 4.5 with 2,000 reviews is more trustworthy than a 4.8 with 50 reviews. Monitor both your rating and your competitors'.",
+      "Your average star rating on Google, based on all customer reviews. Ranges from 1.0 to 5.0.",
+    whyItMatters:
+      "Google rating directly affects whether new customers choose you or the competitor down the street. A restaurant below 4.0 loses significant potential traffic. The difference between 4.2 and 4.5 can be 20% more clicks.",
     whenRedPlaybook: [
-      "Consider responding to every negative review within 24 hours — professional responses build trust with future customers reading reviews",
-      "Consider asking satisfied customers to leave reviews — a simple receipt message or counter sign can double your review rate",
-      "Consider that 1-star reviews hurt less when you have hundreds of 5-star reviews diluting them",
-      "Consider monitoring competitor reviews for complaints you can address in your marketing",
-      "Consider that review volume matters — aim for at least 10 new reviews per month per location",
+      "Consider responding to every review — positive and negative. Businesses that respond to reviews average higher ratings over time. Industry benchmark: 4.3+ for independents.",
     ],
   },
   reputation: {
@@ -915,6 +913,286 @@ export const EDUCATION_CONTENT: Record<string, EducationEntry> = {
       "A high delivery mix means a large portion of your revenue is subject to platform fees. If 40% of sales are delivery at 25% commission, 10% of your total revenue goes to platforms.",
     whenRedPlaybook: [
       "Consider whether marketing direct ordering could shift some delivery volume to a lower-cost channel. Even shifting 5% of delivery to direct saves thousands annually.",
+    ],
+  },
+  price_movers: {
+    title: "Price Movers",
+    whatItMeans:
+      "Items from your vendors that changed in price recently — up or down. These are ingredients or supplies where the cost shifted compared to your last order.",
+    whyItMatters:
+      "Vendor price increases are silent profit killers. A 3% increase on your top cheese that you don't catch costs hundreds per month without a single thing changing on your menu.",
+    whenRedPlaybook: [
+      "Consider reviewing Price Movers weekly. If a key item goes up, check if a comparable product is available at the old price. Industry benchmark: keep total vendor spend increases under 2% per quarter.",
+    ],
+  },
+  annual_spend: {
+    title: "Annual Spend",
+    whatItMeans:
+      "The total dollar amount spent with each vendor over the past 12 months. Shows which vendors get the biggest share of your money.",
+    whyItMatters:
+      "Knowing your annual spend per vendor gives you leverage. A vendor getting $80,000 per year from you has a reason to keep you happy and keep prices competitive.",
+    whenRedPlaybook: [
+      "Consider reviewing your top 3 vendors by annual spend quarterly. That is where small percentage savings have the biggest dollar impact.",
+    ],
+  },
+  cc_processing_quoted_vs_actual: {
+    title: "Quoted vs Actual Rate",
+    whatItMeans:
+      "Quoted Rate is what your credit card processor promised you. Actual Rate is what you are really paying — total fees divided by total volume. These are often different.",
+    whyItMatters:
+      "Credit card processing is a $3,000-$8,000 annual expense for most independents. A 0.3% gap between quoted and actual rate on $1M in card volume is $3,000 per year.",
+    whenRedPlaybook: [
+      "Consider pulling your monthly processing statement and dividing total fees by total volume. If actual is more than 0.2% above quoted, call your processor and ask why.",
+    ],
+  },
+  actual_food_cost: {
+    title: "Actual Food Cost",
+    whatItMeans:
+      "What you ACTUALLY spent on food and disposables, calculated from invoices and inventory counts. This is the real number — what left your bank account.",
+    whyItMatters:
+      "Actual food cost is truth. It includes every mistake, every wasted batch, every over-portioned pizza, every comp that was not recorded properly.",
+    whenRedPlaybook: [
+      "Consider doing beginning and ending inventory counts weekly (not monthly) for your top 10 items. Weekly counts catch problems in days, not weeks.",
+    ],
+  },
+  variance_gap: {
+    title: "Variance Gap",
+    whatItMeans:
+      "The difference between your Theoretical Food Cost and your Actual Food Cost. If theoretical is 30% and actual is 34%, your Variance Gap is 4%.",
+    whyItMatters:
+      "Every 1% of variance on a $1M store is $10,000 per year in preventable loss. A 3-4% gap is common but fixable. A 5%+ gap means something significant is wrong.",
+    whenRedPlaybook: [
+      "Consider investigating the gap by category. If cheese variance is 6% but sauce is 1%, the problem is cheese — not everything. Focus fixes on the biggest gaps first.",
+    ],
+  },
+  cross_location_comparison: {
+    title: "Cross-Location Comparison",
+    whatItMeans:
+      "Side-by-side view of the same metric across your different store locations. Shows how each store performs on the same measure.",
+    whyItMatters:
+      "Cross-location comparison reveals which store runs tightest and which has the most room to improve. If Kent runs 31% food cost and Aurora runs 35%, Aurora has a $40,000 annual opportunity.",
+    whenRedPlaybook: [
+      "Consider sharing best practices from your best-performing store with the others. Often the gap is a process difference, not a people difference.",
+    ],
+  },
+  menu_item_margin: {
+    title: "Menu Item Margin",
+    whatItMeans:
+      "The profit margin on a single menu item — the difference between what you charge and what the ingredients cost you, shown as a percentage.",
+    whyItMatters:
+      "Not all menu items are created equal. A $15 pizza with 60% margin makes you $9. A $12 sub with 40% margin makes you $4.80. Selling more of the high-margin items changes everything.",
+    whenRedPlaybook: [
+      "Consider highlighting your top 5 highest-margin items for your team. If they suggest those items first, your mix shifts toward more profit with the same number of customers.",
+    ],
+  },
+  menu_gap_pct: {
+    title: "Menu Gap %",
+    whatItMeans:
+      "The percentage difference between your menu price and the price needed to hit your target food cost on that item. A 15%+ gap means the item is significantly underpriced relative to its ingredient cost.",
+    whyItMatters:
+      "Menu items with large gaps are quietly draining your margins every time they sell. A popular item with a 20% gap is worse than an unpopular item with the same gap.",
+    whenRedPlaybook: [
+      "Consider adjusting prices on items with 15%+ gaps, starting with your highest-volume items. A $0.50 increase on an item you sell 40 times a day is $7,300 per year.",
+    ],
+  },
+  menu_compare: {
+    title: "Menu Compare",
+    whatItMeans:
+      "Side-by-side comparison of the same menu item across your locations. Shows if pricing, cost, or margin differs between stores.",
+    whyItMatters:
+      "If the same pizza is $14 at Kent and $12 at Aurora, one store is leaving money on the table. Menu consistency across locations protects your brand and your margins.",
+    whenRedPlaybook: [
+      "Consider standardizing menu prices across locations unless there is a specific market reason for the difference.",
+    ],
+  },
+  review_count: {
+    title: "Review Count",
+    whatItMeans:
+      "The total number of Google reviews your business has received. More reviews generally means more visibility in search results.",
+    whyItMatters:
+      "Review count is a trust signal. A store with 400 reviews at 4.3 stars appears more trustworthy than a store with 20 reviews at 4.8 stars. Volume matters.",
+    whenRedPlaybook: [
+      "Consider asking satisfied customers to leave a review. A simple table card or receipt message can increase review flow by 200-300%.",
+    ],
+  },
+  competitor_price_comparison: {
+    title: "Competitor Price Comparison",
+    whatItMeans:
+      "A comparison of your menu prices against nearby competitors for similar items. Shows where you are priced higher, lower, or in line with the market.",
+    whyItMatters:
+      "Pricing too low leaves money on the table. Pricing too high without justification loses customers. Knowing where you stand helps you price with confidence.",
+    whenRedPlaybook: [
+      "Consider that being the cheapest is not a strategy for independents. Competing on quality, speed, and experience lets you price 10-15% above chains.",
+    ],
+  },
+  overtime_warning: {
+    title: "Overtime Warning",
+    whatItMeans:
+      "A flag that appears when an employee is approaching or has exceeded 40 hours in a work week. Overtime means paying 1.5x their normal rate for every extra hour.",
+    whyItMatters:
+      "Unplanned overtime is one of the most expensive labor leaks. One employee working 5 hours of overtime per week at $15/hour costs an extra $1,950 per year — and most stores have multiple employees doing it.",
+    whenRedPlaybook: [
+      "Consider setting a 38-hour soft cap so managers can adjust before overtime hits. Two hours of buffer prevents expensive surprises.",
+    ],
+  },
+  labor_hours: {
+    title: "Labor Hours",
+    whatItMeans:
+      "The total number of hours worked by all employees in a given period. This drives your labor cost and your RPLH calculation.",
+    whyItMatters:
+      "Labor hours are the lever you control most directly. Unlike food cost, which depends partly on vendors, labor hours are 100% your scheduling decision.",
+    whenRedPlaybook: [
+      "Consider reviewing total labor hours against sales volume weekly. If sales dropped 10% but hours stayed the same, you overstaffed.",
+    ],
+  },
+  completion_rate: {
+    title: "Completion Rate",
+    whatItMeans:
+      "The percentage of assigned tasks that were completed on time. If 8 out of 10 tasks were done, completion rate is 80%.",
+    whyItMatters:
+      "Completion rate tells you how reliably your team follows through. A store running 60% completion rate has accountability gaps that affect food safety, cleanliness, and consistency.",
+    whenRedPlaybook: [
+      "Consider reviewing completion rate weekly with your managers. The goal is not 100% every day — it is a consistent upward trend. Industry benchmark: 85%+.",
+    ],
+  },
+  employee_acquisition_cost: {
+    title: "Employee Acquisition Cost",
+    whatItMeans:
+      "How much it costs to hire one new employee — job posting fees, interview time, training hours, uniforms, and onboarding materials, all added up.",
+    whyItMatters:
+      "In the restaurant industry, replacing one hourly employee can cost $1,500-$3,500. High turnover multiplies this cost quickly — a store replacing 10 people per year could spend $15,000-$35,000 just on hiring.",
+    whenRedPlaybook: [
+      "Consider that reducing turnover by even 2-3 employees per year saves more than most raises would cost. Retention is cheaper than recruitment.",
+    ],
+  },
+  employee_tenure: {
+    title: "Employee Tenure",
+    whatItMeans:
+      "How long each employee has been with you, measured from their hire date. Longer tenure generally means more experience and lower replacement costs.",
+    whyItMatters:
+      "Employees who stay longer make fewer mistakes, train new hires, and require less supervision. A team with average tenure over 12 months runs significantly smoother than one with 4-month average tenure.",
+    whenRedPlaybook: [
+      "Consider recognizing tenure milestones — 6 months, 1 year, 2 years. Small recognition keeps good people longer.",
+    ],
+  },
+  employee_churn: {
+    title: "Employee Churn",
+    whatItMeans:
+      "The rate at which employees leave your business over a given period. If you start the year with 20 employees and 8 leave, your annual churn is 40%.",
+    whyItMatters:
+      "Restaurant industry average churn is 75-100% annually. Every percentage point below that is money saved on hiring and training, and quality gained from experienced staff.",
+    whenRedPlaybook: [
+      "Consider tracking why people leave. If the top reason is scheduling, that is fixable. If it is pay, do a market comparison. Industry benchmark: aim for under 60% annual churn.",
+    ],
+  },
+  pay_rate: {
+    title: "Pay Rate",
+    whatItMeans:
+      "The hourly wage or salary paid to each employee. This is the base rate before overtime, tips, or benefits.",
+    whyItMatters:
+      "Pay rate directly affects your ability to attract and retain good employees. Being $1-2 below market rate can double your turnover — costing far more than the raise would have.",
+    whenRedPlaybook: [
+      "Consider checking local market rates for similar positions quarterly. What was competitive 6 months ago may not be today.",
+    ],
+  },
+  sentiment_score: {
+    title: "Sentiment Score",
+    whatItMeans:
+      "An overall score representing how customers feel about your business based on review text analysis. Positive, neutral, and negative sentiments are aggregated into one number.",
+    whyItMatters:
+      "Sentiment goes deeper than star ratings. A 4-star review with negative sentiment in the text (like complaints about wait time) tells a different story than a 4-star review praising the food.",
+    whenRedPlaybook: [
+      "Consider reading your most recent negative reviews for patterns. If three people mention the same issue, that is not a coincidence — it is a fixable problem.",
+    ],
+  },
+  response_rate: {
+    title: "Response Rate",
+    whatItMeans:
+      "The percentage of customer reviews you have responded to publicly. If you have 100 reviews and responded to 62, your response rate is 62%.",
+    whyItMatters:
+      "Responding to reviews shows potential customers you care. Google's algorithm also favors businesses that actively engage with reviews. A 80%+ response rate signals a well-managed business.",
+    whenRedPlaybook: [
+      "Consider responding to every review within 48 hours. Keep responses professional and brief. Thank positive reviewers, address concerns in negative reviews without being defensive. Industry benchmark: 80%+.",
+    ],
+  },
+  ai_visibility_score: {
+    title: "AI Visibility Score",
+    whatItMeans:
+      "A score representing how visible and accurately represented your business is in AI search results — tools like ChatGPT, Google AI Overview, and Perplexity that customers increasingly use to find restaurants.",
+    whyItMatters:
+      "AI search is growing fast. If an AI assistant recommends the pizza place down the street instead of you, you are losing customers you never knew existed. AI visibility is the new SEO.",
+    whenRedPlaybook: [
+      "Consider making sure your Google Business Profile is complete with current hours, photos, menu, and accurate categories. AI tools pull heavily from Google data.",
+    ],
+  },
+  platform_breakdown: {
+    title: "Platform Breakdown",
+    whatItMeans:
+      "A breakdown of your reviews and ratings by platform — Google, Yelp, Facebook, TripAdvisor. Shows where customers are talking about you and how ratings differ across platforms.",
+    whyItMatters:
+      "Your reputation is not just Google. Some customers check Yelp, others check Facebook. A 4.5 on Google with a 3.2 on Yelp sends mixed signals.",
+    whenRedPlaybook: [
+      "Consider claiming and updating your profile on all platforms, even ones you do not actively use. An abandoned profile with outdated info hurts more than no profile at all.",
+    ],
+  },
+  market_comparison: {
+    title: "Market Comparison",
+    whatItMeans:
+      "How your ratings and review metrics compare to other restaurants in your local market area. Shows where you rank against nearby competitors.",
+    whyItMatters:
+      "Context matters. A 4.2 rating in a market where the average is 3.8 means you are outperforming. A 4.2 in a market where competitors average 4.5 means you are behind.",
+    whenRedPlaybook: [
+      "Consider focusing less on your absolute score and more on the gap between you and your top local competitors. Closing that gap is what drives customer choice.",
+    ],
+  },
+  gl_categories: {
+    title: "GL Categories",
+    whatItMeans:
+      "General Ledger categories are the buckets your business expenses are sorted into — like Food and Beverage, Labor, Occupancy, Marketing, Utilities, Insurance, and more. Each category groups similar expenses together.",
+    whyItMatters:
+      "Categorizing expenses correctly is the foundation of understanding where your money goes. If expenses are in the wrong category, your percentages and benchmarks are meaningless.",
+    whenRedPlaybook: [
+      "Consider reviewing your GL categories quarterly to make sure new expenses are landing in the right bucket. A common mistake is lumping paper goods into food cost when they should be a separate category.",
+    ],
+  },
+  vendor_matching: {
+    title: "Vendor Matching",
+    whatItMeans:
+      "The process of matching each invoice to the correct vendor in your system. This ensures expenses are tracked to the right supplier and category.",
+    whyItMatters:
+      "Unmatched or mismatched invoices create blind spots in your vendor spend data. If invoices are not matched, your Vendor Tracker numbers will be incomplete.",
+    whenRedPlaybook: [
+      "Consider matching invoices the same day they arrive. A weekly backlog of unmatched invoices means a week of incomplete data.",
+    ],
+  },
+  risk_score: {
+    title: "Risk Score",
+    whatItMeans:
+      "A score estimating your likelihood of receiving a health inspection based on local inspection patterns, your last inspection date, and county activity levels.",
+    whyItMatters:
+      "Health inspections are not random — they follow patterns. Knowing when inspectors are active in your area lets you stay prepared instead of scrambling.",
+    whenRedPlaybook: [
+      "Consider running through the pre-inspection checklist monthly, not just when you think an inspection is coming. Consistent standards mean you are always ready.",
+    ],
+  },
+  campaign_roi: {
+    title: "Campaign ROI",
+    whatItMeans:
+      "Return on Investment for a marketing campaign. How much revenue a campaign generated compared to what it cost. If you spent $500 and generated $2,000 in attributed sales, your ROI is 4x or 300%.",
+    whyItMatters:
+      "Not all marketing is equal. A $200 Facebook ad that brings in $1,500 is a better investment than a $1,000 mailer that brings in $1,200. ROI tells you where to put your next dollar.",
+    whenRedPlaybook: [
+      "Consider tracking ROI per channel — social, print, email, local events. Double down on what works and cut what does not.",
+    ],
+  },
+  marketing_cac: {
+    title: "Marketing CAC",
+    whatItMeans:
+      "Customer Acquisition Cost for marketing — how much you spent in marketing to get one new customer. Total marketing spend divided by number of new customers acquired.",
+    whyItMatters:
+      "If your CAC is $8 and a new customer's first order is $22, you made money on the first visit. If CAC is $25 and the first order is $15, you need that customer to come back twice just to break even.",
+    whenRedPlaybook: [
+      "Consider that a healthy CAC for pizza is $5-$15 per new customer. Above that, the channel may not be efficient enough. Industry benchmark: $5-$15.",
     ],
   },
 };

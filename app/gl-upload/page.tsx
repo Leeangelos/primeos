@@ -242,10 +242,11 @@ export default function GLUploadPage() {
 
       {uploadState === "mapping" && (
         <div className="space-y-3">
-          <div className="bg-amber-600/10 rounded-xl border border-amber-700/30 p-3">
+          <div className="bg-amber-600/10 rounded-xl border border-amber-700/30 p-3 flex items-start justify-between gap-2">
             <p className="text-xs text-amber-300">
               {unmappedAccounts.length} account{unmappedAccounts.length !== 1 ? "s" : ""} couldn&apos;t be auto-categorized. Select a category for each — PrimeOS will remember your mapping.
             </p>
+            <EducationInfoIcon metricKey="gl_categories" size="sm" />
           </div>
 
           {unmappedAccounts.map((acct) => (

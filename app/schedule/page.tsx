@@ -291,6 +291,7 @@ function ShiftModal({
                     ? `⚠ ${totalWeeklyHours.toFixed(1)}h this week — overtime will apply`
                     : `${totalWeeklyHours.toFixed(1)}h this week — approaching overtime`}
                 </span>
+                <EducationInfoIcon metricKey="overtime_warning" size="sm" />
               </div>
             )}
 
@@ -683,7 +684,10 @@ export default function SchedulePage() {
                 </div>
                 <div className="p-4 border-t border-border/30 bg-black/20 grid grid-cols-3 gap-2 text-center">
                   <div>
-                    <div className="text-[10px] uppercase text-muted">Hours</div>
+                    <div className="text-[10px] uppercase text-muted flex items-center justify-center gap-0.5">
+                      Hours
+                      <EducationInfoIcon metricKey="labor_hours" size="sm" />
+                    </div>
                     <div className="text-base font-bold tabular-nums text-white">{totalHours.toFixed(1)}</div>
                   </div>
                   <div>
@@ -765,7 +769,10 @@ export default function SchedulePage() {
 
               <div className="p-3 border-t border-border/30 bg-black/20 grid grid-cols-3 gap-2 text-center">
                 <div>
-                  <div className="text-[9px] uppercase text-muted">Hours</div>
+                  <div className="text-[9px] uppercase text-muted flex items-center justify-center gap-0.5">
+                    Hours
+                    <EducationInfoIcon metricKey="labor_hours" size="sm" />
+                  </div>
                   <div className="text-sm font-bold tabular-nums text-white">{totalHours.toFixed(1)}</div>
                 </div>
                 <div>

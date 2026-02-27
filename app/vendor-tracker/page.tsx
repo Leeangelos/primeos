@@ -447,7 +447,10 @@ export default function VendorTrackerPage() {
             </div>
           </div>
 
-          <h3 className="text-sm font-semibold text-slate-400 mb-2">Top Movers (&gt;3% change)</h3>
+          <div className="flex items-center gap-2 mb-2">
+            <h3 className="text-sm font-semibold text-slate-400">Top Movers (&gt;3% change)</h3>
+            <EducationInfoIcon metricKey="price_movers" size="sm" />
+          </div>
           <div className="space-y-2">
             {topMovers.length === 0 && (
               <p className="text-xs text-slate-500">No vendors with more than 3% change this month.</p>
@@ -583,6 +586,10 @@ export default function VendorTrackerPage() {
       {/* SECTION 5: ANNUAL VIEW */}
       {view === "annual" && (
         <div className="overflow-x-auto">
+          <div className="flex items-center gap-2 mb-3">
+            <h3 className="text-sm font-semibold text-white">Annual Spend by Vendor</h3>
+            <EducationInfoIcon metricKey="annual_spend" size="sm" />
+          </div>
           <table className="w-full text-xs">
             <thead>
               <tr className="border-b border-slate-700">
@@ -710,6 +717,10 @@ export default function VendorTrackerPage() {
             const actualAboveQuoted = actualPct > quotedPct;
             return (
               <div className="bg-slate-700/50 rounded-lg p-3 mb-3">
+                <div className="flex items-center gap-2 mb-2">
+                  <span className="text-xs text-slate-400">Quoted vs Actual</span>
+                  <EducationInfoIcon metricKey="cc_processing_quoted_vs_actual" size="sm" />
+                </div>
                 <div className="flex justify-between text-xs mb-1">
                   <span className="text-slate-400">Quoted Rate</span>
                   <span className="text-white">{quotedPct.toFixed(2)}%</span>

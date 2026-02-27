@@ -451,6 +451,7 @@ export default function InspectionRadarPage() {
         }`}
       >
         <div className="flex items-center gap-3 mb-3">
+          <EducationInfoIcon metricKey="risk_score" size="sm" />
           <div
             className={`w-12 h-12 rounded-full flex items-center justify-center ${
               threat.level === "imminent" ? "bg-red-600/30" : threat.level === "high" ? "bg-red-600/20" : threat.level === "elevated" ? "bg-amber-600/20" : "bg-emerald-600/20"

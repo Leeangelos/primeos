@@ -128,6 +128,7 @@ export default function MarketingPage() {
               <div className="flex items-center gap-1.5 text-slate-400 text-xs uppercase tracking-wide mb-1">
                 Blended ROAS
                 <EducationInfoIcon metricKey="marketing_roas" />
+                <EducationInfoIcon metricKey="campaign_roi" size="sm" />
               </div>
               <div
                 className={cn(
@@ -216,7 +217,10 @@ export default function MarketingPage() {
                     <div className="text-sm text-white font-medium">{c.orders}</div>
                   </div>
                   <div>
-                    <div className="text-xs text-slate-500">Cost per Order</div>
+                    <div className="flex items-center gap-1 text-xs text-slate-500">
+                      Cost per Order
+                      <EducationInfoIcon metricKey="marketing_cac" size="sm" />
+                    </div>
                     <div className="text-sm text-white font-medium">
                       {c.orders > 0 ? `$${(c.spend / c.orders).toFixed(2)}` : "—"}
                     </div>

@@ -235,9 +235,10 @@ export default function TasksPage() {
       {/* Completion rate header */}
       {!loading && totalTasks > 0 && (
         <div className="flex items-center justify-between mb-4">
-          <div>
+          <div className="flex items-center gap-2">
             <span className="text-2xl font-bold text-white">{completionRate}%</span>
-            <span className="text-xs text-slate-500 ml-2">{completedTasks}/{totalTasks} tasks</span>
+            <span className="text-xs text-slate-500">{completedTasks}/{totalTasks} tasks</span>
+            <EducationInfoIcon metricKey="completion_rate" size="sm" />
           </div>
           <div className={cn(
             "px-2.5 py-1 rounded-lg text-xs font-bold",
