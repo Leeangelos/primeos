@@ -8,6 +8,7 @@ import {
   TrendingUp,
   TrendingDown,
   Eye,
+  ExternalLink,
 } from "lucide-react";
 import { SEED_STORES } from "@/src/lib/seed-data";
 import { EducationInfoIcon } from "@/src/components/education/InfoIcon";
@@ -105,6 +106,12 @@ const STORE_OPTIONS = [
   { value: "all", label: "All Locations" },
   ...SEED_STORES.map((s) => ({ value: s.slug, label: s.name })),
 ];
+
+const GOOGLE_PROFILE_URL: Record<string, string> = {
+  kent: "https://www.google.com/maps/search/LeeAngelo's+Kent+OH",
+  aurora: "https://www.google.com/maps/search/LeeAngelo's+Aurora+OH",
+  lindseys: "https://www.google.com/maps/search/Lindsey's+Pizza",
+};
 
 export default function ReputationPage() {
   const [selectedStore, setSelectedStore] = useState("kent");
@@ -244,22 +251,10 @@ export default function ReputationPage() {
       </div>
 
       <div className="mb-4">
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-2 mb-2">
           <label className="text-xs text-slate-500 shrink-0">Store:</label>
-          <select
-            value={selectedStore}
-            onChange={(e) => setSelectedStore(e.target.value)}
-            className="dashboard-input sm:hidden rounded-lg border border-slate-600 bg-black/30 px-3 py-2 text-sm text-white focus:border-brand/60 focus:outline-none"
-          >
-            {STORE_OPTIONS.map((o) => (
-              <option key={o.value} value={o.value}>
-                {o.label}
-              </option>
-            ))}
-          </select>
         </div>
-
-        <div className="hidden sm:flex flex-wrap gap-2 mt-2">
+        <div className="flex flex-wrap gap-2 overflow-x-auto pb-1 min-h-[44px]">
           {STORE_OPTIONS.map((o) => {
             const isActive = selectedStore === o.value;
             return (
@@ -267,10 +262,10 @@ export default function ReputationPage() {
                 key={o.value}
                 type="button"
                 onClick={() => setSelectedStore(o.value)}
-                className={`px-3 py-2 rounded-lg text-xs font-medium transition-colors border min-h-[44px] ${
+                className={`px-3 py-2 rounded-lg text-xs font-medium transition-colors border shrink-0 min-h-[44px] ${
                   isActive
-                    ? "bg-[#E65100]/15 text-[#E65100] border-[#E65100]/50 ring-2 ring-[#E65100] shadow-[0_0_8px_rgba(230,81,0,0.5)]"
-                    : "bg-slate-800 text-slate-400 border-slate-700 hover:text-slate-300"
+                    ? "bg-zinc-800 border-[#E65100]/50 ring-2 ring-[#E65100] shadow-[0_0_8px_rgba(230,81,0,0.5)] text-white"
+                    : "bg-zinc-900 text-slate-400 border-zinc-800 hover:text-slate-300"
                 }`}
               >
                 {o.label}
@@ -308,6 +303,16 @@ export default function ReputationPage() {
                 <span className="text-[10px] text-slate-500">({data.reviewCount})</span>
               </div>
               <div className="text-[10px] text-slate-500 mt-0.5 capitalize">{platform}</div>
+              {platform === "google" && selectedStore !== "all" && GOOGLE_PROFILE_URL[selectedStore] && (
+                <a
+                  href={GOOGLE_PROFILE_URL[selectedStore]}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-flex items-center gap-0.5 mt-1 text-[10px] text-[#E65100] hover:underline"
+                >
+                  View on Google <ExternalLink className="w-3 h-3" />
+                </a>
+              )}
               {data.trend === "up" && <TrendingUp className="w-3 h-3 text-emerald-400 mx-auto mt-0.5" />}
               {data.trend === "down" && <TrendingDown className="w-3 h-3 text-red-400 mx-auto mt-0.5" />}
             </div>
@@ -448,7 +453,18 @@ export default function ReputationPage() {
               <p className="text-xs text-slate-300 leading-relaxed">&quot;{review.snippet}&quot;</p>
               {review.sentiment === "negative" && (
                 <div className="mt-2 px-3 py-2 rounded-lg bg-amber-600/10 border border-amber-700/30">
-                  <p className="text-[10px] text-amber-300">💡 Consider responding to this review. A professional response shows future customers you care and often prompts the reviewer to update their rating.</p>
+                  <p className="text-[10px] text-amber-300">
+                    💡{" "}
+                    <a
+                      href={review.store_id && GOOGLE_PROFILE_URL[review.store_id] ? GOOGLE_PROFILE_URL[review.store_id] : "#"}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="text-[#E65100] underline cursor-pointer"
+                    >
+                      Consider responding to this review.
+                    </a>{" "}
+                    A professional response shows future customers you care and often prompts the reviewer to update their rating.
+                  </p>
                 </div>
               )}
             </div>

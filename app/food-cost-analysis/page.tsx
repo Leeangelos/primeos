@@ -117,7 +117,10 @@ export default function FoodCostAnalysisPage() {
 
         <div className="grid grid-cols-3 gap-3 mb-3">
           <div>
-            <div className="text-xs text-slate-500">Theoretical</div>
+            <div className="flex items-center gap-1">
+              <span className="text-xs text-slate-500">Theoretical</span>
+              <EducationInfoIcon metricKey="theoretical_food_cost" size="sm" />
+            </div>
             <div className="text-lg text-emerald-400 font-bold">{formatDollars(theoretical)}</div>
             <div className="text-[10px] text-slate-600">{formatPct(theoreticalPct)} of revenue</div>
           </div>

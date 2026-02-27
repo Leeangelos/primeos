@@ -259,10 +259,10 @@ export default function BriefPage() {
           >
             ←
           </button>
-          <div className="flex-1 text-center min-h-[44px] flex items-center justify-center min-w-0">
-            <div className="text-sm font-medium text-white">{formatDateLong(date)}</div>
+          <div className="flex-1 text-center min-h-[44px] flex flex-col items-center justify-center min-w-0 gap-1">
+            <div className="text-sm font-medium text-white whitespace-nowrap">{formatDateLong(date)}</div>
             {date === yesterday && (
-              <p className="text-xs text-zinc-500 dark:text-zinc-400 mt-0.5">Showing your most recent complete business day</p>
+              <p className="text-xs text-zinc-500 dark:text-zinc-400 mt-1">Showing your most recent complete business day</p>
             )}
           </div>
           {date !== today && (
@@ -322,7 +322,7 @@ export default function BriefPage() {
             <div className="flex items-center justify-between mb-4">
               <div>
                 <h2 className="text-xs text-slate-500 uppercase tracking-wide">Morning Brief</h2>
-                <p className="text-sm text-slate-400">{briefDate}</p>
+                <p className="text-sm text-slate-400 whitespace-nowrap">{briefDate}</p>
               </div>
               <div className="flex items-center gap-2">
                 <button

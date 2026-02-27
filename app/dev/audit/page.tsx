@@ -28,7 +28,7 @@ const ROUTES: RouteConfig[] = [
   { path: "/marketing", label: "Ad Accountability", status: "demo" },
   { path: "/parties", label: "Catering & Large Orders", status: "demo" },
   { path: "/schedule", label: "Smart Schedule", status: "demo" },
-  { path: "/billing", label: "Billing", status: "demo" },
+  { path: "/billing", label: "Our Story", status: "demo" },
   { path: "/doordash", label: "DoorDash Economics", status: "demo" },
   { path: "/merch", label: "Team Merch", status: "demo" },
   { path: "/tasks", label: "Manager Tasks", status: "demo" },

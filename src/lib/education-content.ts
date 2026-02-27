@@ -1245,4 +1245,104 @@ export const EDUCATION_CONTENT: Record<string, EducationEntry> = {
       "Consider making Team Pulse part of your closing routine. 60 seconds at the end of shift while the day is fresh.",
     ],
   },
+  variable_costs: {
+    title: "Variable Costs",
+    whatItMeans:
+      "Variable costs change based on your sales volume — the more you sell, the more these costs go up. They include food and beverage, labor, paper goods, and delivery fees.",
+    whyItMatters:
+      "Variable costs are the costs you control most directly. Unlike rent, which is fixed, you can influence variable costs through better scheduling, tighter portioning, and smarter purchasing.",
+    whenRedPlaybook: [
+      "Consider tracking your variable costs as a percentage of revenue weekly. If the percentage is climbing while sales are flat, something is getting less efficient.",
+    ],
+  },
+  fixed_costs_rent: {
+    title: "Rent / Occupancy",
+    whatItMeans:
+      "Your monthly rent payment for your restaurant space. This is a fixed cost — it stays the same regardless of how much you sell.",
+    whyItMatters:
+      "Rent should be 6-10% of revenue. If you are above 10%, the space is eating too much profit. This is the hardest cost to change short-term.",
+    whenRedPlaybook: [
+      "Consider that growing revenue is the fastest way to improve your rent-to-revenue ratio.",
+    ],
+  },
+  fixed_costs_insurance: {
+    title: "Insurance",
+    whatItMeans:
+      "Business insurance including general liability, property, workers comp, and any other policies. A fixed monthly or annual expense.",
+    whyItMatters:
+      "Insurance costs have risen significantly in the restaurant industry. Review your coverage annually to make sure you are not overpaying or underinsured.",
+    whenRedPlaybook: [
+      "Consider getting competitive quotes every 12-18 months. Loyalty to one provider does not always equal the best rate.",
+    ],
+  },
+  fixed_costs_utilities: {
+    title: "Utilities",
+    whatItMeans:
+      "Monthly utility bills — electric, gas, water, trash, internet. These are semi-fixed — they stay roughly the same month to month with some seasonal variation.",
+    whyItMatters:
+      "Utilities typically run 3-5% of revenue. Spikes often come from equipment issues — a failing cooler or HVAC running overtime can double a utility bill.",
+    whenRedPlaybook: [
+      "Consider checking utility bills for unusual spikes monthly. A sudden increase usually means equipment needs attention.",
+    ],
+  },
+  fixed_costs_loan: {
+    title: "Loan Payments",
+    whatItMeans:
+      "Monthly loan or debt payments — equipment financing, build-out loans, SBA loans, or any other business debt.",
+    whyItMatters:
+      "Debt service is a real cost that reduces your net profit. Knowing your total monthly debt obligation helps you understand your true break-even point.",
+    whenRedPlaybook: [
+      "Consider reviewing loan terms annually. Refinancing at a lower rate or paying down high-interest debt first can free up significant cash flow.",
+    ],
+  },
+  fixed_costs_marketing: {
+    title: "Marketing & Advertising",
+    whatItMeans:
+      "Your monthly marketing budget — social media ads, print materials, local sponsorships, loyalty programs, and any other promotional spending.",
+    whyItMatters:
+      "Most successful independents spend 3-6% of revenue on marketing. Under-spending means you are invisible. Over-spending without tracking ROI means you are wasting money.",
+    whenRedPlaybook: [
+      "Consider tracking which marketing channels bring the most new customers per dollar spent. Double down on what works.",
+    ],
+  },
+  fixed_costs_technology: {
+    title: "Technology & Software",
+    whatItMeans:
+      "Monthly technology costs — POS system fees, online ordering platforms, reservation systems, accounting software, and other tech subscriptions.",
+    whyItMatters:
+      "Technology costs add up quickly. Most operators are paying for tools they barely use. A quarterly audit of all subscriptions can reveal hundreds in savings.",
+    whenRedPlaybook: [
+      "Consider listing every tech subscription and its monthly cost. Cancel anything your team has not used in 30 days.",
+    ],
+  },
+  fixed_costs_professional: {
+    title: "Professional Services",
+    whatItMeans:
+      "CPA, legal, bookkeeping, and other professional fees. Usually fixed or project-based.",
+    whyItMatters:
+      "Necessary for compliance and planning. Shopping around at renewal can reduce cost without cutting quality.",
+    whenRedPlaybook: [
+      "Consider getting quotes when contracts renew. Bundle services where possible.",
+    ],
+  },
+  fixed_costs_repairs: {
+    title: "Repairs & Maintenance",
+    whatItMeans:
+      "Equipment repairs, HVAC service, plumbing, and general facility maintenance.",
+    whyItMatters:
+      "Deferred maintenance often leads to larger bills. Budgeting 1-2% of revenue helps avoid surprises.",
+    whenRedPlaybook: [
+      "Consider a monthly maintenance checklist for high-cost equipment. Small fixes prevent big breakdowns.",
+    ],
+  },
+  fixed_costs_misc: {
+    title: "Miscellaneous",
+    whatItMeans:
+      "Other fixed or semi-fixed expenses that do not fit other categories — permits, fees, bank charges, etc.",
+    whyItMatters:
+      "Misc can hide creeping costs. Review line items quarterly to catch duplicates or unnecessary spend.",
+    whenRedPlaybook: [
+      "Consider reviewing every misc charge at least once a year. Small recurring fees add up.",
+    ],
+  },
 };

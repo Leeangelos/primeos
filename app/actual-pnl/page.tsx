@@ -416,7 +416,10 @@ export default function ActualPnlPage() {
               </div>
             </div>
             <div className="p-4 border-b border-slate-700">
-              <div className="text-xs text-slate-500 uppercase tracking-wide mb-2">Variable Costs</div>
+              <div className="flex items-center gap-2 mb-2">
+                <span className="text-xs text-slate-500 uppercase tracking-wide">Variable Costs</span>
+                <EducationInfoIcon metricKey="variable_costs" size="sm" />
+              </div>
               <LineItem label="Food & Beverage" amount={formatDollars(pnl.food)} pct={formatPct(pnl.foodPct)} amountColor="red" />
               <LineItem label="Labor" amount={formatDollars(pnl.labor)} pct={formatPct(pnl.laborPct)} amountColor="red" />
               <LineItem label="Disposables & Packaging" amount={formatDollars(pnl.disposables)} pct={formatPct(pnl.dispPct)} amountColor="red" />
@@ -441,19 +444,16 @@ export default function ActualPnlPage() {
               </div>
             </div>
             <div className="p-4 border-b border-slate-700">
-              <div className="flex items-center justify-between mb-2">
-                <div className="text-xs text-slate-500 uppercase tracking-wide">Fixed Costs</div>
-                <EducationInfoIcon metricKey="occupancy_pct" size="sm" />
-              </div>
-              <LineItem label="Rent / Occupancy" amount={formatDollars(pnl.rent)} pct={formatPct(pnl.rentPct)} badge="green" metricKey="occupancy_pct" amountColor="red" />
-              <LineItem label="Insurance" amount={formatDollars(pnl.insurance)} pct={formatPct(pnl.insurancePct)} badge="green" metricKey="insurance_pct" amountColor="red" />
-              <LineItem label="Utilities" amount={formatDollars(pnl.utilities)} pct={formatPct(pnl.utilitiesPct)} badge="green" metricKey="utilities_pct" amountColor="red" />
-              <LineItem label="Loan Payments" amount={formatDollars(pnl.loans)} pct={formatPct(pnl.loansPct)} amountColor="red" />
-              <LineItem label="Marketing & Advertising" amount={formatDollars(pnl.marketing)} pct={formatPct(pnl.marketingPct)} amountColor="red" />
-              <LineItem label="Technology & Software" amount={formatDollars(pnl.tech)} pct={formatPct(pnl.techPct)} amountColor="red" />
-              <LineItem label="Professional Services (CPA, Legal)" amount={formatDollars(pnl.professional)} pct={formatPct(pnl.professionalPct)} amountColor="red" />
-              <LineItem label="Repairs & Maintenance" amount={formatDollars(pnl.repairs)} pct={formatPct(pnl.repairsPct)} amountColor="red" />
-              <LineItem label="Miscellaneous" amount={formatDollars(pnl.misc)} pct={formatPct(pnl.miscPct)} amountColor="red" />
+              <div className="text-xs text-slate-500 uppercase tracking-wide mb-2">Fixed Costs</div>
+              <LineItem label="Rent / Occupancy" amount={formatDollars(pnl.rent)} pct={formatPct(pnl.rentPct)} badge="green" metricKey="fixed_costs_rent" amountColor="red" />
+              <LineItem label="Insurance" amount={formatDollars(pnl.insurance)} pct={formatPct(pnl.insurancePct)} badge="green" metricKey="fixed_costs_insurance" amountColor="red" />
+              <LineItem label="Utilities" amount={formatDollars(pnl.utilities)} pct={formatPct(pnl.utilitiesPct)} badge="green" metricKey="fixed_costs_utilities" amountColor="red" />
+              <LineItem label="Loan Payments" amount={formatDollars(pnl.loans)} pct={formatPct(pnl.loansPct)} amountColor="red" metricKey="fixed_costs_loan" />
+              <LineItem label="Marketing & Advertising" amount={formatDollars(pnl.marketing)} pct={formatPct(pnl.marketingPct)} amountColor="red" metricKey="fixed_costs_marketing" />
+              <LineItem label="Technology & Software" amount={formatDollars(pnl.tech)} pct={formatPct(pnl.techPct)} amountColor="red" metricKey="fixed_costs_technology" />
+              <LineItem label="Professional Services (CPA, Legal)" amount={formatDollars(pnl.professional)} pct={formatPct(pnl.professionalPct)} amountColor="red" metricKey="fixed_costs_professional" />
+              <LineItem label="Repairs & Maintenance" amount={formatDollars(pnl.repairs)} pct={formatPct(pnl.repairsPct)} amountColor="red" metricKey="fixed_costs_repairs" />
+              <LineItem label="Miscellaneous" amount={formatDollars(pnl.misc)} pct={formatPct(pnl.miscPct)} amountColor="red" metricKey="fixed_costs_misc" />
               <div className="flex justify-between text-sm font-semibold text-red-400 pt-2 mt-2 border-t border-slate-600">
                 <span>Total Fixed</span>
                 <span>{formatDollars(pnl.totalFixed)} ({formatPct(pnl.fixedPct)})</span>
