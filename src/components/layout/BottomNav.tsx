@@ -38,6 +38,7 @@ import {
   Shield,
   Search,
   X,
+  Handshake,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { createClient } from "@/lib/supabase";
@@ -377,6 +378,28 @@ export function BottomNav() {
                 pathname={pathname}
                 setMoreOpen={closeMore}
               />
+
+          <div className={cn("pt-4 mt-4 border-t", isLight ? "border-zinc-200" : "border-zinc-800")}>
+            <Link
+              href="/partner"
+              onClick={closeMore}
+              className={cn(
+                "flex items-center gap-3 px-4 py-3 rounded-xl border active:opacity-90",
+                isLight ? "bg-amber-50/50 border-amber-200/50 active:bg-amber-100/50" : "bg-zinc-900/50 border-zinc-800 active:bg-zinc-800/50"
+              )}
+            >
+              <div className={cn(
+                "w-8 h-8 rounded-lg flex items-center justify-center border",
+                isLight ? "bg-white border-amber-200" : "bg-zinc-800 border-zinc-700"
+              )}>
+                <Handshake className="w-4 h-4 text-amber-400" />
+              </div>
+              <div className="flex-1">
+                <div className={cn("text-sm font-medium", isLight ? "text-zinc-900" : "text-white")}>Need a Partner?</div>
+                <div className={cn("text-xs", isLight ? "text-zinc-600" : "text-slate-500")}>Coaching, growth, or your next chapter</div>
+              </div>
+            </Link>
+          </div>
 
           <div className={cn("pt-4 border-t mt-2", isLight ? "border-zinc-200" : "border-slate-800")}>
             <div className="flex justify-center gap-3">

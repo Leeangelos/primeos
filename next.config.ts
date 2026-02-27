@@ -8,6 +8,10 @@ const nextConfig: NextConfig = {
         source: "/welcome",
         destination: "/welcome.html",
       },
+      {
+        source: "/partner",
+        destination: "/partner.html",
+      },
     ];
   },
 };
