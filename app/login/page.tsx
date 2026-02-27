@@ -154,6 +154,14 @@ export default function LoginPage() {
                 Forgot password?
               </button>
             </form>
+            <div className="mt-4 text-center">
+              <a
+                href="/welcome"
+                className="text-xs text-slate-400 hover:text-slate-200 underline underline-offset-4"
+              >
+                Learn more about PrimeOS
+              </a>
+            </div>
           </>
         )}
       </div>
