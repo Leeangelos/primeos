@@ -184,7 +184,10 @@ function MonthlyContent() {
         </div>
 
         <div className="p-4 border-b border-slate-700">
-          <div className="text-xs text-slate-500 uppercase tracking-wide mb-2">Revenue</div>
+          <div className="flex items-center gap-1.5 mb-2">
+            <span className="text-xs text-slate-500 uppercase tracking-wide">Revenue</span>
+            <EducationInfoIcon metricKey="revenue_pl" size="sm" />
+          </div>
           <div className="flex justify-between items-center gap-2 text-sm py-1.5">
             <div className="flex items-center gap-2 min-w-0">
               <span className="text-slate-300">Total Sales</span>
@@ -195,7 +198,10 @@ function MonthlyContent() {
         </div>
 
         <div className="p-4 border-b border-slate-700">
-          <div className="text-xs text-slate-500 uppercase tracking-wide mb-2">Cost of Goods</div>
+          <div className="flex items-center gap-1.5 mb-2">
+          <span className="text-xs text-slate-500 uppercase tracking-wide">Cost of Goods</span>
+          <EducationInfoIcon metricKey="cogs_pl" size="sm" />
+        </div>
           <LineItem
             label="Food"
             amount={formatDollars(pnl.totalFood)}
@@ -218,7 +224,7 @@ function MonthlyContent() {
             pct={formatPct(pnl.cogsPct)}
             bold
             grade={pctToGrade(pnl.cogsPct, 35)}
-            metricKey="cogs"
+            metricKey="cogs_pl"
             amountColor="red"
           />
         </div>
@@ -239,11 +245,14 @@ function MonthlyContent() {
           <div className="flex justify-between items-center gap-2">
             <div className="flex items-center gap-2 min-w-0">
               <span className="text-white font-bold">Gross Profit</span>
-              <EducationInfoIcon metricKey="gross_profit" />
+              <EducationInfoIcon metricKey="gross_profit_pl" />
             </div>
-            <div className="text-right shrink-0">
+            <div className="text-right shrink-0 flex items-center justify-end gap-1">
               <span className="text-emerald-400 font-bold text-lg">{formatDollars(pnl.grossProfit)}</span>
-              <span className="text-xs text-slate-400 ml-2">{formatPct(pnl.gpPct)}</span>
+              <span className="text-xs text-slate-400 ml-2 flex items-center gap-1">
+                {formatPct(pnl.gpPct)}
+                <EducationInfoIcon metricKey="gross_profit_margin_pct" size="sm" />
+              </span>
             </div>
           </div>
         </div>
@@ -266,7 +275,10 @@ function MonthlyContent() {
                 <p className="text-muted text-xs leading-relaxed">Daily numbers jump around. One slow Tuesday doesn't mean the model is broken. Monthly smooths that out. You see real trends: labor creeping up, food cost spiking in summer, or a store that's been red for three months. That's when you act — renegotiate a contract, fix scheduling, or dig into waste.</p>
               </div>
               <div>
-                <h4 className="font-medium text-white mb-1">Seasonal Patterns</h4>
+                <h4 className="font-medium text-white mb-1 flex items-center gap-2">
+                  Seasonal Patterns
+                  <EducationInfoIcon metricKey="seasonal_variation" size="sm" />
+                </h4>
                 <p className="text-muted text-xs leading-relaxed">Pizza does more in football season and holidays. Compare this month to last month and last year. If you're up 5% on sales but labor is up 12%, you're not winning. Use this view to set next month's targets and catch drift before it becomes a habit.</p>
               </div>
               <div className="rounded-lg border border-red-500/30 bg-red-500/5 p-3">

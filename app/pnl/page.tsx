@@ -217,7 +217,10 @@ export default function PnlPage() {
         </div>
 
         <div className="p-4 border-b border-slate-700">
-          <div className="text-xs text-slate-500 uppercase tracking-wide mb-2">Revenue</div>
+          <div className="flex items-center gap-1.5 mb-2">
+            <span className="text-xs text-slate-500 uppercase tracking-wide">Revenue</span>
+            <EducationInfoIcon metricKey="revenue_pl" size="sm" />
+          </div>
           <div className="flex justify-between items-center gap-2 py-1.5">
             <div className="flex items-center gap-2 min-w-0">
               <span className="text-slate-300">Total Sales</span>
@@ -228,7 +231,10 @@ export default function PnlPage() {
         </div>
 
         <div className="p-4 border-b border-slate-700">
-          <div className="text-xs text-slate-500 uppercase tracking-wide mb-2">Cost of Goods</div>
+          <div className="flex items-center gap-1.5 mb-2">
+          <span className="text-xs text-slate-500 uppercase tracking-wide">Cost of Goods</span>
+          <EducationInfoIcon metricKey="cogs_pl" size="sm" />
+        </div>
           <LineItem
             label="Food"
             amount={formatDollars(pnl.totalFood)}
@@ -251,7 +257,7 @@ export default function PnlPage() {
             pct={formatPct(pnl.cogsPct)}
             bold
             grade={pctToGrade(pnl.cogsPct, 35)}
-            metricKey="cogs"
+            metricKey="cogs_pl"
             amountColor="red"
           />
         </div>
@@ -272,11 +278,14 @@ export default function PnlPage() {
           <div className="flex justify-between items-center gap-2">
             <div className="flex items-center gap-2 min-w-0">
               <span className="text-white font-bold">Gross Profit</span>
-              <EducationInfoIcon metricKey="gross_profit" />
+              <EducationInfoIcon metricKey="gross_profit_pl" />
             </div>
-            <div className="text-right shrink-0">
+            <div className="text-right shrink-0 flex items-center justify-end gap-1">
               <span className="text-emerald-400 font-bold text-lg tabular-nums">{formatDollars(pnl.grossProfit)}</span>
-              <span className="text-xs text-slate-400 ml-2 tabular-nums">{formatPct(pnl.gpPct)}</span>
+              <span className="text-xs text-slate-400 ml-2 tabular-nums flex items-center gap-1">
+                {formatPct(pnl.gpPct)}
+                <EducationInfoIcon metricKey="gross_profit_margin_pct" size="sm" />
+              </span>
             </div>
           </div>
         </div>

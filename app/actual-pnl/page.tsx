@@ -406,8 +406,11 @@ export default function ActualPnlPage() {
         <>
           <div className="bg-slate-800 rounded-xl border border-slate-700 overflow-hidden">
             <div className="p-4 border-b border-slate-700">
-              <div className="text-xs text-slate-500 uppercase tracking-wide mb-2">Revenue</div>
-              <div className="flex justify-between text-sm">
+              <div className="flex items-center gap-1.5 mb-2">
+              <span className="text-xs text-slate-500 uppercase tracking-wide">Revenue</span>
+              <EducationInfoIcon metricKey="revenue_pl" size="sm" />
+            </div>
+            <div className="flex justify-between text-sm">
                 <span className="text-slate-300">Total Sales</span>
                 <span className="text-emerald-400 font-medium">{formatDollars(pnl.revenue)}</span>
               </div>
@@ -424,10 +427,16 @@ export default function ActualPnlPage() {
             </div>
             <div className="p-4 border-b border-slate-700 bg-emerald-950/20">
               <div className="flex justify-between">
-                <span className="text-emerald-400 font-bold">Gross Profit</span>
+                <div className="flex items-center gap-2">
+                  <span className="text-emerald-400 font-bold">Gross Profit</span>
+                  <EducationInfoIcon metricKey="gross_profit_pl" size="sm" />
+                </div>
                 <div>
                   <span className="text-emerald-400 font-bold text-lg">{formatDollars(pnl.grossProfit)}</span>
-                  <span className="text-xs text-slate-400 ml-2">{formatPct(pnl.gpPct)}</span>
+                  <span className="text-xs text-slate-400 ml-2 flex items-center gap-1">
+                    {formatPct(pnl.gpPct)}
+                    <EducationInfoIcon metricKey="gross_profit_margin_pct" size="sm" />
+                  </span>
                 </div>
               </div>
             </div>
@@ -454,18 +463,24 @@ export default function ActualPnlPage() {
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-2">
                   <span className="text-white font-bold text-lg">Net Profit</span>
-                  <EducationInfoIcon metricKey="net_profit" size="sm" />
+                  <EducationInfoIcon metricKey="net_profit_pl" size="sm" />
                 </div>
                 <div>
                   <span className="text-emerald-400 font-bold text-xl">{formatDollars(pnl.netProfit)}</span>
-                  <span className="text-xs text-slate-400 ml-2">{formatPct(pnl.netPct)}</span>
+                  <span className="text-xs text-slate-400 ml-2 flex items-center gap-1">
+                    {formatPct(pnl.netPct)}
+                    <EducationInfoIcon metricKey="net_profit_margin_pct" size="sm" />
+                  </span>
                 </div>
               </div>
             </div>
           </div>
 
           <div className="bg-amber-950/30 rounded-xl border border-amber-800/50 p-5 mt-4">
-            <h3 className="text-base font-bold text-amber-400 mb-4">The Gap — Where Your Money Goes</h3>
+            <div className="flex items-center gap-2 mb-4">
+            <h3 className="text-base font-bold text-amber-400">The Gap — Where Your Money Goes</h3>
+            <EducationInfoIcon metricKey="the_gap" size="sm" />
+          </div>
             <div className="space-y-3">
               <div className="flex justify-between items-center">
                 <span className="text-sm text-slate-300">Your GP P&L says you made</span>

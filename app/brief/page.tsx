@@ -10,6 +10,7 @@ import { cn } from "@/lib/utils";
 import { formatPct } from "@/src/lib/formatters";
 import { useRedAlert } from "@/src/lib/useRedAlert";
 import { SEED_MORNING_BRIEF_BY_STORE } from "@/src/lib/seed-data";
+import { EducationInfoIcon } from "@/src/components/education/InfoIcon";
 
 type BriefStore = "all" | CockpitStoreSlug;
 
@@ -201,7 +202,10 @@ export default function BriefPage() {
     <div className="space-y-5 min-w-0 overflow-x-hidden pb-28">
       <div className="dashboard-toolbar p-3 sm:p-5 space-y-3">
         <div className="flex items-center gap-2">
-          <h1 className="text-lg font-semibold sm:text-2xl">Morning Brief</h1>
+          <h1 className="text-lg font-semibold sm:text-2xl flex items-center gap-2">
+            Morning Brief
+            <EducationInfoIcon metricKey="morning_brief" />
+          </h1>
           <button type="button" onClick={() => setShowEducation(true)} className="inline-flex items-center justify-center min-h-[44px] min-w-[44px] rounded-full bg-muted/20 text-muted hover:bg-brand/20 hover:text-brand transition-colors text-xs font-bold" aria-label="Learn more">i</button>
         </div>
         <p className="text-xs text-muted">AI-generated summary of yesterday&apos;s operations.</p>

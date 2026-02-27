@@ -666,4 +666,255 @@ export const EDUCATION_CONTENT: Record<string, EducationEntry> = {
       "Consider that some operators use this number as a goal. Others use it as a starting point for a conversation. Either way — now you know",
     ],
   },
+
+  todays_sales: {
+    title: "Today's Sales",
+    whatItMeans:
+      "Total revenue collected today from all channels — dine-in, takeout, delivery, catering.",
+    whyItMatters:
+      "Daily sales drive everything. A $200 drop per day is $6,000 per month and $73,000 per year. Knowing your daily number lets you spot trends before they become problems.",
+    whenRedPlaybook: [
+      "Consider comparing today to the same day last week. Tuesdays should beat Tuesdays. If they don't, something changed.",
+    ],
+  },
+  food_cost_pct: {
+    title: "Food Cost %",
+    whatItMeans:
+      "How much of every dollar you collect goes to food and disposable supplies. If your Food Cost is 33%, you spend 33 cents on ingredients for every dollar of sales.",
+    whyItMatters:
+      "Every 1% over target on a $1M store costs $10,000 per year. Most operators don't know their real food cost until the end of the month — by then, the money is gone.",
+    whenRedPlaybook: [
+      "Consider tracking your top 5 ingredients by dollar spend weekly. That's where the leaks usually hide. Industry benchmark: 28-33%.",
+    ],
+  },
+  labor_pct_home: {
+    title: "Labor %",
+    whatItMeans:
+      "How much of every dollar goes to paying your team — wages, taxes, benefits. If Labor is 28%, you spend 28 cents per sales dollar on labor.",
+    whyItMatters:
+      "Labor is usually your second biggest expense after food. A 2% overage on a $1.5M store is $30,000 per year — enough to hire another part-timer.",
+    whenRedPlaybook: [
+      "Consider reviewing your schedule against your sales forecast. Overstaffing slow shifts is the most common labor leak. Industry benchmark: 25-30%.",
+    ],
+  },
+  prime_pct: {
+    title: "PRIME %",
+    whatItMeans:
+      "What's left after you subtract Food Cost and Labor from your sales. PRIME stands for Profit Remaining After Ingredients, Materials, and Employees. This is the money available to cover rent, utilities, and profit.",
+    whyItMatters:
+      "PRIME is the truest measure of how efficiently you run your store. Two stores can have the same sales but completely different PRIME numbers based on how tight they run.",
+    whenRedPlaybook: [
+      "Consider tracking PRIME weekly, not monthly. Monthly is too late to adjust. Industry benchmark: 55-65%.",
+    ],
+  },
+  needs_attention: {
+    title: "Needs Attention",
+    whatItMeans:
+      "A metric that has crossed into the red zone — it's significantly outside your target range and needs immediate review.",
+    whyItMatters:
+      "Red alerts mean real money is being lost right now. Each day a metric stays red compounds the cost.",
+    whenRedPlaybook: [
+      "Consider addressing red alerts the same day they appear. Check the playbook on the specific metric for action steps.",
+    ],
+  },
+  keep_an_eye_on: {
+    title: "Keep an Eye On",
+    whatItMeans:
+      "A metric that is drifting toward the danger zone — not red yet, but trending in the wrong direction.",
+    whyItMatters:
+      "Amber alerts are early warnings. Catching them now prevents them from becoming red alerts next week.",
+    whenRedPlaybook: [
+      "Consider checking amber metrics daily for the next 3-5 days. If the trend continues, dig deeper.",
+    ],
+  },
+  all_good_today: {
+    title: "All Good Today",
+    whatItMeans:
+      "A metric that is at or better than your target. Green means your operation is running well in this area.",
+    whyItMatters:
+      "Green doesn't mean ignore it — it means keep doing what you're doing. Consistency is what separates good operators from great ones.",
+    whenRedPlaybook: [
+      "Consider noting what's working when you see green. Those habits are worth protecting.",
+    ],
+  },
+  net_sales: {
+    title: "Net Sales",
+    whatItMeans:
+      "Total revenue after refunds, voids, and discounts. This is the real money that came in the door today.",
+    whyItMatters:
+      "Net Sales is the starting point for every other calculation. If this number is wrong, everything below it — Food Cost %, Labor %, PRIME — will be wrong too.",
+    whenRedPlaybook: [
+      "Consider comparing Net Sales to the same day last week and last year. Patterns tell you more than single numbers.",
+    ],
+  },
+  customer_count: {
+    title: "Customer Count",
+    whatItMeans:
+      "Total number of transactions (tickets) for the day. One family ordering together is one transaction.",
+    whyItMatters:
+      "Customer count tells you traffic trends. If sales are flat but customer count is dropping, your average ticket is going up — which could mean price increases are working but you're losing bodies.",
+    whenRedPlaybook: [
+      "Consider tracking customer count by daypart (lunch vs dinner). A slow lunch with a strong dinner tells a different story than even traffic all day.",
+    ],
+  },
+  average_ticket: {
+    title: "Average Ticket",
+    whatItMeans:
+      "Net Sales divided by Customer Count. How much the average customer spends per visit.",
+    whyItMatters:
+      "Raising average ticket by $1 across 100 daily customers is $36,500 per year in extra revenue with zero extra marketing cost.",
+    whenRedPlaybook: [
+      "Consider upsell training for your team. A simple \"Would you like to add...\" can move average ticket $0.50-$1.50 without changing your menu. Industry benchmark varies by concept.",
+    ],
+  },
+  rplh: {
+    title: "RPLH (Revenue Per Labor Hour)",
+    whatItMeans:
+      "Net Sales divided by total labor hours worked. How much revenue each labor hour generates. If RPLH is $45, every hour of labor on the schedule produced $45 in sales.",
+    whyItMatters:
+      "RPLH is the best single number for measuring labor efficiency. A store doing $45 RPLH is getting more out of every scheduled hour than a store doing $35.",
+    whenRedPlaybook: [
+      "Consider targeting $40-$50 RPLH depending on your concept. If RPLH drops below $35, you're likely overstaffed for the volume. Industry benchmark: $40-$55.",
+    ],
+  },
+  morning_brief: {
+    title: "Morning Brief",
+    whatItMeans:
+      "An AI-generated summary of yesterday's business performance. It highlights what went well, what needs attention, and what changed from the day before.",
+    whyItMatters:
+      "The Brief saves you from digging through numbers every morning. In 60 seconds you know where you stand and what to focus on today.",
+    whenRedPlaybook: [
+      "Consider reading the Brief before your first shift meeting. It gives you one or two talking points to share with your team.",
+    ],
+  },
+  wow_pct_change: {
+    title: "WoW % Change (Week-over-Week)",
+    whatItMeans:
+      "The percentage change in a metric compared to the same metric last week. If Food Cost was 32% last week and 34% this week, WoW change is +2%.",
+    whyItMatters:
+      "Weekly trends are more reliable than daily swings. One bad day can spike a number, but a bad week is a pattern that needs attention.",
+    whenRedPlaybook: [
+      "Consider using WoW trends to catch problems in their first week, not their first month. A metric moving the wrong direction for two weeks in a row is a signal.",
+    ],
+  },
+  revenue_pl: {
+    title: "Revenue",
+    whatItMeans:
+      "Total money collected from all sales channels before any expenses are subtracted. Also called Top Line.",
+    whyItMatters:
+      "Revenue is the starting point but it's not profit. A store doing $100K/month in revenue can still lose money if costs aren't controlled.",
+    whenRedPlaybook: [
+      "Consider tracking revenue by channel — dine-in, delivery, catering. Knowing where the money comes from helps you invest in the right areas.",
+    ],
+  },
+  cogs_pl: {
+    title: "COGS (Cost of Goods Sold)",
+    whatItMeans:
+      "The total cost of all food, beverages, and disposable supplies used to generate your sales. This is what it costs to make what you sell.",
+    whyItMatters:
+      "COGS is the biggest controllable expense in most restaurants. A 2% improvement on a $1M store saves $20,000 per year.",
+    whenRedPlaybook: [
+      "Consider doing weekly inventory counts on your top 10 items by cost. That's where most waste and variance hides. Industry benchmark: 28-33% of revenue.",
+    ],
+  },
+  gross_profit_pl: {
+    title: "Gross Profit",
+    whatItMeans:
+      "Revenue minus COGS. The money left after paying for the food and supplies that made the sales. This is not your take-home — rent, labor, and other expenses still come out.",
+    whyItMatters:
+      "Gross Profit tells you how much room you have to cover all your other expenses. If Gross Profit is thin, no amount of cost-cutting elsewhere will save you.",
+    whenRedPlaybook: [
+      "Consider tracking Gross Profit by week, not just by month. If Gross Profit drops mid-month, you have time to adjust before the month closes.",
+    ],
+  },
+  gross_profit_margin_pct: {
+    title: "Gross Profit Margin %",
+    whatItMeans:
+      "Gross Profit divided by Revenue, shown as a percentage. If you keep 67 cents from every dollar after paying for food, your Gross Profit Margin is 67%.",
+    whyItMatters:
+      "This tells you how efficiently you turn ingredients into revenue. Two stores with the same revenue can have very different Gross Profit Margins based on menu pricing and waste.",
+    whenRedPlaybook: [
+      "Consider comparing your margin across locations and over time. A declining margin with stable sales often means vendor prices crept up. Industry benchmark: 65-72%.",
+    ],
+  },
+  net_profit_pl: {
+    title: "Net Profit",
+    whatItMeans:
+      "What's left after ALL expenses — food, labor, rent, utilities, insurance, everything. This is the actual money the business earned (or lost).",
+    whyItMatters:
+      "Net Profit is the final scorecard. Everything above this line is a lever you can pull to improve it.",
+    whenRedPlaybook: [
+      "Consider targeting 8-12% Net Profit Margin. Below 5% means the business is fragile — one bad month could tip you into a loss.",
+    ],
+  },
+  net_profit_margin_pct: {
+    title: "Net Profit Margin %",
+    whatItMeans:
+      "Net Profit divided by Revenue, shown as a percentage. If you keep 10 cents of actual profit from every dollar of sales, your Net Profit Margin is 10%.",
+    whyItMatters:
+      "This is the number that determines whether the business is healthy, surviving, or bleeding. It accounts for everything.",
+    whenRedPlaybook: [
+      "Consider that most independent pizzerias operate between 5-15% Net Profit Margin. If you're below 5%, focus on the biggest expense categories first. Industry benchmark: 8-12%.",
+    ],
+  },
+  the_gap: {
+    title: "The Gap",
+    whatItMeans:
+      "The difference between your theoretical costs (what you should have spent based on sales) and your actual costs (what you really spent). The Gap represents waste, theft, portioning errors, or unrecorded discounts.",
+    whyItMatters:
+      "The Gap is hidden money. A 3% Gap on a $1M store is $30,000 per year walking out the door without showing up on any receipt.",
+    whenRedPlaybook: [
+      "Consider doing a weekly variance check on your top 5 items. If cheese has a 5% gap, that's portioning or waste — and it's fixable.",
+    ],
+  },
+  seasonal_variation: {
+    title: "Seasonal Variation",
+    whatItMeans:
+      "How your sales and costs change throughout the year based on predictable patterns — summer slumps, holiday spikes, school schedules, weather.",
+    whyItMatters:
+      "Knowing your seasonal pattern prevents panic. A 15% sales drop in January isn't a crisis if it happens every January. But a 15% drop in your peak month is a real problem.",
+    whenRedPlaybook: [
+      "Consider planning labor and inventory around your seasonal patterns, not your best month. Overstaffing for volume that isn't coming is one of the biggest controllable leaks.",
+    ],
+  },
+  daily_sales_breakdown: {
+    title: "Daily Sales Breakdown",
+    whatItMeans:
+      "A day-by-day view of your sales for the selected period. Shows how much revenue came in each day.",
+    whyItMatters:
+      "The breakdown reveals your strong days and weak days. Most operators overestimate how even their sales are — usually 2-3 days drive the majority of weekly revenue.",
+    whenRedPlaybook: [
+      "Consider scheduling your strongest team on your highest-volume days. Your best Friday crew should not be your Monday crew.",
+    ],
+  },
+  effective_commission_pct: {
+    title: "Effective Commission %",
+    whatItMeans:
+      "The actual percentage of each delivery order that goes to the delivery platform (DoorDash, UberEats, Slice, etc.) after all fees, commissions, and charges. This is the real cost, not just the advertised rate.",
+    whyItMatters:
+      "Most platforms advertise 15-30% commission, but the effective rate after all fees is often higher. A 30% effective commission means you keep only 70 cents of every delivery dollar.",
+    whenRedPlaybook: [
+      "Consider calculating your effective commission monthly. If the real rate is above 25%, compare whether direct delivery or a lower-cost platform would save money.",
+    ],
+  },
+  net_after_fees: {
+    title: "Net After Fees",
+    whatItMeans:
+      "The dollar amount you actually keep from delivery orders after the platform takes its cut. If a $30 order has 28% effective commission, your Net After Fees is $21.60.",
+    whyItMatters:
+      "This is the real revenue from delivery. Many operators look at gross delivery sales and think they're doing well, but Net After Fees tells the true story.",
+    whenRedPlaybook: [
+      "Consider comparing Net After Fees per platform. One platform might have higher gross sales but lower net — that matters.",
+    ],
+  },
+  delivery_mix_pct: {
+    title: "Delivery Mix %",
+    whatItMeans:
+      "What percentage of your total sales come from delivery platforms vs dine-in, takeout, and other channels.",
+    whyItMatters:
+      "A high delivery mix means a large portion of your revenue is subject to platform fees. If 40% of sales are delivery at 25% commission, 10% of your total revenue goes to platforms.",
+    whenRedPlaybook: [
+      "Consider whether marketing direct ordering could shift some delivery volume to a lower-cost channel. Even shifting 5% of delivery to direct saves thousands annually.",
+    ],
+  },
 };

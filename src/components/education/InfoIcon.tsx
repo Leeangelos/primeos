@@ -87,9 +87,20 @@ export function EducationInfoIcon({ metricKey, size = "sm" }: EducationInfoIconP
             </p>
           </section>
 
+          {entry.whyItMatters && (
+            <section className="mt-6">
+              <h3 className="text-sm font-semibold text-slate-300 uppercase tracking-wide">
+                Why It Matters
+              </h3>
+              <p className="mt-2 text-sm text-slate-400 leading-relaxed">
+                {entry.whyItMatters}
+              </p>
+            </section>
+          )}
+
           <section className="mt-6">
-            <h3 className="text-sm font-semibold text-red-400/90 uppercase tracking-wide">
-              When This Goes Red
+            <h3 className="text-sm font-semibold text-amber-400/90 uppercase tracking-wide">
+              Playbook
             </h3>
             <ul className="mt-2 space-y-2">
               {entry.whenRedPlaybook.map((step, i) => (

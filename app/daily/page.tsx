@@ -756,7 +756,7 @@ function DailyPageContent() {
             <div className="space-y-1 min-w-0">
               <div className="flex items-center gap-2">
                 <label htmlFor="daily-net-sales" className="text-xs text-slate-400">Sales ($)</label>
-                <EducationInfoIcon metricKey="daily_sales" />
+                <EducationInfoIcon metricKey="net_sales" />
               </div>
               <input
                 id="daily-net-sales"
@@ -820,7 +820,7 @@ function DailyPageContent() {
             <div className="space-y-1 min-w-0">
               <div className="flex items-center gap-2">
                 <label htmlFor="daily-transactions" className="text-xs text-slate-400">Transactions</label>
-                <EducationInfoIcon metricKey="ticket_avg" />
+                <EducationInfoIcon metricKey="customer_count" />
               </div>
               <input
                 id="daily-transactions"
@@ -955,10 +955,10 @@ function DailyPageContent() {
                   targetNum: targets.primeMax,
                 },
                 {
-                  label: "SLPH",
+                  label: "RPLH",
                   value: formatSlph(lh, computed.slph),
                   target: `${targets.slphMin}+`,
-                  gradeKey: "slph",
+                  gradeKey: "rplh",
                   valueNum: computed.slph,
                   direction: "higher_is_better" as const,
                   targetNum: targets.slphMin,
@@ -967,7 +967,7 @@ function DailyPageContent() {
                   label: "Avg Ticket",
                   value: computed.avgTicket != null ? `$${computed.avgTicket.toFixed(2)}` : "—",
                   target: "—",
-                  gradeKey: "ticket_avg",
+                  gradeKey: "average_ticket",
                   valueNum: computed.avgTicket,
                   direction: "higher_is_better" as const,
                   targetNum: null,

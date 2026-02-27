@@ -292,9 +292,12 @@ export default function SalesPage() {
       {/* Bar chart — daily sales */}
       <div className="px-3 sm:px-5">
         <div className="rounded-xl border border-slate-700 bg-slate-800/50 p-4 min-w-0">
-          <h2 className="text-xs font-semibold uppercase tracking-wider text-slate-400 mb-3">
-            Daily Sales — {label}
-          </h2>
+          <div className="flex items-center gap-2 mb-3">
+            <h2 className="text-xs font-semibold uppercase tracking-wider text-slate-400">
+              Daily Sales — {label}
+            </h2>
+            <EducationInfoIcon metricKey="daily_sales_breakdown" size="sm" />
+          </div>
           <div className="w-full h-[280px] min-h-[200px]">
             <ResponsiveContainer width="100%" height="100%">
               <BarChart

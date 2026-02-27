@@ -410,7 +410,7 @@ export default function HomePage() {
               <div className="bg-slate-800 rounded-xl p-4 border-l-4 min-w-0 border-slate-700" style={{ borderLeftColor: salesBorder }}>
                 <div className="flex items-center justify-between mb-1">
                   <span className="text-xs text-slate-400 uppercase tracking-wide">Today&apos;s Sales</span>
-                  <EducationInfoIcon metricKey="daily_sales" />
+                  <EducationInfoIcon metricKey="todays_sales" />
                 </div>
                 <div className="text-2xl font-bold tabular-nums" style={{ color: salesGrade === "green" ? COLORS.grade.green : COLORS.grade.red }}>
                   ${kpi.sales.toLocaleString("en-US", { maximumFractionDigits: 0 })}
@@ -428,7 +428,7 @@ export default function HomePage() {
               <div className="bg-slate-800 rounded-xl p-4 border-l-4 min-w-0 border-slate-700" style={{ borderLeftColor: borderColor }}>
                 <div className="flex items-center justify-between mb-1">
                   <span className="text-xs text-slate-400 uppercase tracking-wide">Food Cost</span>
-                  <EducationInfoIcon metricKey="food_cost" />
+                  <EducationInfoIcon metricKey="food_cost_pct" />
                 </div>
                 <div className="text-2xl font-bold tabular-nums" style={{ color: borderColor }}>
                   {formatPct(kpi.foodCostPct)}
@@ -444,7 +444,7 @@ export default function HomePage() {
               <div className="bg-slate-800 rounded-xl p-4 border-l-4 min-w-0 border-slate-700" style={{ borderLeftColor: borderColor }}>
                 <div className="flex items-center justify-between mb-1">
                   <span className="text-xs text-slate-400 uppercase tracking-wide">Labor %</span>
-                  <EducationInfoIcon metricKey="labor_pct" />
+                  <EducationInfoIcon metricKey="labor_pct_home" />
                 </div>
                 <div className="text-2xl font-bold tabular-nums" style={{ color: borderColor }}>
                   {formatPct(kpi.laborPct)}
@@ -460,7 +460,7 @@ export default function HomePage() {
               <div className="bg-slate-800 rounded-xl p-4 border-l-4 min-w-0 border-slate-700" style={{ borderLeftColor: borderColor }}>
                 <div className="flex items-center justify-between mb-1">
                   <span className="text-xs text-slate-400 uppercase tracking-wide">PRIME %</span>
-                  <EducationInfoIcon metricKey="prime_cost" />
+                  <EducationInfoIcon metricKey="prime_pct" />
                 </div>
                 <div className="text-2xl font-bold tabular-nums" style={{ color: borderColor }}>
                   {formatPct(kpi.primePct)}
@@ -475,7 +475,7 @@ export default function HomePage() {
           <div className="bg-slate-800 rounded-xl p-4 border border-slate-700 min-w-0">
             <div className="flex items-center justify-between mb-1">
               <span className="text-xs text-slate-400 uppercase tracking-wide">Today&apos;s Sales</span>
-              <EducationInfoIcon metricKey="daily_sales" />
+              <EducationInfoIcon metricKey="todays_sales" />
             </div>
             <div className="text-2xl font-bold text-slate-500">—</div>
             <div className="text-xs text-slate-500">Target: ${(dailyTargetSales / 1000).toFixed(1)}K/day</div>
@@ -483,7 +483,7 @@ export default function HomePage() {
           <div className="bg-slate-800 rounded-xl p-4 border border-slate-700 min-w-0">
             <div className="flex items-center justify-between mb-1">
               <span className="text-xs text-slate-400 uppercase tracking-wide">Food Cost</span>
-              <EducationInfoIcon metricKey="food_cost" />
+              <EducationInfoIcon metricKey="food_cost_pct" />
             </div>
             <div className="text-2xl font-bold text-slate-500">—</div>
             <div className="text-xs text-slate-500">Target: ≤{benchmarks.foodCostTargetPct}%</div>
@@ -491,7 +491,7 @@ export default function HomePage() {
           <div className="bg-slate-800 rounded-xl p-4 border border-slate-700 min-w-0">
             <div className="flex items-center justify-between mb-1">
               <span className="text-xs text-slate-400 uppercase tracking-wide">Labor %</span>
-              <EducationInfoIcon metricKey="labor_pct" />
+              <EducationInfoIcon metricKey="labor_pct_home" />
             </div>
             <div className="text-2xl font-bold text-slate-500">—</div>
             <div className="text-xs text-slate-500">Target: ≤{benchmarks.laborTargetPct}%</div>
@@ -499,7 +499,7 @@ export default function HomePage() {
           <div className="bg-slate-800 rounded-xl p-4 border border-slate-700 min-w-0">
             <div className="flex items-center justify-between mb-1">
               <span className="text-xs text-slate-400 uppercase tracking-wide">PRIME %</span>
-              <EducationInfoIcon metricKey="prime_cost" />
+              <EducationInfoIcon metricKey="prime_pct" />
             </div>
             <div className="text-2xl font-bold text-slate-500">—</div>
             <div className="text-xs text-slate-500">Target: ≤{benchmarks.primeTargetPct}%</div>
@@ -710,13 +710,14 @@ export default function HomePage() {
                 aria-hidden
               />
               <h3
-                className={`text-sm font-semibold uppercase tracking-wide ${
+                className={`text-sm font-semibold uppercase tracking-wide flex items-center gap-1.5 ${
                   alerts.some((a) => a.severity === "red") ? "text-red-400" : "text-amber-400"
                 }`}
               >
                 {alerts.some((a) => a.severity === "red")
                   ? "⚠ NEEDS ATTENTION"
                   : "👀 KEEP AN EYE ON"}
+                <EducationInfoIcon metricKey={alerts.some((a) => a.severity === "red") ? "needs_attention" : "keep_an_eye_on"} />
               </h3>
             </div>
             <div className="space-y-2">
@@ -763,12 +764,15 @@ export default function HomePage() {
             </div>
           </>
         ) : (
-          <div className="flex items-center gap-2">
-            <span className="text-emerald-400 text-lg" aria-hidden>✅</span>
+          <div className="flex items-start gap-2">
+            <span className="text-emerald-400 text-lg shrink-0" aria-hidden>✅</span>
             <div>
-              <h3 className="text-sm font-semibold text-emerald-400 uppercase tracking-wide">
-                ✅ ALL GOOD TODAY
-              </h3>
+              <div className="flex items-center gap-1.5">
+                <h3 className="text-sm font-semibold text-emerald-400 uppercase tracking-wide">
+                  ✅ ALL GOOD TODAY
+                </h3>
+                <EducationInfoIcon metricKey="all_good_today" />
+              </div>
               <p className="text-xs text-slate-400 mt-0.5">All KPIs within target.</p>
             </div>
           </div>

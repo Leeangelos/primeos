@@ -491,9 +491,10 @@ function WeeklyPageContent() {
                   </span>
                 )}
                 {data.hero.wow_delta_pct != null && (
-                  <span className="text-sm">
+                  <span className="text-sm inline-flex items-center gap-1">
                     WoW: {data.hero.wow_delta_pct >= 0 ? "+" : ""}
                     {formatPct(data.hero.wow_delta_pct)}
+                    <EducationInfoIcon metricKey="wow_pct_change" size="sm" />
                   </span>
                 )}
               </div>
