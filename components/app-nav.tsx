@@ -1,6 +1,6 @@
 "use client";
 
-import { Sun, Moon, LogOut } from "lucide-react";
+import { Sun, Moon, ArrowRightFromLine } from "lucide-react";
 import { useTheme } from "@/src/lib/theme-context";
 import { useAuth } from "@/src/lib/auth-context";
 import { NotificationCenter } from "@/src/components/layout/NotificationCenter";
@@ -20,7 +20,7 @@ export function AppNav() {
               aria-label="Sign out"
               title="Sign out"
             >
-              <LogOut className="w-4 h-4 rotate-180" />
+              <ArrowRightFromLine className="w-4 h-4 rotate-180" />
             </button>
           )}
           <span className="text-lg font-bold text-white">PrimeOS</span>

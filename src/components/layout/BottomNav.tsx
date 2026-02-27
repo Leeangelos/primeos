@@ -145,18 +145,15 @@ export function BottomNav() {
   }, []);
 
   useEffect(() => {
-    if (!moreOpen) return;
-    const onEscape = (e: KeyboardEvent) => e.key === "Escape" && closeMore();
-    document.addEventListener("keydown", onEscape);
-    document.body.style.overflow = "hidden";
-    document.documentElement.style.overflow = "hidden";
-
-    return () => {
-      document.removeEventListener("keydown", onEscape);
+    if (moreOpen) {
+      document.body.style.overflow = "hidden";
+    } else {
       document.body.style.overflow = "";
-      document.documentElement.style.overflow = "";
+    }
+    return () => {
+      document.body.style.overflow = "";
     };
-  }, [moreOpen, closeMore]);
+  }, [moreOpen]);
 
   useEffect(() => {
     if (!moreOpen) return;
