@@ -20,7 +20,7 @@ export function AppNav() {
               aria-label="Sign out"
               title="Sign out"
             >
-              <LogOut className="w-4 h-4" />
+              <LogOut className="w-4 h-4 rotate-180" />
             </button>
           )}
           <span className="text-lg font-bold text-white">PrimeOS</span>

@@ -36,6 +36,8 @@ import {
   Settings,
   LogOut,
   Shield,
+  Search,
+  X,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { createClient } from "@/lib/supabase";
@@ -121,11 +123,15 @@ export function BottomNav() {
   const { theme } = useTheme();
   const isLight = theme === "light";
   const [moreOpen, setMoreOpen] = useState(false);
+  const [drawerSearch, setDrawerSearch] = useState("");
   const dragStartYRef = useRef<number | null>(null);
-  const bodyScrollYRef = useRef(0);
+  const searchInputRef = useRef<HTMLInputElement | null>(null);
   const [upgradeModal, setUpgradeModal] = useState<{ requiredTier: string; pageName: string } | null>(null);
 
-  const closeMore = useCallback(() => setMoreOpen(false), []);
+  const closeMore = useCallback(() => {
+    setMoreOpen(false);
+    setDrawerSearch("");
+  }, []);
 
   const handleLogout = async () => {
     const supabase = createClient();
@@ -142,39 +148,23 @@ export function BottomNav() {
     if (!moreOpen) return;
     const onEscape = (e: KeyboardEvent) => e.key === "Escape" && closeMore();
     document.addEventListener("keydown", onEscape);
-
-    // Lock background scrolling while drawer is open (mobile Safari-safe).
-    const prevBodyOverflow = document.body.style.overflow;
-    const prevBodyPosition = document.body.style.position;
-    const prevBodyTop = document.body.style.top;
-    const prevBodyLeft = document.body.style.left;
-    const prevBodyRight = document.body.style.right;
-    const prevBodyWidth = document.body.style.width;
-    const prevHtmlOverflow = document.documentElement.style.overflow;
-
-    bodyScrollYRef.current = typeof window !== "undefined" ? window.scrollY : 0;
     document.body.style.overflow = "hidden";
     document.documentElement.style.overflow = "hidden";
-    document.body.style.position = "fixed";
-    document.body.style.top = `-${bodyScrollYRef.current}px`;
-    document.body.style.left = "0";
-    document.body.style.right = "0";
-    document.body.style.width = "100%";
 
     return () => {
       document.removeEventListener("keydown", onEscape);
-      document.body.style.overflow = prevBodyOverflow;
-      document.body.style.position = prevBodyPosition;
-      document.body.style.top = prevBodyTop;
-      document.body.style.left = prevBodyLeft;
-      document.body.style.right = prevBodyRight;
-      document.body.style.width = prevBodyWidth;
-      document.documentElement.style.overflow = prevHtmlOverflow;
-      if (typeof window !== "undefined") {
-        window.scrollTo(0, bodyScrollYRef.current);
-      }
+      document.body.style.overflow = "";
+      document.documentElement.style.overflow = "";
     };
   }, [moreOpen, closeMore]);
+
+  useEffect(() => {
+    if (!moreOpen) return;
+    const t = setTimeout(() => {
+      searchInputRef.current?.focus();
+    }, 100);
+    return () => clearTimeout(t);
+  }, [moreOpen]);
 
   // Active tab source of truth: pathname only (derived every render).
   const isHomeActive = pathname === "/";
@@ -188,7 +178,7 @@ export function BottomNav() {
       {moreOpen && (
         <div
           className="fixed inset-0 z-40 bg-black/50"
-          onClick={() => setMoreOpen(false)}
+          onClick={closeMore}
           aria-hidden
         />
       )}
@@ -223,7 +213,7 @@ export function BottomNav() {
               if (dragStartYRef.current !== null) {
                 const diff = e.touches[0].clientY - dragStartYRef.current;
                 if (diff > 50) {
-                  setMoreOpen(false);
+                  closeMore();
                   dragStartYRef.current = null;
                 }
               }
@@ -232,8 +222,36 @@ export function BottomNav() {
           >
             <div className={cn("w-10 h-1 rounded-full", isLight ? "bg-zinc-300" : "bg-slate-600")} />
           </div>
-          <div className="px-4 pt-2 pb-4">
+          <div className="px-4 pt-2 pb-2">
             <h2 className={cn("text-lg font-bold", isLight ? "text-zinc-900" : "text-white")}>All Tools</h2>
+          </div>
+          <div className="px-4 pb-3">
+            <div className="relative">
+              <Search className="w-4 h-4 text-zinc-500 absolute left-3 top-1/2 -translate-y-1/2" />
+              <input
+                ref={searchInputRef}
+                type="text"
+                value={drawerSearch}
+                onChange={(e) => setDrawerSearch(e.target.value)}
+                placeholder="Search pages..."
+                className={cn(
+                  "w-full rounded-lg px-9 py-2 text-sm border placeholder:text-zinc-500 focus:outline-none focus:ring-2 focus:ring-[#E65100]/50",
+                  isLight
+                    ? "bg-zinc-100 text-zinc-900 border-zinc-300"
+                    : "bg-zinc-800 text-white border-zinc-700"
+                )}
+              />
+              {drawerSearch && (
+                <button
+                  type="button"
+                  onClick={() => setDrawerSearch("")}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-zinc-500 hover:text-zinc-300"
+                  aria-label="Clear search"
+                >
+                  <X className="w-3 h-3" />
+                </button>
+              )}
+            </div>
           </div>
         </div>
 
@@ -241,13 +259,11 @@ export function BottomNav() {
         <div
           className="overflow-y-auto"
           style={{ maxHeight: "calc(100vh - 4rem - env(safe-area-inset-bottom, 0px) - env(safe-area-inset-top, 0px))" }}
-          role="region"
-          aria-label="All tools and links"
         >
-          <div className="px-4 py-2 space-y-6 pb-24">
+          <div className="px-4 py-2 space-y-6 pb-24" role="region" aria-label="All tools and links">
           <Link
             href="/"
-            onClick={() => setMoreOpen(false)}
+            onClick={closeMore}
             className={cn(
               "flex items-center gap-3 px-4 py-3 mb-2 rounded-xl border active:opacity-90",
               isLight ? "bg-zinc-50 border-zinc-200 active:bg-zinc-100" : "bg-slate-800 border-slate-700 active:bg-slate-700/50"
@@ -267,7 +283,8 @@ export function BottomNav() {
               <NavSection
                 isLight={isLight}
                 title="Daily Operations"
-                items={[
+                items={(() => {
+                  const items: NavItem[] = [
                   { href: "/daily", icon: ClipboardList, label: "Daily KPIs", desc: "Enter today's numbers", color: "text-blue-400" },
                   { href: "/brief", icon: Sparkles, label: "Morning Brief", desc: "AI summary of yesterday", color: "text-purple-400" },
                   { href: "/weekly", icon: BarChart3, label: "Weekly Snapshot", desc: "Week-over-week trends", color: "text-emerald-400" },
@@ -276,15 +293,20 @@ export function BottomNav() {
                   { href: "/inspection-radar", icon: Shield, label: "Inspection Radar", desc: "Inspector activity near you", color: "text-blue-400" },
                   { href: "/tasks", icon: CheckSquare, label: "Manager Tasks", desc: "Assign and track team tasks", color: "text-orange-400" },
                   { href: "/chat", icon: MessageCircle, label: "Team Chat", desc: "Internal messaging", color: "text-pink-400" },
-                ]}
+                  ];
+                  if (!drawerSearch.trim()) return items;
+                  const q = drawerSearch.toLowerCase();
+                  return items.filter((i) => i.label.toLowerCase().includes(q));
+                })()}
                 pathname={pathname}
-                setMoreOpen={setMoreOpen}
+                setMoreOpen={closeMore}
               />
 
               <NavSection
                 isLight={isLight}
                 title="Financial"
-                items={[
+                items={(() => {
+                  const items: NavItem[] = [
                   { href: "/pnl", icon: DollarSign, label: "GP P&L", desc: "Gross profit tracking", color: "text-emerald-400" },
                   { href: "/actual-pnl", icon: FileSpreadsheet, label: "Actual P&L", desc: "CPA upload — real net profit", color: "text-green-400" },
                   { href: "/gl-upload", icon: FileSpreadsheet, label: "GL Upload", desc: "General Ledger import", color: "text-cyan-400" },
@@ -293,58 +315,77 @@ export function BottomNav() {
                   { href: "/valuation", icon: TrendingUp, label: "What's It Worth?", desc: "Business valuation estimator", color: "text-amber-400" },
                   { href: "/doordash", icon: Truck, label: "Delivery Economics", desc: "Platform costs and comparison", color: "text-red-400" },
                   { href: "/billing", icon: Heart, label: "Our Story", desc: "Why we built this", color: "text-[#E65100]" },
-                ]}
+                  ];
+                  if (!drawerSearch.trim()) return items;
+                  const q = drawerSearch.toLowerCase();
+                  return items.filter((i) => i.label.toLowerCase().includes(q));
+                })()}
                 pathname={pathname}
-                setMoreOpen={setMoreOpen}
+                setMoreOpen={closeMore}
               />
 
               <NavSection
                 isLight={isLight}
                 title="Kitchen & Inventory"
-                items={[
+                items={(() => {
+                  const items: NavItem[] = [
                   { href: "/recipes", icon: BookOpen, label: "Recipes", desc: "Food costing and portions", color: "text-amber-400" },
                   { href: "/inventory", icon: Package, label: "Inventory", desc: "Stock levels and par", color: "text-yellow-400" },
                   { href: "/invoices", icon: FileText, label: "Invoice Scanner", desc: "AI-powered OCR scanning", color: "text-violet-400" },
                   { href: "/menu-intelligence", icon: UtensilsCrossed, label: "Menu Intelligence", desc: "Prices, comparison, gap analysis", color: "text-teal-400" },
                   { href: "/food-cost-analysis", icon: Scale, label: "Food Cost Analysis", desc: "Theoretical vs actual variance", color: "text-pink-400" },
-                ]}
+                  ];
+                  if (!drawerSearch.trim()) return items;
+                  const q = drawerSearch.toLowerCase();
+                  return items.filter((i) => i.label.toLowerCase().includes(q));
+                })()}
                 pathname={pathname}
-                setMoreOpen={setMoreOpen}
+                setMoreOpen={closeMore}
               />
 
               <NavSection
                 isLight={isLight}
                 title="People & Marketing"
-                items={[
+                items={(() => {
+                  const items: NavItem[] = [
                   { href: "/people", icon: Users, label: "People Economics", desc: "CAC, LTV, churn tracking", color: "text-cyan-400" },
                   { href: "/marketing", icon: Target, label: "Ad Accountability", desc: "ROAS and campaign tracking", color: "text-rose-400" },
                   { href: "/reputation", icon: MessageCircle, label: "Do We Suck?", desc: "Reviews and reputation", color: "text-pink-400" },
                   { href: "/competitor-intel", icon: Target, label: "Competitor Intel", desc: "Market position and alerts", color: "text-violet-400" },
                   { href: "/parties", icon: Gift, label: "Catering & Large Orders", desc: "Catering and event orders", color: "text-fuchsia-400" },
                   { href: "/merch", icon: ShoppingBag, label: "Team Merch", desc: "Staff gear and ordering", color: "text-orange-400" },
-                ]}
+                  ];
+                  if (!drawerSearch.trim()) return items;
+                  const q = drawerSearch.toLowerCase();
+                  return items.filter((i) => i.label.toLowerCase().includes(q));
+                })()}
                 pathname={pathname}
-                setMoreOpen={setMoreOpen}
+                setMoreOpen={closeMore}
               />
 
               <NavSection
                 isLight={isLight}
                 title="Resources"
-                items={[
+                items={(() => {
+                  const items: NavItem[] = [
                   { href: "/vendor-settings", icon: Settings, label: "Vendor Settings", desc: "Manage vendors and platforms", color: "text-slate-400" },
                   { href: "/rolodex", icon: BookUser, label: "Trusted Rolodex", desc: "Vendors, repairs, contacts", color: "text-teal-400" },
                   { href: "/daily-edge", icon: Newspaper, label: "The Daily Edge", desc: "Daily intelligence feed", color: "text-blue-400" },
                   { href: "/training", icon: GraduationCap, label: "Training Guide", desc: "Learn every metric", color: "text-indigo-400" },
-                ]}
+                  ];
+                  if (!drawerSearch.trim()) return items;
+                  const q = drawerSearch.toLowerCase();
+                  return items.filter((i) => i.label.toLowerCase().includes(q));
+                })()}
                 pathname={pathname}
-                setMoreOpen={setMoreOpen}
+                setMoreOpen={closeMore}
               />
 
           <div className={cn("pt-4 border-t mt-2", isLight ? "border-zinc-200" : "border-slate-800")}>
             <div className="flex justify-center gap-3">
-              <Link href="/terms" onClick={() => setMoreOpen(false)} className={cn("text-xs hover:underline", isLight ? "text-zinc-600 hover:text-zinc-800" : "text-slate-600 hover:text-slate-400")}>Terms of Service</Link>
+              <Link href="/terms" onClick={closeMore} className={cn("text-xs hover:underline", isLight ? "text-zinc-600 hover:text-zinc-800" : "text-slate-600 hover:text-slate-400")}>Terms of Service</Link>
               <span className={cn("text-xs", isLight ? "text-zinc-500" : "text-slate-700")}>·</span>
-              <Link href="/privacy" onClick={() => setMoreOpen(false)} className={cn("text-xs hover:underline", isLight ? "text-zinc-600 hover:text-zinc-800" : "text-slate-600 hover:text-slate-400")}>Privacy Policy</Link>
+              <Link href="/privacy" onClick={closeMore} className={cn("text-xs hover:underline", isLight ? "text-zinc-600 hover:text-zinc-800" : "text-slate-600 hover:text-slate-400")}>Privacy Policy</Link>
             </div>
             <button
               type="button"
@@ -400,7 +441,15 @@ export function BottomNav() {
           </Link>
           <button
             type="button"
-            onClick={() => setMoreOpen((prev) => !prev)}
+            onClick={() =>
+              setMoreOpen((prev) => {
+                const next = !prev;
+                if (!next) {
+                  setDrawerSearch("");
+                }
+                return next;
+              })
+            }
             className="flex flex-col items-center justify-center gap-0.5 min-w-[44px] min-h-[44px] flex-1 max-w-[80px] transition-colors"
             aria-expanded={moreOpen}
             aria-haspopup="dialog"
