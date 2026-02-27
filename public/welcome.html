@@ -316,6 +316,57 @@
         color: var(--text-subtle);
         text-decoration: underline;
       }
+      .form-section {
+        border-radius: 1.5rem;
+        padding: 2.25rem 1.5rem;
+        background-color: var(--bg-card-soft);
+        border: 1px solid var(--border-subtle);
+      }
+      .form-grid {
+        display: flex;
+        flex-direction: column;
+        gap: 1rem;
+        margin-top: 1.5rem;
+      }
+      .field-label {
+        display: block;
+        font-size: 0.8rem;
+        color: var(--text-subtle);
+        margin-bottom: 0.25rem;
+      }
+      .field-input {
+        width: 100%;
+        border-radius: 0.75rem;
+        border: 1px solid #374151;
+        background-color: #020617;
+        color: var(--text);
+        padding: 0.75rem 1rem;
+        font-size: 0.9rem;
+        outline: none;
+        transition: border-color 150ms ease, box-shadow 150ms ease,
+          background-color 150ms ease;
+      }
+      .field-input::placeholder {
+        color: var(--text-muted);
+      }
+      .field-input:focus {
+        border-color: var(--accent);
+        box-shadow: 0 0 0 1px rgba(230, 81, 0, 0.7);
+        background-color: #020617;
+      }
+      .form-actions {
+        margin-top: 1.5rem;
+      }
+      .status-message {
+        margin-top: 1rem;
+        font-size: 0.875rem;
+      }
+      .status-success {
+        color: #4ade80;
+      }
+      .status-error {
+        color: #f97373;
+      }
     </style>
   </head>
   <body>
@@ -340,12 +391,7 @@
               </p>
             </div>
             <div class="hero-cta-row">
-              <a
-                class="btn-primary"
-                href="mailto:hello@getprimeos.com?subject=PrimeOS%20Access%20Request"
-              >
-                Request Access
-              </a>
+              <a class="btn-primary" href="#request-access">Request Access</a>
             </div>
           </section>
 
@@ -485,16 +531,101 @@
           <section class="section center">
             <h2 class="section-title">Stop Running Blind.</h2>
             <div class="hero-cta-row" style="justify-content: center;">
-              <a
-                class="btn-primary"
-                href="mailto:hello@getprimeos.com?subject=PrimeOS%20Access%20Request"
-              >
-                Request Access
-              </a>
+              <a class="btn-primary" href="#request-access">Request Access</a>
             </div>
             <p class="text-muted" style="margin-top: 0.75rem; font-size: 0.875rem;">
               Built by a pizzeria operator who got tired of guessing.
             </p>
+          </section>
+
+          <!-- REQUEST ACCESS FORM -->
+          <section class="section">
+            <div id="request-access" class="form-section">
+              <h2 class="section-title">Get Started</h2>
+              <p class="section-text-lg">
+                Tell us a little about your operation. We'll be in touch.
+              </p>
+              <form id="access-request-form" novalidate>
+                <div class="form-grid">
+                  <div class="field">
+                    <label class="field-label" for="name">Name *</label>
+                    <input
+                      id="name"
+                      name="name"
+                      type="text"
+                      required
+                      class="field-input"
+                      autocomplete="name"
+                    />
+                  </div>
+                  <div class="field">
+                    <label class="field-label" for="email">Email *</label>
+                    <input
+                      id="email"
+                      name="email"
+                      type="email"
+                      required
+                      class="field-input"
+                      autocomplete="email"
+                    />
+                  </div>
+                  <div class="field">
+                    <label class="field-label" for="phone">Phone</label>
+                    <input
+                      id="phone"
+                      name="phone"
+                      type="tel"
+                      class="field-input"
+                      autocomplete="tel"
+                    />
+                  </div>
+                  <div class="field">
+                    <label class="field-label" for="storeName">Store Name *</label>
+                    <input
+                      id="storeName"
+                      name="storeName"
+                      type="text"
+                      required
+                      class="field-input"
+                      autocomplete="organization"
+                    />
+                  </div>
+                </div>
+                <div class="form-actions">
+                  <button
+                    type="submit"
+                    id="access-request-submit"
+                    class="btn-primary"
+                  >
+                    Request Access
+                  </button>
+                </div>
+                <p
+                  id="access-request-status"
+                  class="status-message"
+                  aria-live="polite"
+                ></p>
+              </form>
+              <div
+                id="access-request-success"
+                class="status-message status-success"
+                style="display: none; font-weight: 500;"
+              >
+                ✅ You're in. We'll reach out soon.
+              </div>
+              <div
+                id="access-request-error"
+                class="status-message status-error"
+                style="display: none;"
+              >
+                Something went wrong. Email us at
+                <a
+                  href="mailto:hello@getprimeos.com"
+                  style="text-decoration: underline; color: inherit;"
+                  >hello@getprimeos.com</a
+                >.
+              </div>
+            </div>
           </section>
 
           <!-- SECTION 7 — FOOTER -->
@@ -513,6 +644,104 @@
         </div>
       </main>
     </div>
+    <script>
+      (function () {
+        var form = document.getElementById("access-request-form");
+        var submitBtn = document.getElementById("access-request-submit");
+        var statusEl = document.getElementById("access-request-status");
+        var successEl = document.getElementById("access-request-success");
+        var errorEl = document.getElementById("access-request-error");
+        var isSubmitting = false;
+
+        function smoothScrollToHash(hash) {
+          try {
+            var target = document.querySelector(hash);
+            if (!target) return;
+            window.scrollTo({
+              top:
+                target.getBoundingClientRect().top +
+                window.pageYOffset -
+                80,
+              behavior: "smooth",
+            });
+          } catch (_) {}
+        }
+
+        document.addEventListener("click", function (e) {
+          var anchor = e.target.closest('a[href^="#"]');
+          if (!anchor) return;
+          var href = anchor.getAttribute("href");
+          if (!href || href === "#") return;
+          if (href.charAt(0) === "#") {
+            e.preventDefault();
+            smoothScrollToHash(href);
+          }
+        });
+
+        if (!form || !submitBtn) return;
+
+        form.addEventListener("submit", function (e) {
+          e.preventDefault();
+          if (isSubmitting) return;
+
+          statusEl.textContent = "";
+          successEl.style.display = "none";
+          errorEl.style.display = "none";
+
+          var name = (document.getElementById("name") || {}).value || "";
+          var email = (document.getElementById("email") || {}).value || "";
+          var phone = (document.getElementById("phone") || {}).value || "";
+          var storeName =
+            (document.getElementById("storeName") || {}).value || "";
+
+          if (!name.trim() || !email.trim() || !storeName.trim()) {
+            statusEl.textContent =
+              "Please fill in your name, email, and store name.";
+            statusEl.className = "status-message status-error";
+            return;
+          }
+
+          isSubmitting = true;
+          submitBtn.disabled = true;
+          submitBtn.textContent = "Sending...";
+
+          fetch("/api/access-request", {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify({
+              name: name.trim(),
+              email: email.trim(),
+              phone: phone.trim(),
+              storeName: storeName.trim(),
+            }),
+          })
+            .then(function (res) {
+              if (!res.ok) {
+                throw new Error("Request failed");
+              }
+              return res.json().catch(function () {
+                return {};
+              });
+            })
+            .then(function () {
+              form.style.display = "none";
+              successEl.style.display = "block";
+              statusEl.textContent = "";
+            })
+            .catch(function () {
+              errorEl.style.display = "block";
+              statusEl.textContent = "";
+            })
+            .finally(function () {
+              isSubmitting = false;
+              submitBtn.disabled = false;
+              submitBtn.textContent = "Request Access";
+            });
+        });
+      })();
+    </script>
   </body>
 </html>
 
