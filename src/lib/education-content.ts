@@ -1215,14 +1215,14 @@ export const EDUCATION_CONTENT: Record<string, EducationEntry> = {
       "Consider whether your managers are recognizing team members by name this week.",
     ],
   },
-  pillar_performance: {
-    title: "Performance",
+  pillar_process: {
+    title: "Process",
     whatItMeans:
-      "Performance is your daily numbers — PRIME, revenue, reputation, vendor costs, and delivery economics. It is the scoreboard that tells you if Product and People are working.",
+      "Process is your daily systems — PRIME tracking, vendor management, delivery economics, and reputation monitoring. It is the discipline that turns good Product and good People into consistent results.",
     whyItMatters:
       "Operators who review KPIs daily catch cost problems 3 to 4 weeks earlier than those who review monthly. At $5,000 per month in leaks — that is $15,000 saved per catch.",
     whenRedPlaybook: [
-      "Consider making your Morning Brief the first thing you open before you open the store.",
+      "Consider making your Morning Brief the first thing you open before you open the store. Process is what you do every day whether you feel like it or not.",
     ],
   },
   win_notifications: {

@@ -479,9 +479,9 @@ export default function HomePage() {
           3 Pillars of Success
         </p>
         <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
-        <PillarPill emoji="🍕" label="Product" grade={pillarGrades.product} metricKey="pillar_product" />
-        <PillarPill emoji="👥" label="People" grade={pillarGrades.people} metricKey="pillar_people" />
-        <PillarPill emoji="📊" label="Performance" grade={pillarGrades.performance} metricKey="pillar_performance" />
+          <PillarPill emoji="🍕" label="Product" grade={pillarGrades.product} metricKey="pillar_product" />
+          <PillarPill emoji="👥" label="People" grade={pillarGrades.people} metricKey="pillar_people" />
+          <PillarPill emoji="📊" label="Process" grade={pillarGrades.performance} metricKey="pillar_process" />
         </div>
       </div>
 
