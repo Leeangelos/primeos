@@ -81,6 +81,7 @@ export default function VendorTrackerPage() {
   const [quickNotes, setQuickNotes] = useState("");
   const [quickSaving, setQuickSaving] = useState(false);
   const [quickToast, setQuickToast] = useState<"idle" | "saved" | "error">("idle");
+  const [quickErrorDetail, setQuickErrorDetail] = useState<string | null>(null);
 
   const storeVendors = useMemo(() => getVendorsByStore(selectedStore), [selectedStore]);
   const allCosts = useMemo(() => [...VENDOR_COSTS, ...addedEntries], [addedEntries]);
@@ -227,7 +228,7 @@ export default function VendorTrackerPage() {
             {quickToast === "saved"
               ? "Invoice logged"
               : quickToast === "error"
-                ? "Could not log invoice"
+                ? quickErrorDetail || "Could not log invoice"
                 : "Vendor entry saved"}
           </p>
         </div>
@@ -413,17 +414,33 @@ export default function VendorTrackerPage() {
                     try {
                       setQuickSaving(true);
                       setQuickToast("idle");
-                      const res = await fetch("/api/quick-invoice", {
+                    const payload = {
+                      vendor_name: quickVendorName.trim(),
+                      invoice_date: quickInvoiceDate,
+                      total: Number(quickTotal),
+                      notes: quickNotes.trim() || null,
+                    };
+                    console.log("quick-invoice request payload", payload);
+                    const res = await fetch("/api/quick-invoice", {
                         method: "POST",
                         headers: { "Content-Type": "application/json" },
-                        body: JSON.stringify({
-                          vendor_name: quickVendorName.trim(),
-                          invoice_date: quickInvoiceDate,
-                          total: Number(quickTotal),
-                          notes: quickNotes.trim() || null,
-                        }),
+                      body: JSON.stringify(payload),
                       });
                       if (!res.ok) {
+                      let errorJson: any = null;
+                      try {
+                        errorJson = await res.json();
+                      } catch (e) {
+                        console.error("quick-invoice error parsing response", e);
+                      }
+                      console.error("quick-invoice API error", errorJson);
+                      setQuickErrorDetail(
+                        typeof errorJson?.detail === "string"
+                          ? errorJson.detail
+                          : typeof errorJson?.error === "string"
+                            ? errorJson.error
+                            : "Unknown error from invoice API"
+                      );
                         setQuickToast("error");
                       } else {
                         setQuickToast("saved");
@@ -431,8 +448,11 @@ export default function VendorTrackerPage() {
                         setQuickVendorName("");
                         setQuickTotal("");
                         setQuickNotes("");
+                      setQuickErrorDetail(null);
                       }
-                    } catch {
+                    } catch (e) {
+                      console.error("quick-invoice network error", e);
+                      setQuickErrorDetail("Network or unexpected error while saving invoice");
                       setQuickToast("error");
                     } finally {
                       setQuickSaving(false);

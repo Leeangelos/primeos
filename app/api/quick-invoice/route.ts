@@ -33,7 +33,16 @@ export async function POST(req: NextRequest) {
 
   if (error) {
     console.error("quick-invoice insert error", { error, payload });
-    return NextResponse.json({ ok: false, error: error.message, details: error }, { status: 500 });
+    return NextResponse.json(
+      {
+        ok: false,
+        error: "Insert failed",
+        detail: error.message,
+        code: (error as any).code ?? null,
+        hint: (error as any).hint ?? null,
+      },
+      { status: 500 }
+    );
   }
 
   return NextResponse.json({ ok: true }, { status: 200 });
