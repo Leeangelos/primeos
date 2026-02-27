@@ -454,7 +454,7 @@ export default function VendorTrackerPage() {
           <button
             type="button"
             onClick={() => setShowQuickInvoice(true)}
-            className="hidden sm:inline-flex items-center gap-1 rounded-lg border border-amber-600/40 bg-amber-500/10 px-3 py-1.5 text-[11px] font-medium text-amber-300 hover:bg-amber-500/20"
+            className="inline-flex items-center gap-1 rounded-lg border border-[#E65100] px-3 py-1.5 text-sm font-medium text-[#E65100] hover:bg-[#E65100]/10"
           >
             Log Invoice
           </button>

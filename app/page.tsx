@@ -474,7 +474,7 @@ export default function HomePage() {
         </div>
       </div>
 
-      <div className="flex gap-3 w-full min-w-0">
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-3 w-full min-w-0">
         <PillarPill emoji="🍕" label="Product" grade={pillarGrades.product} metricKey="pillar_product" />
         <PillarPill emoji="👥" label="People" grade={pillarGrades.people} metricKey="pillar_people" />
         <PillarPill emoji="📊" label="Performance" grade={pillarGrades.performance} metricKey="pillar_performance" />
