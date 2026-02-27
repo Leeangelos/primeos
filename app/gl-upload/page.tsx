@@ -51,15 +51,33 @@ type UnmappedAccount = {
   suggestedCategory: string | null;
 };
 
+type MonthData = {
+  uploadState: UploadState;
+  unmappedAccounts: UnmappedAccount[];
+  mappedAccounts: Record<string, string>;
+};
+
+function getMonthKey(year: number, monthIndex: number): string {
+  return `${year}-${String(monthIndex + 1).padStart(2, "0")}`;
+}
+
 export default function GLUploadPage() {
   const [selectedStore, setSelectedStore] = useState("kent");
   const [selectedMonth, setSelectedMonth] = useState(2);
   const [selectedYear, setSelectedYear] = useState(2026);
-  const [uploadState, setUploadState] = useState<UploadState>("idle");
-  const [unmappedAccounts, setUnmappedAccounts] = useState<UnmappedAccount[]>([]);
-  const [mappedAccounts, setMappedAccounts] = useState<Record<string, string>>({});
+  const [dataByMonth, setDataByMonth] = useState<Record<string, MonthData>>({});
   const [showHelp, setShowHelp] = useState(false);
   const [expandedCategory, setExpandedCategory] = useState<string | null>(null);
+
+  const monthKey = getMonthKey(selectedYear, selectedMonth);
+  const monthData = dataByMonth[monthKey] ?? {
+    uploadState: "idle" as UploadState,
+    unmappedAccounts: [] as UnmappedAccount[],
+    mappedAccounts: {} as Record<string, string>,
+  };
+  const uploadState = monthData.uploadState;
+  const unmappedAccounts = monthData.unmappedAccounts;
+  const mappedAccounts = monthData.mappedAccounts;
 
   const totalExpenses =
     SEED_GL_RESULTS.food.amount +
@@ -75,22 +93,37 @@ export default function GLUploadPage() {
   const allMapped = unmappedAccounts.length === 0 || unmappedAccounts.every((acct) => !!mappedAccounts[acct.accountNumber]);
 
   function simulateUpload() {
-    setUploadState("uploading");
+    setDataByMonth((prev) => ({
+      ...prev,
+      [monthKey]: { ...monthData, uploadState: "uploading", unmappedAccounts: [], mappedAccounts: {} },
+    }));
     setTimeout(() => {
-      setUnmappedAccounts([
-        { accountNumber: "6150", description: "Employee Benefits", amount: 840, suggestedCategory: "Labor" },
-        { accountNumber: "7450", description: "POS System Fee", amount: 189, suggestedCategory: "Operating Expenses" },
-      ]);
-      setUploadState("mapping");
+      setDataByMonth((prev) => ({
+        ...prev,
+        [monthKey]: {
+          uploadState: "mapping",
+          unmappedAccounts: [
+            { accountNumber: "6150", description: "Employee Benefits", amount: 840, suggestedCategory: "Labor" },
+            { accountNumber: "7450", description: "POS System Fee", amount: 189, suggestedCategory: "Operating Expenses" },
+          ],
+          mappedAccounts: {},
+        },
+      }));
     }, 2500);
   }
 
   function mapAccount(accountNumber: string, category: string) {
-    setMappedAccounts((prev) => ({ ...prev, [accountNumber]: category }));
+    setDataByMonth((prev) => ({
+      ...prev,
+      [monthKey]: { ...monthData, mappedAccounts: { ...monthData.mappedAccounts, [accountNumber]: category } },
+    }));
   }
 
   function finishMapping() {
-    setUploadState("complete");
+    setDataByMonth((prev) => ({
+      ...prev,
+      [monthKey]: { ...monthData, uploadState: "complete" },
+    }));
   }
 
   function toggleCategory(key: string) {

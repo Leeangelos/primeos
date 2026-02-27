@@ -272,29 +272,35 @@ export default function TasksPage() {
                 className={cn("rounded-lg border p-3 flex items-center gap-3", isCompleted ? "border-emerald-500/30 bg-emerald-500/5" : "border-border/50 bg-black/20")}
               >
                 {completingTaskId === task.id ? (
-                  <div className="mt-2 p-3 rounded-xl bg-slate-700/50 border border-slate-600 relative z-20 pb-4 min-w-0 flex-1 sm:flex-initial">
-                    <select
-                      value={completingSelectedName}
-                      onChange={(e) => setCompletingSelectedName(e.target.value)}
-                      className="w-full bg-slate-700 border border-slate-600 rounded-lg text-xs text-white h-8 px-2"
-                      autoFocus
-                    >
-                      <option value="">Who completed this?</option>
-                      {employees.map((emp) => (
-                        <option key={emp.id} value={emp.name}>{emp.name} ({ROLES[emp.role] ?? emp.role})</option>
-                      ))}
-                    </select>
-                    <div className="flex gap-2 mt-2">
-                      <button type="button" onClick={() => { setCompletingTaskId(null); setCompletingSelectedName(""); }} className="flex-1 py-2 rounded-lg bg-slate-600 text-slate-300 text-xs">Cancel</button>
-                      <button
-                        type="button"
-                        onClick={() => completingSelectedName.trim() && handleComplete(task.id, completingSelectedName)}
-                        disabled={!completingSelectedName.trim()}
-                        className="flex-1 py-2 rounded-lg bg-emerald-600 text-white text-xs disabled:opacity-50"
+                  <div className="mt-2 p-3 rounded-xl bg-slate-700/50 border border-slate-600 relative z-20 min-w-0 flex-1 sm:flex-initial flex flex-col gap-3 pb-28">
+                    <div className="mb-1">
+                      <select
+                        value={completingSelectedName}
+                        onChange={(e) => setCompletingSelectedName(e.target.value)}
+                        className="w-full bg-slate-700 border border-slate-600 rounded-lg text-xs text-white h-10 px-2 min-h-[44px]"
+                        autoFocus
                       >
-                        Confirm
-                      </button>
+                        <option value="">Who completed this?</option>
+                        {employees.map((emp) => (
+                          <option key={emp.id} value={emp.name}>{emp.name} ({ROLES[emp.role] ?? emp.role})</option>
+                        ))}
+                      </select>
                     </div>
+                    <button
+                      type="button"
+                      onClick={() => completingSelectedName.trim() && handleComplete(task.id, completingSelectedName)}
+                      disabled={!completingSelectedName.trim()}
+                      className="w-full py-2.5 rounded-lg bg-emerald-600 text-white text-xs font-medium disabled:opacity-50 min-h-[44px]"
+                    >
+                      Confirm
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => { setCompletingTaskId(null); setCompletingSelectedName(""); }}
+                      className="w-full py-2.5 rounded-lg bg-slate-600 text-slate-300 text-xs font-medium min-h-[44px]"
+                    >
+                      Cancel
+                    </button>
                   </div>
                 ) : (
                   <button

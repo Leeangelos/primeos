@@ -10,34 +10,34 @@ import { COCKPIT_STORE_SLUGS, COCKPIT_TARGETS, type CockpitStoreSlug } from "@/l
 import { getStoreColor } from "@/lib/store-colors";
 import { cn } from "@/lib/utils";
 
-function getMessageColor(senderName: string) {
-  switch (senderName.toLowerCase()) {
-    case "angelo": return "bg-blue-600/20 border-blue-700/30";
-    case "greg": return "bg-emerald-600/20 border-emerald-700/30";
-    case "rosario": return "bg-amber-600/20 border-amber-700/30";
-    case "leeann": return "bg-purple-600/20 border-purple-700/30";
-    default: return "bg-slate-700/50 border-slate-600";
+/** Map email or name to display name and colors. Primary auth / angelo → Angelo blue; leeann → LeeAnn purple; greg → Greg green; rosario → Rosario amber; else first part of email or name, zinc. */
+const SENDER_DISPLAY: Array<{ match: (s: string) => boolean; name: string; bg: string; avatar: string; text: string }> = [
+  { match: (s) => /angelo/i.test(s), name: "Angelo", bg: "bg-blue-500/20 border-blue-700/30", avatar: "bg-blue-600", text: "text-blue-400" },
+  { match: (s) => /leeann/i.test(s), name: "LeeAnn", bg: "bg-purple-500/20 border-purple-700/30", avatar: "bg-purple-600", text: "text-purple-400" },
+  { match: (s) => /greg/i.test(s), name: "Greg", bg: "bg-green-500/20 border-green-700/30", avatar: "bg-green-600", text: "text-green-400" },
+  { match: (s) => /rosario/i.test(s), name: "Rosario", bg: "bg-amber-500/20 border-amber-700/30", avatar: "bg-amber-600", text: "text-amber-400" },
+];
+
+function getSenderDisplay(sender: string): { name: string; bg: string; avatar: string; text: string } {
+  const lower = sender.toLowerCase().trim();
+  for (const row of SENDER_DISPLAY) {
+    if (row.match(lower)) return { name: row.name, bg: row.bg, avatar: row.avatar, text: row.text };
   }
+  const name = lower.includes("@") ? (sender.split("@")[0] || "User") : sender;
+  const cap = name.charAt(0).toUpperCase() + name.slice(1);
+  return { name: cap, bg: "bg-slate-700/50 border-slate-600", avatar: "bg-slate-600", text: "text-slate-400" };
+}
+
+function getMessageColor(senderName: string) {
+  return getSenderDisplay(senderName).bg;
 }
 
 function getAvatarColor(senderName: string) {
-  switch (senderName.toLowerCase()) {
-    case "angelo": return "bg-blue-600";
-    case "greg": return "bg-emerald-600";
-    case "rosario": return "bg-amber-600";
-    case "leeann": return "bg-purple-600";
-    default: return "bg-slate-600";
-  }
+  return getSenderDisplay(senderName).avatar;
 }
 
 function getTextColor(senderName: string) {
-  switch (senderName.toLowerCase()) {
-    case "angelo": return "text-blue-400";
-    case "greg": return "text-emerald-400";
-    case "rosario": return "text-amber-400";
-    case "leeann": return "text-purple-400";
-    default: return "text-slate-400";
-  }
+  return getSenderDisplay(senderName).text;
 }
 
 const CHANNELS = [
@@ -85,14 +85,8 @@ export default function ChatPage() {
     const supabase = createClient();
     supabase.auth.getUser().then(({ data: { user } }) => {
       if (user) {
-        const userMap: Record<string, { name: string; color: string }> = {
-          "leeangelos.corp@gmail.com": { name: "Angelo", color: "blue" },
-          "greg@leeangelos.com": { name: "Greg", color: "green" },
-          "rosario@leeangelos.com": { name: "Rosario", color: "amber" },
-          "leeann@leeangelos.com": { name: "LeeAnn", color: "purple" },
-        };
-        const mapped = userMap[user.email || ""] || { name: user.email?.split("@")[0] || "User", color: "slate" };
-        setCurrentUser({ email: user.email || "", name: mapped.name });
+        const display = getSenderDisplay(user.email || "");
+        setCurrentUser({ email: user.email || "", name: display.name });
       }
     });
   }, []);
@@ -307,18 +301,19 @@ export default function ChatPage() {
 
 function MessageBlock({ m, isAnnouncements }: { m: Message; isAnnouncements: boolean }) {
   const roleStyle = ROLE_STYLE[m.sender_role ?? ""] ?? ROLE_STYLE.team;
-  const messageColor = isAnnouncements || m.is_announcement ? "border-amber-500/40 bg-amber-500/5" : getMessageColor(m.sender_name);
-  const avatarColor = getAvatarColor(m.sender_name);
-  const textColor = getTextColor(m.sender_name);
+  const senderDisplay = getSenderDisplay(m.sender_name);
+  const messageColor = isAnnouncements || m.is_announcement ? "border-amber-500/40 bg-amber-500/5" : senderDisplay.bg;
+  const avatarColor = senderDisplay.avatar;
+  const textColor = senderDisplay.text;
   const time = new Date(m.created_at).toLocaleTimeString("en-US", { hour: "numeric", minute: "2-digit" });
 
   return (
     <div className={cn("rounded-lg border p-3", messageColor)}>
       <div className="flex items-center gap-2 flex-wrap mb-1">
         <span className={cn("h-6 w-6 rounded-full flex items-center justify-center text-xs font-bold text-white shrink-0", avatarColor)}>
-          {m.sender_name.slice(0, 1)}
+          {senderDisplay.name.slice(0, 1)}
         </span>
-        <span className={cn("font-medium text-sm", textColor)}>{m.sender_name}</span>
+        <span className={cn("font-medium text-sm", textColor)}>{senderDisplay.name}</span>
         {m.sender_role && (
           <span className={cn("text-[10px] uppercase px-2 py-0.5 rounded border", roleStyle)}>{m.sender_role.replace("_", " ")}</span>
         )}

@@ -57,6 +57,7 @@ export default function VendorSettingsPage() {
 
   const [activePlatforms, setActivePlatforms] = useState(["doordash", "ubereats"]);
   const [leaseDetails, setLeaseDetails] = useState<Record<string, LeaseState>>(initialLeaseDetails);
+  const [lastSavedLeaseDetails, setLastSavedLeaseDetails] = useState<Record<string, LeaseState>>(initialLeaseDetails);
   const [saveToast, setSaveToast] = useState(false);
 
   useEffect(() => {
@@ -65,7 +66,9 @@ export default function VendorSettingsPage() {
     if (saved) {
       try {
         const parsed = JSON.parse(saved) as Record<string, LeaseState>;
-        setLeaseDetails((prev) => ({ ...initialLeaseDetails(), ...parsed }));
+        const next = { ...initialLeaseDetails(), ...parsed };
+        setLeaseDetails(next);
+        setLastSavedLeaseDetails(next);
       } catch {}
     }
   }, []);
@@ -194,12 +197,26 @@ export default function VendorSettingsPage() {
       },
     };
     setLeaseDetails(next);
+    setLastSavedLeaseDetails(next);
     if (typeof window !== "undefined") {
       localStorage.setItem("primeos-lease-details", JSON.stringify(next));
     }
     setSaveToast(true);
-    setTimeout(() => setSaveToast(false), 2500);
+    setTimeout(() => setSaveToast(false), 3000);
   };
+
+  const leaseDirty = useMemo(() => {
+    const cur = leaseDetails[selectedStore];
+    const saved = lastSavedLeaseDetails[selectedStore];
+    if (!cur || !saved) return !!cur;
+    return (
+      Number(cur.monthlyRent) !== Number(saved.monthlyRent) ||
+      Number(cur.sqft) !== Number(saved.sqft) ||
+      (cur.leaseRenewal ?? "") !== (saved.leaseRenewal ?? "") ||
+      (cur.ccProcessor ?? "") !== (saved.ccProcessor ?? "") ||
+      (cur.ccQuotedRate ?? "") !== (saved.ccQuotedRate ?? "")
+    );
+  }, [leaseDetails, lastSavedLeaseDetails, selectedStore]);
 
   const monthlyRent = typeof currentLease.monthlyRent === "number" ? currentLease.monthlyRent : Number(currentLease.monthlyRent) || 0;
   const sqft = typeof currentLease.sqft === "number" ? currentLease.sqft : Number(currentLease.sqft) || 0;
@@ -207,10 +224,7 @@ export default function VendorSettingsPage() {
   return (
     <div className="space-y-4 pb-28 min-w-0 overflow-x-hidden">
       {saveToast && (
-        <div
-          className="fixed left-1/2 z-50 -translate-x-1/2 bg-emerald-600/20 border border-emerald-700/30 rounded-xl px-4 py-2.5 shadow-lg shadow-black/30"
-          style={{ top: "calc(4rem + env(safe-area-inset-top, 0px))" }}
-        >
+        <div className="fixed bottom-20 left-4 right-4 z-50 bg-emerald-600/20 border border-emerald-700/30 rounded-xl px-4 py-2.5 shadow-lg text-center">
           <p className="text-xs text-emerald-400 font-medium">Lease details saved</p>
         </div>
       )}
@@ -339,11 +353,20 @@ export default function VendorSettingsPage() {
               <label className="text-xs text-slate-500 mb-1 block">Monthly Rent ($)</label>
               <input
                 type="number"
-                value={currentLease.monthlyRent}
+                value={currentLease.monthlyRent === 0 ? "" : currentLease.monthlyRent}
+                onFocus={(e) => e.target.select?.()}
+                onBlur={(e) => {
+                  if (e.target.value === "" || e.target.value === undefined) {
+                    setLeaseDetails((prev) => ({
+                      ...prev,
+                      [selectedStore]: { ...(prev[selectedStore] ?? currentLease), monthlyRent: 0 },
+                    }));
+                  }
+                }}
                 onChange={(e) =>
                   setLeaseDetails((prev) => ({
                     ...prev,
-                    [selectedStore]: { ...(prev[selectedStore] ?? currentLease), monthlyRent: Number(e.target.value) || 0 },
+                    [selectedStore]: { ...(prev[selectedStore] ?? currentLease), monthlyRent: e.target.value === "" ? 0 : Number(e.target.value) || 0 },
                   }))
                 }
                 className="w-full bg-slate-700 border border-slate-600 rounded-xl text-sm text-white h-11 px-3"
@@ -353,11 +376,20 @@ export default function VendorSettingsPage() {
               <label className="text-xs text-slate-500 mb-1 block">Square Footage</label>
               <input
                 type="number"
-                value={currentLease.sqft}
+                value={currentLease.sqft === 0 ? "" : currentLease.sqft}
+                onFocus={(e) => e.target.select?.()}
+                onBlur={(e) => {
+                  if (e.target.value === "" || e.target.value === undefined) {
+                    setLeaseDetails((prev) => ({
+                      ...prev,
+                      [selectedStore]: { ...(prev[selectedStore] ?? currentLease), sqft: 0 },
+                    }));
+                  }
+                }}
                 onChange={(e) =>
                   setLeaseDetails((prev) => ({
                     ...prev,
-                    [selectedStore]: { ...(prev[selectedStore] ?? currentLease), sqft: Number(e.target.value) || 0 },
+                    [selectedStore]: { ...(prev[selectedStore] ?? currentLease), sqft: e.target.value === "" ? 0 : Number(e.target.value) || 0 },
                   }))
                 }
                 className="w-full bg-slate-700 border border-slate-600 rounded-xl text-sm text-white h-11 px-3"
@@ -412,7 +444,12 @@ export default function VendorSettingsPage() {
             <button
               type="button"
               onClick={handleSaveLease}
-              className="w-full py-3 rounded-xl bg-[#E65100] hover:bg-orange-600 text-white text-sm font-semibold mt-2 transition-colors"
+              disabled={!leaseDirty}
+              className={`w-full py-3 rounded-xl text-sm font-semibold mt-2 transition-colors ${
+                leaseDirty
+                  ? "bg-[#E65100] hover:bg-orange-600 text-white"
+                  : "bg-zinc-600 text-zinc-400 opacity-50 cursor-not-allowed"
+              }`}
             >
               Save Changes
             </button>

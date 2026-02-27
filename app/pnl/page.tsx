@@ -1,6 +1,7 @@
 "use client";
 
 import { useMemo, useState, useRef } from "react";
+import { Share2 } from "lucide-react";
 import {
   COCKPIT_STORE_SLUGS,
   COCKPIT_TARGETS,
@@ -9,7 +10,6 @@ import {
 import { getStoreColor } from "@/lib/store-colors";
 import { EducationInfoIcon } from "@/src/components/education/InfoIcon";
 import { ExportButton } from "@/src/components/ui/ExportButton";
-import { ShareButton } from "@/src/components/ui/ShareButton";
 import { formatPct as formatPctShared, formatDollars as formatDollarsBase } from "@/src/lib/formatters";
 import { SEED_DAILY_KPIS } from "@/src/lib/seed-data";
 
@@ -75,6 +75,8 @@ function pctToGrade(pct: number, targetMax: number): "green" | "yellow" | "red" 
 
 export default function PnlPage() {
   const [storeFilter, setStoreFilter] = useState<"all" | CockpitStoreSlug>("kent");
+  const [shareToast, setShareToast] = useState(false);
+  const [shareGenerating, setShareGenerating] = useState(false);
   const shareRef = useRef<HTMLDivElement>(null);
 
   const { startDate, endDate, label: mtdLabel } = useMemo(() => getMTDRange(), []);
@@ -112,8 +114,47 @@ export default function PnlPage() {
     };
   }, [storeForSeed, startDate, endDate]);
 
+  async function handleShare() {
+    setShareGenerating(true);
+    const textBody = [
+      `Revenue: ${formatDollars(pnl.totalSales)}`,
+      `COGS: ${formatDollars(pnl.totalCOGS)} (${formatPct(pnl.cogsPct)})`,
+      `Gross Profit: ${formatDollars(pnl.grossProfit)} (${formatPct(pnl.gpPct)})`,
+      `Labor: ${formatDollars(pnl.totalLabor)} (${formatPct(pnl.laborPct)})`,
+    ].join("\n");
+    const shareText = `PrimeOS — GP P&L\n${storeName}\n${mtdLabel}\n\n${textBody}\n\nPowered by PrimeOS — getprimeos.com`;
+    try {
+      if (navigator.share) {
+        await navigator.share({
+          title: "PrimeOS — GP P&L",
+          text: shareText,
+        });
+        setShareGenerating(false);
+        return;
+      }
+    } catch (e) {
+      if ((e as Error)?.name === "AbortError") {
+        setShareGenerating(false);
+        return;
+      }
+    }
+    try {
+      await navigator.clipboard.writeText(shareText);
+      setShareToast(true);
+      setTimeout(() => setShareToast(false), 3000);
+    } catch {
+      // clipboard failed
+    }
+    setShareGenerating(false);
+  }
+
   return (
     <div className="space-y-6 min-w-0 overflow-x-hidden pb-28">
+      {shareToast && (
+        <div className="fixed bottom-20 left-4 right-4 z-50 bg-emerald-600/20 border border-emerald-700/30 rounded-xl px-4 py-2.5 shadow-lg text-center">
+          <p className="text-xs text-emerald-400 font-medium">Copied to clipboard</p>
+        </div>
+      )}
       <div className={`dashboard-toolbar p-3 sm:p-5 space-y-3 ${getStoreColor(storeFilter === "all" ? "kent" : storeFilter).glow}`}>
         <div className="flex items-center justify-between gap-2 flex-wrap">
           <h1 className="text-lg font-semibold sm:text-2xl">GP P&L — Gross Profit</h1>
@@ -136,7 +177,15 @@ export default function PnlPage() {
             ]],
           })}
         />
-          <ShareButton targetRef={shareRef} title="GP P&L" fileName="primeos-gp-pnl" />
+          <button
+            type="button"
+            onClick={handleShare}
+            disabled={shareGenerating}
+            className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-slate-800 border border-slate-700 text-xs text-slate-400 hover:text-slate-300 transition-colors disabled:opacity-50"
+          >
+            <Share2 className={`w-3.5 h-3.5 ${shareGenerating ? "animate-spin" : ""}`} />
+            <span>{shareGenerating ? "Generating..." : "Share"}</span>
+          </button>
         </div>
         <p className="text-xs text-muted">Month-to-date rolling view. What you control daily.</p>
         <div className="flex flex-wrap gap-2">

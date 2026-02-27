@@ -537,7 +537,7 @@ export default function BillingPage() {
               onClick={() => handleReset(["primeos-notification-prompt-dismissed"], "Notifications")}
               className="px-3 py-2 rounded-lg text-xs font-medium bg-slate-700 text-slate-400 active:bg-slate-600 touch-manipulation min-h-[44px]"
             >
-              Reset Notifications
+              Reset Notification Badge
             </button>
             <button
               type="button"

@@ -107,8 +107,8 @@ function MerchContent() {
   return (
     <div className="space-y-5 pb-28">
       {checkoutToast && (
-        <div className="fixed top-16 left-1/2 -translate-x-1/2 z-50 bg-slate-800 border border-slate-700 rounded-xl px-4 py-2.5 shadow-lg shadow-black/30">
-          <p className="text-xs text-slate-300">Checkout not available in this demo.</p>
+        <div className="fixed bottom-20 left-4 right-4 z-50 bg-slate-800 border border-slate-700 rounded-xl px-4 py-2.5 shadow-lg text-center">
+          <p className="text-xs text-slate-300">Demo Mode — Checkout coming soon in the full release.</p>
         </div>
       )}
       <div className="dashboard-toolbar p-3 sm:p-5 space-y-3">
@@ -152,19 +152,19 @@ function MerchContent() {
         <div className="rounded-lg border border-amber-500/50 bg-amber-500/10 p-5 text-center text-sm text-amber-400">Checkout canceled. Your cart is still here.</div>
       )}
 
-      {/* Fixed floating cart bubble — stays visible above content, below modals */}
+      {/* Fixed floating cart bubble — stays visible while scrolling, above nav */}
       {cartCount > 0 && (
         <button
           type="button"
           onClick={() => setShowCart(true)}
-          className="fixed z-30 rounded-full bg-[#E65100] hover:bg-orange-600 shadow-lg shadow-black/30 px-4 py-3 flex items-center gap-2 transition-colors"
-          style={{
-            bottom: "calc(5rem + env(safe-area-inset-bottom, 0px))",
-            right: "1rem",
-          }}
+          className="fixed right-4 z-50 w-14 h-14 rounded-full bg-[#E65100] hover:bg-orange-600 shadow-lg flex items-center justify-center text-white transition-colors"
+          style={{ bottom: "calc(5rem + env(safe-area-inset-bottom, 0px))" }}
+          aria-label={`Cart (${cartCount} items)`}
         >
-          <ShoppingCart className="w-5 h-5 text-white" />
-          <span className="text-white text-sm font-semibold">Cart ({cartCount})</span>
+          <ShoppingCart className="w-6 h-6" />
+          <span className="absolute -top-1 -right-1 min-w-[18px] h-[18px] rounded-full bg-white text-[#E65100] text-xs font-bold flex items-center justify-center">
+            {cartCount}
+          </span>
         </button>
       )}
 

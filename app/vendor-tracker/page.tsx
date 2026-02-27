@@ -30,6 +30,13 @@ const STORE_REVENUE: Record<string, number> = { kent: 44000, aurora: 52000, lind
 const MONTH_NAMES = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
 const STORE_NAMES: Record<string, string> = { kent: "LeeAngelo's Kent", aurora: "LeeAngelo's Aurora", lindseys: "Lindsey's" };
 
+/** CC processing per store: quoted rate and actual volume/fees for actual rate calculation. Actual rate = (monthly_fees / monthly_volume) * 100 */
+const CC_PROCESSING_BY_STORE: Record<string, { processorName: string; quotedRatePct: number; monthlyVolume: number; monthlyFees: number }> = {
+  kent: { processorName: "Square", quotedRatePct: 2.6, monthlyVolume: 85000, monthlyFees: 2380 },
+  aurora: { processorName: "Square", quotedRatePct: 2.6, monthlyVolume: 102000, monthlyFees: 2856 },
+  lindseys: { processorName: "Square", quotedRatePct: 2.5, monthlyVolume: 52000, monthlyFees: 1456 },
+};
+
 const STORE_OPTIONS = SEED_STORES.map((s) => ({ value: s.slug, label: s.name }));
 
 // 12 months Mar 2025 – Feb 2026 for annual view
@@ -192,7 +199,7 @@ export default function VendorTrackerPage() {
     setShowAddEntry(false);
 
     setSaveToast(true);
-    setTimeout(() => setSaveToast(false), 2500);
+    setTimeout(() => setSaveToast(false), 3000);
   }
 
   const details = STORE_DETAILS[selectedStore];
@@ -208,8 +215,8 @@ export default function VendorTrackerPage() {
   return (
     <div className="space-y-4 pb-28 min-w-0 overflow-x-hidden">
       {saveToast && (
-        <div className="fixed top-16 left-1/2 -translate-x-1/2 z-50 bg-emerald-600/20 border border-emerald-700/50 rounded-xl px-4 py-2.5 shadow-lg shadow-black/30 animate-slide-up">
-          <p className="text-xs text-emerald-300">Vendor entry saved</p>
+        <div className="fixed bottom-20 left-4 right-4 z-50 bg-emerald-600/20 border border-emerald-700/50 rounded-xl px-4 py-2.5 shadow-lg text-center">
+          <p className="text-xs text-emerald-300 font-medium">Vendor entry saved</p>
         </div>
       )}
 
@@ -696,33 +703,49 @@ export default function VendorTrackerPage() {
             </div>
           </div>
 
-          <div className="bg-slate-700/50 rounded-lg p-3 mb-3">
-            <div className="flex justify-between text-xs mb-1">
-              <span className="text-slate-400">Quoted Rate</span>
-              <span className="text-white">2.60%</span>
-            </div>
-            <div className="flex justify-between text-xs mb-1">
-              <span className="text-slate-400">Effective Rate</span>
-              <span className={effectiveRate > 3.0 ? "text-red-400" : "text-amber-400"}>
-                {effectiveRate.toFixed(2)}%
-              </span>
-            </div>
-            <div className="flex justify-between text-xs">
-              <span className="text-slate-400">Hidden Fee Gap</span>
-              <span className="text-red-400">
-                {(effectiveRate - 2.6).toFixed(2)}% = ~
-                {formatDollars(Math.round(((effectiveRate - 2.6) / 100) * estCardSales))}/mo
-              </span>
-            </div>
-          </div>
+          {(() => {
+            const cc = CC_PROCESSING_BY_STORE[selectedStore];
+            const quotedPct = cc?.quotedRatePct ?? 2.6;
+            const actualPct = cc ? (cc.monthlyVolume > 0 ? (cc.monthlyFees / cc.monthlyVolume) * 100 : 0) : effectiveRate;
+            const actualAboveQuoted = actualPct > quotedPct;
+            return (
+              <div className="bg-slate-700/50 rounded-lg p-3 mb-3">
+                <div className="flex justify-between text-xs mb-1">
+                  <span className="text-slate-400">Quoted Rate</span>
+                  <span className="text-white">{quotedPct.toFixed(2)}%</span>
+                </div>
+                <div className="flex justify-between text-xs mb-1">
+                  <span className="text-slate-400">Actual Rate</span>
+                  <span className={actualAboveQuoted ? (actualPct > quotedPct + 0.5 ? "text-red-400" : "text-amber-400") : "text-emerald-400"}>
+                    {actualPct.toFixed(2)}%
+                  </span>
+                </div>
+                <div className="flex justify-between text-xs">
+                  <span className="text-slate-400">Hidden Fee Gap</span>
+                  <span className={actualAboveQuoted ? "text-red-400" : "text-slate-400"}>
+                    {actualAboveQuoted ? `${(actualPct - quotedPct).toFixed(2)}% = ~${formatDollars(Math.round(((actualPct - quotedPct) / 100) * (cc?.monthlyVolume ?? estCardSales)))}/mo` : "—"}
+                  </span>
+                </div>
+              </div>
+            );
+          })()}
 
-          <div className="bg-red-600/10 rounded-lg border border-red-700/30 p-3">
-            <p className="text-xs text-red-400">
-              At your current effective rate of {effectiveRate.toFixed(2)}%, you&apos;re paying ~
-              {formatDollars(Math.round(((effectiveRate - 2.6) / 100) * estCardSales * 12))}/year more than your
-              quoted rate. Getting 2-3 competing quotes could save $2,000-5,000 annually.
-            </p>
-          </div>
+          {(() => {
+            const cc = CC_PROCESSING_BY_STORE[selectedStore];
+            const quotedPct = cc?.quotedRatePct ?? 2.6;
+            const actualPct = cc ? (cc.monthlyVolume > 0 ? (cc.monthlyFees / cc.monthlyVolume) * 100 : 0) : effectiveRate;
+            const gap = actualPct - quotedPct;
+            if (gap <= 0) return null;
+            return (
+              <div className="bg-red-600/10 rounded-lg border border-red-700/30 p-3">
+                <p className="text-xs text-red-400">
+                  At your current effective rate of {actualPct.toFixed(2)}%, you&apos;re paying ~
+                  {formatDollars(Math.round((gap / 100) * (cc?.monthlyVolume ?? estCardSales) * 12))}/year more than your
+                  quoted rate. Getting 2-3 competing quotes could save $2,000-5,000 annually.
+                </p>
+              </div>
+            );
+          })()}
 
           {last6Months.length > 0 && (
             <div className="mt-3">
@@ -831,14 +854,11 @@ export default function VendorTrackerPage() {
       <button
         type="button"
         onClick={() => setShowAddEntry(true)}
-        className="fixed z-30 w-14 h-14 rounded-full bg-[#E65100] hover:bg-orange-600 shadow-lg shadow-black/30 flex items-center justify-center transition-colors"
-        style={{
-          bottom: "calc(5rem + env(safe-area-inset-bottom, 0px))",
-          right: "1rem",
-        }}
+        className="fixed right-4 z-50 w-14 h-14 rounded-full bg-[#E65100] hover:bg-orange-600 shadow-lg flex items-center justify-center transition-colors text-white"
+        style={{ bottom: "calc(5rem + env(safe-area-inset-bottom, 0px))" }}
         aria-label="Quick vendor entry"
       >
-        <Plus className="w-6 h-6 text-white" />
+        <Plus className="w-6 h-6" />
       </button>
 
       <DataDisclaimer confidence="high" details="12 months of vendor cost data loaded. Trends require 2+ months." />
