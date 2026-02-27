@@ -9,7 +9,7 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ ok: false, error: "Invalid JSON body" }, { status: 400 });
   }
 
-  const { vendor_name, invoice_date, total, notes } = body ?? {};
+  const { vendor_name, invoice_date, total } = body ?? {};
 
   if (!vendor_name || !invoice_date || typeof total !== "number" || Number.isNaN(total)) {
     return NextResponse.json(
@@ -24,9 +24,8 @@ export async function POST(req: NextRequest) {
     vendor_name,
     invoice_date,
     total,
-    notes: notes || null,
+    line_items: [],
     status: "pending",
-    source: "manual",
   };
 
   const { error } = await supabase.from("invoices").insert(payload);

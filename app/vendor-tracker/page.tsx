@@ -78,7 +78,6 @@ export default function VendorTrackerPage() {
   const [quickVendorName, setQuickVendorName] = useState("");
   const [quickInvoiceDate, setQuickInvoiceDate] = useState(() => new Date().toISOString().split("T")[0]);
   const [quickTotal, setQuickTotal] = useState("");
-  const [quickNotes, setQuickNotes] = useState("");
   const [quickSaving, setQuickSaving] = useState(false);
   const [quickToast, setQuickToast] = useState<"idle" | "saved" | "error">("idle");
   const [quickErrorDetail, setQuickErrorDetail] = useState<string | null>(null);
@@ -343,7 +342,7 @@ export default function VendorTrackerPage() {
         <>
           <div className="fixed inset-0 bg-black/60 z-40" onClick={() => setShowQuickInvoice(false)} />
           <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
-            <div className="bg-zinc-900 border border-zinc-700 rounded-2xl p-6 w-full max-w-md space-y-4">
+            <div className="bg-zinc-900 border border-zinc-700 rounded-2xl p-6 w-full max-w-md space-y-4 overflow-hidden">
               <h3 className="text-lg font-bold text-white">Log Invoice</h3>
               <div>
                 <label className="text-sm text-zinc-400">Vendor Name</label>
@@ -352,7 +351,7 @@ export default function VendorTrackerPage() {
                   value={quickVendorName}
                   onChange={(e) => setQuickVendorName(e.target.value)}
                   placeholder="Vendor name"
-                  className="w-full mt-1 bg-zinc-800 border border-zinc-700 rounded-lg px-4 py-3 text-white text-sm focus:outline-none focus:ring-2 focus:ring-[#E65100]/50"
+                  className="w-full max-w-full box-border mt-1 bg-zinc-800 border border-zinc-700 rounded-lg px-4 py-3 text-white text-sm focus:outline-none focus:ring-2 focus:ring-[#E65100]/50"
                 />
               </div>
               <div>
@@ -361,7 +360,7 @@ export default function VendorTrackerPage() {
                   type="date"
                   value={quickInvoiceDate}
                   onChange={(e) => setQuickInvoiceDate(e.target.value)}
-                  className="w-full mt-1 bg-zinc-800 border border-zinc-700 rounded-lg px-4 py-3 text-white text-sm focus:outline-none focus:ring-2 focus:ring-[#E65100]/50"
+                  className="appearance-none w-full max-w-full box-border mt-1 bg-zinc-800 border border-zinc-700 rounded-lg px-4 py-3 text-white text-sm focus:outline-none focus:ring-2 focus:ring-[#E65100]/50"
                 />
               </div>
               <div>
@@ -372,17 +371,7 @@ export default function VendorTrackerPage() {
                   value={quickTotal}
                   onChange={(e) => setQuickTotal(e.target.value)}
                   placeholder="0.00"
-                  className="w-full mt-1 bg-zinc-800 border border-zinc-700 rounded-lg px-4 py-3 text-white text-sm focus:outline-none focus:ring-2 focus:ring-[#E65100]/50"
-                />
-              </div>
-              <div>
-                <label className="text-sm text-zinc-400">Notes (optional)</label>
-                <input
-                  type="text"
-                  value={quickNotes}
-                  onChange={(e) => setQuickNotes(e.target.value)}
-                  placeholder="Optional notes"
-                  className="w-full mt-1 bg-zinc-800 border border-zinc-700 rounded-lg px-4 py-3 text-white text-sm focus:outline-none focus:ring-2 focus:ring-[#E65100]/50"
+                  className="w-full max-w-full box-border mt-1 bg-zinc-800 border border-zinc-700 rounded-lg px-4 py-3 text-white text-sm focus:outline-none focus:ring-2 focus:ring-[#E65100]/50"
                 />
               </div>
               <div className="flex gap-3 pt-2">
@@ -418,7 +407,6 @@ export default function VendorTrackerPage() {
                       vendor_name: quickVendorName.trim(),
                       invoice_date: quickInvoiceDate,
                       total: Number(quickTotal),
-                      notes: quickNotes.trim() || null,
                     };
                     console.log("quick-invoice request payload", payload);
                     const res = await fetch("/api/quick-invoice", {
@@ -447,7 +435,6 @@ export default function VendorTrackerPage() {
                         setShowQuickInvoice(false);
                         setQuickVendorName("");
                         setQuickTotal("");
-                        setQuickNotes("");
                       setQuickErrorDetail(null);
                       }
                     } catch (e) {
