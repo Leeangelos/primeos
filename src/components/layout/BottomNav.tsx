@@ -122,6 +122,7 @@ export function BottomNav() {
   const isLight = theme === "light";
   const [moreOpen, setMoreOpen] = useState(false);
   const dragStartYRef = useRef<number | null>(null);
+  const bodyScrollYRef = useRef(0);
   const [upgradeModal, setUpgradeModal] = useState<{ requiredTier: string; pageName: string } | null>(null);
 
   const closeMore = useCallback(() => setMoreOpen(false), []);
@@ -141,19 +142,59 @@ export function BottomNav() {
     if (!moreOpen) return;
     const onEscape = (e: KeyboardEvent) => e.key === "Escape" && closeMore();
     document.addEventListener("keydown", onEscape);
+
+    // Lock background scrolling while drawer is open (mobile Safari-safe).
+    const prevBodyOverflow = document.body.style.overflow;
+    const prevBodyPosition = document.body.style.position;
+    const prevBodyTop = document.body.style.top;
+    const prevBodyLeft = document.body.style.left;
+    const prevBodyRight = document.body.style.right;
+    const prevBodyWidth = document.body.style.width;
+    const prevHtmlOverflow = document.documentElement.style.overflow;
+
+    bodyScrollYRef.current = typeof window !== "undefined" ? window.scrollY : 0;
     document.body.style.overflow = "hidden";
+    document.documentElement.style.overflow = "hidden";
+    document.body.style.position = "fixed";
+    document.body.style.top = `-${bodyScrollYRef.current}px`;
+    document.body.style.left = "0";
+    document.body.style.right = "0";
+    document.body.style.width = "100%";
+
     return () => {
       document.removeEventListener("keydown", onEscape);
-      document.body.style.overflow = "";
+      document.body.style.overflow = prevBodyOverflow;
+      document.body.style.position = prevBodyPosition;
+      document.body.style.top = prevBodyTop;
+      document.body.style.left = prevBodyLeft;
+      document.body.style.right = prevBodyRight;
+      document.body.style.width = prevBodyWidth;
+      document.documentElement.style.overflow = prevHtmlOverflow;
+      if (typeof window !== "undefined") {
+        window.scrollTo(0, bodyScrollYRef.current);
+      }
     };
   }, [moreOpen, closeMore]);
+
+  const activeMainHref = (() => {
+    for (const tab of MAIN_TABS) {
+      const href = tab.href;
+      const isActive =
+        href === "/"
+          ? pathname === "/"
+          : pathname === href || pathname.startsWith(href + "/");
+      if (isActive) return href;
+    }
+    return null;
+  })();
+  const moreHighlighted = moreOpen && activeMainHref == null;
 
   return (
     <>
       {/* 1. Backdrop — only when drawer open */}
       {moreOpen && (
         <div
-          className="fixed inset-0 z-40 bg-black/40"
+          className="fixed inset-0 z-50 bg-black/40"
           onClick={() => setMoreOpen(false)}
           aria-hidden
         />
@@ -162,44 +203,44 @@ export function BottomNav() {
       {/* 2. More drawer — slides up ABOVE the nav bar; z-[61] so above nav when open; fully hidden when closed */}
       <div
         className={cn(
-          "fixed left-0 right-0 z-[61] rounded-t-2xl transition-[transform,opacity] duration-300 ease-out border-t",
+          "fixed left-0 right-0 z-[61] rounded-t-2xl transition-[transform,opacity] duration-300 ease-out border-t overflow-hidden",
           isLight ? "bg-white border-zinc-200" : "bg-slate-900 border-slate-700",
           moreOpen ? "translate-y-0 opacity-100 visible" : "translate-y-full pointer-events-none opacity-0 invisible"
         )}
         style={{
           bottom: "calc(4rem + env(safe-area-inset-bottom, 0px))",
-          maxHeight: "80vh",
-          overflowY: "auto",
+          maxHeight: "calc(100vh - 4rem - env(safe-area-inset-bottom, 0px))",
           paddingTop: "env(safe-area-inset-top, 0px)",
           paddingLeft: "env(safe-area-inset-left, 0px)",
           paddingRight: "env(safe-area-inset-right, 0px)",
         }}
         aria-hidden={!moreOpen}
       >
-        {/* Drag handle: pull down to close */}
-        <div
-          className={cn(
-            "flex justify-center pt-3 pb-1 sticky top-0 z-10 border-b touch-none",
-            isLight ? "bg-white border-zinc-200" : "bg-slate-900 border-slate-800"
-          )}
-          onTouchStart={(e) => { dragStartYRef.current = e.touches[0].clientY; }}
-          onTouchMove={(e) => {
-            if (dragStartYRef.current !== null) {
-              const diff = e.touches[0].clientY - dragStartYRef.current;
-              if (diff > 50) {
-                setMoreOpen(false);
-                dragStartYRef.current = null;
+        <div className="overflow-y-auto" style={{ maxHeight: "calc(100vh - 4rem - env(safe-area-inset-bottom, 0px))" }}>
+          {/* Drag handle: pull down to close */}
+          <div
+            className={cn(
+              "flex justify-center pt-3 pb-1 sticky top-0 z-10 border-b touch-none",
+              isLight ? "bg-white border-zinc-200" : "bg-slate-900 border-slate-800"
+            )}
+            onTouchStart={(e) => { dragStartYRef.current = e.touches[0].clientY; }}
+            onTouchMove={(e) => {
+              if (dragStartYRef.current !== null) {
+                const diff = e.touches[0].clientY - dragStartYRef.current;
+                if (diff > 50) {
+                  setMoreOpen(false);
+                  dragStartYRef.current = null;
+                }
               }
-            }
-          }}
-          onTouchEnd={() => { dragStartYRef.current = null; }}
-        >
-          <div className={cn("w-10 h-1 rounded-full", isLight ? "bg-zinc-300" : "bg-slate-600")} />
-        </div>
-        <div className="px-4 pt-2 pb-4">
-          <h2 className={cn("text-lg font-bold mb-4", isLight ? "text-zinc-900" : "text-white")}>All Tools</h2>
-        </div>
-        <div className="px-4 py-2 space-y-6 pb-24" role="region" aria-label="All tools and links">
+            }}
+            onTouchEnd={() => { dragStartYRef.current = null; }}
+          >
+            <div className={cn("w-10 h-1 rounded-full", isLight ? "bg-zinc-300" : "bg-slate-600")} />
+          </div>
+          <div className="px-4 pt-2 pb-4">
+            <h2 className={cn("text-lg font-bold mb-4", isLight ? "text-zinc-900" : "text-white")}>All Tools</h2>
+          </div>
+          <div className="px-4 py-2 space-y-6 pb-24" role="region" aria-label="All tools and links">
           <Link
             href="/"
             onClick={() => setMoreOpen(false)}
@@ -311,6 +352,7 @@ export function BottomNav() {
             </button>
           </div>
         </div>
+        </div>
       </div>
 
       {/* 3. Nav bar — ALWAYS RENDERED, LAST IN DOM; z-[60] above common z-50 overlays */}
@@ -321,10 +363,7 @@ export function BottomNav() {
       >
         <div className="flex items-center justify-around h-16 px-2">
           {MAIN_TABS.map(({ href, label, Icon }) => {
-            const isActive =
-              href === "/"
-                ? pathname === "/"
-                : pathname === href || pathname.startsWith(href + "/");
+            const isActive = activeMainHref === href;
             return (
               <Link
                 key={href}
@@ -347,8 +386,8 @@ export function BottomNav() {
             aria-haspopup="dialog"
             aria-label="More pages"
           >
-            <Menu className={cn("w-5 h-5 shrink-0", moreOpen ? "text-[#E65100]" : "text-zinc-400")} aria-hidden />
-            <span className={cn("text-[10px] font-medium whitespace-nowrap leading-tight", moreOpen ? "text-[#E65100]" : "text-zinc-400")}>
+            <Menu className={cn("w-5 h-5 shrink-0", moreHighlighted ? "text-[#E65100]" : "text-zinc-400")} aria-hidden />
+            <span className={cn("text-[10px] font-medium whitespace-nowrap leading-tight", moreHighlighted ? "text-[#E65100]" : "text-zinc-400")}>
               More
             </span>
           </button>
