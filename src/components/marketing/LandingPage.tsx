@@ -15,7 +15,20 @@ const CTA_HREF =
 export function LandingPage() {
   return (
     <div className="min-h-screen bg-zinc-950 text-white scroll-smooth">
-      <main className="mx-auto max-w-4xl px-4 pb-16 pt-12 md:pt-16 md:pb-24 space-y-20 md:space-y-24">
+      <header className="border-b border-zinc-900/80">
+        <div className="mx-auto flex max-w-4xl items-center justify-between px-4 py-4">
+          <span className="text-sm font-semibold tracking-tight text-white">
+            PrimeOS
+          </span>
+          <Link
+            href="/login"
+            className="text-sm font-medium text-zinc-400 hover:text-white transition-colors"
+          >
+            Log In
+          </Link>
+        </div>
+      </header>
+      <main className="mx-auto max-w-4xl px-4 pb-16 pt-10 md:pt-14 md:pb-24 space-y-20 md:space-y-24">
         {/* SECTION 1 — HERO */}
         <section className="space-y-8">
           <div className="space-y-4 text-center md:text-left">
