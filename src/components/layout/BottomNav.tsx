@@ -176,25 +176,18 @@ export function BottomNav() {
     };
   }, [moreOpen, closeMore]);
 
-  const activeMainHref = (() => {
-    for (const tab of MAIN_TABS) {
-      const href = tab.href;
-      const isActive =
-        href === "/"
-          ? pathname === "/"
-          : pathname === href || pathname.startsWith(href + "/");
-      if (isActive) return href;
-    }
-    return null;
-  })();
-  const moreHighlighted = moreOpen && activeMainHref == null;
+  // Active tab source of truth: pathname only (derived every render).
+  const isHomeActive = pathname === "/";
+  const isDailyActive = pathname === "/daily" || pathname.startsWith("/daily/");
+  const isBriefActive = pathname === "/brief" || pathname.startsWith("/brief/");
+  const isGuideActive = pathname === "/training" || pathname.startsWith("/training/");
 
   return (
     <>
       {/* 1. Backdrop — only when drawer open */}
       {moreOpen && (
         <div
-          className="fixed inset-0 z-50 bg-black/40"
+          className="fixed inset-0 z-40 bg-black/50"
           onClick={() => setMoreOpen(false)}
           aria-hidden
         />
@@ -203,7 +196,7 @@ export function BottomNav() {
       {/* 2. More drawer — slides up ABOVE the nav bar; z-[61] so above nav when open; fully hidden when closed */}
       <div
         className={cn(
-          "fixed left-0 right-0 z-[61] rounded-t-2xl transition-[transform,opacity] duration-300 ease-out border-t overflow-hidden",
+          "fixed left-0 right-0 z-50 rounded-t-2xl transition-[transform,opacity] duration-300 ease-out border-t overflow-hidden",
           isLight ? "bg-white border-zinc-200" : "bg-slate-900 border-slate-700",
           moreOpen ? "translate-y-0 opacity-100 visible" : "translate-y-full pointer-events-none opacity-0 invisible"
         )}
@@ -216,13 +209,15 @@ export function BottomNav() {
         }}
         aria-hidden={!moreOpen}
       >
-        <div className="overflow-y-auto" style={{ maxHeight: "calc(100vh - 4rem - env(safe-area-inset-bottom, 0px))" }}>
-          {/* Drag handle: pull down to close */}
+        {/* Drag handle + title (anchored) */}
+        <div
+          className={cn(
+            "sticky top-0 z-10 border-b",
+            isLight ? "bg-white border-zinc-200" : "bg-slate-900 border-slate-800"
+          )}
+        >
           <div
-            className={cn(
-              "flex justify-center pt-3 pb-1 sticky top-0 z-10 border-b touch-none",
-              isLight ? "bg-white border-zinc-200" : "bg-slate-900 border-slate-800"
-            )}
+            className="flex justify-center pt-3 pb-1 touch-none"
             onTouchStart={(e) => { dragStartYRef.current = e.touches[0].clientY; }}
             onTouchMove={(e) => {
               if (dragStartYRef.current !== null) {
@@ -238,9 +233,18 @@ export function BottomNav() {
             <div className={cn("w-10 h-1 rounded-full", isLight ? "bg-zinc-300" : "bg-slate-600")} />
           </div>
           <div className="px-4 pt-2 pb-4">
-            <h2 className={cn("text-lg font-bold mb-4", isLight ? "text-zinc-900" : "text-white")}>All Tools</h2>
+            <h2 className={cn("text-lg font-bold", isLight ? "text-zinc-900" : "text-white")}>All Tools</h2>
           </div>
-          <div className="px-4 py-2 space-y-6 pb-24" role="region" aria-label="All tools and links">
+        </div>
+
+        {/* Drawer content (scrolls internally) */}
+        <div
+          className="overflow-y-auto"
+          style={{ maxHeight: "calc(100vh - 4rem - env(safe-area-inset-bottom, 0px) - env(safe-area-inset-top, 0px))" }}
+          role="region"
+          aria-label="All tools and links"
+        >
+          <div className="px-4 py-2 space-y-6 pb-24">
           <Link
             href="/"
             onClick={() => setMoreOpen(false)}
@@ -351,7 +355,7 @@ export function BottomNav() {
               <span className="text-sm font-medium">Log Out</span>
             </button>
           </div>
-        </div>
+          </div>
         </div>
       </div>
 
@@ -362,22 +366,38 @@ export function BottomNav() {
         aria-label="Bottom navigation"
       >
         <div className="flex items-center justify-around h-16 px-2">
-          {MAIN_TABS.map(({ href, label, Icon }) => {
-            const isActive = activeMainHref === href;
-            return (
-              <Link
-                key={href}
-                href={href}
-                className="flex flex-col items-center justify-center gap-0.5 min-w-[44px] min-h-[44px] flex-1 max-w-[80px] transition-colors"
-                aria-current={isActive ? "page" : undefined}
-              >
-                <Icon className={cn("w-5 h-5 shrink-0", isActive ? "text-[#E65100]" : "text-zinc-400")} aria-hidden />
-                <span className={cn("text-[10px] font-medium whitespace-nowrap leading-tight", isActive ? "text-[#E65100]" : "text-zinc-400")}>
-                  {label}
-                </span>
-              </Link>
-            );
-          })}
+          <Link
+            href="/"
+            className="flex flex-col items-center justify-center gap-0.5 min-w-[44px] min-h-[44px] flex-1 max-w-[80px] transition-colors"
+            aria-current={isHomeActive ? "page" : undefined}
+          >
+            <LayoutDashboard className={cn("w-5 h-5 shrink-0", isHomeActive ? "text-[#E65100]" : "text-zinc-500")} aria-hidden />
+            <span className={cn("text-[10px] font-medium whitespace-nowrap leading-tight", isHomeActive ? "text-[#E65100]" : "text-zinc-500")}>Home</span>
+          </Link>
+          <Link
+            href="/daily"
+            className="flex flex-col items-center justify-center gap-0.5 min-w-[44px] min-h-[44px] flex-1 max-w-[80px] transition-colors"
+            aria-current={isDailyActive ? "page" : undefined}
+          >
+            <ClipboardList className={cn("w-5 h-5 shrink-0", isDailyActive ? "text-[#E65100]" : "text-zinc-500")} aria-hidden />
+            <span className={cn("text-[10px] font-medium whitespace-nowrap leading-tight", isDailyActive ? "text-[#E65100]" : "text-zinc-500")}>Daily</span>
+          </Link>
+          <Link
+            href="/brief"
+            className="flex flex-col items-center justify-center gap-0.5 min-w-[44px] min-h-[44px] flex-1 max-w-[80px] transition-colors"
+            aria-current={isBriefActive ? "page" : undefined}
+          >
+            <Sparkles className={cn("w-5 h-5 shrink-0", isBriefActive ? "text-[#E65100]" : "text-zinc-500")} aria-hidden />
+            <span className={cn("text-[10px] font-medium whitespace-nowrap leading-tight", isBriefActive ? "text-[#E65100]" : "text-zinc-500")}>Brief</span>
+          </Link>
+          <Link
+            href="/training"
+            className="flex flex-col items-center justify-center gap-0.5 min-w-[44px] min-h-[44px] flex-1 max-w-[80px] transition-colors"
+            aria-current={isGuideActive ? "page" : undefined}
+          >
+            <GraduationCap className={cn("w-5 h-5 shrink-0", isGuideActive ? "text-[#E65100]" : "text-zinc-500")} aria-hidden />
+            <span className={cn("text-[10px] font-medium whitespace-nowrap leading-tight", isGuideActive ? "text-[#E65100]" : "text-zinc-500")}>Guide</span>
+          </Link>
           <button
             type="button"
             onClick={() => setMoreOpen((prev) => !prev)}
@@ -386,8 +406,8 @@ export function BottomNav() {
             aria-haspopup="dialog"
             aria-label="More pages"
           >
-            <Menu className={cn("w-5 h-5 shrink-0", moreHighlighted ? "text-[#E65100]" : "text-zinc-400")} aria-hidden />
-            <span className={cn("text-[10px] font-medium whitespace-nowrap leading-tight", moreHighlighted ? "text-[#E65100]" : "text-zinc-400")}>
+            <Menu className="w-5 h-5 shrink-0 text-zinc-500 active:text-[#E65100]" aria-hidden />
+            <span className="text-[10px] font-medium whitespace-nowrap leading-tight text-zinc-500 active:text-[#E65100]">
               More
             </span>
           </button>

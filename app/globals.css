@@ -197,14 +197,7 @@ body {
 .light-mode header .text-slate-400 { color: #94a3b8 !important; }
 .light-mode header .text-slate-500 { color: #64748b !important; }
 
-.light-mode .bottom-nav {
-  background-color: #18181b !important; /* zinc-900 — always dark */
-  border-color: #27272a !important;
-}
-.light-mode .bottom-nav * { color: inherit; }
-.light-mode .bottom-nav .text-slate-500,
-.light-mode .bottom-nav .text-zinc-400 { color: #a1a1aa !important; } /* visible gray on dark bar */
-.light-mode .bottom-nav .text-\[#E65100\] { color: #E65100 !important; }
+/* Bottom nav colors are controlled in `BottomNav.tsx` (no global overrides). */
 
 /* ——— Body and main wrapper: light background ——— */
 .light-mode body {
