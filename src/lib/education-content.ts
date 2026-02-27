@@ -1195,4 +1195,34 @@ export const EDUCATION_CONTENT: Record<string, EducationEntry> = {
       "Consider that a healthy CAC for pizza is $5-$15 per new customer. Above that, the channel may not be efficient enough. Industry benchmark: $5-$15.",
     ],
   },
+  pillar_product: {
+    title: "Product",
+    whatItMeans:
+      "Your product is your food cost, menu performance, and consistency. If customers get a different experience every visit — you have a product problem.",
+    whyItMatters:
+      "A 5% swing in food cost on $50K monthly revenue is $2,500 per month lost or gained. Consistency directly impacts your Google rating — which directly impacts revenue.",
+    whenRedPlaybook: [
+      "Consider auditing your top 5 selling items for food cost accuracy this week.",
+    ],
+  },
+  pillar_people: {
+    title: "People",
+    whatItMeans:
+      "Your people are your labor cost, culture, retention rate, and leadership consistency. Every person either adds to or subtracts from your operation every single shift.",
+    whyItMatters:
+      "Every team member who quits costs an estimated $3,500 to $5,000 to replace. A 10-person team with 80% annual turnover means $28,000 or more in invisible labor cost per year.",
+    whenRedPlaybook: [
+      "Consider whether your managers are recognizing team members by name this week.",
+    ],
+  },
+  pillar_performance: {
+    title: "Performance",
+    whatItMeans:
+      "Performance is your daily numbers — PRIME, revenue, reputation, vendor costs, and delivery economics. It is the scoreboard that tells you if Product and People are working.",
+    whyItMatters:
+      "Operators who review KPIs daily catch cost problems 3 to 4 weeks earlier than those who review monthly. At $5,000 per month in leaks — that is $15,000 saved per catch.",
+    whenRedPlaybook: [
+      "Consider making your Morning Brief the first thing you open before you open the store.",
+    ],
+  },
 };

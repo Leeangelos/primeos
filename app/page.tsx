@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useMemo, useState, useEffect } from "react";
+import { useMemo, useState, useEffect, useCallback, useRef } from "react";
 import { createPortal } from "react-dom";
 import { BarChart3, Calendar, Check, ChevronDown, ChevronRight, ClipboardList, MapPin, Sparkles, TriangleAlert, AlertTriangle, X } from "lucide-react";
 import { Area, AreaChart, ReferenceLine, ResponsiveContainer } from "recharts";
@@ -62,6 +62,38 @@ function gradeCost(value: number, target: number): Grade {
   return "red";
 }
 
+type LetterGrade = "A" | "B" | "C" | "D" | "F";
+
+function gradePillarProduct(foodCostPct: number): LetterGrade {
+  if (foodCostPct <= 30) return "A";
+  if (foodCostPct <= 33) return "B";
+  if (foodCostPct <= 35) return "C";
+  if (foodCostPct <= 38) return "D";
+  return "F";
+}
+
+function gradePillarPeople(laborPct: number): LetterGrade {
+  if (laborPct <= 25) return "A";
+  if (laborPct <= 28) return "B";
+  if (laborPct <= 30) return "C";
+  if (laborPct <= 33) return "D";
+  return "F";
+}
+
+function gradePillarPerformance(primePct: number): LetterGrade {
+  if (primePct >= 65) return "A";
+  if (primePct >= 60) return "B";
+  if (primePct >= 55) return "C";
+  if (primePct >= 50) return "D";
+  return "F";
+}
+
+function pillarGradeColorClass(grade: LetterGrade): string {
+  if (grade === "A" || grade === "B") return "text-emerald-400";
+  if (grade === "C") return "text-amber-400";
+  return "text-red-400";
+}
+
 function gradeFoodCost(pct: number, target: number): Grade {
   return gradeCost(pct, target);
 }
@@ -106,6 +138,59 @@ function storeSlugForFetch(slug: StoreSlug): string {
   return slug === "all" ? "kent" : slug;
 }
 
+function PillarPill({
+  emoji,
+  label,
+  grade,
+  metricKey,
+}: {
+  emoji: string;
+  label: string;
+  grade: LetterGrade;
+  metricKey: string;
+}) {
+  const rootRef = useRef<HTMLDivElement | null>(null);
+
+  const openEducation = useCallback(() => {
+    const btn = rootRef.current?.querySelector(
+      'button[data-testid="education-info-icon"]'
+    ) as HTMLButtonElement | null;
+    btn?.click();
+  }, []);
+
+  return (
+    <div
+      ref={rootRef}
+      role="button"
+      tabIndex={0}
+      onClick={openEducation}
+      onKeyDown={(e) => {
+        if (e.key === "Enter" || e.key === " ") {
+          e.preventDefault();
+          openEducation();
+        }
+      }}
+      className="flex-1 min-w-0 flex items-center justify-between gap-2 rounded-full bg-zinc-900 border border-zinc-800 px-3 py-2 min-h-[44px] cursor-pointer active:opacity-90"
+      aria-label={`${label} pillar grade ${grade}. Tap to learn more.`}
+    >
+      <div className="flex items-center gap-2 min-w-0">
+        <span className="text-base leading-none" aria-hidden="true">
+          {emoji}
+        </span>
+        <span className="text-xs font-semibold text-white truncate">
+          {label}
+        </span>
+      </div>
+      <div className="flex items-center gap-2 shrink-0">
+        <EducationInfoIcon metricKey={metricKey} size="sm" />
+        <span className={`text-sm font-bold ${pillarGradeColorClass(grade)}`}>
+          {grade}
+        </span>
+      </div>
+    </div>
+  );
+}
+
 export default function HomePage() {
   const [selectedStore, setSelectedStore] = useState<StoreSlug>("kent");
   const [storeOpen, setStoreOpen] = useState(false);
@@ -118,6 +203,30 @@ export default function HomePage() {
   const [showAllWins, setShowAllWins] = useState(false);
   const today = todayYYYYMMDD();
   const yesterday = yesterdayYYYYMMDD();
+
+  const pillarSeed = useMemo(() => {
+    const store = storeSlugForFetch(selectedStore);
+    const forStore = SEED_DAILY_KPIS.filter((r) => r.store_id === store);
+    const todayRow = forStore.find((r) => r.date === today);
+    const yesterdayRow = forStore.find((r) => r.date === yesterday);
+    const row = todayRow ?? yesterdayRow ?? forStore[forStore.length - 1] ?? null;
+    if (!row) return null;
+    const foodCostPct = row.food_cost_pct;
+    const laborPct = row.labor_pct;
+    const primePct = 100 - foodCostPct - laborPct;
+    return { foodCostPct, laborPct, primePct };
+  }, [selectedStore, today, yesterday]);
+
+  const pillarGrades = useMemo(() => {
+    if (!pillarSeed) {
+      return { product: "C" as LetterGrade, people: "C" as LetterGrade, performance: "C" as LetterGrade };
+    }
+    return {
+      product: gradePillarProduct(pillarSeed.foodCostPct),
+      people: gradePillarPeople(pillarSeed.laborPct),
+      performance: gradePillarPerformance(pillarSeed.primePct),
+    };
+  }, [pillarSeed]);
 
   useEffect(() => {
     let cancelled = false;
@@ -362,6 +471,12 @@ export default function HomePage() {
             Today's pulse — {new Date(today + "T12:00:00Z").toLocaleDateString("en-US", { weekday: "long", month: "short", day: "numeric" })}
           </p>
         </div>
+      </div>
+
+      <div className="flex gap-3 w-full min-w-0">
+        <PillarPill emoji="🍕" label="Product" grade={pillarGrades.product} metricKey="pillar_product" />
+        <PillarPill emoji="👥" label="People" grade={pillarGrades.people} metricKey="pillar_people" />
+        <PillarPill emoji="📊" label="Performance" grade={pillarGrades.performance} metricKey="pillar_performance" />
       </div>
 
       {showMissingBanner && (
