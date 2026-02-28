@@ -110,18 +110,9 @@ function MerchContent() {
   const brandBadge = (b: string) => b === "lindseys" ? "bg-zinc-700/50 text-zinc-300" : "bg-orange-500/15 text-orange-400";
 
   return (
-    <div className="space-y-5 pb-28">
-      {checkoutToast && (
-        <div className="fixed bottom-20 left-4 right-4 z-50 bg-slate-800 border border-slate-700 rounded-xl px-4 py-2.5 shadow-lg text-center">
-          <p className="text-xs text-slate-300">Demo Mode — Merch checkout is coming in Phase 2.</p>
-        </div>
-      )}
-      {toastMessage && (
-        <div className="fixed top-20 left-1/2 -translate-x-1/2 z-[100] bg-emerald-600 text-white px-6 py-3 rounded-xl text-sm font-semibold shadow-lg animate-pulse">
-          {toastMessage}
-        </div>
-      )}
-      <div className="dashboard-toolbar p-3 sm:p-5 space-y-3">
+    <>
+      <div className="space-y-5 pb-28">
+        <div className="dashboard-toolbar p-3 sm:p-5 space-y-3">
         <div className="flex items-center gap-2">
           <h1 className="text-lg font-semibold sm:text-2xl">Team Merch</h1>
           <button type="button" onClick={() => setShowEducation(true)} className="inline-flex items-center justify-center min-h-[44px] min-w-[44px] rounded-full bg-muted/20 text-muted hover:bg-brand/20 hover:text-brand transition-colors text-xs font-bold" aria-label="Learn more">i</button>
@@ -160,27 +151,6 @@ function MerchContent() {
 
       {canceled && (
         <div className="rounded-lg border border-amber-500/50 bg-amber-500/10 p-5 text-center text-sm text-amber-400">Checkout canceled. Your cart is still here.</div>
-      )}
-
-      {/* Fixed cart bar — position:fixed above bottom nav */}
-      {cartCount > 0 && (
-        <div className="fixed bottom-20 left-4 right-4 z-40 bg-zinc-900 border border-zinc-700 rounded-2xl px-5 py-4 flex items-center justify-between shadow-lg">
-          <button type="button" onClick={() => setShowCart(true)} className="flex items-center gap-2 min-w-0 flex-1 text-left">
-            <ShoppingCart className="w-5 h-5 text-[#E65100] shrink-0" />
-            <span className="text-sm font-medium text-white truncate">{cartCount} {cartCount === 1 ? "item" : "items"}</span>
-            <span className="text-sm font-bold text-emerald-400 tabular-nums">${cartGrandTotal.toFixed(2)}</span>
-          </button>
-          <button
-            type="button"
-            onClick={() => {
-              setCheckoutToast(true);
-              setTimeout(() => setCheckoutToast(false), 4000);
-            }}
-            className="shrink-0 px-4 py-2.5 rounded-lg bg-[#E65100] hover:bg-orange-600 text-white text-sm font-semibold transition-colors"
-          >
-            Checkout
-          </button>
-        </div>
       )}
 
       {loading ? (
@@ -399,7 +369,38 @@ function MerchContent() {
         </div>,
         document.body
       )}
-    </div>
+      </div>
+
+      {checkoutToast && (
+        <div className="fixed bottom-20 left-4 right-4 z-50 bg-slate-800 border border-slate-700 rounded-xl px-4 py-2.5 shadow-lg text-center">
+          <p className="text-xs text-slate-300">Demo Mode — Merch checkout is coming in Phase 2.</p>
+        </div>
+      )}
+      {toastMessage && (
+        <div className="fixed top-20 left-1/2 -translate-x-1/2 z-[100] bg-emerald-600 text-white px-6 py-3 rounded-xl text-sm font-semibold shadow-lg">
+          {toastMessage}
+        </div>
+      )}
+      {cartCount > 0 && (
+        <div className="fixed bottom-20 left-4 right-4 z-40 bg-zinc-900 border border-zinc-700 rounded-2xl px-5 py-4 flex items-center justify-between shadow-lg">
+          <button type="button" onClick={() => setShowCart(true)} className="flex items-center gap-2 min-w-0 flex-1 text-left">
+            <ShoppingCart className="w-5 h-5 text-[#E65100] shrink-0" />
+            <span className="text-sm font-medium text-white truncate">{cartCount} {cartCount === 1 ? "item" : "items"}</span>
+            <span className="text-sm font-bold text-emerald-400 tabular-nums">${cartGrandTotal.toFixed(2)}</span>
+          </button>
+          <button
+            type="button"
+            onClick={() => {
+              setCheckoutToast(true);
+              setTimeout(() => setCheckoutToast(false), 4000);
+            }}
+            className="shrink-0 px-4 py-2.5 rounded-lg bg-[#E65100] hover:bg-orange-600 text-white text-sm font-semibold transition-colors"
+          >
+            Checkout
+          </button>
+        </div>
+      )}
+    </>
   );
 }
 
