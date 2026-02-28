@@ -109,7 +109,9 @@ function MerchContent() {
 
   return (
     <>
-      <div className="space-y-5 pb-28">
+      <div className="flex flex-col h-[calc(100vh-5rem)]">
+        <div className="flex-1 overflow-y-auto pb-4">
+          <div className="space-y-5">
         <div className="dashboard-toolbar p-3 sm:p-5 space-y-3">
         <div className="flex items-center gap-2">
           <h1 className="text-lg font-semibold sm:text-2xl">Team Merch</h1>
@@ -367,18 +369,20 @@ function MerchContent() {
         </div>,
         document.body
       )}
-
-      {cartCount > 0 && (
-        <div className="sticky bottom-0 left-0 right-0 z-40 bg-zinc-900 border-t border-zinc-700 px-5 py-4 flex items-center justify-between shadow-[0_-4px_12px_rgba(0,0,0,0.3)]" style={{ position: "sticky", bottom: 0 }}>
-          <div className="flex items-center gap-3">
-            <span className="text-white font-semibold">{cartCount} {cartCount === 1 ? "item" : "items"}</span>
-            <span className="text-[#E65100] font-bold">${cartTotal.toFixed(2)}</span>
           </div>
-          <button type="button" onClick={handleCheckout} className="bg-[#E65100] text-white font-semibold px-6 py-2.5 rounded-xl">
-            Checkout
-          </button>
         </div>
-      )}
+
+        {cartCount > 0 && (
+          <div className="shrink-0 bg-zinc-900 border-t border-zinc-700 px-5 py-4 flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              <span className="text-white font-semibold">{cartCount} {cartCount === 1 ? "item" : "items"}</span>
+              <span className="text-[#E65100] font-bold">${cartTotal.toFixed(2)}</span>
+            </div>
+            <button type="button" onClick={handleCheckout} className="bg-[#E65100] text-white font-semibold px-6 py-2.5 rounded-xl">
+              Checkout
+            </button>
+          </div>
+        )}
       </div>
 
       {checkoutToast && (
