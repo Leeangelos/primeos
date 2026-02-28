@@ -10,12 +10,12 @@ import { COCKPIT_STORE_SLUGS, COCKPIT_TARGETS, type CockpitStoreSlug } from "@/l
 import { getStoreColor } from "@/lib/store-colors";
 import { cn } from "@/lib/utils";
 
-/** Map email or name to display name and colors. Primary auth / angelo → Angelo blue; leeann → LeeAnn purple; greg → Greg green; rosario → Rosario amber; else first part of email or name, zinc. */
+/** Map full email to display name and colors. Exact matches first; rosario is substring fallback; else part before @, zinc. */
 const SENDER_DISPLAY: Array<{ match: (s: string) => boolean; name: string; bg: string; avatar: string; text: string }> = [
-  { match: (s) => /angelo/i.test(s), name: "Angelo", bg: "bg-blue-500/20 border-blue-700/30", avatar: "bg-blue-600", text: "text-blue-400" },
-  { match: (s) => /leeann/i.test(s), name: "LeeAnn", bg: "bg-purple-500/20 border-purple-700/30", avatar: "bg-purple-600", text: "text-purple-400" },
-  { match: (s) => /greg/i.test(s), name: "Greg", bg: "bg-green-500/20 border-green-700/30", avatar: "bg-green-600", text: "text-green-400" },
-  { match: (s) => /rosario/i.test(s), name: "Rosario", bg: "bg-amber-500/20 border-amber-700/30", avatar: "bg-amber-600", text: "text-amber-400" },
+  { match: (s) => s === "leeangelos.corp@gmail.com", name: "Angelo", bg: "bg-blue-500/20 border-blue-700/30", avatar: "bg-blue-600", text: "text-blue-400" },
+  { match: (s) => s === "greg.leeangelos@gmail.com", name: "Greg", bg: "bg-green-500/20 border-green-700/30", avatar: "bg-green-600", text: "text-green-400" },
+  { match: (s) => s === "lmg.11@yahoo.com", name: "LeeAnn", bg: "bg-purple-500/20 border-purple-700/30", avatar: "bg-purple-600", text: "text-purple-400" },
+  { match: (s) => s.includes("rosario"), name: "Rosario", bg: "bg-amber-500/20 border-amber-700/30", avatar: "bg-amber-600", text: "text-amber-400" },
 ];
 
 function getSenderDisplay(sender: string): { name: string; bg: string; avatar: string; text: string } {
@@ -25,7 +25,7 @@ function getSenderDisplay(sender: string): { name: string; bg: string; avatar: s
   }
   const name = lower.includes("@") ? (sender.split("@")[0] || "User") : sender;
   const cap = name.charAt(0).toUpperCase() + name.slice(1);
-  return { name: cap, bg: "bg-slate-700/50 border-slate-600", avatar: "bg-slate-600", text: "text-slate-400" };
+  return { name: cap, bg: "bg-slate-700/50 border-slate-600", avatar: "bg-slate-600", text: "text-zinc-400" };
 }
 
 function getMessageColor(senderName: string) {
@@ -43,7 +43,6 @@ function getTextColor(senderName: string) {
 const CHANNELS = [
   { key: "general" as const, label: "General" },
   { key: "announcements" as const, label: "Announcements" },
-  { key: "shift-swap" as const, label: "Shift Swap" },
   { key: "managers-only" as const, label: "Managers Only" },
 ];
 
@@ -75,7 +74,7 @@ export default function ChatPage() {
   const [store, setStore] = useState<CockpitStoreSlug>("kent");
   const [channel, setChannel] = useState<typeof CHANNELS[number]["key"]>("general");
   const [messages, setMessages] = useState<Message[]>([]);
-  const [counts, setCounts] = useState<Record<string, number>>({ general: 0, announcements: 0, "shift-swap": 0, "managers-only": 0 });
+  const [counts, setCounts] = useState<Record<string, number>>({ general: 0, announcements: 0, "managers-only": 0 });
   const [loading, setLoading] = useState(true);
   const [currentUser, setCurrentUser] = useState<{ email: string; name: string } | null>(null);
   const [newMessage, setNewMessage] = useState("");

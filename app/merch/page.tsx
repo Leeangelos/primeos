@@ -152,19 +152,27 @@ function MerchContent() {
         <div className="rounded-lg border border-amber-500/50 bg-amber-500/10 p-5 text-center text-sm text-amber-400">Checkout canceled. Your cart is still here.</div>
       )}
 
-      {/* Fixed floating cart bubble — above nav, does not cover product grid */}
+      {/* Fixed cart bar — full width above bottom nav */}
       {cartCount > 0 && (
-        <button
-          type="button"
-          onClick={() => setShowCart(true)}
-          className="fixed bottom-20 right-4 z-30 w-14 h-14 rounded-full bg-[#E65100] hover:bg-orange-600 shadow-lg flex items-center justify-center text-white transition-colors"
-          aria-label={`Cart (${cartCount} items)`}
-        >
-          <ShoppingCart className="w-6 h-6" />
-          <span className="absolute -top-1 -right-1 min-w-[18px] h-[18px] rounded-full bg-white text-[#E65100] text-xs font-bold flex items-center justify-center">
-            {cartCount}
-          </span>
-        </button>
+        <div className="fixed bottom-20 left-0 right-0 z-30 px-4 pb-2">
+          <div className="bg-slate-800 border border-slate-700 rounded-xl px-4 py-3 flex items-center justify-between gap-3 shadow-lg">
+            <button type="button" onClick={() => setShowCart(true)} className="flex items-center gap-2 min-w-0 flex-1 text-left">
+              <ShoppingCart className="w-5 h-5 text-[#E65100] shrink-0" />
+              <span className="text-sm font-medium text-white truncate">{cartCount} {cartCount === 1 ? "item" : "items"}</span>
+              <span className="text-sm font-bold text-emerald-400 tabular-nums">${cartGrandTotal.toFixed(2)}</span>
+            </button>
+            <button
+              type="button"
+              onClick={() => {
+                setCheckoutToast(true);
+                setTimeout(() => setCheckoutToast(false), 4000);
+              }}
+              className="shrink-0 px-4 py-2.5 rounded-lg bg-[#E65100] hover:bg-orange-600 text-white text-sm font-semibold transition-colors"
+            >
+              Checkout
+            </button>
+          </div>
+        </div>
       )}
 
       {loading ? (
@@ -174,7 +182,7 @@ function MerchContent() {
           ))}
         </div>
       ) : (
-        <div className="space-y-3 pb-24">
+        <div className="space-y-3 pb-40">
           {/* Packages first — Hormozi style */}
           {filtered.filter((i) => i.category === "package").length > 0 && (
             <div className="space-y-3">

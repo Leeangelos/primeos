@@ -110,7 +110,7 @@ const STORE_OPTIONS = [
 const GOOGLE_PROFILE_URL: Record<string, string> = {
   kent: "https://www.google.com/maps/search/LeeAngelo's+Kent+OH",
   aurora: "https://www.google.com/maps/search/LeeAngelo's+Aurora+OH",
-  lindseys: "https://www.google.com/maps/search/Lindsey's+Pizza",
+  lindseys: "https://www.google.com/maps/search/Lindsey's+Pizza+OH",
 };
 
 export default function ReputationPage() {
@@ -254,7 +254,7 @@ export default function ReputationPage() {
         <div className="flex items-center gap-2 mb-2">
           <label className="text-xs text-slate-500 shrink-0">Store:</label>
         </div>
-        <div className="flex flex-wrap gap-2 overflow-x-auto pb-1 min-h-[44px]">
+        <div className="flex flex-wrap gap-2 overflow-x-auto overflow-visible pb-1 min-h-[44px] p-1">
           {STORE_OPTIONS.map((o) => {
             const isActive = selectedStore === o.value;
             return (
@@ -303,16 +303,19 @@ export default function ReputationPage() {
                 <span className="text-[10px] text-slate-500">({data.reviewCount})</span>
               </div>
               <div className="text-[10px] text-slate-500 mt-0.5 capitalize">{platform}</div>
-              {platform === "google" && selectedStore !== "all" && GOOGLE_PROFILE_URL[selectedStore] && (
-                <a
-                  href={GOOGLE_PROFILE_URL[selectedStore]}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="inline-flex items-center gap-0.5 mt-1 text-[10px] text-[#E65100] hover:underline"
-                >
-                  View on Google <ExternalLink className="w-3 h-3" />
-                </a>
-              )}
+              {platform === "google" && (() => {
+                const urls = selectedStore === "all" ? ["kent", "aurora", "lindseys"].map((id) => ({ id, url: GOOGLE_PROFILE_URL[id], label: id === "kent" ? "Kent" : id === "aurora" ? "Aurora" : "Lindsey's" })) : selectedStore && GOOGLE_PROFILE_URL[selectedStore] ? [{ id: selectedStore, url: GOOGLE_PROFILE_URL[selectedStore], label: "View on Google" }] : [];
+                if (urls.length === 0) return null;
+                return (
+                  <div className="flex flex-wrap items-center justify-center gap-x-2 gap-y-0.5 mt-1">
+                    {urls.map(({ id, url, label }) => (
+                      <a key={id} href={url} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-0.5 text-[10px] text-[#E65100] hover:underline">
+                        {label} <ExternalLink className="w-3 h-3" />
+                      </a>
+                    ))}
+                  </div>
+                );
+              })()}
               {data.trend === "up" && <TrendingUp className="w-3 h-3 text-emerald-400 mx-auto mt-0.5" />}
               {data.trend === "down" && <TrendingDown className="w-3 h-3 text-red-400 mx-auto mt-0.5" />}
             </div>
