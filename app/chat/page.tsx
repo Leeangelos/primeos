@@ -84,7 +84,10 @@ export default function ChatPage() {
   const [newMessage, setNewMessage] = useState("");
   const [sending, setSending] = useState(false);
   const [playbookOpen, setPlaybookOpen] = useState(true);
-  const chatScrollRef = useRef<HTMLDivElement>(null);
+  const messagesEndRef = useRef<HTMLDivElement>(null);
+  const scrollToBottom = () => {
+    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+  };
 
   useEffect(() => {
     const supabase = createClient();
@@ -118,10 +121,8 @@ export default function ChatPage() {
   useEffect(() => { loadCounts(); }, [loadCounts]);
 
   useEffect(() => {
-    if (loading) return;
-    const el = chatScrollRef.current;
-    if (el) el.scrollTo({ top: el.scrollHeight, behavior: "smooth" });
-  }, [messages, loading]);
+    scrollToBottom();
+  }, [messages]);
 
   async function handleSend() {
     if (!newMessage.trim() || !currentUser) return;
@@ -143,9 +144,7 @@ export default function ChatPage() {
     await loadMessages();
     loadCounts();
     setSending(false);
-    setTimeout(() => {
-      chatScrollRef.current?.scrollTo({ top: chatScrollRef.current.scrollHeight, behavior: "smooth" });
-    }, 100);
+    setTimeout(scrollToBottom, 100);
   }
 
   const pinned = messages.filter((m) => m.is_pinned);
@@ -206,7 +205,7 @@ export default function ChatPage() {
           </div>
         ) : (
           <>
-            <div ref={chatScrollRef} className="flex-1 overflow-y-auto p-4 space-y-3">
+            <div className="flex-1 overflow-y-auto p-4 space-y-3">
               {pinned.length > 0 && (
                 <div className="space-y-2 mb-4 pb-3 border-b border-border/50">
                   <div className="text-[10px] uppercase text-muted font-medium flex items-center gap-1">📌 Pinned</div>
@@ -221,6 +220,7 @@ export default function ChatPage() {
               {messages.length === 0 && (
                 <div className="text-center py-8 text-muted text-sm">No messages in this channel yet.</div>
               )}
+              <div ref={messagesEndRef} />
             </div>
 
             <div className="p-3 border-t border-border/50 space-y-2">
@@ -313,12 +313,20 @@ export default function ChatPage() {
   );
 }
 
+const SENDER_NAME_COLOR: Record<string, string> = {
+  "text-blue-400": "text-blue-400",
+  "text-green-400": "text-green-400",
+  "text-purple-400": "text-purple-400",
+  "text-amber-400": "text-amber-400",
+  "text-zinc-400": "text-zinc-400",
+};
+
 function MessageBlock({ m, isAnnouncements }: { m: Message; isAnnouncements: boolean }) {
   const roleStyle = ROLE_STYLE[m.sender_role ?? ""] ?? ROLE_STYLE.team;
   const senderDisplay = getSenderDisplay(m.sender_email ?? m.sender_name ?? "");
   const messageColor = isAnnouncements || m.is_announcement ? "border-amber-500/40 bg-amber-500/5" : senderDisplay.bg;
   const avatarColor = senderDisplay.avatar;
-  const textColor = senderDisplay.text;
+  const senderNameColor = SENDER_NAME_COLOR[senderDisplay.text] ?? "text-zinc-400";
   const time = new Date(m.created_at).toLocaleTimeString("en-US", { hour: "numeric", minute: "2-digit" });
 
   return (
@@ -327,7 +335,7 @@ function MessageBlock({ m, isAnnouncements }: { m: Message; isAnnouncements: boo
         <span className={cn("h-6 w-6 rounded-full flex items-center justify-center text-xs font-bold text-white shrink-0", avatarColor)}>
           {senderDisplay.name.slice(0, 1)}
         </span>
-        <span className={cn("font-medium text-sm", textColor)}>{senderDisplay.name}</span>
+        <span className={cn("font-medium text-sm", senderNameColor)}>{senderDisplay.name}</span>
         {m.sender_role && (
           <span className={cn("text-[10px] uppercase px-2 py-0.5 rounded border", roleStyle)}>{m.sender_role.replace("_", " ")}</span>
         )}

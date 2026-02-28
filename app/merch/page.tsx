@@ -44,7 +44,7 @@ function MerchContent() {
   const [showCart, setShowCart] = useState(false);
   const [showEducation, setShowEducation] = useState(false);
   const [checkoutToast, setCheckoutToast] = useState(false);
-  const [addedToCartToast, setAddedToCartToast] = useState(false);
+  const [toastMessage, setToastMessage] = useState<string | null>(null);
 
   const loadItems = useCallback(async () => {
     setLoading(true);
@@ -69,8 +69,8 @@ function MerchContent() {
     } else {
       setCart([...cart, { item_id: item.id, name: item.name, brand: item.brand, price: item.price, size, qty: 1 }]);
     }
-    setAddedToCartToast(true);
-    setTimeout(() => setAddedToCartToast(false), 1500);
+    setToastMessage("Added to cart");
+    setTimeout(() => setToastMessage(null), 1500);
   }
 
   function removeFromCart(index: number) {
@@ -114,9 +114,9 @@ function MerchContent() {
           <p className="text-xs text-slate-300">Demo Mode — Merch checkout is coming in Phase 2.</p>
         </div>
       )}
-      {addedToCartToast && (
-        <div className="fixed bottom-24 left-4 right-4 z-50 bg-emerald-800/95 border border-emerald-600 rounded-xl px-4 py-2.5 shadow-lg text-center">
-          <p className="text-sm text-emerald-100 font-medium">Added to cart</p>
+      {toastMessage && (
+        <div className="fixed bottom-36 left-1/2 -translate-x-1/2 z-50 bg-emerald-600 text-white px-6 py-3 rounded-xl text-sm font-semibold shadow-lg">
+          {toastMessage}
         </div>
       )}
       <div className="dashboard-toolbar p-3 sm:p-5 space-y-3">
