@@ -110,7 +110,7 @@ const STORE_OPTIONS = [
 const GOOGLE_PROFILE_URL: Record<string, string> = {
   kent: "https://www.google.com/maps/search/LeeAngelo's+Kent+OH",
   aurora: "https://www.google.com/maps/search/LeeAngelo's+Aurora+OH",
-  lindseys: "https://www.google.com/maps/search/Lindsey's+Pizza+OH",
+  lindseys: "https://www.google.com/maps/search/Lindsey's+Pizza+Kent+OH",
 };
 
 export default function ReputationPage() {
@@ -239,6 +239,8 @@ export default function ReputationPage() {
     return SEED_REPUTATION_KPIS_BY_STORE[selectedStore] ?? SEED_REPUTATION_KPIS_BY_STORE.kent;
   }, [selectedStore]);
 
+  const pinnedStoreLabel = selectedStore === "all" ? "All Locations" : (STORE_OPTIONS.find((o) => o.value === selectedStore)?.label ?? selectedStore);
+
   return (
     <div className="space-y-4 pb-28 min-w-0 overflow-x-hidden">
       {/* Header */}
@@ -248,6 +250,12 @@ export default function ReputationPage() {
           <p className="text-xs text-slate-400 mt-0.5">What the internet thinks about your business</p>
         </div>
         <EducationInfoIcon metricKey="reputation" />
+      </div>
+
+      <div className="mb-2">
+        <span className="inline-block px-3 py-1.5 rounded-lg bg-zinc-800 border border-zinc-700 text-xs font-medium text-slate-300">
+          Viewing: {pinnedStoreLabel}
+        </span>
       </div>
 
       <div className="mb-4">

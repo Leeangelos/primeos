@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import { createPortal } from "react-dom";
 import { createClient } from "@/lib/supabase";
 import { EducationInfoIcon } from "@/src/components/education/InfoIcon";
@@ -10,20 +10,24 @@ import { COCKPIT_STORE_SLUGS, COCKPIT_TARGETS, type CockpitStoreSlug } from "@/l
 import { getStoreColor } from "@/lib/store-colors";
 import { cn } from "@/lib/utils";
 
-/** Map full email to display name and colors. Exact matches first; rosario is substring fallback; else part before @, zinc. */
+/** Map email or sender string to display name and colors. Case-insensitive. Exact email first; lmg prefix → LeeAnn; rosario substring → Rosario; else part before @, zinc. */
 const SENDER_DISPLAY: Array<{ match: (s: string) => boolean; name: string; bg: string; avatar: string; text: string }> = [
   { match: (s) => s === "leeangelos.corp@gmail.com", name: "Angelo", bg: "bg-blue-500/20 border-blue-700/30", avatar: "bg-blue-600", text: "text-blue-400" },
   { match: (s) => s === "greg.leeangelos@gmail.com", name: "Greg", bg: "bg-green-500/20 border-green-700/30", avatar: "bg-green-600", text: "text-green-400" },
-  { match: (s) => s === "lmg.11@yahoo.com", name: "LeeAnn", bg: "bg-purple-500/20 border-purple-700/30", avatar: "bg-purple-600", text: "text-purple-400" },
+  { match: (s) => s === "lmg.11@yahoo.com" || s.startsWith("lmg"), name: "LeeAnn", bg: "bg-purple-500/20 border-purple-700/30", avatar: "bg-purple-600", text: "text-purple-400" },
   { match: (s) => s.includes("rosario"), name: "Rosario", bg: "bg-amber-500/20 border-amber-700/30", avatar: "bg-amber-600", text: "text-amber-400" },
 ];
 
 function getSenderDisplay(sender: string): { name: string; bg: string; avatar: string; text: string } {
-  const lower = sender.toLowerCase().trim();
+  const raw = (sender ?? "").trim();
+  const lower = raw.toLowerCase();
+  if (typeof process !== "undefined" && process.env?.NODE_ENV === "development") {
+    console.log("[Chat] sender value:", JSON.stringify({ raw, lower }));
+  }
   for (const row of SENDER_DISPLAY) {
     if (row.match(lower)) return { name: row.name, bg: row.bg, avatar: row.avatar, text: row.text };
   }
-  const name = lower.includes("@") ? (sender.split("@")[0] || "User") : sender;
+  const name = lower.includes("@") ? (raw.split("@")[0] || "User") : raw;
   const cap = name.charAt(0).toUpperCase() + name.slice(1);
   return { name: cap, bg: "bg-slate-700/50 border-slate-600", avatar: "bg-slate-600", text: "text-zinc-400" };
 }
@@ -80,6 +84,7 @@ export default function ChatPage() {
   const [newMessage, setNewMessage] = useState("");
   const [sending, setSending] = useState(false);
   const [playbookOpen, setPlaybookOpen] = useState(true);
+  const chatScrollRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     const supabase = createClient();
@@ -112,6 +117,12 @@ export default function ChatPage() {
   useEffect(() => { loadMessages(); }, [loadMessages]);
   useEffect(() => { loadCounts(); }, [loadCounts]);
 
+  useEffect(() => {
+    if (loading) return;
+    const el = chatScrollRef.current;
+    if (el) el.scrollTo({ top: el.scrollHeight, behavior: "smooth" });
+  }, [messages, loading]);
+
   async function handleSend() {
     if (!newMessage.trim() || !currentUser) return;
     setSending(true);
@@ -128,10 +139,13 @@ export default function ChatPage() {
         is_announcement: false,
       }),
     });
-    setSending(false);
     setNewMessage("");
-    loadMessages();
+    await loadMessages();
     loadCounts();
+    setSending(false);
+    setTimeout(() => {
+      chatScrollRef.current?.scrollTo({ top: chatScrollRef.current.scrollHeight, behavior: "smooth" });
+    }, 100);
   }
 
   const pinned = messages.filter((m) => m.is_pinned);
@@ -192,7 +206,7 @@ export default function ChatPage() {
           </div>
         ) : (
           <>
-            <div className="flex-1 overflow-y-auto p-4 space-y-3">
+            <div ref={chatScrollRef} className="flex-1 overflow-y-auto p-4 space-y-3">
               {pinned.length > 0 && (
                 <div className="space-y-2 mb-4 pb-3 border-b border-border/50">
                   <div className="text-[10px] uppercase text-muted font-medium flex items-center gap-1">📌 Pinned</div>
