@@ -3,7 +3,7 @@
 import { Suspense, useState, useEffect, useCallback } from "react";
 import { createPortal } from "react-dom";
 import { useSearchParams } from "next/navigation";
-import { Shirt, ShoppingCart } from "lucide-react";
+import { Shirt } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { SEED_MERCH } from "@/src/lib/seed-data";
 
@@ -44,7 +44,7 @@ function MerchContent() {
   const [showCart, setShowCart] = useState(false);
   const [showEducation, setShowEducation] = useState(false);
   const [checkoutToast, setCheckoutToast] = useState(false);
-  const [toastMessage, setToastMessage] = useState<string | null>(null);
+  const [addedItemId, setAddedItemId] = useState<string | null>(null);
 
   const loadItems = useCallback(async () => {
     setLoading(true);
@@ -69,10 +69,8 @@ function MerchContent() {
     } else {
       setCart([...cart, { item_id: item.id, name: item.name, brand: item.brand, price: item.price, size, qty: 1 }]);
     }
-    console.log("ADD TO CART CLICKED", { item, cartCount: cart.length + 1 });
-    console.log("TOAST SET:", "Added to cart");
-    setToastMessage("Added to cart");
-    setTimeout(() => setToastMessage(null), 2500);
+    setAddedItemId(item.id);
+    setTimeout(() => setAddedItemId(null), 1500);
   }
 
   function removeFromCart(index: number) {
@@ -232,7 +230,7 @@ function MerchContent() {
                       ) : (
                         <span className="text-xs text-muted flex-1">{item.sizes[0]}</span>
                       )}
-                      <button type="button" onClick={() => addToCart(item)} className={cn("rounded-lg border px-6 py-2 text-sm font-bold transition-colors", isLindseys ? "border-zinc-600 bg-zinc-600 text-white hover:bg-zinc-500" : "border-orange-500/50 bg-orange-500 text-white hover:bg-orange-600")}>Add to Cart</button>
+                      <button type="button" onClick={() => addToCart(item)} className={cn("rounded-lg border px-6 py-2 text-sm font-bold transition-colors", addedItemId === item.id ? "border-emerald-600 bg-emerald-600 text-white" : isLindseys ? "border-zinc-600 bg-zinc-600 text-white hover:bg-zinc-500" : "border-orange-500/50 bg-orange-500 text-white hover:bg-orange-600")}>{addedItemId === item.id ? "✓ Added" : "Add to Cart"}</button>
                     </div>
                   </div>
                 );
@@ -279,7 +277,7 @@ function MerchContent() {
                           ) : (
                             <span className="text-xs text-muted flex-1 py-2">{item.sizes[0] || "One Size"}</span>
                           )}
-                          <button type="button" onClick={() => addToCart(item)} className={cn("rounded-lg border px-4 py-2 min-h-[44px] text-sm font-bold transition-colors shrink-0", isLindseys ? "border-zinc-600 bg-zinc-600 text-white hover:bg-zinc-500" : "border-orange-500/50 bg-orange-500 text-white hover:bg-orange-600")}>Order</button>
+                          <button type="button" onClick={() => addToCart(item)} className={cn("rounded-lg border px-4 py-2 min-h-[44px] text-sm font-bold transition-colors shrink-0", addedItemId === item.id ? "border-emerald-600 bg-emerald-600 text-white" : isLindseys ? "border-zinc-600 bg-zinc-600 text-white hover:bg-zinc-500" : "border-orange-500/50 bg-orange-500 text-white hover:bg-orange-600")}>{addedItemId === item.id ? "✓ Added" : "Order"}</button>
                         </div>
                       </div>
                     </div>
@@ -369,35 +367,23 @@ function MerchContent() {
         </div>,
         document.body
       )}
+
+      {cartCount > 0 && (
+        <div className="sticky bottom-0 left-0 right-0 z-40 bg-zinc-900 border-t border-zinc-700 px-5 py-4 flex items-center justify-between shadow-[0_-4px_12px_rgba(0,0,0,0.3)]" style={{ position: "sticky", bottom: 0 }}>
+          <div className="flex items-center gap-3">
+            <span className="text-white font-semibold">{cartCount} {cartCount === 1 ? "item" : "items"}</span>
+            <span className="text-[#E65100] font-bold">${cartTotal.toFixed(2)}</span>
+          </div>
+          <button type="button" onClick={handleCheckout} className="bg-[#E65100] text-white font-semibold px-6 py-2.5 rounded-xl">
+            Checkout
+          </button>
+        </div>
+      )}
       </div>
 
       {checkoutToast && (
         <div className="fixed bottom-20 left-4 right-4 z-50 bg-slate-800 border border-slate-700 rounded-xl px-4 py-2.5 shadow-lg text-center">
           <p className="text-xs text-slate-300">Demo Mode — Merch checkout is coming in Phase 2.</p>
-        </div>
-      )}
-      {toastMessage && (
-        <div className="fixed top-20 left-1/2 -translate-x-1/2 z-[100] bg-emerald-600 text-white px-6 py-3 rounded-xl text-sm font-semibold shadow-lg">
-          {toastMessage}
-        </div>
-      )}
-      {cartCount > 0 && (
-        <div className="fixed bottom-20 left-4 right-4 z-40 bg-zinc-900 border border-zinc-700 rounded-2xl px-5 py-4 flex items-center justify-between shadow-lg">
-          <button type="button" onClick={() => setShowCart(true)} className="flex items-center gap-2 min-w-0 flex-1 text-left">
-            <ShoppingCart className="w-5 h-5 text-[#E65100] shrink-0" />
-            <span className="text-sm font-medium text-white truncate">{cartCount} {cartCount === 1 ? "item" : "items"}</span>
-            <span className="text-sm font-bold text-emerald-400 tabular-nums">${cartGrandTotal.toFixed(2)}</span>
-          </button>
-          <button
-            type="button"
-            onClick={() => {
-              setCheckoutToast(true);
-              setTimeout(() => setCheckoutToast(false), 4000);
-            }}
-            className="shrink-0 px-4 py-2.5 rounded-lg bg-[#E65100] hover:bg-orange-600 text-white text-sm font-semibold transition-colors"
-          >
-            Checkout
-          </button>
         </div>
       )}
     </>

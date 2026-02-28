@@ -339,7 +339,8 @@ export default function ReputationPage() {
         </div>
       </div>
 
-      <div className="pinned-store-banner w-full max-w-full mx-auto bg-zinc-900 border border-zinc-700 rounded-2xl px-5 py-4 mb-3 ring-2 ring-[#E65100] shadow-[0_0_12px_rgba(230,81,0,0.3)]">
+      <div className="overflow-visible">
+        <div className="pinned-store-banner w-full max-w-full mx-2 bg-zinc-900 border border-zinc-700 rounded-2xl px-5 py-4 mb-3 ring-2 ring-[#E65100] shadow-[0_0_12px_rgba(230,81,0,0.3)]">
         <div className="flex items-center justify-between gap-4 flex-wrap">
           <div>
             <div className="pinned-store-banner-name text-lg font-bold text-white">{pinnedStoreDisplay}</div>
@@ -362,6 +363,7 @@ export default function ReputationPage() {
             </a>
           )}
         </div>
+      </div>
       </div>
 
       {/* Tabs */}
