@@ -320,19 +320,6 @@ export default function ReputationPage() {
                 <span className="text-[10px] text-slate-500">({data.reviewCount})</span>
               </div>
               <div className="text-[10px] text-slate-500 mt-0.5 capitalize">{platform}</div>
-              {platform === "google" && (() => {
-                const urls = selectedStore === "all" ? ["kent", "aurora", "lindseys"].map((id) => ({ id, url: GOOGLE_PROFILE_URL[id], label: id === "kent" ? "Kent" : id === "aurora" ? "Aurora" : "Lindsey's" })) : selectedStore && GOOGLE_PROFILE_URL[selectedStore] ? [{ id: selectedStore, url: GOOGLE_PROFILE_URL[selectedStore], label: "View on Google" }] : [];
-                if (urls.length === 0) return null;
-                return (
-                  <div className="flex flex-wrap items-center justify-center gap-x-2 gap-y-0.5 mt-1">
-                    {urls.map(({ id, url, label }) => (
-                      <a key={id} href={url} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-0.5 text-[10px] text-[#E65100] hover:underline">
-                        {label} <ExternalLink className="w-3 h-3" />
-                      </a>
-                    ))}
-                  </div>
-                );
-              })()}
               {data.trend === "up" && <TrendingUp className="w-3 h-3 text-emerald-400 mx-auto mt-0.5" />}
               {data.trend === "down" && <TrendingDown className="w-3 h-3 text-red-400 mx-auto mt-0.5" />}
             </div>
@@ -352,10 +339,29 @@ export default function ReputationPage() {
         </div>
       </div>
 
-      <div className="mb-2">
-        <span className="inline-block text-sm font-semibold text-white bg-zinc-800 border border-zinc-700 rounded-lg px-3 py-1.5 mb-2">
-          {pinnedStoreDisplay}
-        </span>
+      <div className="w-full bg-zinc-900 border border-zinc-700 rounded-2xl px-5 py-4 mb-3">
+        <div className="flex items-center justify-between gap-4 flex-wrap">
+          <div>
+            <div className="text-lg font-bold text-white">{pinnedStoreDisplay}</div>
+            <div className="flex items-center gap-1.5 mt-1">
+              <span className="text-base font-semibold text-amber-400">
+                <Star className="w-4 h-4 inline fill-amber-400 text-amber-400 mr-0.5 align-middle" />
+                {storeData.google.rating}
+              </span>
+              <span className="text-xs text-zinc-500">({storeData.google.reviewCount} reviews)</span>
+            </div>
+          </div>
+          {selectedStore !== "all" && GOOGLE_PROFILE_URL[selectedStore] && (
+            <a
+              href={GOOGLE_PROFILE_URL[selectedStore]}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-blue-400 text-sm font-medium underline inline-flex items-center gap-1 shrink-0"
+            >
+              View on Google <ExternalLink className="w-4 h-4" />
+            </a>
+          )}
+        </div>
       </div>
 
       {/* Tabs */}
