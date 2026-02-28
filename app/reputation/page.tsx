@@ -339,31 +339,27 @@ export default function ReputationPage() {
         </div>
       </div>
 
-      <div className="overflow-visible">
-        <div className="pinned-store-banner w-full max-w-full mx-2 bg-zinc-900 border border-zinc-700 rounded-2xl px-5 py-4 mb-3 ring-2 ring-[#E65100] shadow-[0_0_12px_rgba(230,81,0,0.3)]">
-        <div className="flex items-center justify-between gap-4 flex-wrap">
-          <div>
-            <div className="pinned-store-banner-name text-lg font-bold text-white">{pinnedStoreDisplay}</div>
-            <div className="flex items-center gap-1.5 mt-1">
-              <span className="text-base font-semibold text-amber-500">
-                <Star className="w-4 h-4 inline fill-amber-500 text-amber-500 mr-0.5 align-middle" />
-                {storeData.google.rating}
-              </span>
-              <span className="pinned-store-banner-reviews text-xs text-zinc-500">({storeData.google.reviewCount} reviews)</span>
-            </div>
+      <div className="w-full bg-zinc-900 border border-zinc-700 rounded-2xl px-5 py-4 flex items-center justify-between shadow-[0_0_12px_rgba(230,81,0,0.3)] ring-2 ring-[#E65100] mb-3">
+        <div>
+          <div className="text-lg font-bold text-white">{pinnedStoreDisplay}</div>
+          <div className="flex items-center gap-1.5 mt-1">
+            <span className="text-base font-semibold text-amber-500">
+              <Star className="w-4 h-4 inline fill-amber-500 text-amber-500 mr-0.5 align-middle" />
+              {storeData.google.rating}
+            </span>
+            <span className="text-xs text-zinc-500">({storeData.google.reviewCount} reviews)</span>
           </div>
-          {selectedStore !== "all" && GOOGLE_PROFILE_URL[selectedStore] && (
-            <a
-              href={GOOGLE_PROFILE_URL[selectedStore]}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="pinned-store-banner-link text-blue-400 text-sm font-medium underline inline-flex items-center gap-1 shrink-0"
-            >
-              View on Google <ExternalLink className="w-4 h-4" />
-            </a>
-          )}
         </div>
-      </div>
+        {selectedStore !== "all" && GOOGLE_PROFILE_URL[selectedStore] && (
+          <a
+            href={GOOGLE_PROFILE_URL[selectedStore]}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="text-blue-400 text-sm font-medium underline inline-flex items-center gap-1 shrink-0"
+          >
+            View on Google <ExternalLink className="w-4 h-4" />
+          </a>
+        )}
       </div>
 
       {/* Tabs */}
