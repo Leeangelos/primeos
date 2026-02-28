@@ -104,8 +104,8 @@ function MerchContent() {
     }
   }
 
-  const brandColor = (b: string) => b === "lindseys" ? "border-purple-500/30 bg-purple-500/5" : "border-orange-500/30 bg-orange-500/5";
-  const brandBadge = (b: string) => b === "lindseys" ? "bg-purple-500/15 text-purple-400" : "bg-orange-500/15 text-orange-400";
+  const brandColor = (b: string) => b === "lindseys" ? "border-zinc-700 bg-zinc-800/50" : "border-orange-500/30 bg-orange-500/5";
+  const brandBadge = (b: string) => b === "lindseys" ? "bg-zinc-700/50 text-zinc-300" : "bg-orange-500/15 text-orange-400";
 
   return (
     <div className="space-y-5 pb-28">
@@ -115,7 +115,7 @@ function MerchContent() {
         </div>
       )}
       {toastMessage && (
-        <div className="fixed bottom-36 left-1/2 -translate-x-1/2 z-50 bg-emerald-600 text-white px-6 py-3 rounded-xl text-sm font-semibold shadow-lg">
+        <div className="fixed bottom-44 left-1/2 -translate-x-1/2 z-50 bg-emerald-600 text-white px-6 py-3 rounded-xl text-sm font-semibold shadow-lg animate-pulse">
           {toastMessage}
         </div>
       )}
@@ -160,26 +160,24 @@ function MerchContent() {
         <div className="rounded-lg border border-amber-500/50 bg-amber-500/10 p-5 text-center text-sm text-amber-400">Checkout canceled. Your cart is still here.</div>
       )}
 
-      {/* Fixed cart bar — full width above bottom nav */}
+      {/* Fixed cart bar — position:fixed above bottom nav */}
       {cartCount > 0 && (
-        <div className="fixed bottom-20 left-0 right-0 z-30 px-4 pb-2">
-          <div className="bg-slate-800 border border-slate-700 rounded-xl px-4 py-3 flex items-center justify-between gap-3 shadow-lg">
-            <button type="button" onClick={() => setShowCart(true)} className="flex items-center gap-2 min-w-0 flex-1 text-left">
-              <ShoppingCart className="w-5 h-5 text-[#E65100] shrink-0" />
-              <span className="text-sm font-medium text-white truncate">{cartCount} {cartCount === 1 ? "item" : "items"}</span>
-              <span className="text-sm font-bold text-emerald-400 tabular-nums">${cartGrandTotal.toFixed(2)}</span>
-            </button>
-            <button
-              type="button"
-              onClick={() => {
-                setCheckoutToast(true);
-                setTimeout(() => setCheckoutToast(false), 4000);
-              }}
-              className="shrink-0 px-4 py-2.5 rounded-lg bg-[#E65100] hover:bg-orange-600 text-white text-sm font-semibold transition-colors"
-            >
-              Checkout
-            </button>
-          </div>
+        <div className="fixed bottom-20 left-4 right-4 z-30 bg-zinc-900 border border-zinc-700 rounded-2xl px-5 py-4 flex items-center justify-between shadow-lg">
+          <button type="button" onClick={() => setShowCart(true)} className="flex items-center gap-2 min-w-0 flex-1 text-left">
+            <ShoppingCart className="w-5 h-5 text-[#E65100] shrink-0" />
+            <span className="text-sm font-medium text-white truncate">{cartCount} {cartCount === 1 ? "item" : "items"}</span>
+            <span className="text-sm font-bold text-emerald-400 tabular-nums">${cartGrandTotal.toFixed(2)}</span>
+          </button>
+          <button
+            type="button"
+            onClick={() => {
+              setCheckoutToast(true);
+              setTimeout(() => setCheckoutToast(false), 4000);
+            }}
+            className="shrink-0 px-4 py-2.5 rounded-lg bg-[#E65100] hover:bg-orange-600 text-white text-sm font-semibold transition-colors"
+          >
+            Checkout
+          </button>
         </div>
       )}
 
@@ -198,10 +196,10 @@ function MerchContent() {
                 const isMostPopular = item.description?.includes("MOST POPULAR");
                 const isBestValue = item.description?.includes("BEST VALUE");
                 const isLindseys = item.brand === "lindseys";
-                const accentBorder = isLindseys ? "border-purple-500" : "border-orange-500";
-                const accentBg = isLindseys ? "bg-purple-500" : "bg-orange-500";
-                const accentText = isLindseys ? "text-purple-400" : "text-orange-400";
-                const accentBgLight = isLindseys ? "bg-purple-500/10" : "bg-orange-500/10";
+                const accentBorder = isLindseys ? "border-zinc-600" : "border-orange-500";
+                const accentBg = isLindseys ? "bg-zinc-600" : "bg-orange-500";
+                const accentText = isLindseys ? "text-zinc-300" : "text-orange-400";
+                const accentBgLight = isLindseys ? "bg-zinc-500/10" : "bg-orange-500/10";
 
                 // Parse description
                 const parts = (item.description || "").split("·").map((s: string) => s.trim());
@@ -219,7 +217,7 @@ function MerchContent() {
                     <div className="flex items-start justify-between pt-1">
                       <div>
                         <div className="flex items-center gap-2 mb-1">
-                          <span className={cn("text-[9px] uppercase font-bold px-2 py-0.5 rounded", isLindseys ? "bg-purple-500/15 text-purple-400" : "bg-orange-500/15 text-orange-400")}>{isLindseys ? "Lindsey's" : "LeeAngelo's"}</span>
+                          <span className={cn("text-[9px] uppercase font-bold px-2 py-0.5 rounded", isLindseys ? "bg-zinc-700/50 text-zinc-300" : "bg-orange-500/15 text-orange-400")}>{isLindseys ? "Lindsey's" : "LeeAngelo's"}</span>
                         </div>
                         <h3 className="text-lg font-black text-white">{item.name}</h3>
                       </div>
@@ -262,7 +260,7 @@ function MerchContent() {
                       ) : (
                         <span className="text-xs text-muted flex-1">{item.sizes[0]}</span>
                       )}
-                      <button type="button" onClick={() => addToCart(item)} className={cn("rounded-lg border px-6 py-2 text-sm font-bold transition-colors", isLindseys ? "border-purple-500/50 bg-purple-500 text-white hover:bg-purple-600" : "border-orange-500/50 bg-orange-500 text-white hover:bg-orange-600")}>Add to Cart</button>
+                      <button type="button" onClick={() => addToCart(item)} className={cn("rounded-lg border px-6 py-2 text-sm font-bold transition-colors", isLindseys ? "border-zinc-600 bg-zinc-600 text-white hover:bg-zinc-500" : "border-orange-500/50 bg-orange-500 text-white hover:bg-orange-600")}>Add to Cart</button>
                     </div>
                   </div>
                 );
@@ -278,7 +276,7 @@ function MerchContent() {
                 {filtered.filter((i) => i.category !== "package").map((item) => {
                   const isLindseys = item.brand === "lindseys";
                   return (
-                    <div key={item.id} className={cn("rounded-xl border overflow-hidden", isLindseys ? "border-purple-500/30 bg-purple-500/5" : "border-orange-500/30 bg-orange-500/5")}>
+                    <div key={item.id} className={cn("rounded-xl border overflow-hidden", isLindseys ? "border-zinc-700 bg-zinc-800/50" : "border-orange-500/30 bg-orange-500/5")}>
                       <div className="aspect-square bg-black/40 flex items-center justify-center">
                         <Shirt className="w-16 h-16 text-muted/50" aria-hidden />
                       </div>
@@ -286,7 +284,7 @@ function MerchContent() {
                         <div className="flex items-start justify-between gap-2">
                           <div>
                             <div className="flex items-center gap-2 mb-1">
-                              <span className={cn("text-[9px] uppercase font-bold px-2 py-0.5 rounded", isLindseys ? "bg-purple-500/15 text-purple-400" : "bg-orange-500/15 text-orange-400")}>{isLindseys ? "Lindsey's" : "LeeAngelo's"}</span>
+                              <span className={cn("text-[9px] uppercase font-bold px-2 py-0.5 rounded", isLindseys ? "bg-zinc-700/50 text-zinc-300" : "bg-orange-500/15 text-orange-400")}>{isLindseys ? "Lindsey's" : "LeeAngelo's"}</span>
                               {item.category === "gear" && <span className="text-[9px] uppercase font-bold px-2 py-0.5 rounded bg-muted/15 text-muted">Gear</span>}
                             </div>
                             <h3 className="text-sm font-bold text-white">{item.name}</h3>
@@ -309,7 +307,7 @@ function MerchContent() {
                           ) : (
                             <span className="text-xs text-muted flex-1 py-2">{item.sizes[0] || "One Size"}</span>
                           )}
-                          <button type="button" onClick={() => addToCart(item)} className={cn("rounded-lg border px-4 py-2 min-h-[44px] text-sm font-bold transition-colors shrink-0", isLindseys ? "border-purple-500/50 bg-purple-500 text-white hover:bg-purple-600" : "border-orange-500/50 bg-orange-500 text-white hover:bg-orange-600")}>Order</button>
+                          <button type="button" onClick={() => addToCart(item)} className={cn("rounded-lg border px-4 py-2 min-h-[44px] text-sm font-bold transition-colors shrink-0", isLindseys ? "border-zinc-600 bg-zinc-600 text-white hover:bg-zinc-500" : "border-orange-500/50 bg-orange-500 text-white hover:bg-orange-600")}>Order</button>
                         </div>
                       </div>
                     </div>

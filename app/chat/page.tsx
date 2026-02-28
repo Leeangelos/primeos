@@ -10,38 +10,32 @@ import { COCKPIT_STORE_SLUGS, COCKPIT_TARGETS, type CockpitStoreSlug } from "@/l
 import { getStoreColor } from "@/lib/store-colors";
 import { cn } from "@/lib/utils";
 
-/** Map email or sender string to display name and colors. Case-insensitive. Exact email first; lmg prefix → LeeAnn; rosario substring → Rosario; else part before @, zinc. */
-const SENDER_DISPLAY: Array<{ match: (s: string) => boolean; name: string; bg: string; avatar: string; text: string }> = [
-  { match: (s) => s === "leeangelos.corp@gmail.com", name: "Angelo", bg: "bg-blue-500/20 border-blue-700/30", avatar: "bg-blue-600", text: "text-blue-400" },
-  { match: (s) => s === "greg.leeangelos@gmail.com", name: "Greg", bg: "bg-green-500/20 border-green-700/30", avatar: "bg-green-600", text: "text-green-400" },
-  { match: (s) => s === "lmg.11@yahoo.com" || s.startsWith("lmg"), name: "LeeAnn", bg: "bg-purple-500/20 border-purple-700/30", avatar: "bg-purple-600", text: "text-purple-400" },
-  { match: (s) => s.includes("rosario"), name: "Rosario", bg: "bg-amber-500/20 border-amber-700/30", avatar: "bg-amber-600", text: "text-amber-400" },
-];
+/** Direct map: full Tailwind class strings so Tailwind does not purge. Email or name → { name, textColor, bgColor }. */
+type SenderColors = { name: string; textColor: string; bgColor: string };
+const SENDER_COLORS_BY_EMAIL: Record<string, SenderColors> = {
+  "leeangelos.corp@gmail.com": { name: "Angelo", textColor: "text-blue-400", bgColor: "bg-blue-500" },
+  "greg.leeangelos@gmail.com": { name: "Greg", textColor: "text-green-400", bgColor: "bg-green-500" },
+  "lmg.11@yahoo.com": { name: "LeeAnn", textColor: "text-purple-400", bgColor: "bg-purple-500" },
+};
+const SENDER_COLORS_BY_NAME: Record<string, SenderColors> = {
+  angelo: { name: "Angelo", textColor: "text-blue-400", bgColor: "bg-blue-500" },
+  greg: { name: "Greg", textColor: "text-green-400", bgColor: "bg-green-500" },
+  leeann: { name: "LeeAnn", textColor: "text-purple-400", bgColor: "bg-purple-500" },
+  rosario: { name: "Rosario", textColor: "text-amber-400", bgColor: "bg-amber-500" },
+};
 
-function getSenderDisplay(sender: string): { name: string; bg: string; avatar: string; text: string } {
+function getSenderColors(sender: string): SenderColors {
   const raw = (sender ?? "").trim();
   const lower = raw.toLowerCase();
-  if (typeof process !== "undefined" && process.env?.NODE_ENV === "development") {
-    console.log("[Chat] sender value:", JSON.stringify({ raw, lower }));
-  }
-  for (const row of SENDER_DISPLAY) {
-    if (row.match(lower)) return { name: row.name, bg: row.bg, avatar: row.avatar, text: row.text };
-  }
+  const byEmail = SENDER_COLORS_BY_EMAIL[lower];
+  if (byEmail) return byEmail;
+  if (lower.includes("rosario")) return SENDER_COLORS_BY_NAME.rosario;
+  if (lower.startsWith("lmg")) return SENDER_COLORS_BY_NAME.leeann;
+  const byName = SENDER_COLORS_BY_NAME[lower];
+  if (byName) return byName;
   const name = lower.includes("@") ? (raw.split("@")[0] || "User") : raw;
   const cap = name.charAt(0).toUpperCase() + name.slice(1);
-  return { name: cap, bg: "bg-slate-700/50 border-slate-600", avatar: "bg-slate-600", text: "text-zinc-400" };
-}
-
-function getMessageColor(senderName: string) {
-  return getSenderDisplay(senderName).bg;
-}
-
-function getAvatarColor(senderName: string) {
-  return getSenderDisplay(senderName).avatar;
-}
-
-function getTextColor(senderName: string) {
-  return getSenderDisplay(senderName).text;
+  return { name: cap, textColor: "text-zinc-400", bgColor: "bg-zinc-500" };
 }
 
 const CHANNELS = [
@@ -83,7 +77,7 @@ export default function ChatPage() {
   const [currentUser, setCurrentUser] = useState<{ email: string; name: string } | null>(null);
   const [newMessage, setNewMessage] = useState("");
   const [sending, setSending] = useState(false);
-  const [playbookOpen, setPlaybookOpen] = useState(true);
+  const [playbookOpen, setPlaybookOpen] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -93,8 +87,8 @@ export default function ChatPage() {
     const supabase = createClient();
     supabase.auth.getUser().then(({ data: { user } }) => {
       if (user) {
-        const display = getSenderDisplay(user.email || "");
-        setCurrentUser({ email: user.email || "", name: display.name });
+        const colors = getSenderColors(user.email || "");
+        setCurrentUser({ email: user.email || "", name: colors.name });
       }
     });
   }, []);
@@ -152,8 +146,8 @@ export default function ChatPage() {
   const isAnnouncements = channel === "announcements";
 
   return (
-    <div className="space-y-5 pb-28">
-      <div className="dashboard-toolbar p-3 sm:p-5 space-y-3">
+    <div className="flex flex-col min-h-[calc(100vh-8rem)] pb-28">
+      <div className="dashboard-toolbar p-3 sm:p-5 space-y-3 shrink-0">
         <div className="flex items-center gap-2 flex-wrap">
           <h1 className="text-lg font-semibold sm:text-2xl">Team Chat</h1>
           <EducationInfoIcon metricKey="team_communication" />
@@ -190,78 +184,12 @@ export default function ChatPage() {
         </div>
       </div>
 
-      <div className="dashboard-surface rounded-lg border border-border flex flex-col" style={{ minHeight: "360px" }}>
-        {loading ? (
-          <div className="flex-1 p-4 space-y-3 animate-pulse">
-            {[1, 2, 3, 4, 5].map((i) => (
-              <div key={i} className="flex gap-3">
-                <div className="h-8 w-8 rounded-full bg-muted/20" />
-                <div className="flex-1">
-                  <div className="h-4 w-32 bg-muted/20 rounded mb-1" />
-                  <div className="h-3 w-full bg-muted/20 rounded" />
-                </div>
-              </div>
-            ))}
-          </div>
-        ) : (
-          <>
-            <div className="flex-1 overflow-y-auto p-4 space-y-3">
-              {pinned.length > 0 && (
-                <div className="space-y-2 mb-4 pb-3 border-b border-border/50">
-                  <div className="text-[10px] uppercase text-muted font-medium flex items-center gap-1">📌 Pinned</div>
-                  {pinned.map((m) => (
-                    <MessageBlock key={m.id} m={m} isAnnouncements={isAnnouncements} />
-                  ))}
-                </div>
-              )}
-              {rest.map((m) => (
-                <MessageBlock key={m.id} m={m} isAnnouncements={isAnnouncements} />
-              ))}
-              {messages.length === 0 && (
-                <div className="text-center py-8 text-muted text-sm">No messages in this channel yet.</div>
-              )}
-              <div ref={messagesEndRef} />
-            </div>
-
-            <div className="p-3 border-t border-border/50 space-y-2">
-              {!currentUser ? (
-                <p className="text-sm text-muted py-2">Log in to use chat.</p>
-              ) : null}
-              <div className="flex gap-2">
-                <textarea
-                  value={newMessage}
-                  onChange={(e) => setNewMessage(e.target.value)}
-                  placeholder={currentUser ? "Type a message..." : "Log in to use chat"}
-                  rows={2}
-                  disabled={!currentUser}
-                  className="flex-1 rounded-lg border border-border/50 bg-black/30 px-3 py-2 text-sm text-white placeholder:text-muted focus:border-brand/60 focus:ring-1 focus:ring-brand/40 focus:outline-none resize-none disabled:opacity-50 disabled:cursor-not-allowed"
-                  onKeyDown={(e) => {
-                    if (e.key === "Enter" && !e.shiftKey) {
-                      e.preventDefault();
-                      handleSend();
-                    }
-                  }}
-                />
-                <button
-                  type="button"
-                  onClick={handleSend}
-                  disabled={!newMessage.trim() || sending || !currentUser}
-                  className="min-h-[44px] rounded-lg border border-brand/50 bg-brand/15 px-4 py-2 text-sm font-semibold text-brand hover:bg-brand/25 disabled:opacity-50 shrink-0"
-                >
-                  Send
-                </button>
-              </div>
-            </div>
-          </>
-        )}
-      </div>
-
-      {/* Layer 3 playbook card — visible, collapsible */}
+      {/* Playbook — collapsed by default, above messages */}
       {(() => {
         const entry = EDUCATION_CONTENT.team_communication;
         if (!entry) return null;
         return (
-          <div className="rounded-lg border border-red-500/30 bg-red-500/5 overflow-hidden">
+          <div className="rounded-lg border border-red-500/30 bg-red-500/5 overflow-hidden shrink-0">
             <button
               type="button"
               onClick={() => setPlaybookOpen((o) => !o)}
@@ -283,6 +211,71 @@ export default function ChatPage() {
           </div>
         );
       })()}
+
+      <div className="dashboard-surface rounded-lg border border-border flex flex-col flex-1 min-h-0 mt-3">
+        {loading ? (
+          <div className="flex-1 p-4 space-y-3 animate-pulse">
+            {[1, 2, 3, 4, 5].map((i) => (
+              <div key={i} className="flex gap-3">
+                <div className="h-8 w-8 rounded-full bg-muted/20" />
+                <div className="flex-1">
+                  <div className="h-4 w-32 bg-muted/20 rounded mb-1" />
+                  <div className="h-3 w-full bg-muted/20 rounded" />
+                </div>
+              </div>
+            ))}
+          </div>
+        ) : (
+          <div className="flex-1 overflow-y-auto p-4 space-y-3 pb-4">
+            {pinned.length > 0 && (
+              <div className="space-y-2 mb-4 pb-3 border-b border-border/50">
+                <div className="text-[10px] uppercase text-muted font-medium flex items-center gap-1">📌 Pinned</div>
+                {pinned.map((m) => (
+                  <MessageBlock key={m.id} m={m} isAnnouncements={isAnnouncements} />
+                ))}
+              </div>
+            )}
+            {rest.map((m) => (
+              <MessageBlock key={m.id} m={m} isAnnouncements={isAnnouncements} />
+            ))}
+            {messages.length === 0 && (
+              <div className="text-center py-8 text-muted text-sm">No messages in this channel yet.</div>
+            )}
+            <div ref={messagesEndRef} />
+          </div>
+        )}
+      </div>
+
+      {/* Input fixed at bottom above nav */}
+      <div className="fixed bottom-20 left-0 right-0 p-3 bg-[#0d0f13] border-t border-border/50 z-20">
+        {!currentUser ? (
+          <p className="text-sm text-muted py-2">Log in to use chat.</p>
+        ) : null}
+        <div className="flex gap-2 max-w-2xl mx-auto">
+          <textarea
+            value={newMessage}
+            onChange={(e) => setNewMessage(e.target.value)}
+            placeholder={currentUser ? "Type a message..." : "Log in to use chat"}
+            rows={2}
+            disabled={!currentUser}
+            className="flex-1 rounded-lg border border-border/50 bg-black/30 px-3 py-2 text-sm text-white placeholder:text-muted focus:border-brand/60 focus:ring-1 focus:ring-brand/40 focus:outline-none resize-none disabled:opacity-50 disabled:cursor-not-allowed"
+            onKeyDown={(e) => {
+              if (e.key === "Enter" && !e.shiftKey) {
+                e.preventDefault();
+                handleSend();
+              }
+            }}
+          />
+          <button
+            type="button"
+            onClick={handleSend}
+            disabled={!newMessage.trim() || sending || !currentUser}
+            className="min-h-[44px] rounded-lg border border-brand/50 bg-brand/15 px-4 py-2 text-sm font-semibold text-brand hover:bg-brand/25 disabled:opacity-50 shrink-0"
+          >
+            Send
+          </button>
+        </div>
+      </div>
 
       {false && typeof document !== "undefined" && createPortal(
         <div className="fixed inset-0 z-[9999] flex items-center justify-center p-4" style={{ position: "fixed", top: 0, left: 0, right: 0, bottom: 0 }} onClick={() => {}}>
@@ -313,29 +306,19 @@ export default function ChatPage() {
   );
 }
 
-const SENDER_NAME_COLOR: Record<string, string> = {
-  "text-blue-400": "text-blue-400",
-  "text-green-400": "text-green-400",
-  "text-purple-400": "text-purple-400",
-  "text-amber-400": "text-amber-400",
-  "text-zinc-400": "text-zinc-400",
-};
-
 function MessageBlock({ m, isAnnouncements }: { m: Message; isAnnouncements: boolean }) {
   const roleStyle = ROLE_STYLE[m.sender_role ?? ""] ?? ROLE_STYLE.team;
-  const senderDisplay = getSenderDisplay(m.sender_email ?? m.sender_name ?? "");
-  const messageColor = isAnnouncements || m.is_announcement ? "border-amber-500/40 bg-amber-500/5" : senderDisplay.bg;
-  const avatarColor = senderDisplay.avatar;
-  const senderNameColor = SENDER_NAME_COLOR[senderDisplay.text] ?? "text-zinc-400";
+  const sender = getSenderColors(m.sender_email ?? m.sender_name ?? "");
+  const messageColor = isAnnouncements || m.is_announcement ? "border-amber-500/40 bg-amber-500/5" : "border-slate-600 bg-slate-700/50";
   const time = new Date(m.created_at).toLocaleTimeString("en-US", { hour: "numeric", minute: "2-digit" });
 
   return (
     <div className={cn("rounded-lg border p-3", messageColor)}>
       <div className="flex items-center gap-2 flex-wrap mb-1">
-        <span className={cn("h-6 w-6 rounded-full flex items-center justify-center text-xs font-bold text-white shrink-0", avatarColor)}>
-          {senderDisplay.name.slice(0, 1)}
+        <span className={cn("h-6 w-6 rounded-full flex items-center justify-center text-xs font-bold text-white shrink-0", sender.bgColor)}>
+          {sender.name.slice(0, 1)}
         </span>
-        <span className={cn("font-medium text-sm", senderNameColor)}>{senderDisplay.name}</span>
+        <span className={cn("font-medium text-sm", sender.textColor)}>{sender.name}</span>
         {m.sender_role && (
           <span className={cn("text-[10px] uppercase px-2 py-0.5 rounded border", roleStyle)}>{m.sender_role.replace("_", " ")}</span>
         )}

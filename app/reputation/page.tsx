@@ -339,7 +339,7 @@ export default function ReputationPage() {
         </div>
       </div>
 
-      <div className="pinned-store-banner w-full bg-zinc-900 border border-zinc-700 rounded-2xl px-5 py-4 mb-3 ring-2 ring-[#E65100] shadow-[0_0_12px_rgba(230,81,0,0.3)]">
+      <div className="pinned-store-banner w-full mx-4 bg-zinc-900 border border-zinc-700 rounded-2xl px-5 py-4 mb-3 ring-2 ring-[#E65100] shadow-[0_0_12px_rgba(230,81,0,0.3)]">
         <div className="flex items-center justify-between gap-4 flex-wrap">
           <div>
             <div className="pinned-store-banner-name text-lg font-bold text-white">{pinnedStoreDisplay}</div>
