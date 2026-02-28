@@ -297,3 +297,12 @@ body {
 .light-mode main .shadow-lg { box-shadow: 0 10px 15px -3px rgba(0,0,0,0.08), 0 4px 6px -4px rgba(0,0,0,0.04) !important; }
 .light-mode main .shadow-black\/30 { box-shadow: 0 4px 12px rgba(0,0,0,0.08) !important; }
 .light-mode main .shadow-black\/20 { box-shadow: 0 2px 8px rgba(0,0,0,0.06) !important; }
+
+/* ——— Do We Suck: pinned store banner (light mode) ——— */
+.light-mode main .pinned-store-banner {
+  background-color: #ffffff !important;
+  border-color: #d4d4d8 !important;
+}
+.light-mode main .pinned-store-banner .pinned-store-banner-name { color: #18181b !important; }
+.light-mode main .pinned-store-banner .pinned-store-banner-reviews { color: #71717a !important; }
+.light-mode main .pinned-store-banner .pinned-store-banner-link { color: rgb(59 130 246) !important; }
