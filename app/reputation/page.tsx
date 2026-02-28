@@ -113,6 +113,20 @@ const GOOGLE_PROFILE_URL: Record<string, string> = {
   lindseys: "https://www.google.com/maps/search/Lindsey's+Pizza+Kent+OH",
 };
 
+const PINNED_STORE_DISPLAY: Record<string, string> = {
+  kent: "LeeAngelo's (Kent)",
+  aurora: "LeeAngelo's (Aurora)",
+  lindseys: "Lindsey's Pizza",
+  all: "All Locations",
+};
+
+const AREA_RANKING: Record<string, { rank: number; total: number }> = {
+  kent: { rank: 4, total: 20 },
+  aurora: { rank: 9, total: 20 },
+  lindseys: { rank: 6, total: 20 },
+  all: { rank: 6, total: 20 },
+};
+
 export default function ReputationPage() {
   const [selectedStore, setSelectedStore] = useState("kent");
   const [activeTab, setActiveTab] = useState<"overview" | "reviews" | "market" | "alerts">("overview");
@@ -239,7 +253,8 @@ export default function ReputationPage() {
     return SEED_REPUTATION_KPIS_BY_STORE[selectedStore] ?? SEED_REPUTATION_KPIS_BY_STORE.kent;
   }, [selectedStore]);
 
-  const pinnedStoreLabel = selectedStore === "all" ? "All Locations" : (STORE_OPTIONS.find((o) => o.value === selectedStore)?.label ?? selectedStore);
+  const pinnedStoreDisplay = PINNED_STORE_DISPLAY[selectedStore] ?? PINNED_STORE_DISPLAY.all;
+  const areaRanking = AREA_RANKING[selectedStore] ?? AREA_RANKING.all;
 
   return (
     <div className="space-y-4 pb-28 min-w-0 overflow-x-hidden">
@@ -250,12 +265,6 @@ export default function ReputationPage() {
           <p className="text-xs text-slate-400 mt-0.5">What the internet thinks about your business</p>
         </div>
         <EducationInfoIcon metricKey="reputation" />
-      </div>
-
-      <div className="mb-2">
-        <span className="inline-block px-3 py-1.5 rounded-lg bg-zinc-800 border border-zinc-700 text-xs font-medium text-slate-300">
-          Viewing: {pinnedStoreLabel}
-        </span>
       </div>
 
       <div className="mb-4">
@@ -334,6 +343,19 @@ export default function ReputationPage() {
           <span className="text-xs text-slate-500">{totalReviews} total reviews across all platforms</span>
           <EducationInfoIcon metricKey="platform_breakdown" size="sm" />
         </div>
+
+        <div className="mt-4 pt-3 border-t border-slate-700 flex flex-wrap items-center justify-center gap-2">
+          <span className="text-sm text-zinc-400">🏅</span>
+          <span className="text-xl font-bold text-[#E65100]">{areaRanking.rank}</span>
+          <span className="text-sm text-zinc-400">/ {areaRanking.total} in your area</span>
+          <EducationInfoIcon metricKey="area_ranking" size="sm" />
+        </div>
+      </div>
+
+      <div className="mb-2">
+        <span className="inline-block text-sm font-semibold text-white bg-zinc-800 border border-zinc-700 rounded-lg px-3 py-1.5 mb-2">
+          {pinnedStoreDisplay}
+        </span>
       </div>
 
       {/* Tabs */}

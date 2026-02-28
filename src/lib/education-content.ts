@@ -600,6 +600,16 @@ export const EDUCATION_CONTENT: Record<string, EducationEntry> = {
       "Consider that AI assistants like ChatGPT now recommend restaurants based on review data — more reviews and higher ratings mean more AI referrals",
     ],
   },
+  area_ranking: {
+    title: "Area Ranking",
+    whatItMeans:
+      "Your area ranking shows where your store places among nearby competitors based on combined review scores across Google, Yelp, Facebook, and Tripadvisor. A rank of 4 out of 20 means you are the 4th highest rated restaurant in your competitive area.",
+    whyItMatters:
+      "Moving up even one rank can mean hundreds of new customers per year. Customers searching for restaurants in your area see the top results first — ranking matters for visibility and trust.",
+    whenRedPlaybook: [
+      "Consider focusing on your weakest platform to lift your overall score. If Google is 4.4 but Yelp is 3.8, improving Yelp responses could jump your ranking.",
+    ],
+  },
   wins: {
     title: "Win Notifications",
     whatItMeans:
