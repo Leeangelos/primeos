@@ -69,8 +69,10 @@ function MerchContent() {
     } else {
       setCart([...cart, { item_id: item.id, name: item.name, brand: item.brand, price: item.price, size, qty: 1 }]);
     }
+    console.log("ADD TO CART CLICKED", { item, cartCount: cart.length + 1 });
+    console.log("TOAST SET:", "Added to cart");
     setToastMessage("Added to cart");
-    setTimeout(() => setToastMessage(null), 1500);
+    setTimeout(() => setToastMessage(null), 2500);
   }
 
   function removeFromCart(index: number) {
@@ -115,7 +117,7 @@ function MerchContent() {
         </div>
       )}
       {toastMessage && (
-        <div className="fixed bottom-44 left-1/2 -translate-x-1/2 z-50 bg-emerald-600 text-white px-6 py-3 rounded-xl text-sm font-semibold shadow-lg animate-pulse">
+        <div className="fixed top-20 left-1/2 -translate-x-1/2 z-[100] bg-emerald-600 text-white px-6 py-3 rounded-xl text-sm font-semibold shadow-lg animate-pulse">
           {toastMessage}
         </div>
       )}
@@ -162,7 +164,7 @@ function MerchContent() {
 
       {/* Fixed cart bar — position:fixed above bottom nav */}
       {cartCount > 0 && (
-        <div className="fixed bottom-20 left-4 right-4 z-30 bg-zinc-900 border border-zinc-700 rounded-2xl px-5 py-4 flex items-center justify-between shadow-lg">
+        <div className="fixed bottom-20 left-4 right-4 z-40 bg-zinc-900 border border-zinc-700 rounded-2xl px-5 py-4 flex items-center justify-between shadow-lg">
           <button type="button" onClick={() => setShowCart(true)} className="flex items-center gap-2 min-w-0 flex-1 text-left">
             <ShoppingCart className="w-5 h-5 text-[#E65100] shrink-0" />
             <span className="text-sm font-medium text-white truncate">{cartCount} {cartCount === 1 ? "item" : "items"}</span>

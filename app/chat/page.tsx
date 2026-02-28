@@ -79,8 +79,9 @@ export default function ChatPage() {
   const [sending, setSending] = useState(false);
   const [playbookOpen, setPlaybookOpen] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
-  const scrollToBottom = () => {
-    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+  const hasInitiallyScrolled = useRef(false);
+  const scrollToBottom = (behavior: ScrollBehavior = "smooth") => {
+    messagesEndRef.current?.scrollIntoView({ behavior });
   };
 
   useEffect(() => {
@@ -115,7 +116,12 @@ export default function ChatPage() {
   useEffect(() => { loadCounts(); }, [loadCounts]);
 
   useEffect(() => {
-    scrollToBottom();
+    if (!hasInitiallyScrolled.current) {
+      scrollToBottom("instant");
+      hasInitiallyScrolled.current = true;
+    } else {
+      scrollToBottom("smooth");
+    }
   }, [messages]);
 
   async function handleSend() {
@@ -138,7 +144,7 @@ export default function ChatPage() {
     await loadMessages();
     loadCounts();
     setSending(false);
-    setTimeout(scrollToBottom, 100);
+    setTimeout(() => scrollToBottom("smooth"), 100);
   }
 
   const pinned = messages.filter((m) => m.is_pinned);
