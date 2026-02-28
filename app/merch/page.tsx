@@ -1,6 +1,6 @@
 "use client";
 
-import { Suspense, useState, useEffect, useCallback } from "react";
+import { Suspense, useState, useEffect, useCallback, useRef } from "react";
 import { createPortal } from "react-dom";
 import { useSearchParams } from "next/navigation";
 import { Shirt } from "lucide-react";
@@ -45,6 +45,11 @@ function MerchContent() {
   const [showEducation, setShowEducation] = useState(false);
   const [checkoutToast, setCheckoutToast] = useState(false);
   const [addedItemId, setAddedItemId] = useState<string | null>(null);
+  const cartRef = useRef<HTMLDivElement>(null);
+
+  const scrollToCart = () => {
+    cartRef.current?.scrollIntoView({ behavior: "smooth" });
+  };
 
   const loadItems = useCallback(async () => {
     setLoading(true);
@@ -109,9 +114,7 @@ function MerchContent() {
 
   return (
     <>
-      <div className="flex flex-col h-[calc(100vh-5rem)]">
-        <div className="flex-1 overflow-y-auto pb-4">
-          <div className="space-y-5">
+      <div className="space-y-5 pb-28">
         <div className="dashboard-toolbar p-3 sm:p-5 space-y-3">
         <div className="flex items-center gap-2">
           <h1 className="text-lg font-semibold sm:text-2xl">Team Merch</h1>
@@ -369,21 +372,30 @@ function MerchContent() {
         </div>,
         document.body
       )}
-          </div>
-        </div>
 
-        {cartCount > 0 && (
-          <div className="shrink-0 bg-zinc-900 border-t border-zinc-700 px-5 py-4 flex items-center justify-between">
-            <div className="flex items-center gap-3">
-              <span className="text-white font-semibold">{cartCount} {cartCount === 1 ? "item" : "items"}</span>
-              <span className="text-[#E65100] font-bold">${cartTotal.toFixed(2)}</span>
-            </div>
-            <button type="button" onClick={handleCheckout} className="bg-[#E65100] text-white font-semibold px-6 py-2.5 rounded-xl">
-              Checkout
-            </button>
+      {cartCount > 0 && (
+        <div ref={cartRef} className="bg-zinc-900 border-t border-zinc-700 px-5 py-4 flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            <span className="text-white font-semibold">{cartCount} {cartCount === 1 ? "item" : "items"}</span>
+            <span className="text-[#E65100] font-bold">${cartTotal.toFixed(2)}</span>
           </div>
-        )}
+          <button type="button" onClick={handleCheckout} className="bg-[#E65100] text-white font-semibold px-6 py-2.5 rounded-xl">
+            Checkout
+          </button>
+        </div>
+      )}
       </div>
+
+      {cartCount > 0 && (
+        <button
+          type="button"
+          onClick={scrollToCart}
+          className="fixed bottom-24 right-4 z-40 bg-[#E65100] text-white w-12 h-12 rounded-full flex items-center justify-center shadow-lg relative"
+        >
+          <span className="text-lg">🛒</span>
+          <span className="absolute -top-1 -right-1 bg-white text-[#E65100] text-xs font-bold w-5 h-5 rounded-full flex items-center justify-center">{cartCount}</span>
+        </button>
+      )}
 
       {checkoutToast && (
         <div className="fixed bottom-20 left-4 right-4 z-50 bg-slate-800 border border-slate-700 rounded-xl px-4 py-2.5 shadow-lg text-center">
