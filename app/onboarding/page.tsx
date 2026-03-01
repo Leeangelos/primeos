@@ -80,6 +80,10 @@ export default function OnboardingPage() {
         }),
       });
       if (!res.ok) throw new Error("Save failed");
+      const userId = session?.user?.id;
+      if (typeof userId === "string" && userId) {
+        localStorage.setItem(`primeos-onboarding-complete-${userId}`, "true");
+      }
       router.replace("/");
       router.refresh();
     } catch {
