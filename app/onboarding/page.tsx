@@ -37,6 +37,17 @@ function pillarGradeColorClass(grade: LetterGrade): string {
   return "text-red-400";
 }
 
+const US_STATES = [
+  "Alabama", "Alaska", "Arizona", "Arkansas", "California", "Colorado", "Connecticut",
+  "Delaware", "Florida", "Georgia", "Hawaii", "Idaho", "Illinois", "Indiana", "Iowa",
+  "Kansas", "Kentucky", "Louisiana", "Maine", "Maryland", "Massachusetts", "Michigan",
+  "Minnesota", "Mississippi", "Missouri", "Montana", "Nebraska", "Nevada", "New Hampshire",
+  "New Jersey", "New Mexico", "New York", "North Carolina", "North Dakota", "Ohio",
+  "Oklahoma", "Oregon", "Pennsylvania", "Rhode Island", "South Carolina", "South Dakota",
+  "Tennessee", "Texas", "Utah", "Vermont", "Virginia", "Washington", "West Virginia",
+  "Wisconsin", "Wyoming",
+];
+
 const GOAL_OPTIONS = [
   { id: "food", emoji: "🍕", label: "Lower my food cost" },
   { id: "team", emoji: "👥", label: "Manage my team better" },
@@ -52,6 +63,12 @@ export default function OnboardingPage() {
   const [laborCostPct, setLaborCostPct] = useState<string>("");
   const [employeeCount, setEmployeeCount] = useState<string>("");
   const [monthlyRent, setMonthlyRent] = useState<string>("");
+  const [googleBusinessName, setGoogleBusinessName] = useState<string>("");
+  const [streetAddress, setStreetAddress] = useState<string>("");
+  const [city, setCity] = useState<string>("");
+  const [state, setState] = useState<string>("");
+  const [zipCode, setZipCode] = useState<string>("");
+  const [county, setCounty] = useState<string>("");
   const [goals, setGoals] = useState<string[]>([]);
   const [submitting, setSubmitting] = useState(false);
 
@@ -76,6 +93,12 @@ export default function OnboardingPage() {
           labor_cost_pct: laborCostPct ? Number(laborCostPct) : null,
           employee_count: employeeCount ? Number(employeeCount) : null,
           monthly_rent: monthlyRent ? Number(monthlyRent) : null,
+          google_business_name: googleBusinessName || null,
+          street_address: streetAddress || null,
+          city: city || null,
+          state: state || null,
+          zip_code: zipCode || null,
+          county: county || null,
           goals,
         }),
       });
@@ -98,7 +121,7 @@ export default function OnboardingPage() {
   const peopleGrade = gradePillarPeople(laborNum);
   const processGrade = gradePillarPerformance(primePct);
 
-  const totalSteps = 4;
+  const totalSteps = 5;
 
   return (
     <div className="min-h-screen bg-zinc-950 text-white flex flex-col items-center justify-center p-4">
@@ -216,6 +239,88 @@ export default function OnboardingPage() {
 
         {step === 3 && (
           <div className="space-y-6">
+            <h2 className="text-xl font-bold">Let&apos;s find you online.</h2>
+            <p className="text-zinc-400 text-sm">This helps PrimeOS pull your real Google reviews, competitor data, and local insights.</p>
+            <div className="space-y-4">
+              <div>
+                <label className="block text-xs text-zinc-500 mb-1">Your Google Business name *</label>
+                <input
+                  type="text"
+                  value={googleBusinessName}
+                  onChange={(e) => setGoogleBusinessName(e.target.value)}
+                  placeholder="e.g., Joe's Pizza"
+                  className="w-full bg-zinc-900 border border-zinc-700 rounded-xl px-4 py-3 text-white placeholder:text-zinc-500"
+                />
+                <p className="text-xs text-zinc-500 mt-1">Exactly as it appears on Google Maps</p>
+              </div>
+              <div>
+                <label className="block text-xs text-zinc-500 mb-1">Street address *</label>
+                <input
+                  type="text"
+                  value={streetAddress}
+                  onChange={(e) => setStreetAddress(e.target.value)}
+                  placeholder="e.g., 123 Main St"
+                  className="w-full bg-zinc-900 border border-zinc-700 rounded-xl px-4 py-3 text-white placeholder:text-zinc-500"
+                />
+              </div>
+              <div>
+                <label className="block text-xs text-zinc-500 mb-1">City *</label>
+                <input
+                  type="text"
+                  value={city}
+                  onChange={(e) => setCity(e.target.value)}
+                  placeholder="e.g., Kent"
+                  className="w-full bg-zinc-900 border border-zinc-700 rounded-xl px-4 py-3 text-white placeholder:text-zinc-500"
+                />
+              </div>
+              <div>
+                <label className="block text-xs text-zinc-500 mb-1">State *</label>
+                <select
+                  value={state}
+                  onChange={(e) => setState(e.target.value)}
+                  className="w-full bg-zinc-900 border border-zinc-700 rounded-xl px-4 py-3 text-white text-sm"
+                >
+                  <option value="">Select state</option>
+                  {US_STATES.map((s) => (
+                    <option key={s} value={s}>{s}</option>
+                  ))}
+                </select>
+              </div>
+              <div>
+                <label className="block text-xs text-zinc-500 mb-1">Zip code *</label>
+                <input
+                  type="text"
+                  value={zipCode}
+                  onChange={(e) => setZipCode(e.target.value)}
+                  placeholder="e.g., 44240"
+                  className="w-full bg-zinc-900 border border-zinc-700 rounded-xl px-4 py-3 text-white placeholder:text-zinc-500"
+                />
+              </div>
+              <div>
+                <label className="block text-xs text-zinc-500 mb-1">County</label>
+                <input
+                  type="text"
+                  value={county}
+                  onChange={(e) => setCounty(e.target.value)}
+                  placeholder="e.g., Portage County"
+                  className="w-full bg-zinc-900 border border-zinc-700 rounded-xl px-4 py-3 text-white placeholder:text-zinc-500"
+                />
+                <p className="text-xs text-zinc-500 mt-1">Helps us track local health inspections</p>
+              </div>
+            </div>
+            <button
+              type="button"
+              onClick={() => setStep(4)}
+              disabled={!googleBusinessName.trim() || !streetAddress.trim() || !city.trim() || !state || !zipCode.trim()}
+              className="w-full py-4 rounded-xl bg-[#E65100] text-white font-semibold disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              Next →
+            </button>
+          </div>
+        )}
+
+        {step === 4 && (
+          <div className="space-y-6">
             <h2 className="text-xl font-bold">What matters most to you right now?</h2>
             <div className="space-y-3">
               {GOAL_OPTIONS.map((g) => (
@@ -235,7 +340,7 @@ export default function OnboardingPage() {
             </div>
             <button
               type="button"
-              onClick={() => setStep(4)}
+              onClick={() => setStep(5)}
               className="w-full py-4 rounded-xl bg-[#E65100] text-white font-semibold"
             >
               Next →
@@ -243,7 +348,7 @@ export default function OnboardingPage() {
           </div>
         )}
 
-        {step === 4 && (
+        {step === 5 && (
           <div className="space-y-6">
             <h2 className="text-xl font-bold">Your dashboard is ready.</h2>
             <p className="text-zinc-400">We built your PrimeOS around the numbers you just gave us.</p>

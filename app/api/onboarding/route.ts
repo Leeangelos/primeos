@@ -9,6 +9,12 @@ type PostBody = {
   labor_cost_pct?: number | null;
   employee_count?: number | null;
   monthly_rent?: number | null;
+  google_business_name?: string | null;
+  street_address?: string | null;
+  city?: string | null;
+  state?: string | null;
+  zip_code?: string | null;
+  county?: string | null;
   goals?: string[];
 };
 
@@ -23,6 +29,12 @@ export async function POST(request: Request) {
       labor_cost_pct,
       employee_count,
       monthly_rent,
+      google_business_name,
+      street_address,
+      city,
+      state,
+      zip_code,
+      county,
       goals,
     } = body;
 
@@ -45,6 +57,12 @@ export async function POST(request: Request) {
       labor_cost_pct: labor_cost_pct ?? null,
       employee_count: employee_count ?? null,
       monthly_rent: monthly_rent ?? null,
+      google_business_name: google_business_name ?? null,
+      street_address: street_address ?? null,
+      city: city ?? null,
+      state: state ?? null,
+      zip_code: zip_code ?? null,
+      county: county ?? null,
       goals: goals ?? null,
       completed_at: new Date().toISOString(),
     });
@@ -87,7 +105,7 @@ export async function GET(request: Request) {
     const supabase = createClient(supabaseUrl, serviceRoleKey);
     const { data } = await supabase
       .from("onboarding_data")
-      .select("id, store_name, weekly_sales, food_cost_pct, labor_cost_pct, employee_count, monthly_rent, goals")
+      .select("id, store_name, weekly_sales, food_cost_pct, labor_cost_pct, employee_count, monthly_rent, google_business_name, street_address, city, state, zip_code, county, goals")
       .eq("user_id", user.id)
       .limit(1)
       .maybeSingle();
