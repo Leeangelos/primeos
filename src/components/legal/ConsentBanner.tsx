@@ -2,8 +2,12 @@
 
 import { useState, useEffect } from "react";
 import Link from "next/link";
+import { usePathname } from "next/navigation";
+
+const HIDE_CONSENT_PATHS = ["/login", "/signup", "/welcome"];
 
 export function ConsentBanner() {
+  const pathname = usePathname();
   const [visible, setVisible] = useState(false);
 
   useEffect(() => {
@@ -18,7 +22,7 @@ export function ConsentBanner() {
     setVisible(false);
   };
 
-  if (!visible) return null;
+  if (HIDE_CONSENT_PATHS.includes(pathname ?? "") || !visible) return null;
 
   return (
     <div className="fixed left-4 right-4 z-40 bg-slate-800 rounded-xl border border-slate-700 p-4 shadow-lg shadow-black/20" style={{ bottom: "calc(5rem + env(safe-area-inset-bottom, 0px))" }}>

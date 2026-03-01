@@ -4,7 +4,7 @@ import { useEffect } from "react";
 import { usePathname, useRouter } from "next/navigation";
 import { useAuth } from "@/src/lib/auth-context";
 
-const PUBLIC_PATHS = ["/login", "/terms", "/privacy"];
+const PUBLIC_PATHS = ["/login", "/signup", "/welcome", "/terms", "/privacy"];
 
 export function AuthGuard({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
