@@ -27,6 +27,7 @@ const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 export async function POST(request: Request) {
   try {
     const body = (await request.json()) as Payload;
+    console.log("Signup POST body:", JSON.stringify(body, null, 2));
     const invite_code = (body.invite_code ?? "").trim().toUpperCase();
     const name = body.name?.trim();
     const email = body.email?.trim();
@@ -88,11 +89,11 @@ export async function POST(request: Request) {
       email_confirm: true,
       user_metadata: {
         name,
+        phone: phone ?? undefined,
         store_name,
         city_state,
-        phone: phone ?? undefined,
         pos_system: pos_system ?? undefined,
-        invite_code,
+        invite_code: invite_code,
       },
     });
 

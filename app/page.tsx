@@ -586,7 +586,7 @@ export default function HomePage() {
 
       <WinNotifications storeId={winsStoreId} />
 
-      {showMissingBanner && (
+      {!isOnboardingUser && showMissingBanner && (
         <div className="bg-amber-600/10 rounded-xl border border-amber-700/30 p-3 mb-4 flex items-start justify-between">
           <div className="flex items-start gap-2">
             <AlertTriangle className="w-4 h-4 text-amber-400 mt-0.5 flex-shrink-0" />
@@ -631,14 +631,14 @@ export default function HomePage() {
             return (
               <div className="bg-slate-800 rounded-xl p-4 border-l-4 min-w-0 border-slate-700" style={{ borderLeftColor: salesBorder }}>
                 <div className="flex items-center justify-between mb-1">
-                  <span className="text-xs text-slate-400 uppercase tracking-wide">Today&apos;s Sales</span>
+                  <span className="text-xs text-slate-400 uppercase tracking-wide">{isOnboardingUser ? "Estimated Daily Sales" : "Today&apos;s Sales"}</span>
                   <EducationInfoIcon metricKey="todays_sales" />
                 </div>
                 <div className="text-2xl font-bold tabular-nums" style={{ color: salesGrade === "green" ? COLORS.grade.green : COLORS.grade.red }}>
                   ${kpi.sales.toLocaleString("en-US", { maximumFractionDigits: 0 })}
                 </div>
                 <div className="text-xs text-slate-500">
-                  Target: ${(dailyTargetSales / 1000).toFixed(1)}K/day{kpi.isYesterday ? " (Yesterday)" : ""}
+                  {isOnboardingUser ? `Weekly ÷ 7 (${(dailyTargetSales / 1000).toFixed(1)}K/day)` : `Target: ${(dailyTargetSales / 1000).toFixed(1)}K/day${kpi.isYesterday ? " (Yesterday)" : ""}`}
                 </div>
               </div>
             );
@@ -691,6 +691,24 @@ export default function HomePage() {
               </div>
             );
           })()}
+          {isOnboardingUser && (onboardingData?.employee_count != null || onboardingData?.monthly_rent != null) && (
+            <div className="grid grid-cols-2 gap-3 min-w-0 col-span-2">
+              {onboardingData?.employee_count != null && (
+                <div className="bg-slate-800 rounded-xl p-4 border border-slate-700 min-w-0">
+                  <span className="text-xs text-slate-400 uppercase tracking-wide">Employee count</span>
+                  <div className="text-2xl font-bold tabular-nums text-white mt-1">{Number(onboardingData.employee_count)}</div>
+                  <div className="text-xs text-slate-500">From your setup</div>
+                </div>
+              )}
+              {onboardingData?.monthly_rent != null && (
+                <div className="bg-slate-800 rounded-xl p-4 border border-slate-700 min-w-0">
+                  <span className="text-xs text-slate-400 uppercase tracking-wide">Monthly rent</span>
+                  <div className="text-2xl font-bold tabular-nums text-white mt-1">${Number(onboardingData.monthly_rent).toLocaleString("en-US", { maximumFractionDigits: 0 })}</div>
+                  <div className="text-xs text-slate-500">From your setup</div>
+                </div>
+              )}
+            </div>
+          )}
         </div>
       ) : (
         <div className="grid grid-cols-2 gap-3 min-w-0">
@@ -733,6 +751,24 @@ export default function HomePage() {
 
       <div className="bg-slate-800 rounded-xl p-4 border border-slate-700 min-w-0">
         <h3 className="text-sm font-semibold text-slate-400 uppercase tracking-wide mb-3">7-Day Trend</h3>
+        {isOnboardingUser ? (
+          <div className="min-w-0">
+            <div className="w-full h-[60px] min-h-[60px]">
+              <ResponsiveContainer width="100%" height={60}>
+                <AreaChart data={last7Days} margin={{ top: 4, right: 4, bottom: 4, left: 4 }}>
+                  <defs>
+                    <linearGradient id="salesFillOnb" x1="0" y1="0" x2="0" y2="1">
+                      <stop offset="0%" stopColor="#3b82f6" stopOpacity={0.2} />
+                      <stop offset="100%" stopColor="#3b82f6" stopOpacity={0} />
+                    </linearGradient>
+                  </defs>
+                  <Area type="monotone" dataKey="sales" stroke="#3b82f6" fill="url(#salesFillOnb)" strokeWidth={2} dot={false} isAnimationActive={false} />
+                </AreaChart>
+              </ResponsiveContainer>
+            </div>
+            <p className="text-xs text-slate-500 mt-2">Daily breakdown available when POS is connected.</p>
+          </div>
+        ) : (
         <div className="grid grid-cols-2 gap-4 min-w-0">
           <div className="min-w-0">
             <div className="flex items-center gap-1.5 text-xs text-slate-500 mb-1">
@@ -780,6 +816,7 @@ export default function HomePage() {
             </div>
           </div>
         </div>
+        )}
       </div>
 
       <div className="bg-slate-800 rounded-xl p-4 border border-slate-700 min-w-0">
@@ -792,7 +829,16 @@ export default function HomePage() {
             Today, {new Date(today + "T12:00:00Z").toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })}
           </span>
         </div>
-        {(() => {
+        {isOnboardingUser ? (
+          <>
+            <p className="text-sm text-slate-300 leading-relaxed">
+              Your morning brief generates after daily KPIs are entered. Connect your POS to start receiving daily insights.
+            </p>
+            <Link href="/daily" className="inline-flex items-center gap-1 text-sm text-blue-400 hover:text-blue-300 mt-3">
+              Enter daily numbers <ChevronRight className="w-4 h-4 shrink-0" aria-hidden />
+            </Link>
+          </>
+        ) : (() => {
           const briefForStore = selectedStore === "all" ? SEED_MORNING_BRIEF : (SEED_MORNING_BRIEF_BY_STORE[selectedStore] ?? SEED_MORNING_BRIEF);
           return briefForStore ? (
             <>
@@ -832,6 +878,13 @@ export default function HomePage() {
       </div>
 
       <div className="mb-4">
+        {isOnboardingUser ? (
+          <div className="rounded-xl border p-4 border-slate-700 bg-slate-800/50">
+            <p className="text-[10px] text-slate-500 uppercase tracking-wide mb-1">Business Health Score</p>
+            <p className="text-sm text-slate-400">Connect POS for live data.</p>
+            <p className="text-xs text-slate-500 mt-2">Based on 6 weeks of data across financials, reputation, and operations.</p>
+          </div>
+        ) : (
         <div
           className={`rounded-xl border p-4 ${
             score.overall >= 80
@@ -874,10 +927,11 @@ export default function HomePage() {
             ))}
           </div>
         </div>
+        )}
       </div>
 
-      {/* Wins This Week — positive first, above alerts */}
-      {wins.length > 0 && (
+      {/* Wins This Week — positive first, above alerts (hidden for onboarding — fabricated) */}
+      {!isOnboardingUser && wins.length > 0 && (
         <div className="mb-4">
           <div className="flex items-center gap-2 mb-3">
             <span className="text-base">🎉</span>
