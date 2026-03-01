@@ -11,6 +11,8 @@ import {
   ChevronDown,
   Plus,
 } from "lucide-react";
+import { useAuth } from "@/src/lib/auth-context";
+import { isNewUser } from "@/src/lib/user-scope";
 import {
   VENDORS,
   VENDOR_COSTS,
@@ -62,6 +64,8 @@ function nextMonth(month: number, year: number): { month: number; year: number }
 }
 
 export default function VendorTrackerPage() {
+  const { session } = useAuth();
+  const newUser = isNewUser(session);
   const [selectedStore, setSelectedStore] = useState("kent");
   const [selectedMonth, setSelectedMonth] = useState(2);
   const [selectedYear, setSelectedYear] = useState(2026);
@@ -474,6 +478,14 @@ export default function VendorTrackerPage() {
         </div>
       </div>
 
+      {newUser && (
+        <div className="rounded-xl border border-slate-700 bg-slate-800/50 p-6 text-center mb-6">
+          <p className="text-sm text-slate-300">No vendors yet. Tap &quot;Log Invoice&quot; to add your first vendor.</p>
+        </div>
+      )}
+
+      {!newUser && (
+      <>
       <div className="flex flex-wrap items-center gap-3">
         <div className="flex items-center gap-2">
           <label className="text-xs text-slate-500">Store:</label>
@@ -1000,6 +1012,10 @@ export default function VendorTrackerPage() {
             </p>
           </div>
         </div>
+      )}
+
+      </>
+
       )}
 
       <DataDisclaimer confidence="high" details="12 months of vendor cost data loaded. Trends require 2+ months." />

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import {
   Star,
   ThumbsUp,
@@ -10,6 +10,8 @@ import {
   Eye,
   ExternalLink,
 } from "lucide-react";
+import { useAuth } from "@/src/lib/auth-context";
+import { isNewUser, getNewUserStoreName } from "@/src/lib/user-scope";
 import { SEED_STORES } from "@/src/lib/seed-data";
 import { EducationInfoIcon } from "@/src/components/education/InfoIcon";
 import DataSourceBadge from "@/src/components/ui/DataSourceBadge";
@@ -127,14 +129,47 @@ const AREA_RANKING: Record<string, { rank: number; total: number }> = {
   all: { rank: 6, total: 20 },
 };
 
+type OnboardingData = {
+  store_name?: string | null;
+  google_business_name?: string | null;
+  city?: string | null;
+  state?: string | null;
+};
+
 export default function ReputationPage() {
+  const { session } = useAuth();
+  const newUser = isNewUser(session);
+  const [onboardingData, setOnboardingData] = useState<OnboardingData | null>(null);
   const [selectedStore, setSelectedStore] = useState("kent");
   const [activeTab, setActiveTab] = useState<"overview" | "reviews" | "market" | "alerts">("overview");
   const [expandedReview, setExpandedReview] = useState<string | null>(null);
   const [reviewFilter, setReviewFilter] = useState<"all" | "positive" | "neutral" | "negative">("all");
 
+  useEffect(() => {
+    const token = session?.access_token;
+    if (!token) return;
+    let cancelled = false;
+    fetch("/api/onboarding", { headers: { Authorization: `Bearer ${token}` } })
+      .then((res) => res.json())
+      .then((body) => {
+        if (!cancelled && body.completed && body.data) setOnboardingData(body.data);
+      })
+      .catch(() => {});
+    return () => { cancelled = true; };
+  }, [session?.access_token]);
+
   const { profiles: googleProfiles, loading: profilesLoading } = useAllStoreProfiles();
   const googleData = selectedStore === "all" ? null : googleProfiles[selectedStore] ?? null;
+
+  const newUserStoreName = (onboardingData?.store_name as string) || getNewUserStoreName(session);
+  const newUserGoogleUrl = useMemo(() => {
+    const name = (onboardingData?.google_business_name as string)?.trim();
+    const city = (onboardingData?.city as string)?.trim();
+    const state = (onboardingData?.state as string)?.trim();
+    if (!name) return null;
+    const query = [name, city, state].filter(Boolean).join(" ");
+    return query ? `https://www.google.com/maps/search/${encodeURIComponent(query)}` : null;
+  }, [onboardingData?.google_business_name, onboardingData?.city, onboardingData?.state]);
 
   const storeData = useMemo(() => {
     if (selectedStore === "all") {
@@ -253,8 +288,9 @@ export default function ReputationPage() {
     return SEED_REPUTATION_KPIS_BY_STORE[selectedStore] ?? SEED_REPUTATION_KPIS_BY_STORE.kent;
   }, [selectedStore]);
 
-  const pinnedStoreDisplay = PINNED_STORE_DISPLAY[selectedStore] ?? PINNED_STORE_DISPLAY.all;
+  const pinnedStoreDisplay = newUser ? newUserStoreName : (PINNED_STORE_DISPLAY[selectedStore] ?? PINNED_STORE_DISPLAY.all);
   const areaRanking = AREA_RANKING[selectedStore] ?? AREA_RANKING.all;
+  const googleProfileUrl = newUser ? newUserGoogleUrl : (selectedStore !== "all" ? GOOGLE_PROFILE_URL[selectedStore] : null);
 
   return (
     <div className="space-y-4 pb-28 min-w-0 overflow-x-hidden">
@@ -272,23 +308,29 @@ export default function ReputationPage() {
           <label className="text-xs text-slate-500 shrink-0">Store:</label>
         </div>
         <div className="flex flex-wrap gap-2 overflow-x-auto overflow-visible pb-1 min-h-[44px] p-1">
-          {STORE_OPTIONS.map((o) => {
-            const isActive = selectedStore === o.value;
-            return (
-              <button
-                key={o.value}
-                type="button"
-                onClick={() => setSelectedStore(o.value)}
-                className={`px-3 py-2 rounded-lg text-xs font-medium transition-colors border shrink-0 min-h-[44px] ${
-                  isActive
-                    ? "bg-zinc-800 border-[#E65100]/50 ring-2 ring-[#E65100] shadow-[0_0_8px_rgba(230,81,0,0.5)] text-white"
-                    : "bg-zinc-900 text-slate-400 border-zinc-800 hover:text-slate-300"
-                }`}
-              >
-                {o.label}
-              </button>
-            );
-          })}
+          {newUser ? (
+            <div className="px-3 py-2 rounded-lg text-xs font-medium border shrink-0 min-h-[44px] bg-zinc-800 border-[#E65100]/50 ring-2 ring-[#E65100] shadow-[0_0_8px_rgba(230,81,0,0.5)] text-white">
+              {newUserStoreName}
+            </div>
+          ) : (
+            STORE_OPTIONS.map((o) => {
+              const isActive = selectedStore === o.value;
+              return (
+                <button
+                  key={o.value}
+                  type="button"
+                  onClick={() => setSelectedStore(o.value)}
+                  className={`px-3 py-2 rounded-lg text-xs font-medium transition-colors border shrink-0 min-h-[44px] ${
+                    isActive
+                      ? "bg-zinc-800 border-[#E65100]/50 ring-2 ring-[#E65100] shadow-[0_0_8px_rgba(230,81,0,0.5)] text-white"
+                      : "bg-zinc-900 text-slate-400 border-zinc-800 hover:text-slate-300"
+                  }`}
+                >
+                  {o.label}
+                </button>
+              );
+            })
+          )}
         </div>
       </div>
 
@@ -342,17 +384,21 @@ export default function ReputationPage() {
       <div className="w-full bg-zinc-900 border border-zinc-700 rounded-2xl px-5 py-4 flex items-center justify-between shadow-[0_0_12px_rgba(230,81,0,0.3)] ring-2 ring-[#E65100] mb-3">
         <div>
           <div className="text-lg font-bold text-white">{pinnedStoreDisplay}</div>
-          <div className="flex items-center gap-1.5 mt-1">
-            <span className="text-base font-semibold text-amber-500">
-              <Star className="w-4 h-4 inline fill-amber-500 text-amber-500 mr-0.5 align-middle" />
-              {storeData.google.rating}
-            </span>
-            <span className="text-xs text-zinc-500">({storeData.google.reviewCount} reviews)</span>
-          </div>
+          {newUser ? (
+            <p className="text-xs text-zinc-400 mt-1">Connect your Google Business Profile to see live reviews</p>
+          ) : (
+            <div className="flex items-center gap-1.5 mt-1">
+              <span className="text-base font-semibold text-amber-500">
+                <Star className="w-4 h-4 inline fill-amber-500 text-amber-500 mr-0.5 align-middle" />
+                {storeData.google.rating}
+              </span>
+              <span className="text-xs text-zinc-500">({storeData.google.reviewCount} reviews)</span>
+            </div>
+          )}
         </div>
-        {selectedStore !== "all" && GOOGLE_PROFILE_URL[selectedStore] && (
+        {googleProfileUrl && (
           <a
-            href={GOOGLE_PROFILE_URL[selectedStore]}
+            href={googleProfileUrl}
             target="_blank"
             rel="noopener noreferrer"
             className="text-blue-400 text-sm font-medium underline inline-flex items-center gap-1 shrink-0"

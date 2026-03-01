@@ -3,6 +3,8 @@
 import { useState, useEffect, useCallback, useRef } from "react";
 import { createPortal } from "react-dom";
 import { createClient } from "@/lib/supabase";
+import { useAuth } from "@/src/lib/auth-context";
+import { isNewUser } from "@/src/lib/user-scope";
 import { EducationInfoIcon } from "@/src/components/education/InfoIcon";
 import { EDUCATION_CONTENT } from "@/src/lib/education-content";
 import { SEED_CHAT_MESSAGES } from "@/src/lib/seed-data";
@@ -69,6 +71,8 @@ type Message = {
 };
 
 export default function ChatPage() {
+  const { session } = useAuth();
+  const newUser = isNewUser(session);
   const [store, setStore] = useState<CockpitStoreSlug>("kent");
   const [channel, setChannel] = useState<typeof CHANNELS[number]["key"]>("general");
   const [messages, setMessages] = useState<Message[]>([]);
@@ -96,6 +100,11 @@ export default function ChatPage() {
 
   const loadMessages = useCallback(async () => {
     setLoading(true);
+    if (newUser) {
+      setMessages([]);
+      setLoading(false);
+      return;
+    }
     const res = await fetch(`/api/chat?store=${store}&channel=${channel}&limit=50`);
     const data = await res.json();
     if (data.ok && Array.isArray(data.messages) && data.messages.length > 0) {
@@ -104,7 +113,7 @@ export default function ChatPage() {
       setMessages(SEED_CHAT_MESSAGES.filter((m) => m.channel === channel));
     }
     setLoading(false);
-  }, [store, channel]);
+  }, [store, channel, newUser]);
 
   const loadCounts = useCallback(async () => {
     const res = await fetch(`/api/chat/counts?store=${store}`);
@@ -150,6 +159,54 @@ export default function ChatPage() {
   const pinned = messages.filter((m) => m.is_pinned);
   const rest = messages.filter((m) => !m.is_pinned);
   const isAnnouncements = channel === "announcements";
+
+  if (newUser) {
+    return (
+      <div className="flex flex-col min-h-[calc(100vh-8rem)] pb-28">
+        <div className="dashboard-toolbar p-3 sm:p-5 space-y-3 shrink-0">
+          <div className="flex items-center gap-2 flex-wrap">
+            <h1 className="text-lg font-semibold sm:text-2xl">Team Chat</h1>
+            <EducationInfoIcon metricKey="team_communication" />
+          </div>
+          <p className="text-xs text-muted">In-app communication by store and channel. No personal numbers, searchable, organized.</p>
+        </div>
+        <div className="dashboard-surface rounded-lg border border-border flex flex-col flex-1 min-h-0 mt-3 p-6 flex flex-col items-center justify-center text-center">
+          <p className="text-sm text-muted max-w-sm">
+            Welcome to Team Chat. Once you add your team, this is where you communicate — no texting, no miscommunication.
+          </p>
+        </div>
+        <div className="fixed bottom-20 left-0 right-0 p-3 bg-[#0d0f13] border-t border-border/50 z-20">
+          {!currentUser ? (
+            <p className="text-sm text-muted py-2">Log in to use chat.</p>
+          ) : null}
+          <div className="flex gap-2 max-w-2xl mx-auto">
+            <textarea
+              value={newMessage}
+              onChange={(e) => setNewMessage(e.target.value)}
+              placeholder={currentUser ? "Type a message..." : "Log in to use chat"}
+              rows={2}
+              disabled={!currentUser}
+              className="flex-1 rounded-lg border border-border/50 bg-black/30 px-3 py-2 text-sm text-white placeholder:text-muted focus:border-brand/60 focus:ring-1 focus:ring-brand/40 focus:outline-none resize-none disabled:opacity-50 disabled:cursor-not-allowed"
+              onKeyDown={(e) => {
+                if (e.key === "Enter" && !e.shiftKey) {
+                  e.preventDefault();
+                  handleSend();
+                }
+              }}
+            />
+            <button
+              type="button"
+              onClick={handleSend}
+              disabled={!newMessage.trim() || sending || !currentUser}
+              className="min-h-[44px] rounded-lg border border-brand/50 bg-brand/15 px-4 py-2 text-sm font-semibold text-brand hover:bg-brand/25 disabled:opacity-50 shrink-0"
+            >
+              Send
+            </button>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="flex flex-col min-h-[calc(100vh-8rem)] pb-28">

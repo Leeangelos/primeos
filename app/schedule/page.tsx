@@ -2,6 +2,8 @@
 
 import { useState, useEffect, useCallback } from "react";
 import { MapPin, ChevronDown, Check } from "lucide-react";
+import { useAuth } from "@/src/lib/auth-context";
+import { isNewUser, getNewUserStoreName } from "@/src/lib/user-scope";
 import { EducationInfoIcon } from "@/src/components/education/InfoIcon";
 import { SEED_SCHEDULE, SEED_DAILY_KPIS, SEED_EMPLOYEES, SEED_STORES, type SeedShift } from "@/src/lib/seed-data";
 import { cn } from "@/lib/utils";
@@ -387,6 +389,8 @@ const emptyForm: ShiftForm = {
 };
 
 export default function SchedulePage() {
+  const { session } = useAuth();
+  const newUser = isNewUser(session);
   const weekDates = getWeekDates();
   const [shifts, setShifts] = useState<SeedShift[]>(() => SEED_SCHEDULE);
   const [modalState, setModalState] = useState<ModalState>({ mode: "closed" });
@@ -401,12 +405,15 @@ export default function SchedulePage() {
   const employeeMap = Object.fromEntries(SEED_EMPLOYEES.map((e) => [e.id, e]));
   const kpiByDate = Object.fromEntries(SEED_DAILY_KPIS.map((k) => [k.date, k]));
 
-  const activeEmployees = SEED_EMPLOYEES.filter((e) => e.status === "active")
-    .filter((e) => selectedStore === "all" || e.store_id === selectedStore)
-    .map((e) => ({ id: e.id, name: e.name, role: e.role }));
+  const activeEmployees = newUser
+    ? []
+    : SEED_EMPLOYEES.filter((e) => e.status === "active")
+        .filter((e) => selectedStore === "all" || e.store_id === selectedStore)
+        .map((e) => ({ id: e.id, name: e.name, role: e.role }));
 
-  const shiftsForStore =
-    selectedStore === "all"
+  const shiftsForStore = newUser
+    ? []
+    : selectedStore === "all"
       ? shifts
       : shifts.filter((s) => employeeMap[s.employee_id]?.store_id === selectedStore);
 
@@ -419,7 +426,7 @@ export default function SchedulePage() {
     shiftsByDate[s.date].push({ ...s, name, hours });
   });
 
-  const selectedStoreName = getStoreLabel(selectedStore);
+  const selectedStoreName = newUser ? getNewUserStoreName(session) : getStoreLabel(selectedStore);
   const currentDayDate = weekDates[dayIndex];
 
   useEffect(() => {
@@ -538,45 +545,60 @@ export default function SchedulePage() {
         <p className="text-xs text-muted">Week view. Total hours, labor cost, and projected SLPH by day.</p>
       </div>
 
-      {/* Store selector */}
+      {/* Store selector — new users see single store name only */}
       <div className="relative mb-4 px-3 sm:px-5">
-        <button
-          type="button"
-          onClick={() => setStoreOpen((o) => !o)}
-          className="flex items-center gap-2 bg-slate-800 rounded-lg px-3 py-2 border border-slate-700 text-sm text-white min-h-[44px] w-full sm:w-auto"
-          aria-haspopup="listbox"
-          aria-expanded={storeOpen}
-          aria-label={`Store: ${selectedStoreName}. Select location.`}
-        >
-          <MapPin className="w-4 h-4 text-blue-400 shrink-0" aria-hidden />
-          <span className="truncate">{selectedStoreName}</span>
-          <ChevronDown className={cn("w-4 h-4 text-slate-400 shrink-0 transition-transform", storeOpen && "rotate-180")} aria-hidden />
-        </button>
-        {storeOpen && (
+        {newUser ? (
+          <div className="flex items-center gap-2 bg-slate-800 rounded-lg px-3 py-2 border border-[#E65100]/50 text-sm text-white min-h-[44px] w-full sm:w-auto">
+            <MapPin className="w-4 h-4 text-[#E65100] shrink-0" aria-hidden />
+            <span className="truncate font-medium">{selectedStoreName}</span>
+          </div>
+        ) : (
           <>
-            <div className="fixed inset-0 z-30" aria-hidden="true" onClick={() => setStoreOpen(false)} />
-            <div className="absolute top-full left-3 right-3 sm:left-0 sm:right-auto mt-1 z-40 w-64 bg-slate-800 rounded-xl border border-slate-700 shadow-lg shadow-black/30 overflow-hidden">
-              {STORE_OPTIONS.map((opt) => (
-                <button
-                  key={opt.slug}
-                  type="button"
-                  onClick={() => {
-                    setSelectedStore(opt.slug);
-                    setStoreOpen(false);
-                  }}
-                  className={cn(
-                    "w-full flex items-center justify-between px-4 py-3 text-sm hover:bg-slate-700/50 transition-colors",
-                    selectedStore === opt.slug ? "text-blue-400" : "text-slate-300"
-                  )}
-                >
-                  <span>{opt.name}</span>
-                  {selectedStore === opt.slug && <Check className="w-4 h-4 text-blue-400 shrink-0" aria-hidden />}
-                </button>
-              ))}
-            </div>
+            <button
+              type="button"
+              onClick={() => setStoreOpen((o) => !o)}
+              className="flex items-center gap-2 bg-slate-800 rounded-lg px-3 py-2 border border-slate-700 text-sm text-white min-h-[44px] w-full sm:w-auto"
+              aria-haspopup="listbox"
+              aria-expanded={storeOpen}
+              aria-label={`Store: ${selectedStoreName}. Select location.`}
+            >
+              <MapPin className="w-4 h-4 text-blue-400 shrink-0" aria-hidden />
+              <span className="truncate">{selectedStoreName}</span>
+              <ChevronDown className={cn("w-4 h-4 text-slate-400 shrink-0 transition-transform", storeOpen && "rotate-180")} aria-hidden />
+            </button>
+            {storeOpen && (
+              <>
+                <div className="fixed inset-0 z-30" aria-hidden="true" onClick={() => setStoreOpen(false)} />
+                <div className="absolute top-full left-3 right-3 sm:left-0 sm:right-auto mt-1 z-40 w-64 bg-slate-800 rounded-xl border border-slate-700 shadow-lg shadow-black/30 overflow-hidden">
+                  {STORE_OPTIONS.map((opt) => (
+                    <button
+                      key={opt.slug}
+                      type="button"
+                      onClick={() => {
+                        setSelectedStore(opt.slug);
+                        setStoreOpen(false);
+                      }}
+                      className={cn(
+                        "w-full flex items-center justify-between px-4 py-3 text-sm hover:bg-slate-700/50 transition-colors",
+                        selectedStore === opt.slug ? "text-blue-400" : "text-slate-300"
+                      )}
+                    >
+                      <span>{opt.name}</span>
+                      {selectedStore === opt.slug && <Check className="w-4 h-4 text-blue-400 shrink-0" aria-hidden />}
+                    </button>
+                  ))}
+                </div>
+              </>
+            )}
           </>
         )}
       </div>
+
+      {newUser && shiftsForStore.length === 0 && (
+        <div className="px-3 sm:px-5 py-4 rounded-xl border border-slate-700 bg-slate-800/50 text-center">
+          <p className="text-sm text-slate-300">No shifts scheduled yet. Tap &quot;Add Shift&quot; to start building your schedule.</p>
+        </div>
+      )}
 
       {/* Week / Day toggle + week label */}
       <div className="flex flex-wrap items-center gap-3 px-3 sm:px-5">
