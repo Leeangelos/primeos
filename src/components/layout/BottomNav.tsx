@@ -44,6 +44,7 @@ import { cn } from "@/lib/utils";
 import { createClient } from "@/lib/supabase";
 import { UpgradeModal } from "@/src/components/layout/UpgradeModal";
 import { useTheme } from "@/src/lib/theme-context";
+import { useAuth } from "@/src/lib/auth-context";
 
 const MAIN_TABS = [
   { href: "/", label: "Home", Icon: LayoutDashboard },
@@ -123,6 +124,7 @@ export function BottomNav() {
   const router = useRouter();
   if (pathname === "/onboarding") return null;
   const { theme } = useTheme();
+  const { session } = useAuth();
   const isLight = theme === "light";
   const [moreOpen, setMoreOpen] = useState(false);
   const [drawerSearch, setDrawerSearch] = useState("");
@@ -385,6 +387,21 @@ export function BottomNav() {
                 setMoreOpen={closeMore}
               />
 
+          {session?.user?.email === "leeangelos.corp@gmail.com" && (
+            <div className={cn("pt-4 mt-4 border-t", isLight ? "border-zinc-200" : "border-zinc-800")}>
+              <Link
+                href="/admin"
+                onClick={closeMore}
+                className={cn(
+                  "flex items-center gap-3 px-4 py-3 rounded-xl active:opacity-90",
+                  isLight ? "text-zinc-600 active:bg-zinc-100" : "text-zinc-400 active:bg-zinc-800/50"
+                )}
+              >
+                <Shield className="w-5 h-5" />
+                <span className="text-sm font-medium">Admin</span>
+              </Link>
+            </div>
+          )}
           <div className={cn("pt-4 mt-4 border-t", isLight ? "border-zinc-200" : "border-zinc-800")}>
             <Link
               href="/partner"
