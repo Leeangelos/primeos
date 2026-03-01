@@ -2,7 +2,10 @@ import { NextResponse } from "next/server";
 import { createClient } from "@supabase/supabase-js";
 import { Resend } from "resend";
 
+const VALID_INVITE_CODES = ["HILLCREST2026", "PRIMEOS2026", "MARZIC2026"];
+
 type Payload = {
+  invite_code?: string;
   name?: string;
   email?: string;
   password?: string;
@@ -23,12 +26,26 @@ const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 export async function POST(request: Request) {
   try {
     const body = (await request.json()) as Payload;
+    const invite_code = (body.invite_code ?? "").trim().toUpperCase();
     const name = body.name?.trim();
     const email = body.email?.trim();
     const password = body.password;
     const store_name = body.store_name?.trim();
     const city_state = body.city_state?.trim();
     const pos_system = body.pos_system?.trim() || null;
+
+    if (!invite_code) {
+      return NextResponse.json(
+        { error: "Invalid invite code. PrimeOS is currently available by invitation only." },
+        { status: 400 }
+      );
+    }
+    if (!VALID_INVITE_CODES.includes(invite_code)) {
+      return NextResponse.json(
+        { error: "Invalid invite code. PrimeOS is currently available by invitation only." },
+        { status: 400 }
+      );
+    }
 
     if (!name || !email || !password || !store_name || !city_state) {
       return NextResponse.json(
@@ -72,6 +89,7 @@ export async function POST(request: Request) {
         store_name,
         city_state,
         pos_system: pos_system ?? undefined,
+        invite_code,
       },
     });
 

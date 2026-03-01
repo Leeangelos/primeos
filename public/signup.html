@@ -76,6 +76,8 @@
         box-shadow: 0 0 0 1px rgba(230, 81, 0, 0.7);
       }
       .field-input::placeholder { color: var(--text-muted); }
+      .field-input-invite { border-left: 4px solid var(--accent); }
+      .field-hint { font-size: 0.75rem; color: var(--text-muted); margin-top: 0.25rem; }
       .btn-submit {
         width: 100%;
         padding: 1rem;
@@ -122,10 +124,15 @@
       <main>
         <div class="container">
           <h1 class="hero-title">Get Started Free</h1>
-          <p class="hero-subtitle">Full access. No credit card. No catch.</p>
+          <p class="hero-subtitle">Invitation only. Full access. No credit card.</p>
           <div class="form-card">
             <form id="signup-form" novalidate>
               <div class="form-grid">
+                <div class="field">
+                  <label class="field-label" for="invite_code">Invite Code *</label>
+                  <input id="invite_code" name="invite_code" type="text" required class="field-input field-input-invite" placeholder="Enter your invite code" autocomplete="off" style="text-transform:uppercase;" />
+                  <p class="field-hint">PrimeOS is currently available by invitation only through select food distributors.</p>
+                </div>
                 <div class="field">
                   <label class="field-label" for="name">Your Name *</label>
                   <input id="name" name="name" type="text" required class="field-input" autocomplete="name" />
@@ -186,6 +193,7 @@
 
         form.addEventListener("submit", function(e) {
           e.preventDefault();
+          var invite_code = ((document.getElementById("invite_code") || {}).value || "").trim().toUpperCase();
           var name = (document.getElementById("name") || {}).value.trim();
           var email = (document.getElementById("email") || {}).value.trim();
           var password = (document.getElementById("password") || {}).value;
@@ -196,6 +204,11 @@
           errorEl.style.display = "none";
           errorEl.textContent = "";
 
+          if (!invite_code) {
+            errorEl.textContent = "Please enter your invite code.";
+            errorEl.style.display = "block";
+            return;
+          }
           if (!name || !email || !password || !store_name || !city_state) {
             errorEl.textContent = "Please fill in all required fields.";
             errorEl.style.display = "block";
@@ -213,7 +226,7 @@
           fetch("/api/signup", {
             method: "POST",
             headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ name, email, password, store_name, city_state, pos_system })
+            body: JSON.stringify({ invite_code, name, email, password, store_name, city_state, pos_system })
           })
             .then(function(res) { return res.json().then(function(data) { return { ok: res.ok, data: data }; }); })
             .then(function(result) {
