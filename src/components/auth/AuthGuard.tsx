@@ -26,11 +26,15 @@ export function AuthGuard({ children }: { children: React.ReactNode }) {
       return;
     }
 
+    console.log("AuthGuard: session exists", session?.user?.email);
+    console.log("AuthGuard: user_metadata", session?.user?.user_metadata);
+
     const storeName = session.user?.user_metadata?.store_name;
     const isNewSignup = typeof storeName === "string" && storeName.length > 0;
     const skipCheck = session.user?.email === SKIP_ONBOARDING_CHECK_EMAIL || !isNewSignup;
 
     if (skipCheck) {
+      console.log("AuthGuard: onboarding complete, proceeding");
       setOnboardingComplete(true);
       return;
     }
@@ -44,22 +48,43 @@ export function AuthGuard({ children }: { children: React.ReactNode }) {
 
     let cancelled = false;
     onboardingCheckDone.current = true;
-    const token = session.access_token;
-    fetch("/api/onboarding", { headers: token ? { Authorization: `Bearer ${token}` } : {} })
-      .then((res) => res.json())
-      .then((body) => {
-        if (!cancelled) {
-          setOnboardingComplete(!!body.completed);
-          if (!body.completed) {
-            router.replace("/onboarding");
-          }
+    console.log("AuthGuard: checking onboarding for new user");
+
+    const timeoutId = setTimeout(() => {
+      if (!cancelled) {
+        console.log("AuthGuard: onboarding check timeout, proceeding");
+        setOnboardingComplete(true);
+      }
+    }, 3000);
+
+    (async () => {
+      try {
+        const token = session.access_token;
+        const res = await fetch("/api/onboarding", {
+          headers: token ? { Authorization: `Bearer ${token}` } : {},
+        });
+        if (!res.ok) throw new Error("API failed");
+        const data = await res.json();
+        console.log("AuthGuard: onboarding API response", data);
+        if (cancelled) return;
+        setOnboardingComplete(!!data.completed);
+        if (!data.completed) {
+          console.log("AuthGuard: redirecting to /onboarding");
+          router.replace("/onboarding");
+        } else {
+          console.log("AuthGuard: onboarding complete, proceeding");
         }
-      })
-      .catch(() => {
+      } catch (err) {
+        console.error("Onboarding check failed, proceeding:", err);
         if (!cancelled) setOnboardingComplete(true);
-      });
+      } finally {
+        clearTimeout(timeoutId);
+      }
+    })();
+
     return () => {
       cancelled = true;
+      clearTimeout(timeoutId);
     };
   }, [loading, session, pathname, router, onboardingComplete]);
 
