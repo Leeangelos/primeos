@@ -121,6 +121,7 @@ const NAV_BAR_HEIGHT = "4rem"; /* h-16 */
 export function BottomNav() {
   const pathname = usePathname();
   const router = useRouter();
+  if (pathname === "/onboarding") return null;
   const { theme } = useTheme();
   const isLight = theme === "light";
   const [moreOpen, setMoreOpen] = useState(false);

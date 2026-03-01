@@ -72,8 +72,21 @@ export default function OnboardingPage() {
   const [goals, setGoals] = useState<string[]>([]);
   const [submitting, setSubmitting] = useState(false);
 
-  const name = (session?.user?.user_metadata?.name as string) ?? "there";
-  const storeName = (session?.user?.user_metadata?.store_name as string) ?? "Your store";
+  const metadata = session?.user?.user_metadata as Record<string, unknown> | undefined;
+  if (typeof metadata === "object" && metadata !== null) {
+    console.log("Onboarding: user_metadata", metadata);
+  }
+  const name = (metadata?.name as string) ?? "there";
+  const storeNameRaw =
+    (metadata?.store_name as string) ||
+    (metadata?.storeName as string) ||
+    (metadata?.store as string) ||
+    "";
+  const cityState =
+    [metadata?.city, metadata?.state].filter(Boolean).join(", ") ||
+    (metadata?.city_state as string) ||
+    "";
+  const storeName = storeNameRaw.trim() || cityState || "Your store";
 
   const toggleGoal = (id: string) => {
     setGoals((prev) => (prev.includes(id) ? prev.filter((g) => g !== id) : [...prev, id]));
@@ -81,36 +94,46 @@ export default function OnboardingPage() {
 
   const handleComplete = async () => {
     setSubmitting(true);
+    const userId = session?.user?.id;
+    const onboardingPayload = {
+      user_id: userId,
+      store_name: storeName,
+      weekly_sales: weeklySales ? Number(weeklySales) : null,
+      food_cost_pct: foodCostPct ? Number(foodCostPct) : null,
+      labor_cost_pct: laborCostPct ? Number(laborCostPct) : null,
+      employee_count: employeeCount ? Number(employeeCount) : null,
+      monthly_rent: monthlyRent ? Number(monthlyRent) : null,
+      google_business_name: googleBusinessName || null,
+      street_address: streetAddress || null,
+      city: city || null,
+      state: state || null,
+      zip_code: zipCode || null,
+      county: county || null,
+      goals,
+    };
     try {
+      console.log("COMPLETING ONBOARDING", onboardingPayload);
       const res = await fetch("/api/onboarding", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          user_id: session?.user?.id,
-          store_name: storeName,
-          weekly_sales: weeklySales ? Number(weeklySales) : null,
-          food_cost_pct: foodCostPct ? Number(foodCostPct) : null,
-          labor_cost_pct: laborCostPct ? Number(laborCostPct) : null,
-          employee_count: employeeCount ? Number(employeeCount) : null,
-          monthly_rent: monthlyRent ? Number(monthlyRent) : null,
-          google_business_name: googleBusinessName || null,
-          street_address: streetAddress || null,
-          city: city || null,
-          state: state || null,
-          zip_code: zipCode || null,
-          county: county || null,
-          goals,
-        }),
+        body: JSON.stringify(onboardingPayload),
       });
-      if (!res.ok) throw new Error("Save failed");
-      const userId = session?.user?.id;
+      console.log("ONBOARDING API RESPONSE", res.status);
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({}));
+        console.error("ONBOARDING API ERROR", err);
+      }
       if (typeof userId === "string" && userId) {
         localStorage.setItem(`primeos-onboarding-complete-${userId}`, "true");
       }
-      router.replace("/");
-      router.refresh();
-    } catch {
-      setSubmitting(false);
+      console.log("LOCALSTORAGE SET, REDIRECTING");
+      window.location.href = "/";
+    } catch (err) {
+      console.error("ONBOARDING COMPLETE ERROR", err);
+      if (typeof userId === "string" && userId) {
+        localStorage.setItem(`primeos-onboarding-complete-${userId}`, "true");
+      }
+      window.location.href = "/";
     }
   };
 
@@ -142,7 +165,9 @@ export default function OnboardingPage() {
           <div className="space-y-6 text-center">
             <h1 className="text-2xl font-bold">Welcome to PrimeOS, {name}!</h1>
             <p className="text-zinc-400">Let&apos;s set up your store. Takes about 60 seconds.</p>
-            <p className="text-zinc-500 text-sm">Your store: {storeName}</p>
+            {storeName && storeName !== "Your store" && (
+              <p className="text-zinc-500 text-sm">Your store: {storeName}</p>
+            )}
             <button
               type="button"
               onClick={() => setStep(2)}
@@ -320,7 +345,7 @@ export default function OnboardingPage() {
         )}
 
         {step === 4 && (
-          <div className="space-y-6">
+          <div className="space-y-4 pt-0">
             <h2 className="text-xl font-bold">What matters most to you right now?</h2>
             <div className="space-y-3">
               {GOAL_OPTIONS.map((g) => (
