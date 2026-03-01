@@ -2,6 +2,8 @@
 
 import { useState } from "react";
 import { FileSpreadsheet, Upload, Check, ChevronDown, HelpCircle } from "lucide-react";
+import { useAuth } from "@/src/lib/auth-context";
+import { isNewUser, getNewUserStoreName } from "@/src/lib/user-scope";
 import { formatDollars, formatPct } from "@/src/lib/formatters";
 import { EducationInfoIcon } from "@/src/components/education/InfoIcon";
 import { DataDisclaimer } from "@/src/components/ui/DataDisclaimer";
@@ -62,6 +64,9 @@ function getMonthKey(year: number, monthIndex: number): string {
 }
 
 export default function GLUploadPage() {
+  const { session } = useAuth();
+  const newUser = isNewUser(session);
+  const newUserStoreName = getNewUserStoreName(session);
   const [selectedStore, setSelectedStore] = useState("kent");
   const [selectedMonth, setSelectedMonth] = useState(2);
   const [selectedYear, setSelectedYear] = useState(2026);
@@ -128,6 +133,27 @@ export default function GLUploadPage() {
 
   function toggleCategory(key: string) {
     setExpandedCategory((prev) => (prev === key ? null : key));
+  }
+
+  if (newUser) {
+    return (
+      <div className="space-y-4 pb-28 min-w-0 overflow-x-hidden">
+        <div className="flex items-center justify-between mb-4">
+          <div>
+            <h1 className="text-xl font-bold text-white">GL Upload</h1>
+            <p className="text-xs text-slate-400 mt-0.5">{newUserStoreName}</p>
+          </div>
+          <EducationInfoIcon metricKey="gl_upload" />
+        </div>
+        <div className="bg-zinc-900/50 border border-zinc-800 rounded-2xl p-6 text-center">
+          <p className="text-sm text-zinc-300 mb-4">Upload your General Ledger to see a complete financial picture. Your accountant can export this from QuickBooks or your accounting software.</p>
+          <button type="button" onClick={() => simulateUpload()} className="px-4 py-2.5 rounded-xl bg-[#E65100] text-white font-semibold text-sm hover:bg-[#f3731a] transition-colors inline-flex items-center gap-2">
+            <Upload className="w-4 h-4" />
+            Upload GL Export
+          </button>
+        </div>
+      </div>
+    );
   }
 
   return (

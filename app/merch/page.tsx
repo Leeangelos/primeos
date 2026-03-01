@@ -5,6 +5,8 @@ import { createPortal } from "react-dom";
 import { useSearchParams } from "next/navigation";
 import { Shirt } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { useAuth } from "@/src/lib/auth-context";
+import { isNewUser, getNewUserStoreName } from "@/src/lib/user-scope";
 import { SEED_MERCH } from "@/src/lib/seed-data";
 
 type MerchItem = {
@@ -28,6 +30,9 @@ type CartItem = {
 };
 
 function MerchContent() {
+  const { session } = useAuth();
+  const newUser = isNewUser(session);
+  const newUserStoreName = getNewUserStoreName(session);
   const searchParams = useSearchParams();
   const success = searchParams.get("success");
   const canceled = searchParams.get("canceled");
@@ -111,6 +116,23 @@ function MerchContent() {
 
   const brandColor = (b: string) => b === "lindseys" ? "border-zinc-700 bg-zinc-800/50" : "border-orange-500/30 bg-orange-500/5";
   const brandBadge = (b: string) => b === "lindseys" ? "bg-zinc-700/50 text-zinc-300" : "bg-orange-500/15 text-orange-400";
+
+  if (newUser) {
+    return (
+      <div className="space-y-5 pb-28">
+        <div className="dashboard-toolbar p-3 sm:p-5 space-y-3">
+          <div className="flex items-center gap-2">
+            <h1 className="text-lg font-semibold sm:text-2xl">Team Merch</h1>
+            <button type="button" onClick={() => setShowEducation(true)} className="inline-flex items-center justify-center min-h-[44px] min-w-[44px] rounded-full bg-muted/20 text-muted hover:bg-brand/20 hover:text-brand transition-colors text-xs font-bold" aria-label="Learn more">i</button>
+          </div>
+          <p className="text-xs text-muted">{newUserStoreName}</p>
+        </div>
+        <div className="bg-zinc-900/50 border border-zinc-800 rounded-2xl p-6 text-center">
+          <p className="text-sm text-zinc-300">Your team merch store is coming soon. Stay tuned.</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <>

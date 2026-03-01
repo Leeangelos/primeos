@@ -8,6 +8,8 @@ import {
   STORE_DETAILS,
   type Vendor,
 } from "@/src/lib/vendor-data";
+import { useAuth } from "@/src/lib/auth-context";
+import { isNewUser, getNewUserStoreName } from "@/src/lib/user-scope";
 import { SEED_STORES } from "@/src/lib/seed-data";
 import { formatDollars } from "@/src/lib/formatters";
 
@@ -41,6 +43,9 @@ function initialLeaseDetails(): Record<string, LeaseState> {
 }
 
 export default function VendorSettingsPage() {
+  const { session } = useAuth();
+  const newUser = isNewUser(session);
+  const newUserStoreName = getNewUserStoreName(session);
   const [selectedStore, setSelectedStore] = useState("kent");
   const [vendors, setVendors] = useState<Vendor[]>(() => VENDORS.filter((v) => v.store_id === selectedStore));
   const [showAddVendor, setShowAddVendor] = useState(false);
@@ -220,6 +225,23 @@ export default function VendorSettingsPage() {
 
   const monthlyRent = typeof currentLease.monthlyRent === "number" ? currentLease.monthlyRent : Number(currentLease.monthlyRent) || 0;
   const sqft = typeof currentLease.sqft === "number" ? currentLease.sqft : Number(currentLease.sqft) || 0;
+
+  if (newUser) {
+    return (
+      <div className="space-y-4 pb-28 min-w-0 overflow-x-hidden">
+        <div className="flex items-center justify-between mb-4">
+          <div>
+            <h1 className="text-xl font-bold text-white">Vendor Settings</h1>
+            <p className="text-xs text-slate-400 mt-0.5">{newUserStoreName}</p>
+          </div>
+          <Settings className="w-5 h-5 text-slate-500 shrink-0" />
+        </div>
+        <div className="bg-zinc-900/50 border border-zinc-800 rounded-2xl p-6 text-center">
+          <p className="text-sm text-zinc-300">Your vendor settings will appear here once you start logging invoices and adding vendors.</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-4 pb-28 min-w-0 overflow-x-hidden">

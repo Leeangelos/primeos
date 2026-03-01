@@ -8,6 +8,8 @@ import {
   type CockpitStoreSlug,
 } from "@/lib/cockpit-config";
 import { getStoreColor } from "@/lib/store-colors";
+import { useAuth } from "@/src/lib/auth-context";
+import { isNewUser, getNewUserStoreName } from "@/src/lib/user-scope";
 import { EducationInfoIcon } from "@/src/components/education/InfoIcon";
 import { formatPct as formatPctShared, formatDollars as formatDollarsBase } from "@/src/lib/formatters";
 import { SEED_DAILY_KPIS } from "@/src/lib/seed-data";
@@ -74,6 +76,9 @@ function pctToGrade(pct: number, targetMax: number): "green" | "yellow" | "red" 
 }
 
 function MonthlyContent() {
+  const { session } = useAuth();
+  const newUser = isNewUser(session);
+  const newUserStoreName = getNewUserStoreName(session);
   const now = new Date();
   const [year, setYear] = useState(now.getFullYear());
   const [month, setMonth] = useState(now.getMonth());
@@ -134,6 +139,23 @@ function MonthlyContent() {
       setMonth((m) => m + 1);
     }
   };
+
+  if (newUser) {
+    return (
+      <div className="space-y-6 min-w-0 overflow-x-hidden pb-28">
+        <div className="dashboard-toolbar p-3 sm:p-5 space-y-3">
+          <div className="flex items-center gap-2">
+            <h1 className="text-lg font-semibold sm:text-2xl">Monthly P&L Summary</h1>
+            <button type="button" onClick={() => setShowEducation(true)} className="inline-flex items-center justify-center min-h-[44px] min-w-[44px] rounded-full bg-muted/20 text-muted hover:bg-brand/20 hover:text-brand transition-colors text-xs font-bold" aria-label="Learn more">i</button>
+          </div>
+          <p className="text-xs text-muted">{newUserStoreName}</p>
+        </div>
+        <div className="bg-zinc-900/50 border border-zinc-800 rounded-2xl p-6 text-center">
+          <p className="text-sm text-zinc-300">Your Monthly Summary will generate at the end of each month once daily data is flowing.</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6 min-w-0 overflow-x-hidden pb-28">

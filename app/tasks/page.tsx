@@ -3,6 +3,8 @@
 import { useState, useEffect, useCallback } from "react";
 import { createPortal } from "react-dom";
 import { ChevronDown, Check } from "lucide-react";
+import { useAuth } from "@/src/lib/auth-context";
+import { isNewUser, getNewUserStoreName } from "@/src/lib/user-scope";
 import { EducationInfoIcon } from "@/src/components/education/InfoIcon";
 import { EDUCATION_CONTENT } from "@/src/lib/education-content";
 import { SEED_TASKS, SEED_EMPLOYEES } from "@/src/lib/seed-data";
@@ -77,6 +79,9 @@ type Task = {
 };
 
 export default function TasksPage() {
+  const { session } = useAuth();
+  const newUser = isNewUser(session);
+  const newUserStoreName = getNewUserStoreName(session);
   const [store, setStore] = useState<CockpitStoreSlug>("kent");
   const [date, setDate] = useState(todayYYYYMMDD);
   const [category, setCategory] = useState<typeof CATEGORIES[number]["key"]>("all");
@@ -176,6 +181,24 @@ export default function TasksPage() {
   }
 
   const sc = getStoreColor(store);
+
+  if (newUser) {
+    return (
+      <div className="space-y-5 pb-28">
+        <div className="dashboard-toolbar p-3 sm:p-5 space-y-3">
+          <div className="flex items-center gap-2 flex-wrap">
+            <h1 className="text-lg font-semibold sm:text-2xl">Manager Tasks</h1>
+            <EducationInfoIcon metricKey="task_management" />
+          </div>
+          <p className="text-xs text-muted">{newUserStoreName}</p>
+        </div>
+        <div className="bg-zinc-900/50 border border-zinc-800 rounded-2xl p-6 text-center">
+          <p className="text-sm text-zinc-300 mb-4">Your task list is ready. Start adding tasks to keep your team on track.</p>
+          <button type="button" onClick={() => setShowAddTask(true)} className="px-4 py-2.5 rounded-xl bg-[#E65100] text-white font-semibold text-sm hover:bg-[#f3731a] transition-colors">Add Task</button>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-5 pb-28">
