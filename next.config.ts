@@ -12,6 +12,10 @@ const nextConfig: NextConfig = {
         source: "/partner",
         destination: "/partner.html",
       },
+      {
+        source: "/signup",
+        destination: "/signup.html",
+      },
     ];
   },
 };

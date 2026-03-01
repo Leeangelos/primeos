@@ -1,12 +1,14 @@
 "use client";
 
-import { useState } from "react";
-import { useRouter } from "next/navigation";
+import { useState, Suspense } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { createClient } from "@/lib/supabase";
 
-export default function LoginPage() {
+function LoginContent() {
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const welcome = searchParams.get("welcome") === "true";
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState<string | null>(null);
@@ -66,6 +68,12 @@ export default function LoginPage() {
         <h1 className="text-2xl font-bold text-white">PrimeOS</h1>
         <p className="text-sm text-slate-400 mt-1">The Operating System for Pizza</p>
       </div>
+
+      {welcome && (
+        <div className="bg-emerald-900/30 border border-emerald-700 rounded-xl p-4 mb-4">
+          <p className="text-sm text-emerald-200">Account created! Log in with your email and password to get started.</p>
+        </div>
+      )}
 
       <div className="w-full bg-gradient-to-r from-[#E65100]/20 to-zinc-900 border border-[#E65100]/30 rounded-2xl p-5 mb-6">
         <p className="text-lg font-bold text-white">First time here?</p>
@@ -175,5 +183,13 @@ export default function LoginPage() {
         )}
       </div>
     </div>
+  );
+}
+
+export default function LoginPage() {
+  return (
+    <Suspense fallback={<div className="max-w-md mx-auto py-8"><div className="h-8 w-48 bg-slate-800 rounded animate-pulse" /></div>}>
+      <LoginContent />
+    </Suspense>
   );
 }

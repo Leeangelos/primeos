@@ -428,7 +428,10 @@
       <header>
         <div class="container header-inner">
           <span class="brand">PrimeOS</span>
-          <a href="/login" class="login-link">Log In</a>
+          <div class="header-links" style="display:flex;align-items:center;gap:0.75rem;">
+            <a href="/login" class="login-link">Log In</a>
+            <a href="/signup" class="btn-signup" style="background-color:var(--accent);color:#fff;padding:0.5rem 1rem;border-radius:0.5rem;font-weight:600;font-size:0.875rem;">Sign Up</a>
+          </div>
         </div>
       </header>
 
@@ -621,6 +624,9 @@
           <!-- REQUEST ACCESS FORM -->
           <section class="section">
             <div id="request-access" class="form-section">
+              <p class="section-text-lg" style="margin-bottom:0.5rem;">
+                <a href="/signup" style="color:var(--accent);font-weight:600;text-decoration:underline;">Ready to jump in? Sign up now →</a>
+              </p>
               <h2 class="section-title">Ready to Stop Guessing?</h2>
               <p class="section-text-lg">
                 3 fields. 10 seconds. We'll show you what you're missing.
