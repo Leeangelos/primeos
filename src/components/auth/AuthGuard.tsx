@@ -42,6 +42,7 @@ export function AuthGuard({ children }: { children: React.ReactNode }) {
   const router = useRouter();
   const { session, loading } = useAuth();
   const [welcomeAnimationDone, setWelcomeAnimationDone] = useState(false);
+  const [showRedirectingMessage, setShowRedirectingMessage] = useState(false);
   const onboardingCheckAfterWelcome = useRef(false);
 
   useEffect(() => {
@@ -62,8 +63,19 @@ export function AuthGuard({ children }: { children: React.ReactNode }) {
 
     if (skipCheck) return;
 
-    if (!welcomeAnimationDone) {
-      const t = setTimeout(() => setWelcomeAnimationDone(true), 2900);
+    if (!welcomeAnimationDone && !showRedirectingMessage) {
+      const userId = session.user?.id;
+      const key = userId ? `${ONBOARDING_STORAGE_PREFIX}${userId}` : "";
+      const t = setTimeout(() => {
+        if (typeof window !== "undefined" && key && !localStorage.getItem(key)) {
+          setShowRedirectingMessage(true);
+          setTimeout(() => {
+            window.location.href = "/onboarding";
+          }, 400);
+        } else {
+          setWelcomeAnimationDone(true);
+        }
+      }, 3000);
       return () => clearTimeout(t);
     }
 
@@ -73,9 +85,9 @@ export function AuthGuard({ children }: { children: React.ReactNode }) {
     const userId = session.user?.id;
     const key = userId ? `${ONBOARDING_STORAGE_PREFIX}${userId}` : "";
     if (typeof window !== "undefined" && key && !localStorage.getItem(key)) {
-      router.replace("/onboarding");
+      window.location.href = "/onboarding";
     }
-  }, [loading, session, pathname, router, welcomeAnimationDone]);
+  }, [loading, session, pathname, router, welcomeAnimationDone, showRedirectingMessage]);
 
   if (PUBLIC_PATHS.includes(pathname)) {
     return <>{children}</>;
@@ -101,7 +113,17 @@ export function AuthGuard({ children }: { children: React.ReactNode }) {
   const onboardingComplete =
     typeof window !== "undefined" && onboardingStorageKey ? !!localStorage.getItem(onboardingStorageKey) : false;
   const showWelcomeAnimation =
-    isNewSignup && !skipCheck && !onboardingComplete && !welcomeAnimationDone;
+    isNewSignup && !skipCheck && !onboardingComplete && !welcomeAnimationDone && !showRedirectingMessage;
+
+  if (showRedirectingMessage) {
+    return (
+      <div className="min-h-screen bg-zinc-950 flex flex-col items-center justify-center px-6 z-[100] fixed inset-0">
+        <div className="text-center space-y-4 max-w-sm">
+          <h1 className="text-xl font-bold text-white">Redirecting to your setup...</h1>
+        </div>
+      </div>
+    );
+  }
 
   if (showWelcomeAnimation) {
     return (
