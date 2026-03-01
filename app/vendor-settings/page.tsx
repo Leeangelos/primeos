@@ -43,7 +43,7 @@ function initialLeaseDetails(): Record<string, LeaseState> {
 }
 
 export default function VendorSettingsPage() {
-  const { session } = useAuth();
+  const { session, loading } = useAuth();
   const newUser = isNewUser(session);
   const newUserStoreName = getNewUserStoreName(session);
   const [selectedStore, setSelectedStore] = useState("kent");
@@ -226,6 +226,7 @@ export default function VendorSettingsPage() {
   const monthlyRent = typeof currentLease.monthlyRent === "number" ? currentLease.monthlyRent : Number(currentLease.monthlyRent) || 0;
   const sqft = typeof currentLease.sqft === "number" ? currentLease.sqft : Number(currentLease.sqft) || 0;
 
+  if (loading) return <div className="min-h-screen bg-zinc-950" />;
   if (newUser) {
     return (
       <div className="space-y-4 pb-28 min-w-0 overflow-x-hidden">

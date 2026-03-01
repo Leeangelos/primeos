@@ -326,7 +326,7 @@ const CHECKLIST_STORAGE_KEY = "primeos_inspection_checklist";
 const CHECKLIST_COMPLETED_KEY = "primeos_checklist_completed";
 
 export default function InspectionRadarPage() {
-  const { session } = useAuth();
+  const { session, loading } = useAuth();
   const newUser = isNewUser(session);
   const newUserStoreName = getNewUserStoreName(session);
   const [selectedStore, setSelectedStore] = useState<"kent" | "aurora" | "lindseys" | "all">("kent");
@@ -413,6 +413,7 @@ export default function InspectionRadarPage() {
     return "steady";
   }
 
+  if (loading) return <div className="min-h-screen bg-zinc-950" />;
   if (newUser) {
     return (
       <div className="space-y-4 pb-28">

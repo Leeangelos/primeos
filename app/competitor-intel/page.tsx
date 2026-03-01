@@ -46,7 +46,7 @@ function getStoreName(storeId: string): string {
 }
 
 export default function CompetitorIntelPage() {
-  const { session } = useAuth();
+  const { session, loading } = useAuth();
   const newUser = isNewUser(session);
   const newUserStoreName = getNewUserStoreName(session);
   const [selectedStore, setSelectedStore] = useState("all");
@@ -217,6 +217,7 @@ export default function CompetitorIntelPage() {
     setExpandedCompetitor((prev) => (prev === id ? null : id));
   }
 
+  if (loading) return <div className="min-h-screen bg-zinc-950" />;
   if (newUser) {
     return (
       <div className="space-y-4 pb-28 min-w-0 overflow-x-hidden">

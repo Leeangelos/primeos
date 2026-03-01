@@ -164,9 +164,10 @@ export async function POST(request: Request) {
             <p style="margin:0 0 8px;font-size:14px;"><strong>Name:</strong> ${name.replace(/</g, "&lt;")}</p>
             <p style="margin:0 0 8px;font-size:14px;"><strong>Email:</strong> ${email.replace(/</g, "&lt;")}</p>
             <p style="margin:0 0 8px;font-size:14px;"><strong>Phone:</strong> ${(phone || "—").replace(/</g, "&lt;")}</p>
-            <p style="margin:0 0 8px;font-size:14px;"><strong>Store:</strong> ${store_name.replace(/</g, "&lt;")}</p>
-            <p style="margin:0 0 8px;font-size:14px;"><strong>City & State:</strong> ${city_state.replace(/</g, "&lt;")}</p>
-            <p style="margin:0 0 0;font-size:14px;"><strong>POS:</strong> ${(pos_system || "—").replace(/</g, "&lt;")}</p>
+            <p style="margin:0 0 8px;font-size:14px;"><strong>Store Name:</strong> ${store_name.replace(/</g, "&lt;")}</p>
+            <p style="margin:0 0 8px;font-size:14px;"><strong>City / State:</strong> ${city_state.replace(/</g, "&lt;")}</p>
+            <p style="margin:0 0 8px;font-size:14px;"><strong>POS System:</strong> ${(pos_system || "—").replace(/</g, "&lt;")}</p>
+            <p style="margin:0 0 0;font-size:14px;"><strong>Invite Code Used:</strong> ${invite_code.replace(/</g, "&lt;")}</p>
           </div>
         </div>
       `;

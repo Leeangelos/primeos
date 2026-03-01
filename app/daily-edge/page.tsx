@@ -12,6 +12,8 @@ import {
   Clock,
   ExternalLink,
 } from "lucide-react";
+import { useAuth } from "@/src/lib/auth-context";
+import { isNewUser, getNewUserStoreName } from "@/src/lib/user-scope";
 import { EducationInfoIcon } from "@/src/components/education/InfoIcon";
 import type { LucideIcon } from "lucide-react";
 import { getDailyScoops } from "@/src/lib/daily-edge-engine";
@@ -42,6 +44,9 @@ const CONTENT_TYPES: Record<
 };
 
 export default function DailyEdgePage() {
+  const { session, loading } = useAuth();
+  const newUser = isNewUser(session);
+  const newUserStoreName = getNewUserStoreName(session);
   const selectedStore = "kent";
   const dataScoops = useMemo(() => getDailyScoops(selectedStore), [selectedStore]);
 
@@ -110,6 +115,24 @@ export default function DailyEdgePage() {
       ? FEED_ITEMS
       : FEED_ITEMS.filter((item) => item.type === activeFilter);
   }, [activeFilter, FEED_ITEMS]);
+
+  if (loading) return <div className="min-h-screen bg-zinc-950" />;
+  if (newUser) {
+    return (
+      <div className="space-y-4 pb-28 min-w-0 overflow-x-hidden">
+        <div className="flex items-center justify-between mb-4">
+          <div>
+            <h1 className="text-xl font-bold text-white">The Daily Edge</h1>
+            <p className="text-xs text-slate-400 mt-0.5">{newUserStoreName}</p>
+          </div>
+          <EducationInfoIcon metricKey="daily_edge" />
+        </div>
+        <div className="bg-zinc-900/50 border border-zinc-800 rounded-2xl p-6 text-center">
+          <p className="text-sm text-zinc-300">Your Daily Edge content will appear here once your POS is connected and we have your data.</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-4 pb-28 min-w-0 overflow-x-hidden">

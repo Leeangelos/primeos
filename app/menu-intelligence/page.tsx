@@ -87,7 +87,7 @@ function useComparableWithGaps() {
 }
 
 export default function MenuIntelligencePage() {
-  const { session } = useAuth();
+  const { session, loading } = useAuth();
   const newUser = isNewUser(session);
   const newUserStoreName = getNewUserStoreName(session);
   const [storeId, setStoreId] = useState("all");
@@ -129,6 +129,7 @@ export default function MenuIntelligencePage() {
     });
   };
 
+  if (loading) return <div className="min-h-screen bg-zinc-950" />;
   if (newUser) {
     return (
       <div className="space-y-4 pb-28 min-w-0 overflow-x-hidden">

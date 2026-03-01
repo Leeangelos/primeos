@@ -105,7 +105,7 @@ function getSeedBriefForStore(store: BriefStore): string | null {
 }
 
 export default function BriefPage() {
-  const { session } = useAuth();
+  const { session, loading: authLoading } = useAuth();
   const newUser = isNewUser(session);
   const newUserStoreName = getNewUserStoreName(session);
   const today = todayYYYYMMDD();
@@ -203,6 +203,7 @@ export default function BriefPage() {
     return val > redAbove ? "text-red-400" : "text-emerald-400";
   }
 
+  if (authLoading) return <div className="min-h-screen bg-zinc-950" />;
   if (newUser) {
     return (
       <div className="space-y-5 min-w-0 overflow-x-hidden pb-28">

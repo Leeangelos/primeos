@@ -16,6 +16,8 @@ type PostBody = {
   zip_code?: string | null;
   county?: string | null;
   goals?: string[];
+  phone?: string | null;
+  website_url?: string | null;
 };
 
 export async function POST(request: Request) {
@@ -36,6 +38,8 @@ export async function POST(request: Request) {
       zip_code,
       county,
       goals,
+      phone,
+      website_url,
     } = body;
 
     if (!user_id) {
@@ -64,6 +68,8 @@ export async function POST(request: Request) {
       zip_code: zip_code ?? null,
       county: county ?? null,
       goals: goals ?? null,
+      phone: phone ?? null,
+      website_url: website_url ?? null,
       completed_at: new Date().toISOString(),
     });
 
@@ -105,7 +111,7 @@ export async function GET(request: Request) {
     const supabase = createClient(supabaseUrl, serviceRoleKey);
     const { data } = await supabase
       .from("onboarding_data")
-      .select("id, store_name, weekly_sales, food_cost_pct, labor_cost_pct, employee_count, monthly_rent, google_business_name, street_address, city, state, zip_code, county, goals")
+      .select("id, store_name, weekly_sales, food_cost_pct, labor_cost_pct, employee_count, monthly_rent, google_business_name, street_address, city, state, zip_code, county, goals, phone, website_url")
       .eq("user_id", user.id)
       .limit(1)
       .maybeSingle();

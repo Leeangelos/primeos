@@ -162,7 +162,7 @@ const NET_PROFIT_PLAYBOOK = [
 ];
 
 export default function ActualPnlPage() {
-  const { session } = useAuth();
+  const { session, loading } = useAuth();
   const newUser = isNewUser(session);
   const newUserStoreName = getNewUserStoreName(session);
   const [uploadedMonths, setUploadedMonths] = useState<Record<string, boolean>>({});
@@ -277,6 +277,7 @@ export default function ActualPnlPage() {
     };
   }, [currentMonthKey, uploadedPnlData]);
 
+  if (loading) return <div className="min-h-screen bg-zinc-950" />;
   if (newUser) {
     return (
       <div className="space-y-4 pb-28">

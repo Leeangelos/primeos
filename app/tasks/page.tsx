@@ -79,7 +79,7 @@ type Task = {
 };
 
 export default function TasksPage() {
-  const { session } = useAuth();
+  const { session, loading: authLoading } = useAuth();
   const newUser = isNewUser(session);
   const newUserStoreName = getNewUserStoreName(session);
   const [store, setStore] = useState<CockpitStoreSlug>("kent");
@@ -182,6 +182,7 @@ export default function TasksPage() {
 
   const sc = getStoreColor(store);
 
+  if (authLoading) return <div className="min-h-screen bg-zinc-950" />;
   if (newUser) {
     return (
       <div className="space-y-5 pb-28">

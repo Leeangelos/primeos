@@ -30,7 +30,7 @@ type CartItem = {
 };
 
 function MerchContent() {
-  const { session } = useAuth();
+  const { session, loading: authLoading } = useAuth();
   const newUser = isNewUser(session);
   const newUserStoreName = getNewUserStoreName(session);
   const searchParams = useSearchParams();
@@ -117,6 +117,7 @@ function MerchContent() {
   const brandColor = (b: string) => b === "lindseys" ? "border-zinc-700 bg-zinc-800/50" : "border-orange-500/30 bg-orange-500/5";
   const brandBadge = (b: string) => b === "lindseys" ? "bg-zinc-700/50 text-zinc-300" : "bg-orange-500/15 text-orange-400";
 
+  if (authLoading) return <div className="min-h-screen bg-zinc-950" />;
   if (newUser) {
     return (
       <div className="space-y-5 pb-28">

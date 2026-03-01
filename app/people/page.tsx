@@ -66,7 +66,7 @@ function churnGrade(pct: number): "green" | "yellow" | "red" {
 }
 
 export default function PeoplePage() {
-  const { session } = useAuth();
+  const { session, loading } = useAuth();
   const newUser = isNewUser(session);
   const newUserStoreName = getNewUserStoreName(session);
   const employees = SEED_EMPLOYEES;
@@ -95,6 +95,7 @@ export default function PeoplePage() {
 
   const churnColor = churnGrade(QUARTERLY_CHURN_RATE) === "green" ? "text-emerald-400" : churnGrade(QUARTERLY_CHURN_RATE) === "yellow" ? "text-amber-400" : "text-red-400";
 
+  if (loading) return <div className="min-h-screen bg-zinc-950" />;
   if (newUser) {
     return (
       <div className="space-y-4 min-w-0 overflow-x-hidden pb-28">

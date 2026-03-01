@@ -119,6 +119,7 @@ export default function OnboardingPage() {
   const [state, setState] = useState<string>("");
   const [zipCode, setZipCode] = useState<string>("");
   const [county, setCounty] = useState<string>("");
+  const [websiteUrl, setWebsiteUrl] = useState<string>("");
   const [goals, setGoals] = useState<string[]>([]);
   const [submitting, setSubmitting] = useState(false);
 
@@ -145,6 +146,8 @@ export default function OnboardingPage() {
   const handleComplete = async () => {
     setSubmitting(true);
     const userId = session?.user?.id;
+    const metadataForPhone = session?.user?.user_metadata as Record<string, unknown> | undefined;
+    const phoneFromSignup = (metadataForPhone?.phone as string)?.trim() || null;
     const onboardingPayload = {
       user_id: userId,
       store_name: storeName,
@@ -160,6 +163,8 @@ export default function OnboardingPage() {
       zip_code: zipCode || null,
       county: county || null,
       goals,
+      phone: phoneFromSignup,
+      website_url: websiteUrl?.trim() || null,
     };
     try {
       console.log("COMPLETING ONBOARDING", onboardingPayload);
@@ -418,6 +423,17 @@ export default function OnboardingPage() {
                   </div>
                 </div>
                 <p className="text-xs text-zinc-500">County helps us track local health inspections.</p>
+                <div>
+                  <label className="block text-xs text-zinc-500 mb-0.5">Your website (optional)</label>
+                  <input
+                    type="text"
+                    value={websiteUrl}
+                    onChange={(e) => setWebsiteUrl(e.target.value)}
+                    placeholder="e.g., www.joespizza.com"
+                    className="w-full h-10 py-1.5 bg-zinc-900 border border-zinc-700 rounded-lg px-3 text-white placeholder:text-zinc-500 text-sm"
+                  />
+                  <p className="text-xs text-zinc-500 mt-0.5">We&apos;ll use this to help build your menu and profile</p>
+                </div>
               </div>
             </div>
             <div className="shrink-0">

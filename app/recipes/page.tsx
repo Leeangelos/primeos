@@ -1,8 +1,10 @@
 "use client";
 
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import { createPortal } from "react-dom";
 import { cn } from "@/lib/utils";
+import { useAuth } from "@/src/lib/auth-context";
+import { isNewUser, getNewUserStoreName } from "@/src/lib/user-scope";
 import { EducationInfoIcon } from "@/src/components/education/InfoIcon";
 import { SEED_RECIPES, type SeedRecipe, type SeedRecipeIngredient } from "@/src/lib/seed-data";
 
@@ -48,10 +50,25 @@ function gradeBadgeClass(grade: "GREEN" | "YELLOW" | "RED"): string {
 }
 
 export default function RecipesPage() {
+  const { session, loading } = useAuth();
+  const newUser = isNewUser(session);
+  const newUserStoreName = getNewUserStoreName(session);
+  const [onboardingWebsite, setOnboardingWebsite] = useState<string | null>(null);
   const [search, setSearch] = useState("");
   const [filter, setFilter] = useState<Category>("all");
   const [selected, setSelected] = useState<SeedRecipe | null>(null);
   const [showEducation, setShowEducation] = useState(false);
+
+  useEffect(() => {
+    if (!newUser || !session?.access_token) return;
+    fetch("/api/onboarding", { headers: { Authorization: `Bearer ${session.access_token}` } })
+      .then((r) => r.json())
+      .then((d: { completed?: boolean; data?: { website_url?: string | null } }) => {
+        const url = d?.data?.website_url?.trim();
+        setOnboardingWebsite(url || null);
+      })
+      .catch(() => setOnboardingWebsite(null));
+  }, [newUser, session?.access_token]);
 
   const filteredRecipes = useMemo(() => {
     let list = SEED_RECIPES.filter((r) => filter === "all" || r.category === filter);
@@ -67,6 +84,30 @@ export default function RecipesPage() {
     }
     return list;
   }, [filter, search]);
+
+  if (loading) return <div className="min-h-screen bg-zinc-950" />;
+  if (newUser) {
+    const websiteMsg = onboardingWebsite
+      ? `We're building your menu from ${onboardingWebsite}. Check back soon.`
+      : "Your recipes will appear here. Add your website during setup so PrimeOS can help build your menu.";
+    return (
+      <div className="space-y-4 min-w-0 overflow-x-hidden pb-28">
+        <div className="dashboard-toolbar p-3 sm:p-5 space-y-3">
+          <div className="flex items-center gap-2">
+            <h1 className="text-lg font-semibold sm:text-2xl">Recipe Cards</h1>
+            <button type="button" onClick={() => setShowEducation(true)} className="inline-flex items-center justify-center min-h-[44px] min-w-[44px] rounded-full bg-muted/20 text-muted hover:bg-brand/20 hover:text-brand transition-colors text-xs font-bold" aria-label="Learn more">i</button>
+          </div>
+          <p className="text-xs text-muted">{newUserStoreName}</p>
+        </div>
+        <div className="bg-zinc-900/50 border border-zinc-800 rounded-2xl p-6 text-center">
+          <p className="text-sm text-zinc-300">{websiteMsg}</p>
+          {!onboardingWebsite && (
+            <p className="text-xs text-zinc-400 mt-2">Add your recipes manually or provide your website URL so PrimeOS can help.</p>
+          )}
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-4 min-w-0 overflow-x-hidden pb-28">

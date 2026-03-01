@@ -76,7 +76,7 @@ function pctToGrade(pct: number, targetMax: number): "green" | "yellow" | "red" 
 }
 
 export default function PnlPage() {
-  const { session } = useAuth();
+  const { session, loading } = useAuth();
   const newUser = isNewUser(session);
   const newUserStoreName = getNewUserStoreName(session);
   const [storeFilter, setStoreFilter] = useState<"all" | CockpitStoreSlug>("kent");
@@ -153,6 +153,7 @@ export default function PnlPage() {
     setShareGenerating(false);
   }
 
+  if (loading) return <div className="min-h-screen bg-zinc-950" />;
   if (newUser) {
     return (
       <div className="space-y-6 min-w-0 overflow-x-hidden pb-28">

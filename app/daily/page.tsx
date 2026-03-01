@@ -136,7 +136,7 @@ function isValidCockpitStore(s: string | null): s is CockpitStoreSlug {
 }
 
 function DailyPageContent() {
-  const { session } = useAuth();
+  const { session, loading } = useAuth();
   const newUser = isNewUser(session);
   const newUserStoreName = getNewUserStoreName(session);
   const searchParams = useSearchParams();
@@ -569,6 +569,7 @@ function DailyPageContent() {
     [warnings]
   );
 
+  if (loading) return <div className="min-h-screen bg-zinc-950" />;
   if (newUser) {
     return (
       <div className="space-y-5 min-w-0 pb-28">

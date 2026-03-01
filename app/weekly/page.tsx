@@ -113,7 +113,7 @@ function getChangeArrow(current: number, previous: number): string {
 }
 
 function WeeklyPageContent() {
-  const { session } = useAuth();
+  const { session, loading: authLoading } = useAuth();
   const newUser = isNewUser(session);
   const newUserStoreName = getNewUserStoreName(session);
   const searchParams = useSearchParams();
@@ -319,6 +319,7 @@ function WeeklyPageContent() {
     }
   }
 
+  if (authLoading) return <div className="min-h-screen bg-zinc-950" />;
   if (newUser) {
     return (
       <div className="space-y-6 pb-28">
