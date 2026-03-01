@@ -147,9 +147,9 @@ export default function OnboardingPage() {
   const totalSteps = 5;
 
   return (
-    <div className="min-h-screen bg-zinc-950 text-white flex flex-col items-center justify-center p-4">
-      <div className="w-full max-w-md">
-        <div className="flex justify-center gap-2 mb-8">
+    <div className="min-h-screen bg-zinc-950 text-white flex flex-col justify-between px-4 py-6">
+      <div className="w-full max-w-md flex-1 flex flex-col justify-center mx-auto">
+        <div className="flex justify-center gap-2 mb-4 shrink-0">
           {Array.from({ length: totalSteps }).map((_, i) => (
             <div
               key={i}
@@ -162,247 +162,267 @@ export default function OnboardingPage() {
         </div>
 
         {step === 1 && (
-          <div className="space-y-6 text-center">
-            <h1 className="text-2xl font-bold">Welcome to PrimeOS, {name}!</h1>
-            <p className="text-zinc-400">Let&apos;s set up your store. Takes about 60 seconds.</p>
-            {storeName && storeName !== "Your store" && (
-              <p className="text-zinc-500 text-sm">Your store: {storeName}</p>
-            )}
-            <button
-              type="button"
-              onClick={() => setStep(2)}
-              className="w-full py-4 rounded-xl bg-[#E65100] text-white font-semibold text-lg"
-            >
-              Let&apos;s Go →
-            </button>
-          </div>
+          <>
+            <div className="flex-1 flex flex-col justify-center space-y-3 text-center pt-8">
+              <h1 className="text-xl font-bold">Welcome to PrimeOS, {name}!</h1>
+              <p className="text-zinc-400 text-sm">Let&apos;s set up your store. Takes about 60 seconds.</p>
+              {storeName && storeName !== "Your store" && (
+                <p className="text-zinc-500 text-xs">Your store: {storeName}</p>
+              )}
+            </div>
+            <div className="shrink-0 pb-4">
+              <button
+                type="button"
+                onClick={() => setStep(2)}
+                className="w-full py-3 rounded-xl bg-[#E65100] text-white font-semibold text-base"
+              >
+                Let&apos;s Go →
+              </button>
+            </div>
+          </>
         )}
 
         {step === 2 && (
-          <div className="space-y-6">
-            <h2 className="text-xl font-bold">Enter a few numbers about your business.</h2>
-            <p className="text-zinc-400 text-sm">Don&apos;t worry about being exact — estimates work.</p>
-            <div className="space-y-4">
-              <div>
-                <label className="block text-xs text-zinc-500 mb-1">Average weekly sales ($)</label>
-                <input
-                  type="number"
-                  value={weeklySales}
-                  onChange={(e) => setWeeklySales(e.target.value)}
-                  placeholder="$8,000"
-                  className="w-full bg-zinc-900 border border-zinc-700 rounded-xl px-4 py-3 text-white placeholder:text-zinc-500"
-                />
-              </div>
-              <div>
-                <label className="block text-xs text-zinc-500 mb-1">Estimated food cost (%)</label>
-                <div className="flex gap-2">
+          <>
+            <div className="flex-1 flex flex-col justify-center min-h-0">
+              <h2 className="text-lg font-bold mb-1">Enter a few numbers about your business.</h2>
+              <p className="text-zinc-400 text-xs mb-3">Don&apos;t worry about being exact — estimates work.</p>
+              <div className="space-y-2">
+                <div>
+                  <label className="block text-xs text-zinc-500 mb-0.5">Average weekly sales ($)</label>
                   <input
                     type="number"
-                    value={foodCostPct}
-                    onChange={(e) => setFoodCostPct(e.target.value)}
-                    placeholder="32"
-                    className="flex-1 bg-zinc-900 border border-zinc-700 rounded-xl px-4 py-3 text-white placeholder:text-zinc-500"
+                    value={weeklySales}
+                    onChange={(e) => setWeeklySales(e.target.value)}
+                    placeholder="$8,000"
+                    className="w-full bg-zinc-900 border border-zinc-700 rounded-lg px-3 py-2 text-white placeholder:text-zinc-500 text-sm"
                   />
-                  <button
-                    type="button"
-                    onClick={() => setFoodCostPct("33")}
-                    className="px-4 py-3 rounded-xl border border-zinc-600 text-zinc-400 text-sm whitespace-nowrap"
-                  >
-                    I don&apos;t know
-                  </button>
                 </div>
-              </div>
-              <div>
-                <label className="block text-xs text-zinc-500 mb-1">Estimated labor cost (%)</label>
-                <div className="flex gap-2">
+                <div>
+                  <label className="block text-xs text-zinc-500 mb-0.5">Estimated food cost (%)</label>
+                  <div className="flex gap-2">
+                    <input
+                      type="number"
+                      value={foodCostPct}
+                      onChange={(e) => setFoodCostPct(e.target.value)}
+                      placeholder="32"
+                      className="flex-1 bg-zinc-900 border border-zinc-700 rounded-lg px-3 py-2 text-white placeholder:text-zinc-500 text-sm"
+                    />
+                    <button
+                      type="button"
+                      onClick={() => setFoodCostPct("33")}
+                      className="px-3 py-1 rounded-lg border border-zinc-600 text-zinc-400 text-xs whitespace-nowrap"
+                    >
+                      I don&apos;t know
+                    </button>
+                  </div>
+                </div>
+                <div>
+                  <label className="block text-xs text-zinc-500 mb-0.5">Estimated labor cost (%)</label>
+                  <div className="flex gap-2">
+                    <input
+                      type="number"
+                      value={laborCostPct}
+                      onChange={(e) => setLaborCostPct(e.target.value)}
+                      placeholder="30"
+                      className="flex-1 bg-zinc-900 border border-zinc-700 rounded-lg px-3 py-2 text-white placeholder:text-zinc-500 text-sm"
+                    />
+                    <button
+                      type="button"
+                      onClick={() => setLaborCostPct("30")}
+                      className="px-3 py-1 rounded-lg border border-zinc-600 text-zinc-400 text-xs whitespace-nowrap"
+                    >
+                      I don&apos;t know
+                    </button>
+                  </div>
+                </div>
+                <div>
+                  <label className="block text-xs text-zinc-500 mb-0.5">Number of employees</label>
                   <input
                     type="number"
-                    value={laborCostPct}
-                    onChange={(e) => setLaborCostPct(e.target.value)}
-                    placeholder="30"
-                    className="flex-1 bg-zinc-900 border border-zinc-700 rounded-xl px-4 py-3 text-white placeholder:text-zinc-500"
+                    value={employeeCount}
+                    onChange={(e) => setEmployeeCount(e.target.value)}
+                    placeholder="12"
+                    className="w-full bg-zinc-900 border border-zinc-700 rounded-lg px-3 py-2 text-white placeholder:text-zinc-500 text-sm"
                   />
-                  <button
-                    type="button"
-                    onClick={() => setLaborCostPct("30")}
-                    className="px-4 py-3 rounded-xl border border-zinc-600 text-zinc-400 text-sm whitespace-nowrap"
-                  >
-                    I don&apos;t know
-                  </button>
                 </div>
-              </div>
-              <div>
-                <label className="block text-xs text-zinc-500 mb-1">Number of employees</label>
-                <input
-                  type="number"
-                  value={employeeCount}
-                  onChange={(e) => setEmployeeCount(e.target.value)}
-                  placeholder="12"
-                  className="w-full bg-zinc-900 border border-zinc-700 rounded-xl px-4 py-3 text-white placeholder:text-zinc-500"
-                />
-              </div>
-              <div>
-                <label className="block text-xs text-zinc-500 mb-1">Monthly rent ($)</label>
-                <input
-                  type="number"
-                  value={monthlyRent}
-                  onChange={(e) => setMonthlyRent(e.target.value)}
-                  placeholder="$3,500"
-                  className="w-full bg-zinc-900 border border-zinc-700 rounded-xl px-4 py-3 text-white placeholder:text-zinc-500"
-                />
+                <div>
+                  <label className="block text-xs text-zinc-500 mb-0.5">Monthly rent ($)</label>
+                  <input
+                    type="number"
+                    value={monthlyRent}
+                    onChange={(e) => setMonthlyRent(e.target.value)}
+                    placeholder="$3,500"
+                    className="w-full bg-zinc-900 border border-zinc-700 rounded-lg px-3 py-2 text-white placeholder:text-zinc-500 text-sm"
+                  />
+                </div>
               </div>
             </div>
-            <button
-              type="button"
-              onClick={() => setStep(3)}
-              className="w-full py-4 rounded-xl bg-[#E65100] text-white font-semibold"
-            >
-              Next →
-            </button>
-          </div>
+            <div className="shrink-0 pb-4 mt-2">
+              <button
+                type="button"
+                onClick={() => setStep(3)}
+                className="w-full py-2.5 rounded-xl bg-[#E65100] text-white font-semibold text-sm"
+              >
+                Next →
+              </button>
+            </div>
+          </>
         )}
 
         {step === 3 && (
-          <div className="space-y-6">
-            <h2 className="text-xl font-bold">Let&apos;s find you online.</h2>
-            <p className="text-zinc-400 text-sm">This helps PrimeOS pull your real Google reviews, competitor data, and local insights.</p>
-            <div className="space-y-4">
-              <div>
-                <label className="block text-xs text-zinc-500 mb-1">Your Google Business name *</label>
-                <input
-                  type="text"
-                  value={googleBusinessName}
-                  onChange={(e) => setGoogleBusinessName(e.target.value)}
-                  placeholder="e.g., Joe's Pizza"
-                  className="w-full bg-zinc-900 border border-zinc-700 rounded-xl px-4 py-3 text-white placeholder:text-zinc-500"
-                />
-                <p className="text-xs text-zinc-500 mt-1">Exactly as it appears on Google Maps</p>
-              </div>
-              <div>
-                <label className="block text-xs text-zinc-500 mb-1">Street address *</label>
-                <input
-                  type="text"
-                  value={streetAddress}
-                  onChange={(e) => setStreetAddress(e.target.value)}
-                  placeholder="e.g., 123 Main St"
-                  className="w-full bg-zinc-900 border border-zinc-700 rounded-xl px-4 py-3 text-white placeholder:text-zinc-500"
-                />
-              </div>
-              <div>
-                <label className="block text-xs text-zinc-500 mb-1">City *</label>
-                <input
-                  type="text"
-                  value={city}
-                  onChange={(e) => setCity(e.target.value)}
-                  placeholder="e.g., Kent"
-                  className="w-full bg-zinc-900 border border-zinc-700 rounded-xl px-4 py-3 text-white placeholder:text-zinc-500"
-                />
-              </div>
-              <div>
-                <label className="block text-xs text-zinc-500 mb-1">State *</label>
-                <select
-                  value={state}
-                  onChange={(e) => setState(e.target.value)}
-                  className="w-full bg-zinc-900 border border-zinc-700 rounded-xl px-4 py-3 text-white text-sm"
-                >
-                  <option value="">Select state</option>
-                  {US_STATES.map((s) => (
-                    <option key={s} value={s}>{s}</option>
-                  ))}
-                </select>
-              </div>
-              <div>
-                <label className="block text-xs text-zinc-500 mb-1">Zip code *</label>
-                <input
-                  type="text"
-                  value={zipCode}
-                  onChange={(e) => setZipCode(e.target.value)}
-                  placeholder="e.g., 44240"
-                  className="w-full bg-zinc-900 border border-zinc-700 rounded-xl px-4 py-3 text-white placeholder:text-zinc-500"
-                />
-              </div>
-              <div>
-                <label className="block text-xs text-zinc-500 mb-1">County</label>
-                <input
-                  type="text"
-                  value={county}
-                  onChange={(e) => setCounty(e.target.value)}
-                  placeholder="e.g., Portage County"
-                  className="w-full bg-zinc-900 border border-zinc-700 rounded-xl px-4 py-3 text-white placeholder:text-zinc-500"
-                />
-                <p className="text-xs text-zinc-500 mt-1">Helps us track local health inspections</p>
+          <>
+            <div className="flex-1 flex flex-col justify-center min-h-0">
+              <h2 className="text-lg font-bold mb-1">Let&apos;s find you online.</h2>
+              <p className="text-zinc-400 text-xs mb-3">This helps PrimeOS pull your real Google reviews, competitor data, and local insights.</p>
+              <div className="space-y-2">
+                <div>
+                  <label className="block text-xs text-zinc-500 mb-0.5">Your Google Business name *</label>
+                  <input
+                    type="text"
+                    value={googleBusinessName}
+                    onChange={(e) => setGoogleBusinessName(e.target.value)}
+                    placeholder="e.g., Joe's Pizza"
+                    className="w-full bg-zinc-900 border border-zinc-700 rounded-lg px-3 py-2 text-white placeholder:text-zinc-500 text-sm"
+                  />
+                  <p className="text-xs text-zinc-500 mt-0.5">Exactly as it appears on Google Maps</p>
+                </div>
+                <div>
+                  <label className="block text-xs text-zinc-500 mb-0.5">Street address *</label>
+                  <input
+                    type="text"
+                    value={streetAddress}
+                    onChange={(e) => setStreetAddress(e.target.value)}
+                    placeholder="e.g., 123 Main St"
+                    className="w-full bg-zinc-900 border border-zinc-700 rounded-lg px-3 py-2 text-white placeholder:text-zinc-500 text-sm"
+                  />
+                </div>
+                <div>
+                  <label className="block text-xs text-zinc-500 mb-0.5">City *</label>
+                  <input
+                    type="text"
+                    value={city}
+                    onChange={(e) => setCity(e.target.value)}
+                    placeholder="e.g., Kent"
+                    className="w-full bg-zinc-900 border border-zinc-700 rounded-lg px-3 py-2 text-white placeholder:text-zinc-500 text-sm"
+                  />
+                </div>
+                <div>
+                  <label className="block text-xs text-zinc-500 mb-0.5">State *</label>
+                  <select
+                    value={state}
+                    onChange={(e) => setState(e.target.value)}
+                    className="w-full bg-zinc-900 border border-zinc-700 rounded-lg px-3 py-2 text-white text-sm"
+                  >
+                    <option value="">Select state</option>
+                    {US_STATES.map((s) => (
+                      <option key={s} value={s}>{s}</option>
+                    ))}
+                  </select>
+                </div>
+                <div>
+                  <label className="block text-xs text-zinc-500 mb-0.5">Zip code *</label>
+                  <input
+                    type="text"
+                    value={zipCode}
+                    onChange={(e) => setZipCode(e.target.value)}
+                    placeholder="e.g., 44240"
+                    className="w-full bg-zinc-900 border border-zinc-700 rounded-lg px-3 py-2 text-white placeholder:text-zinc-500 text-sm"
+                  />
+                </div>
+                <div>
+                  <label className="block text-xs text-zinc-500 mb-0.5">County</label>
+                  <input
+                    type="text"
+                    value={county}
+                    onChange={(e) => setCounty(e.target.value)}
+                    placeholder="e.g., Portage County"
+                    className="w-full bg-zinc-900 border border-zinc-700 rounded-lg px-3 py-2 text-white placeholder:text-zinc-500 text-sm"
+                  />
+                  <p className="text-xs text-zinc-500 mt-0.5">Helps us track local health inspections</p>
+                </div>
               </div>
             </div>
-            <button
-              type="button"
-              onClick={() => setStep(4)}
-              disabled={!googleBusinessName.trim() || !streetAddress.trim() || !city.trim() || !state || !zipCode.trim()}
-              className="w-full py-4 rounded-xl bg-[#E65100] text-white font-semibold disabled:opacity-50 disabled:cursor-not-allowed"
-            >
-              Next →
-            </button>
-          </div>
+            <div className="shrink-0 pb-4">
+              <button
+                type="button"
+                onClick={() => setStep(4)}
+                disabled={!googleBusinessName.trim() || !streetAddress.trim() || !city.trim() || !state || !zipCode.trim()}
+                className="w-full py-2.5 rounded-xl bg-[#E65100] text-white font-semibold text-sm disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                Next →
+              </button>
+            </div>
+          </>
         )}
 
         {step === 4 && (
-          <div className="space-y-4 pt-0">
-            <h2 className="text-xl font-bold">What matters most to you right now?</h2>
-            <div className="space-y-3">
-              {GOAL_OPTIONS.map((g) => (
-                <button
-                  key={g.id}
-                  type="button"
-                  onClick={() => toggleGoal(g.id)}
-                  className={cn(
-                    "w-full flex items-center gap-3 p-4 rounded-xl border-2 text-left transition-colors",
-                    goals.includes(g.id) ? "border-[#E65100] bg-[#E65100]/10" : "border-zinc-700 bg-zinc-900"
-                  )}
-                >
-                  <span className="text-2xl">{g.emoji}</span>
-                  <span className="font-medium">{g.label}</span>
-                </button>
-              ))}
+          <>
+            <div className="flex-1 flex flex-col justify-center min-h-0 space-y-3">
+              <h2 className="text-lg font-bold">What matters most to you right now?</h2>
+              <div className="space-y-2">
+                {GOAL_OPTIONS.map((g) => (
+                  <button
+                    key={g.id}
+                    type="button"
+                    onClick={() => toggleGoal(g.id)}
+                    className={cn(
+                      "w-full flex items-center gap-3 p-3 rounded-xl border-2 text-left transition-colors text-sm",
+                      goals.includes(g.id) ? "border-[#E65100] bg-[#E65100]/10" : "border-zinc-700 bg-zinc-900"
+                    )}
+                  >
+                    <span className="text-xl">{g.emoji}</span>
+                    <span className="font-medium">{g.label}</span>
+                  </button>
+                ))}
+              </div>
             </div>
-            <button
-              type="button"
-              onClick={() => setStep(5)}
-              className="w-full py-4 rounded-xl bg-[#E65100] text-white font-semibold"
-            >
-              Next →
-            </button>
-          </div>
+            <div className="shrink-0 pb-4">
+              <button
+                type="button"
+                onClick={() => setStep(5)}
+                className="w-full py-2.5 rounded-xl bg-[#E65100] text-white font-semibold text-sm"
+              >
+                Next →
+              </button>
+            </div>
+          </>
         )}
 
         {step === 5 && (
-          <div className="space-y-6">
-            <h2 className="text-xl font-bold">Your dashboard is ready.</h2>
-            <p className="text-zinc-400">We built your PrimeOS around the numbers you just gave us.</p>
-            <div className="grid grid-cols-3 gap-2">
-              <div className="rounded-xl bg-zinc-900 border border-zinc-700 p-3 text-center">
-                <div className="text-lg mb-1">🍕</div>
-                <div className="text-xs text-zinc-500">Product</div>
-                <div className={cn("text-lg font-bold", pillarGradeColorClass(productGrade))}>{productGrade}</div>
-              </div>
-              <div className="rounded-xl bg-zinc-900 border border-zinc-700 p-3 text-center">
-                <div className="text-lg mb-1">👥</div>
-                <div className="text-xs text-zinc-500">People</div>
-                <div className={cn("text-lg font-bold", pillarGradeColorClass(peopleGrade))}>{peopleGrade}</div>
-              </div>
-              <div className="rounded-xl bg-zinc-900 border border-zinc-700 p-3 text-center">
-                <div className="text-lg mb-1">📊</div>
-                <div className="text-xs text-zinc-500">Process</div>
-                <div className={cn("text-lg font-bold", pillarGradeColorClass(processGrade))}>{processGrade}</div>
+          <>
+            <div className="flex-1 flex flex-col justify-center min-h-0">
+              <h2 className="text-lg font-bold mb-1">Your dashboard is ready.</h2>
+              <p className="text-zinc-400 text-xs mb-3">We built your PrimeOS around the numbers you just gave us.</p>
+              <div className="grid grid-cols-3 gap-2">
+                <div className="rounded-lg bg-zinc-900 border border-zinc-700 p-2 text-center">
+                  <div className="text-base mb-0.5">🍕</div>
+                  <div className="text-[10px] text-zinc-500">Product</div>
+                  <div className={cn("text-sm font-bold", pillarGradeColorClass(productGrade))}>{productGrade}</div>
+                </div>
+                <div className="rounded-lg bg-zinc-900 border border-zinc-700 p-2 text-center">
+                  <div className="text-base mb-0.5">👥</div>
+                  <div className="text-[10px] text-zinc-500">People</div>
+                  <div className={cn("text-sm font-bold", pillarGradeColorClass(peopleGrade))}>{peopleGrade}</div>
+                </div>
+                <div className="rounded-lg bg-zinc-900 border border-zinc-700 p-2 text-center">
+                  <div className="text-base mb-0.5">📊</div>
+                  <div className="text-[10px] text-zinc-500">Process</div>
+                  <div className={cn("text-sm font-bold", pillarGradeColorClass(processGrade))}>{processGrade}</div>
+                </div>
               </div>
             </div>
-            <button
-              type="button"
-              onClick={handleComplete}
-              disabled={submitting}
-              className="w-full py-4 rounded-xl bg-[#E65100] text-white font-semibold text-lg disabled:opacity-70"
-            >
-              {submitting ? "Saving…" : "Open My Dashboard →"}
-            </button>
-          </div>
+            <div className="shrink-0 pb-4 mt-3">
+              <button
+                type="button"
+                onClick={handleComplete}
+                disabled={submitting}
+                className="w-full py-3 rounded-xl bg-[#E65100] text-white font-semibold text-base disabled:opacity-70"
+              >
+                {submitting ? "Saving…" : "Open My Dashboard →"}
+              </button>
+            </div>
+          </>
         )}
       </div>
     </div>
