@@ -36,34 +36,34 @@ export async function POST(request: Request) {
 
     if (!invite_code) {
       return NextResponse.json(
-        { error: "Invalid invite code. PrimeOS is currently available by invitation only." },
+        { error: "Invalid invite code. PrimeOS is currently available by invitation only.", detail: "invite_code missing", step: "validate_invite" },
         { status: 400 }
       );
     }
     if (!VALID_INVITE_CODES.includes(invite_code)) {
       return NextResponse.json(
-        { error: "Invalid invite code. PrimeOS is currently available by invitation only." },
+        { error: "Invalid invite code. PrimeOS is currently available by invitation only.", detail: `code: ${invite_code}`, step: "validate_invite" },
         { status: 400 }
       );
     }
 
     if (!name || !email || !password || !store_name || !city_state) {
       return NextResponse.json(
-        { error: "Missing required fields: name, email, password, store_name, city_state" },
+        { error: "Missing required fields: name, email, password, store_name, city_state", detail: "one or more required fields empty", step: "validate_fields" },
         { status: 400 }
       );
     }
 
     if (password.length < 8) {
       return NextResponse.json(
-        { error: "Password must be at least 8 characters" },
+        { error: "Password must be at least 8 characters", detail: `length: ${password.length}`, step: "validate_password" },
         { status: 400 }
       );
     }
 
     if (!EMAIL_REGEX.test(email)) {
       return NextResponse.json(
-        { error: "Please enter a valid email address" },
+        { error: "Please enter a valid email address", detail: `email: ${email}`, step: "validate_email" },
         { status: 400 }
       );
     }
@@ -73,7 +73,7 @@ export async function POST(request: Request) {
 
     if (!supabaseUrl || !serviceRoleKey) {
       return NextResponse.json(
-        { error: "Server configuration error" },
+        { error: "Server configuration error", detail: "NEXT_PUBLIC_SUPABASE_URL or SUPABASE_SERVICE_ROLE_KEY missing", step: "config" },
         { status: 500 }
       );
     }
@@ -94,20 +94,20 @@ export async function POST(request: Request) {
     });
 
     if (userError) {
-      const msg = userError.message || "";
+      const msg = userError.message || String(userError);
       if (msg.includes("already registered") || msg.includes("already exists")) {
-        return NextResponse.json({ error: "An account with this email already exists. Try logging in." }, { status: 400 });
+        return NextResponse.json({ error: "An account with this email already exists. Try logging in.", detail: msg, step: "createUser" }, { status: 400 });
       }
       if (msg.includes("password") || msg.includes("Password")) {
-        return NextResponse.json({ error: "Password does not meet requirements. Use at least 8 characters." }, { status: 400 });
+        return NextResponse.json({ error: "Password does not meet requirements. Use at least 8 characters.", detail: msg, step: "createUser" }, { status: 400 });
       }
       console.error("Signup createUser error:", userError);
-      return NextResponse.json({ error: "Could not create account. Please try again." }, { status: 500 });
+      return NextResponse.json({ error: "Could not create account", detail: msg, step: "createUser" }, { status: 500 });
     }
 
     const userId = userData?.user?.id;
     if (!userId) {
-      return NextResponse.json({ error: "Account creation failed. Please try again." }, { status: 500 });
+      return NextResponse.json({ error: "Account creation failed", detail: "userData.user.id missing after createUser", step: "createUser" }, { status: 500 });
     }
 
     const baseSlug = slugify(store_name);
@@ -118,6 +118,10 @@ export async function POST(request: Request) {
 
     if (storeError) {
       console.error("Signup stores insert error:", storeError);
+      return NextResponse.json(
+        { error: "Could not create store record", detail: storeError.message || String(storeError), step: "stores_insert" },
+        { status: 500 }
+      );
     }
 
     try {
@@ -177,9 +181,10 @@ export async function POST(request: Request) {
 
     return NextResponse.json({ success: true });
   } catch (err) {
+    const ex = err instanceof Error ? err : new Error(String(err));
     console.error("Signup error:", err);
     return NextResponse.json(
-      { error: "Something went wrong. Please try again." },
+      { error: "Something went wrong", detail: ex.message || String(err), step: "request" },
       { status: 500 }
     );
   }

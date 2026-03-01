@@ -234,11 +234,15 @@
                 window.location.href = "/login?welcome=true";
                 return;
               }
-              errorEl.textContent = (result.data && result.data.error) || "Something went wrong. Please try again.";
+              var d = result.data || {};
+              var parts = [d.error || "Something went wrong. Please try again."];
+              if (d.detail) parts.push("Detail: " + d.detail);
+              if (d.step) parts.push("Step: " + d.step);
+              errorEl.textContent = parts.join(" ");
               errorEl.style.display = "block";
             })
-            .catch(function() {
-              errorEl.textContent = "Something went wrong. Please try again.";
+            .catch(function(e) {
+              errorEl.textContent = "Network or request failed. " + (e && e.message ? e.message : String(e));
               errorEl.style.display = "block";
             })
             .finally(function() {
