@@ -1,9 +1,33 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/src/lib/auth-context";
 import { cn } from "@/lib/utils";
+
+function AnimatedStep({ delay, text }: { delay: number; text: string }) {
+  const [visible, setVisible] = useState(false);
+  const [checked, setChecked] = useState(false);
+  useEffect(() => {
+    const showTimer = setTimeout(() => setVisible(true), delay);
+    const checkTimer = setTimeout(() => setChecked(true), delay + 500);
+    return () => {
+      clearTimeout(showTimer);
+      clearTimeout(checkTimer);
+    };
+  }, [delay]);
+  if (!visible) return null;
+  return (
+    <div className="flex items-center gap-3">
+      <div
+        className={`w-6 h-6 rounded-full flex items-center justify-center transition-all duration-500 ${checked ? "bg-emerald-500" : "bg-zinc-700 animate-pulse"}`}
+      >
+        {checked && <span className="text-white text-xs">✓</span>}
+      </div>
+      <span className={`text-sm transition-all duration-500 ${checked ? "text-white" : "text-zinc-500"}`}>{text}</span>
+    </div>
+  );
+}
 
 type LetterGrade = "A" | "B" | "C" | "D" | "F";
 
@@ -57,7 +81,19 @@ const GOAL_OPTIONS = [
 export default function OnboardingPage() {
   const router = useRouter();
   const { session } = useAuth();
-  const [step, setStep] = useState(1);
+  const [step, setStep] = useState(0);
+  const [progress, setProgress] = useState(0);
+
+  useEffect(() => {
+    if (step !== 0) return;
+    setProgress(0);
+    const tProgress = setTimeout(() => setProgress(100), 100);
+    const tAdvance = setTimeout(() => setStep(1), 4800);
+    return () => {
+      clearTimeout(tProgress);
+      clearTimeout(tAdvance);
+    };
+  }, [step]);
   const [weeklySales, setWeeklySales] = useState<string>("");
   const [foodCostPct, setFoodCostPct] = useState<string>("");
   const [laborCostPct, setLaborCostPct] = useState<string>("");
@@ -149,17 +185,40 @@ export default function OnboardingPage() {
   return (
     <div className="min-h-screen bg-zinc-950 text-white flex flex-col justify-between px-4 py-6">
       <div className="w-full max-w-md flex-1 flex flex-col justify-center mx-auto">
-        <div className="flex justify-center gap-2 mb-4 shrink-0">
-          {Array.from({ length: totalSteps }).map((_, i) => (
-            <div
-              key={i}
-              className={cn(
-                "w-2 h-2 rounded-full transition-colors",
-                i + 1 === step ? "bg-[#E65100]" : "bg-zinc-700"
-              )}
-            />
-          ))}
-        </div>
+        {step > 0 && (
+          <div className="flex justify-center gap-2 mb-4 shrink-0">
+            {Array.from({ length: totalSteps }).map((_, i) => (
+              <div
+                key={i}
+                className={cn(
+                  "w-2 h-2 rounded-full transition-colors",
+                  i + 1 === step ? "bg-[#E65100]" : "bg-zinc-700"
+                )}
+              />
+            ))}
+          </div>
+        )}
+
+        {step === 0 && (
+          <>
+            <div className="fixed top-0 left-0 right-0 h-1 bg-zinc-800 z-50">
+              <div
+                className="h-full bg-[#E65100] transition-all duration-[5000ms] ease-linear"
+                style={{ width: `${progress}%` }}
+              />
+            </div>
+            <div className="text-center space-y-6 max-w-sm mx-auto">
+              <h1 className="text-2xl font-bold text-white">Setting up PrimeOS</h1>
+              <div className="space-y-3 text-left">
+                <AnimatedStep delay={0} text="Verifying your account" />
+                <AnimatedStep delay={1000} text="Loading your store" />
+                <AnimatedStep delay={2000} text="Preparing your dashboard" />
+                <AnimatedStep delay={3000} text="Crunching your numbers" />
+                <AnimatedStep delay={4000} text="You're in 🔥" />
+              </div>
+            </div>
+          </>
+        )}
 
         {step === 1 && (
           <>
