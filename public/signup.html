@@ -142,6 +142,10 @@
                   <input id="email" name="email" type="email" required class="field-input" autocomplete="email" />
                 </div>
                 <div class="field">
+                  <label class="field-label" for="phone">Phone Number *</label>
+                  <input id="phone" name="phone" type="tel" required class="field-input" placeholder="(555) 555-5555" />
+                </div>
+                <div class="field">
                   <label class="field-label" for="password">Password * <span style="color:var(--text-muted)">(min 8 characters)</span></label>
                   <input id="password" name="password" type="password" required minlength="8" class="field-input" autocomplete="new-password" />
                 </div>
@@ -196,6 +200,7 @@
           var invite_code = ((document.getElementById("invite_code") || {}).value || "").trim().toUpperCase();
           var name = (document.getElementById("name") || {}).value.trim();
           var email = (document.getElementById("email") || {}).value.trim();
+          var phone = (document.getElementById("phone") || {}).value.trim();
           var password = (document.getElementById("password") || {}).value;
           var store_name = (document.getElementById("store_name") || {}).value.trim();
           var city_state = (document.getElementById("city_state") || {}).value.trim();
@@ -209,7 +214,7 @@
             errorEl.style.display = "block";
             return;
           }
-          if (!name || !email || !password || !store_name || !city_state) {
+          if (!name || !email || !phone || !password || !store_name || !city_state) {
             errorEl.textContent = "Please fill in all required fields.";
             errorEl.style.display = "block";
             return;
@@ -226,7 +231,7 @@
           fetch("/api/signup", {
             method: "POST",
             headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ invite_code, name, email, password, store_name, city_state, pos_system })
+            body: JSON.stringify({ invite_code, name, email, phone, password, store_name, city_state, pos_system })
           })
             .then(function(res) { return res.json().then(function(data) { return { ok: res.ok, data: data }; }); })
             .then(function(result) {

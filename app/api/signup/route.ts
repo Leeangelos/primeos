@@ -8,6 +8,7 @@ type Payload = {
   invite_code?: string;
   name?: string;
   email?: string;
+  phone?: string;
   password?: string;
   store_name?: string;
   city_state?: string;
@@ -29,6 +30,7 @@ export async function POST(request: Request) {
     const invite_code = (body.invite_code ?? "").trim().toUpperCase();
     const name = body.name?.trim();
     const email = body.email?.trim();
+    const phone = body.phone?.trim() || null;
     const password = body.password;
     const store_name = body.store_name?.trim();
     const city_state = body.city_state?.trim();
@@ -47,9 +49,9 @@ export async function POST(request: Request) {
       );
     }
 
-    if (!name || !email || !password || !store_name || !city_state) {
+    if (!name || !email || !phone || !password || !store_name || !city_state) {
       return NextResponse.json(
-        { error: "Missing required fields: name, email, password, store_name, city_state", detail: "one or more required fields empty", step: "validate_fields" },
+        { error: "Missing required fields: name, email, phone, password, store_name, city_state", detail: "one or more required fields empty", step: "validate_fields" },
         { status: 400 }
       );
     }
@@ -88,6 +90,7 @@ export async function POST(request: Request) {
         name,
         store_name,
         city_state,
+        phone: phone ?? undefined,
         pos_system: pos_system ?? undefined,
         invite_code,
       },
@@ -160,6 +163,7 @@ export async function POST(request: Request) {
             <h1 style="margin:0 0 16px;font-size:18px;font-weight:700;color:#E65100;">New PrimeOS Signup</h1>
             <p style="margin:0 0 8px;font-size:14px;"><strong>Name:</strong> ${name.replace(/</g, "&lt;")}</p>
             <p style="margin:0 0 8px;font-size:14px;"><strong>Email:</strong> ${email.replace(/</g, "&lt;")}</p>
+            <p style="margin:0 0 8px;font-size:14px;"><strong>Phone:</strong> ${(phone || "—").replace(/</g, "&lt;")}</p>
             <p style="margin:0 0 8px;font-size:14px;"><strong>Store:</strong> ${store_name.replace(/</g, "&lt;")}</p>
             <p style="margin:0 0 8px;font-size:14px;"><strong>City & State:</strong> ${city_state.replace(/</g, "&lt;")}</p>
             <p style="margin:0 0 0;font-size:14px;"><strong>POS:</strong> ${(pos_system || "—").replace(/</g, "&lt;")}</p>
