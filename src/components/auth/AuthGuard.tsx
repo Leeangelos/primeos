@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 import { usePathname, useRouter } from "next/navigation";
 import { useAuth } from "@/src/lib/auth-context";
 
@@ -12,7 +12,21 @@ export function AuthGuard({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
   const router = useRouter();
   const { session, loading } = useAuth();
-  const onboardingRedirectDone = useRef(false);
+  const [onboardingApiResolved, setOnboardingApiResolved] = useState(false);
+  const apiCheckStartedRef = useRef(false);
+  const prevUserIdRef = useRef<string | null>(null);
+
+  useEffect(() => {
+    if (!session) {
+      prevUserIdRef.current = null;
+      return;
+    }
+    const uid = session.user?.id;
+    if (uid && prevUserIdRef.current !== uid) {
+      prevUserIdRef.current = uid;
+      apiCheckStartedRef.current = false;
+    }
+  }, [session]);
 
   useEffect(() => {
     if (loading) return;
@@ -33,11 +47,30 @@ export function AuthGuard({ children }: { children: React.ReactNode }) {
     if (skipCheck) return;
 
     const userId = session.user?.id;
-    const key = userId ? `${ONBOARDING_STORAGE_PREFIX}${userId}` : "";
-    if (typeof window !== "undefined" && key && !localStorage.getItem(key) && !onboardingRedirectDone.current) {
-      onboardingRedirectDone.current = true;
-      window.location.href = "/onboarding";
-    }
+    const localFlag = typeof window !== "undefined" && userId ? localStorage.getItem(`${ONBOARDING_STORAGE_PREFIX}${userId}`) : null;
+    if (localFlag === "true") return;
+
+    if (apiCheckStartedRef.current) return;
+    apiCheckStartedRef.current = true;
+
+    fetch("/api/onboarding", {
+      headers: { Authorization: `Bearer ${session.access_token}` },
+    })
+      .then((res) => res.json())
+      .then((data: { completed?: boolean }) => {
+        if (data.completed) {
+          if (userId && typeof window !== "undefined") {
+            localStorage.setItem(`${ONBOARDING_STORAGE_PREFIX}${userId}`, "true");
+          }
+          setOnboardingApiResolved(true);
+        } else {
+          window.location.href = "/onboarding";
+        }
+      })
+      .catch(() => {
+        console.error("Onboarding check failed, proceeding");
+        setOnboardingApiResolved(true);
+      });
   }, [loading, session, pathname, router]);
 
   if (PUBLIC_PATHS.includes(pathname)) {
@@ -61,8 +94,8 @@ export function AuthGuard({ children }: { children: React.ReactNode }) {
   const skipCheck = (session.user?.email && SKIP_ONBOARDING_EMAILS.includes(session.user.email)) || !isNewSignup;
   const userId = session.user?.id;
   const onboardingStorageKey = userId ? `${ONBOARDING_STORAGE_PREFIX}${userId}` : "";
-  const onboardingComplete =
-    typeof window !== "undefined" && onboardingStorageKey ? !!localStorage.getItem(onboardingStorageKey) : false;
+  const hasLocalFlag = typeof window !== "undefined" && onboardingStorageKey ? localStorage.getItem(onboardingStorageKey) === "true" : false;
+  const onboardingComplete = hasLocalFlag || onboardingApiResolved;
   const showRedirectToOnboarding = isNewSignup && !skipCheck && !onboardingComplete;
 
   if (showRedirectToOnboarding) {

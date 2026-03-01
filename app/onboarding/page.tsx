@@ -85,6 +85,20 @@ export default function OnboardingPage() {
   const [progress, setProgress] = useState(0);
 
   useEffect(() => {
+    if (!session?.access_token) return;
+    fetch("/api/onboarding", {
+      headers: { Authorization: `Bearer ${session.access_token}` },
+    })
+      .then((res) => res.json())
+      .then((data: { completed?: boolean }) => {
+        if (data.completed) {
+          window.location.href = "/";
+        }
+      })
+      .catch(() => {});
+  }, [session?.access_token]);
+
+  useEffect(() => {
     if (step !== 0) return;
     setProgress(0);
     const tProgress = setTimeout(() => setProgress(100), 100);
