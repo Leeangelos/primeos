@@ -77,32 +77,31 @@ export function AuthGuard({ children }: { children: React.ReactNode }) {
     }
   }, [loading, session, pathname, router, welcomeAnimationDone]);
 
-  if (loading && !session && !PUBLIC_PATHS.includes(pathname)) {
-    return null;
+  if (PUBLIC_PATHS.includes(pathname)) {
+    return <>{children}</>;
   }
 
-  if (loading && session && !PUBLIC_PATHS.includes(pathname)) {
+  if (loading) {
     return (
-      <div className="fixed inset-0 z-[100] flex items-center justify-center bg-slate-900">
-        <div className="h-8 w-8 animate-spin rounded-full border-2 border-slate-600 border-t-blue-500" aria-hidden />
+      <div className="fixed inset-0 z-[100] flex items-center justify-center bg-zinc-950">
+        <div className="h-8 w-8 animate-spin rounded-full border-2 border-zinc-600 border-t-blue-500" aria-hidden />
       </div>
     );
   }
 
-  const storeName = session?.user?.user_metadata?.store_name;
+  if (!session) {
+    return null;
+  }
+
+  const storeName = session.user?.user_metadata?.store_name;
   const isNewSignup = typeof storeName === "string" && storeName.length > 0;
-  const skipCheck = (session?.user?.email && SKIP_ONBOARDING_EMAILS.includes(session.user.email)) || !isNewSignup;
-  const userId = session?.user?.id;
+  const skipCheck = (session.user?.email && SKIP_ONBOARDING_EMAILS.includes(session.user.email)) || !isNewSignup;
+  const userId = session.user?.id;
   const onboardingStorageKey = userId ? `${ONBOARDING_STORAGE_PREFIX}${userId}` : "";
   const onboardingComplete =
     typeof window !== "undefined" && onboardingStorageKey ? !!localStorage.getItem(onboardingStorageKey) : false;
   const showWelcomeAnimation =
-    session &&
-    isNewSignup &&
-    !skipCheck &&
-    !onboardingComplete &&
-    !welcomeAnimationDone &&
-    !PUBLIC_PATHS.includes(pathname);
+    isNewSignup && !skipCheck && !onboardingComplete && !welcomeAnimationDone;
 
   if (showWelcomeAnimation) {
     return (
