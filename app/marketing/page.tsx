@@ -6,6 +6,7 @@ import { cn } from "@/lib/utils";
 import { useAuth } from "@/src/lib/auth-context";
 import { isNewUser, getNewUserStoreName } from "@/src/lib/user-scope";
 import { EducationInfoIcon } from "@/src/components/education/InfoIcon";
+import { SmartQuestion } from "@/src/components/ui/SmartQuestion";
 import { formatPct } from "@/src/lib/formatters";
 import { SEED_MARKETING_CAMPAIGNS, type SeedMarketingCampaign } from "@/src/lib/seed-data";
 
@@ -80,6 +81,7 @@ export default function MarketingPage() {
           <p className="text-sm text-zinc-300">Ready for live data? Reach out to us and we&apos;ll get your system connected.</p>
           <a href="mailto:hello@getprimeos.com" className="text-[#E65100] underline font-semibold inline-block">hello@getprimeos.com</a>
         </div>
+        <SmartQuestion page="marketing" />
       </div>
     );
   }
@@ -94,7 +96,8 @@ export default function MarketingPage() {
         <p className="text-xs text-muted">
           Every dollar in. Every dollar out. ROAS by campaign.
         </p>
-
+      </div>
+      <SmartQuestion page="marketing" />
         <div className="flex bg-slate-800 rounded-lg p-0.5 border border-slate-700 mb-4">
           <button type="button" onClick={() => setRange("daily")} className={cn("px-3 py-1.5 rounded-md text-xs font-medium transition-colors", range === "daily" ? "bg-slate-700 text-white" : "text-slate-400")}>Daily</button>
           <button type="button" onClick={() => setRange("weekly")} className={cn("px-3 py-1.5 rounded-md text-xs font-medium transition-colors", range === "weekly" ? "bg-slate-700 text-white" : "text-slate-400")}>Weekly</button>
@@ -127,7 +130,6 @@ export default function MarketingPage() {
             />
           </div>
         )}
-      </div>
 
       {/* Summary at top */}
       <div className="px-3 sm:px-5">

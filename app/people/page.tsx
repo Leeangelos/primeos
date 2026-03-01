@@ -7,6 +7,7 @@ import { useAuth } from "@/src/lib/auth-context";
 import { isNewUser, getNewUserStoreName } from "@/src/lib/user-scope";
 import { EducationInfoIcon } from "@/src/components/education/InfoIcon";
 import { ExportButton } from "@/src/components/ui/ExportButton";
+import { SmartQuestion } from "@/src/components/ui/SmartQuestion";
 import { formatPct } from "@/src/lib/formatters";
 import { SEED_EMPLOYEES, type SeedEmployee } from "@/src/lib/seed-data";
 
@@ -108,6 +109,7 @@ export default function PeoplePage() {
           </div>
           <p className="text-xs text-muted">{newUserStoreName}</p>
         </div>
+        <SmartQuestion page="people" />
         <div className="bg-zinc-900/50 border border-zinc-800 rounded-2xl p-6 text-center">
           <p className="text-sm text-zinc-300">Your team roster will appear here. Start by adding shifts in the Schedule.</p>
         </div>
@@ -143,7 +145,7 @@ export default function PeoplePage() {
           Turnover cost, CAC, tenure, and churn. 12 seed employees.
         </p>
       </div>
-
+      <SmartQuestion page="people" />
       {/* Summary at top */}
       <div className="px-3 sm:px-5">
         <div className="rounded-xl border border-slate-700 bg-slate-800/50 p-4 min-w-0">

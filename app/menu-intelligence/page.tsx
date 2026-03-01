@@ -15,6 +15,7 @@ import { isNewUser, getNewUserStoreName } from "@/src/lib/user-scope";
 import { formatDollars } from "@/src/lib/formatters";
 import { EducationInfoIcon } from "@/src/components/education/InfoIcon";
 import { DataDisclaimer } from "@/src/components/ui/DataDisclaimer";
+import { SmartQuestion } from "@/src/components/ui/SmartQuestion";
 
 const PRICING_GAPS = [
   { item_name: "Large Pepperoni Pizza", store_id: "kent", menuPrice: 29.95, avgActualPrice: 27.4, unitsSold: 180, gap: -2.55, gapPct: -8.5, cause: "Possible causes: unapplied POS price updates, staff discounts, coupon overuse, or incorrect ringing." },
@@ -140,6 +141,7 @@ export default function MenuIntelligencePage() {
           </div>
           <EducationInfoIcon metricKey="menu_item_count" />
         </div>
+        <SmartQuestion page="menu" />
         <div className="bg-zinc-900/50 border border-zinc-800 rounded-2xl p-6 text-center">
           <p className="text-sm text-zinc-300">Menu intelligence requires POS data to analyze your best and worst sellers.</p>
         </div>
@@ -158,7 +160,7 @@ export default function MenuIntelligencePage() {
         </div>
         <EducationInfoIcon metricKey="menu_item_count" />
       </div>
-
+      <SmartQuestion page="menu" />
       <div className="bg-blue-950/30 rounded-xl border border-blue-800/50 p-3">
         <p className="text-xs text-blue-300">
           Menu prices last synced from your public website on February 23, 2026.

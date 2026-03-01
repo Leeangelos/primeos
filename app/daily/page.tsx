@@ -23,6 +23,7 @@ import { isNewUser, getNewUserStoreName } from "@/src/lib/user-scope";
 import { useRedAlert } from "@/src/lib/useRedAlert";
 import { EducationInfoIcon } from "@/src/components/education/InfoIcon";
 import { ExportButton } from "@/src/components/ui/ExportButton";
+import { SmartQuestion } from "@/src/components/ui/SmartQuestion";
 import { formatPct as formatPctShared, formatDollars } from "@/src/lib/formatters";
 import { SEED_DAILY_KPIS } from "@/src/lib/seed-data";
 
@@ -607,6 +608,7 @@ function DailyPageContent() {
           </div>
           <p className="text-xs text-muted">{newUserStoreName}</p>
         </div>
+        <SmartQuestion page="daily" />
         <div className="bg-zinc-900/50 border border-zinc-800 rounded-2xl p-6 space-y-4">
           <p className="text-sm text-zinc-300">Here you&apos;ll enter today&apos;s sales, food cost, labor, and other KPIs. Your numbers will appear in the layout below once we connect your system.</p>
           <div className="grid grid-cols-2 gap-3 text-left">

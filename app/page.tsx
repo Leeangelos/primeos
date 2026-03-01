@@ -8,6 +8,7 @@ import { Area, AreaChart, ReferenceLine, ResponsiveContainer } from "recharts";
 import { COLORS } from "@/src/lib/design-tokens";
 import { useRedAlert } from "@/src/lib/useRedAlert";
 import { useAuth } from "@/src/lib/auth-context";
+import { isNewUser } from "@/src/lib/user-scope";
 import { EducationInfoIcon } from "@/src/components/education/InfoIcon";
 import { formatPct } from "@/src/lib/formatters";
 import { EDUCATION_CONTENT } from "@/src/lib/education-content";
@@ -15,6 +16,8 @@ import { SEED_DAILY_KPIS, SEED_MORNING_BRIEF, SEED_MORNING_BRIEF_BY_STORE, SEED_
 import { SEED_WINS } from "@/src/lib/win-engine";
 import { calculateOperatorScore } from "@/src/lib/score-engine";
 import { WinNotifications } from "@/src/components/ui/WinNotifications";
+import { SmartQuestion } from "@/src/components/ui/SmartQuestion";
+import { SMART_QUESTIONS, getCompletionPercentage } from "@/src/lib/smart-questions";
 
 /** Map alert keys to education content keys (for playbook modal). */
 const ALERT_TO_EDUCATION: Record<string, string> = {
@@ -214,6 +217,7 @@ export default function HomePage() {
   const [educationKey, setEducationKey] = useState<string | null>(null);
   const [showMissingBanner, setShowMissingBanner] = useState(true);
   const [showAllWins, setShowAllWins] = useState(false);
+  const [operatorProfile, setOperatorProfile] = useState<Record<string, unknown>>({});
   const today = todayYYYYMMDD();
   const yesterday = yesterdayYYYYMMDD();
 
@@ -225,6 +229,19 @@ export default function HomePage() {
       .then((res) => res.json())
       .then((body) => {
         if (!cancelled && body.completed && body.data) setOnboardingData(body.data);
+      })
+      .catch(() => {});
+    return () => { cancelled = true; };
+  }, [session?.access_token]);
+
+  useEffect(() => {
+    const token = session?.access_token;
+    if (!token) return;
+    let cancelled = false;
+    fetch("/api/operator-profile", { headers: { Authorization: `Bearer ${token}` } })
+      .then((res) => res.json())
+      .then((body) => {
+        if (!cancelled && body.profile) setOperatorProfile(body.profile);
       })
       .catch(() => {});
     return () => { cancelled = true; };
@@ -515,8 +532,34 @@ export default function HomePage() {
   const stores = STORE_OPTIONS.map((opt) => ({ id: opt.slug, name: opt.name }));
   const score = calculateOperatorScore();
 
+  const smartAnsweredIds = useMemo(() => {
+    return SMART_QUESTIONS.filter((q) => {
+      const v = operatorProfile[q.field];
+      if (v === undefined || v === null) return false;
+      if (Array.isArray(v)) return v.length > 0;
+      return String(v).trim() !== "";
+    }).map((q) => q.id);
+  }, [operatorProfile]);
+  const smartPct = getCompletionPercentage(smartAnsweredIds);
+  const smartRemaining = SMART_QUESTIONS.length - smartAnsweredIds.length;
+  const showSmartSection = isNewUser(session);
+
   return (
     <div className="space-y-6 pb-28">
+      {showSmartSection && (
+        <>
+          <div className="rounded-xl border border-slate-700 bg-slate-800/50 p-3">
+            <p className="text-xs font-medium text-slate-300 mb-2">Your PrimeOS: {smartPct}% optimized</p>
+            <div className="h-2 rounded-full bg-zinc-800 overflow-hidden">
+              <div className="h-full rounded-full bg-[#E65100] transition-all" style={{ width: `${smartPct}%` }} />
+            </div>
+            {smartRemaining > 0 && (
+              <p className="text-xs text-slate-500 mt-1.5">Answer {smartRemaining} more question{smartRemaining !== 1 ? "s" : ""} to unlock more insights.</p>
+            )}
+          </div>
+          <SmartQuestion page="home" />
+        </>
+      )}
       {!isOnboardingUser && (
         <div className="relative mb-4">
           <button

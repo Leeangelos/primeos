@@ -15,6 +15,7 @@ import { isNewUser, getNewUserStoreName } from "@/src/lib/user-scope";
 import { SEED_STORES } from "@/src/lib/seed-data";
 import { EducationInfoIcon } from "@/src/components/education/InfoIcon";
 import DataSourceBadge from "@/src/components/ui/DataSourceBadge";
+import { SmartQuestion } from "@/src/components/ui/SmartQuestion";
 import { useAllStoreProfiles } from "@/src/hooks/usePlacesData";
 import { SEED_REPUTATION_KPIS_BY_STORE } from "@/src/lib/seed-data";
 
@@ -302,7 +303,7 @@ export default function ReputationPage() {
         </div>
         <EducationInfoIcon metricKey="reputation" />
       </div>
-
+      <SmartQuestion page="reputation" />
       <div className="mb-4">
         <div className="flex items-center gap-2 mb-2">
           <label className="text-xs text-slate-500 shrink-0">Store:</label>

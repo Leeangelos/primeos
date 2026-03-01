@@ -26,6 +26,7 @@ import {
 import { formatPct, formatDollars } from "@/src/lib/formatters";
 import { EducationInfoIcon } from "@/src/components/education/InfoIcon";
 import { DataDisclaimer } from "@/src/components/ui/DataDisclaimer";
+import { SmartQuestion } from "@/src/components/ui/SmartQuestion";
 import { SEED_STORES } from "@/src/lib/seed-data";
 
 const STORE_REVENUE: Record<string, number> = { kent: 44000, aurora: 52000, lindseys: 32000 };
@@ -477,7 +478,7 @@ export default function VendorTrackerPage() {
           <EducationInfoIcon metricKey="vendor_total_spend" />
         </div>
       </div>
-
+      <SmartQuestion page="vendor" />
       {newUser && (
         <div className="rounded-xl border border-slate-700 bg-slate-800/50 p-6 text-center mb-6">
           <p className="text-sm text-slate-300">No vendors yet. Tap &quot;Log Invoice&quot; to add your first vendor.</p>

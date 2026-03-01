@@ -5,6 +5,7 @@ import { MapPin, ChevronDown, Check } from "lucide-react";
 import { useAuth } from "@/src/lib/auth-context";
 import { isNewUser, getNewUserStoreName } from "@/src/lib/user-scope";
 import { EducationInfoIcon } from "@/src/components/education/InfoIcon";
+import { SmartQuestion } from "@/src/components/ui/SmartQuestion";
 import { SEED_SCHEDULE, SEED_DAILY_KPIS, SEED_EMPLOYEES, SEED_STORES, type SeedShift } from "@/src/lib/seed-data";
 import { cn } from "@/lib/utils";
 
@@ -593,6 +594,8 @@ export default function SchedulePage() {
           </>
         )}
       </div>
+
+      <SmartQuestion page="schedule" />
 
       {newUser && shiftsForStore.length === 0 && (
         <div className="px-3 sm:px-5 py-4 rounded-xl border border-slate-700 bg-slate-800/50 text-center">

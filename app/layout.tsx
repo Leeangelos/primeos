@@ -10,6 +10,7 @@ import { AuthGuard } from "@/src/components/auth/AuthGuard";
 import { ThemeProvider } from "@/src/lib/theme-context";
 import { TierProvider } from "@/src/lib/tier-context";
 import { AuthProvider } from "@/src/lib/auth-context";
+import { AppRefreshHandler } from "@/src/components/layout/AppRefreshHandler";
 
 import type { Viewport, Metadata } from "next";
 
@@ -59,6 +60,7 @@ export default function RootLayout({
   return (
     <html lang="en" className="dark-mode">
       <body className="min-h-screen bg-bg text-text">
+        <AppRefreshHandler />
         <ThemeProvider>
           <TierProvider>
             <TOSGate>
