@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import Link from "next/link";
 import { createClient } from "@/lib/supabase";
 
 export default function LoginPage() {
@@ -64,6 +65,14 @@ export default function LoginPage() {
       <div className="text-center mb-6">
         <h1 className="text-2xl font-bold text-white">PrimeOS</h1>
         <p className="text-sm text-slate-400 mt-1">The Operating System for Pizza</p>
+      </div>
+
+      <div className="w-full bg-gradient-to-r from-[#E65100]/20 to-zinc-900 border border-[#E65100]/30 rounded-2xl p-5 mb-6">
+        <p className="text-lg font-bold text-white">First time here?</p>
+        <p className="text-sm text-zinc-400 mt-1">See how PrimeOS helps independent pizzeria operators stop running blind.</p>
+        <Link href="/welcome" className="bg-[#E65100] text-white px-6 py-2.5 rounded-xl font-semibold text-sm mt-3 inline-block hover:bg-[#f3731a] transition-colors">
+          Learn More →
+        </Link>
       </div>
 
       <div className="bg-slate-800 rounded-xl border border-slate-700 p-5">
