@@ -1045,6 +1045,16 @@ export const EDUCATION_CONTENT: Record<string, EducationEntry> = {
       "Consider setting a 38-hour soft cap so managers can adjust before overtime hits. Two hours of buffer prevents expensive surprises.",
     ],
   },
+  schedule_labor_cost: {
+    title: "Scheduled Labor Cost",
+    whatItMeans:
+      "The total dollar cost of all scheduled labor for the displayed period. This includes wages for every shift shown on the schedule.",
+    whyItMatters:
+      "Labor cost is your most controllable daily expense. Seeing the dollar impact of your schedule before the week starts lets you adjust before the money is spent — not after.",
+    whenRedPlaybook: [
+      "Consider comparing your scheduled labor cost to your forecasted sales. If labor is 35% of expected revenue, the schedule may be too heavy.",
+    ],
+  },
   labor_hours: {
     title: "Labor Hours",
     whatItMeans:

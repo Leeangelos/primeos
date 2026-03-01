@@ -534,7 +534,6 @@ export default function SchedulePage() {
         <div className="flex items-center gap-2 flex-wrap">
           <h1 className="text-lg font-semibold sm:text-2xl">Schedule</h1>
           <EducationInfoIcon metricKey="labor_optimization" />
-          <EducationInfoIcon metricKey="slph" />
         </div>
         <p className="text-xs text-muted">Week view. Total hours, labor cost, and projected SLPH by day.</p>
       </div>
@@ -691,7 +690,10 @@ export default function SchedulePage() {
                     <div className="text-base font-bold tabular-nums text-white">{totalHours.toFixed(1)}</div>
                   </div>
                   <div>
-                    <div className="text-[10px] uppercase text-muted">Labor</div>
+                    <div className="text-[10px] uppercase text-muted flex items-center justify-center gap-0.5">
+                      Labor
+                      <EducationInfoIcon metricKey="schedule_labor_cost" size="sm" />
+                    </div>
                     <div className="text-base font-bold tabular-nums text-white">{"$" + laborCost.toFixed(0)}</div>
                   </div>
                   <div>
@@ -776,7 +778,10 @@ export default function SchedulePage() {
                   <div className="text-sm font-bold tabular-nums text-white">{totalHours.toFixed(1)}</div>
                 </div>
                 <div>
-                  <div className="text-[9px] uppercase text-muted">Labor</div>
+                  <div className="text-[9px] uppercase text-muted flex items-center justify-center gap-0.5">
+                    Labor
+                    <EducationInfoIcon metricKey="schedule_labor_cost" size="sm" />
+                  </div>
                   <div className="text-sm font-bold tabular-nums text-white">{"$" + laborCost.toFixed(0)}</div>
                 </div>
                 <div>
