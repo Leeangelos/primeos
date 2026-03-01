@@ -118,6 +118,25 @@ export default function BriefPage() {
   const [error, setError] = useState<string | null>(null);
   const [showEducation, setShowEducation] = useState(false);
   const [isReading, setIsReading] = useState(false);
+  const [onboardingData, setOnboardingData] = useState<{
+    weekly_sales?: number | null;
+    food_cost_pct?: number | null;
+    labor_cost_pct?: number | null;
+  } | null>(null);
+
+  useEffect(() => {
+    if (!newUser || !session?.access_token) return;
+    let cancelled = false;
+    fetch("/api/onboarding", { headers: { Authorization: `Bearer ${session.access_token}` } })
+      .then((r) => r.json())
+      .then((b) => {
+        if (!cancelled && b.completed && b.data) setOnboardingData(b.data);
+      })
+      .catch(() => {});
+    return () => {
+      cancelled = true;
+    };
+  }, [newUser, session?.access_token]);
 
   const briefDate = (() => {
     const d = new Date(date + "T12:00:00Z");
@@ -205,6 +224,12 @@ export default function BriefPage() {
 
   if (authLoading) return <div className="min-h-screen bg-zinc-950" />;
   if (newUser) {
+    const weekly = onboardingData?.weekly_sales != null ? Number(onboardingData.weekly_sales) : null;
+    const estDaily = weekly != null && weekly > 0 ? Math.round(weekly / 7) : null;
+    const foodPct = onboardingData?.food_cost_pct != null ? Number(onboardingData.food_cost_pct) : null;
+    const laborPct = onboardingData?.labor_cost_pct != null ? Number(onboardingData.labor_cost_pct) : null;
+    const primePct = foodPct != null && laborPct != null ? foodPct + laborPct : null;
+    const todayLabel = new Date(today + "T12:00:00Z").toLocaleDateString("en-US", { weekday: "long", month: "long", day: "numeric", year: "numeric" });
     return (
       <div className="space-y-5 min-w-0 overflow-x-hidden pb-28">
         <div className="dashboard-toolbar p-3 sm:p-5 space-y-3">
@@ -215,10 +240,33 @@ export default function BriefPage() {
             </h1>
             <button type="button" onClick={() => setShowEducation(true)} className="inline-flex items-center justify-center min-h-[44px] min-w-[44px] rounded-full bg-muted/20 text-muted hover:bg-brand/20 hover:text-brand transition-colors text-xs font-bold" aria-label="Learn more">i</button>
           </div>
-          <p className="text-xs text-muted">{newUserStoreName}</p>
+          <p className="text-sm font-medium text-white">{newUserStoreName}</p>
+          <p className="text-xs text-muted">Today, {todayLabel}</p>
         </div>
-        <div className="bg-zinc-900/50 border border-zinc-800 rounded-2xl p-6 text-center">
-          <p className="text-sm text-zinc-300">Your Morning Brief builds automatically from your daily data. Connect your POS to start receiving daily insights.</p>
+        <div className="bg-zinc-900/50 border border-zinc-800 rounded-2xl p-6 space-y-4">
+          <div className="space-y-2">
+            <div className="flex justify-between text-sm">
+              <span className="text-zinc-500">Yesterday&apos;s Sales</span>
+              <span className="font-semibold text-[#E65100]">{estDaily != null ? `~$${estDaily.toLocaleString()}` : "—"}</span>
+            </div>
+            <p className="text-[10px] text-zinc-500">(estimated from your weekly average)</p>
+            <div className="flex justify-between text-sm">
+              <span className="text-zinc-500">Food Cost</span>
+              <span className="text-white">{foodPct != null ? formatPct(foodPct) : "—"}</span>
+            </div>
+            <p className="text-[10px] text-zinc-500">(from your setup)</p>
+            <div className="flex justify-between text-sm">
+              <span className="text-zinc-500">Labor Cost</span>
+              <span className="text-white">{laborPct != null ? formatPct(laborPct) : "—"}</span>
+            </div>
+            <p className="text-[10px] text-zinc-500">(from your setup)</p>
+            <div className="flex justify-between text-sm">
+              <span className="text-zinc-500">PRIME Cost</span>
+              <span className="text-white font-medium">{primePct != null ? formatPct(primePct) : "—"}</span>
+            </div>
+          </div>
+          <p className="text-sm text-zinc-300">Your Morning Brief will include real daily comparisons, alerts, and insights once we connect your system.</p>
+          <a href="mailto:hello@getprimeos.com" className="text-[#E65100] underline font-semibold inline-block">hello@getprimeos.com</a>
         </div>
       </div>
     );

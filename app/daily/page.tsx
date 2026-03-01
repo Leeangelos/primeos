@@ -167,6 +167,27 @@ function DailyPageContent() {
   const [pulseEnergy, setPulseEnergy] = useState<TeamEnergy>(null);
   const [pulseSaving, setPulseSaving] = useState(false);
   const [pulseToast, setPulseToast] = useState<"idle" | "saved" | "error">("idle");
+  const [onboardingData, setOnboardingData] = useState<{
+    weekly_sales?: number | null;
+    food_cost_pct?: number | null;
+    labor_cost_pct?: number | null;
+    employee_count?: number | null;
+    monthly_rent?: number | null;
+  } | null>(null);
+
+  useEffect(() => {
+    if (!newUser || !session?.access_token) return;
+    let cancelled = false;
+    fetch("/api/onboarding", { headers: { Authorization: `Bearer ${session.access_token}` } })
+      .then((r) => r.json())
+      .then((b) => {
+        if (!cancelled && b.completed && b.data) setOnboardingData(b.data);
+      })
+      .catch(() => {});
+    return () => {
+      cancelled = true;
+    };
+  }, [newUser, session?.access_token]);
 
   function validateEntries() {
     const newWarnings: WarningItem[] = [];
@@ -571,6 +592,12 @@ function DailyPageContent() {
 
   if (loading) return <div className="min-h-screen bg-zinc-950" />;
   if (newUser) {
+    const weekly = onboardingData?.weekly_sales != null ? Number(onboardingData.weekly_sales) : null;
+    const estDaily = weekly != null && weekly > 0 ? Math.round(weekly / 7) : null;
+    const foodPct = onboardingData?.food_cost_pct != null ? Number(onboardingData.food_cost_pct) : null;
+    const laborPct = onboardingData?.labor_cost_pct != null ? Number(onboardingData.labor_cost_pct) : null;
+    const employees = onboardingData?.employee_count != null ? Number(onboardingData.employee_count) : null;
+    const rent = onboardingData?.monthly_rent != null ? Number(onboardingData.monthly_rent) : null;
     return (
       <div className="space-y-5 min-w-0 pb-28">
         <div className="dashboard-toolbar p-3 sm:p-5 space-y-3">
@@ -580,8 +607,36 @@ function DailyPageContent() {
           </div>
           <p className="text-xs text-muted">{newUserStoreName}</p>
         </div>
-        <div className="bg-zinc-900/50 border border-zinc-800 rounded-2xl p-6 text-center">
-          <p className="text-sm text-zinc-300">Your daily numbers will appear here once your POS is connected. In the meantime, explore the education icons to learn what each metric means.</p>
+        <div className="bg-zinc-900/50 border border-zinc-800 rounded-2xl p-6 space-y-4">
+          <p className="text-sm text-zinc-300">Here you&apos;ll enter today&apos;s sales, food cost, labor, and other KPIs. Your numbers will appear in the layout below once we connect your system.</p>
+          <div className="grid grid-cols-2 gap-3 text-left">
+            <div className="rounded-lg border border-zinc-700 bg-zinc-800/50 p-3">
+              <div className="text-[10px] uppercase tracking-wider text-zinc-500 mb-0.5">Estimated daily sales</div>
+              <div className="text-lg font-semibold text-[#E65100]">{estDaily != null ? formatDollars(estDaily) : "—"}</div>
+              <div className="text-xs text-zinc-500">from your weekly average</div>
+            </div>
+            <div className="rounded-lg border border-zinc-700 bg-zinc-800/50 p-3">
+              <div className="text-[10px] uppercase tracking-wider text-zinc-500 mb-0.5">Food cost target</div>
+              <div className="text-lg font-semibold text-white">{foodPct != null ? formatPctShared(foodPct) : "—"}</div>
+            </div>
+            <div className="rounded-lg border border-zinc-700 bg-zinc-800/50 p-3">
+              <div className="text-[10px] uppercase tracking-wider text-zinc-500 mb-0.5">Labor cost target</div>
+              <div className="text-lg font-semibold text-white">{laborPct != null ? formatPctShared(laborPct) : "—"}</div>
+            </div>
+            {(employees != null || rent != null) && (
+              <div className="rounded-lg border border-zinc-700 bg-zinc-800/50 p-3 col-span-2">
+                <div className="text-[10px] uppercase tracking-wider text-zinc-500 mb-0.5">From your setup</div>
+                <div className="text-sm text-zinc-300">
+                  {employees != null && <span>Employees: {employees}</span>}
+                  {employees != null && rent != null && " · "}
+                  {rent != null && <span>Monthly rent: {formatDollars(rent)}</span>}
+                </div>
+              </div>
+            )}
+          </div>
+          <p className="text-sm text-zinc-300">Your daily actuals will appear here once we connect your system. Reach out to us at{" "}
+            <a href="mailto:hello@getprimeos.com" className="text-[#E65100] underline font-semibold">hello@getprimeos.com</a>
+          </p>
         </div>
       </div>
     );

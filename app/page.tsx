@@ -766,7 +766,7 @@ export default function HomePage() {
                 </AreaChart>
               </ResponsiveContainer>
             </div>
-            <p className="text-xs text-slate-500 mt-2">Daily breakdown available when POS is connected.</p>
+            <p className="text-xs text-slate-500 mt-2">Ready for live data? Reach out at <a href="mailto:hello@getprimeos.com" className="text-[#E65100] underline font-semibold">hello@getprimeos.com</a> and we&apos;ll get your system connected.</p>
           </div>
         ) : (
         <div className="grid grid-cols-2 gap-4 min-w-0">
@@ -881,7 +881,7 @@ export default function HomePage() {
         {isOnboardingUser ? (
           <div className="rounded-xl border p-4 border-slate-700 bg-slate-800/50">
             <p className="text-[10px] text-slate-500 uppercase tracking-wide mb-1">Business Health Score</p>
-            <p className="text-sm text-slate-400">Connect POS for live data.</p>
+            <p className="text-sm text-slate-400">Ready for live data? Reach out at <a href="mailto:hello@getprimeos.com" className="text-[#E65100] underline font-semibold">hello@getprimeos.com</a> and we&apos;ll get your system connected.</p>
             <p className="text-xs text-slate-500 mt-2">Based on 6 weeks of data across financials, reputation, and operations.</p>
           </div>
         ) : (

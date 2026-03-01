@@ -84,8 +84,10 @@ export default function FoodCostAnalysisPage() {
           </div>
           <EducationInfoIcon metricKey="theoretical_food_cost" />
         </div>
-        <div className="bg-zinc-900/50 border border-zinc-800 rounded-2xl p-6 text-center">
-          <p className="text-sm text-zinc-300">Your food cost breakdown appears here once invoice and sales data are connected.</p>
+        <div className="bg-zinc-900/50 border border-zinc-800 rounded-2xl p-6 space-y-3">
+          <p className="text-sm text-zinc-300">Food Cost Analysis compares theoretical (recipe) cost to actual spend so you can spot variance and leaks. Once invoice and sales data are connected, you&apos;ll see full breakdowns by category and month.</p>
+          <p className="text-sm text-zinc-300">Ready for live data? Reach out to us and we&apos;ll get your system connected.</p>
+          <a href="mailto:hello@getprimeos.com" className="text-[#E65100] underline font-semibold inline-block">hello@getprimeos.com</a>
         </div>
       </div>
     );
