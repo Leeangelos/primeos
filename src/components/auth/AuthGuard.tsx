@@ -5,7 +5,7 @@ import { usePathname, useRouter } from "next/navigation";
 import { useAuth } from "@/src/lib/auth-context";
 
 const PUBLIC_PATHS = ["/login", "/signup", "/welcome", "/partner", "/terms", "/privacy", "/onboarding"];
-const SKIP_ONBOARDING_CHECK_EMAIL = "leeangelos.corp@gmail.com";
+const SKIP_ONBOARDING_EMAILS = ["leeangelos.corp@gmail.com", "greg.leeangelos@gmail.com", "lmg.11@yahoo.com"];
 const ONBOARDING_STORAGE_PREFIX = "primeos-onboarding-complete-";
 
 function AnimatedStep({ delay, text }: { delay: number; text: string }) {
@@ -58,7 +58,7 @@ export function AuthGuard({ children }: { children: React.ReactNode }) {
 
     const storeName = session.user?.user_metadata?.store_name;
     const isNewSignup = typeof storeName === "string" && storeName.length > 0;
-    const skipCheck = session.user?.email === SKIP_ONBOARDING_CHECK_EMAIL || !isNewSignup;
+    const skipCheck = (session.user?.email && SKIP_ONBOARDING_EMAILS.includes(session.user.email)) || !isNewSignup;
 
     if (skipCheck) return;
 
@@ -78,6 +78,10 @@ export function AuthGuard({ children }: { children: React.ReactNode }) {
   }, [loading, session, pathname, router, welcomeAnimationDone]);
 
   if (loading && !session && !PUBLIC_PATHS.includes(pathname)) {
+    return null;
+  }
+
+  if (loading && session && !PUBLIC_PATHS.includes(pathname)) {
     return (
       <div className="fixed inset-0 z-[100] flex items-center justify-center bg-slate-900">
         <div className="h-8 w-8 animate-spin rounded-full border-2 border-slate-600 border-t-blue-500" aria-hidden />
@@ -87,9 +91,18 @@ export function AuthGuard({ children }: { children: React.ReactNode }) {
 
   const storeName = session?.user?.user_metadata?.store_name;
   const isNewSignup = typeof storeName === "string" && storeName.length > 0;
-  const skipCheck = session?.user?.email === SKIP_ONBOARDING_CHECK_EMAIL || !isNewSignup;
+  const skipCheck = (session?.user?.email && SKIP_ONBOARDING_EMAILS.includes(session.user.email)) || !isNewSignup;
+  const userId = session?.user?.id;
+  const onboardingStorageKey = userId ? `${ONBOARDING_STORAGE_PREFIX}${userId}` : "";
+  const onboardingComplete =
+    typeof window !== "undefined" && onboardingStorageKey ? !!localStorage.getItem(onboardingStorageKey) : false;
   const showWelcomeAnimation =
-    session && isNewSignup && !skipCheck && !welcomeAnimationDone && !PUBLIC_PATHS.includes(pathname);
+    session &&
+    isNewSignup &&
+    !skipCheck &&
+    !onboardingComplete &&
+    !welcomeAnimationDone &&
+    !PUBLIC_PATHS.includes(pathname);
 
   if (showWelcomeAnimation) {
     return (
