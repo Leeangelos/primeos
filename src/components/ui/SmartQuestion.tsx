@@ -11,6 +11,7 @@ import {
 import { cn } from "@/lib/utils";
 
 const SKIP_KEY_PREFIX = "primeos-smart-q-skip-";
+const ANSWERED_STORAGE_KEY = "primeos-answered-questions";
 
 function getSkippedIds(): string[] {
   if (typeof window === "undefined") return [];
@@ -22,6 +23,27 @@ function getSkippedIds(): string[] {
     }
   }
   return out;
+}
+
+function getAnsweredFromStorage(): string[] {
+  if (typeof window === "undefined") return [];
+  try {
+    const raw = window.localStorage.getItem(ANSWERED_STORAGE_KEY);
+    const parsed = raw ? JSON.parse(raw) : [];
+    return Array.isArray(parsed) ? parsed : [];
+  } catch {
+    return [];
+  }
+}
+
+function markAnsweredInStorage(questionId: string) {
+  try {
+    const answered = getAnsweredFromStorage();
+    if (!answered.includes(questionId)) {
+      answered.push(questionId);
+      window.localStorage.setItem(ANSWERED_STORAGE_KEY, JSON.stringify(answered));
+    }
+  } catch {}
 }
 
 function markSkipped(id: string) {
@@ -39,6 +61,7 @@ export function SmartQuestion({ page }: { page: string }) {
   const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState(false);
   const [skippedIds, setSkippedIds] = useState<string[]>(() => getSkippedIds());
+  const [answeredIds, setAnsweredIds] = useState<string[]>(() => getAnsweredFromStorage());
 
   const isNew = isNewUser(session);
 
@@ -61,12 +84,14 @@ export function SmartQuestion({ page }: { page: string }) {
 
   const pickCurrent = useCallback(() => {
     const list = getQuestionsForPage(page);
-    const answered = new Set(
+    const fromProfile = new Set(
       SMART_QUESTIONS.filter((q) => {
         const v = profile[q.field];
-        return v !== undefined && v !== null && v !== "";
+        return v !== undefined && v !== null && v !== "" && (Array.isArray(v) ? v.length > 0 : true);
       }).map((q) => q.id)
     );
+    const fromStorage = new Set(getAnsweredFromStorage());
+    const answered = new Set([...fromProfile, ...fromStorage, ...answeredIds]);
     const next = list.find((q) => !answered.has(q.id) && !skippedIds.includes(q.id));
     setCurrent(next ?? null);
     if (next) {
@@ -75,7 +100,7 @@ export function SmartQuestion({ page }: { page: string }) {
       else if (existing !== undefined && existing !== null && existing !== "") setValue(String(existing));
       else setValue(next.type === "multi_select" ? [] : "");
     }
-  }, [page, profile, skippedIds]);
+  }, [page, profile, skippedIds, answeredIds]);
 
   useEffect(() => {
     if (loading) return;
@@ -98,11 +123,14 @@ export function SmartQuestion({ page }: { page: string }) {
       if (res.ok) {
         const data = await res.json();
         if (data.profile) setProfile(data.profile);
+        const questionId = current.id;
+        setAnsweredIds((prev) => (prev.includes(questionId) ? prev : [...prev, questionId]));
+        markAnsweredInStorage(questionId);
         setSaved(true);
         setTimeout(() => {
           setSaved(false);
           pickCurrent();
-        }, 1200);
+        }, 1000);
       }
     } finally {
       setSaving(false);
@@ -115,12 +143,14 @@ export function SmartQuestion({ page }: { page: string }) {
     const nextSkipped = [...skippedIds, current.id];
     setSkippedIds(nextSkipped);
     const list = getQuestionsForPage(page);
-    const answered = new Set(
+    const fromProfile = new Set(
       SMART_QUESTIONS.filter((q) => {
         const v = profile[q.field];
         return v !== undefined && v !== null && v !== "" && (Array.isArray(v) ? v.length > 0 : true);
       }).map((q) => q.id)
     );
+    const fromStorage = new Set(getAnsweredFromStorage());
+    const answered = new Set([...fromProfile, ...fromStorage, ...answeredIds]);
     const next = list.find((q) => !answered.has(q.id) && !nextSkipped.includes(q.id));
     setCurrent(next ?? null);
     if (next) {
