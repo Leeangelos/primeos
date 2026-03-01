@@ -2,11 +2,10 @@
 
 import { useState, useEffect, useCallback, Fragment } from "react";
 import { useAuth } from "@/src/lib/auth-context";
-import { ChevronDown, ChevronUp, Loader2 } from "lucide-react";
+import { ChevronDown, ChevronUp, Loader2, ArrowLeft, Lock } from "lucide-react";
 import { cn } from "@/lib/utils";
 
-const PIN_STORAGE_KEY = "primeos-admin-pin-ok";
-const CORRECT_PIN = "1208";
+const CORRECT_PIN = "5959";
 
 type Onboarding = {
   weekly_sales?: number | null;
@@ -35,6 +34,7 @@ type Signup = {
   city: string;
   state: string;
   pos: string;
+  pos_system: string;
   invite_code: string;
   signed_up: string;
   onboarding: Onboarding | null;
@@ -53,7 +53,6 @@ function PinScreen({
 
   const submit = useCallback(() => {
     if (pin === CORRECT_PIN) {
-      if (typeof sessionStorage !== "undefined") sessionStorage.setItem(PIN_STORAGE_KEY, "1");
       setError(false);
       onCorrect();
     } else {
@@ -70,7 +69,10 @@ function PinScreen({
   }, [pin, submit]);
 
   return (
-    <div className="min-h-screen bg-slate-900 flex flex-col items-center justify-center p-6">
+    <div className="min-h-screen bg-slate-900 flex flex-col items-center justify-center p-6 relative">
+      <button type="button" onClick={() => window.history.back()} className="absolute top-0 left-0 p-2 text-zinc-400 hover:text-white" aria-label="Back">
+        <ArrowLeft className="w-6 h-6" />
+      </button>
       <h1 className="text-xl font-semibold text-white mb-8">Admin Access</h1>
       <div className={cn("transition-all", shake && "animate-shake")}>
         <input
@@ -123,11 +125,6 @@ export default function AdminPage() {
   const [expandedId, setExpandedId] = useState<string | null>(null);
 
   useEffect(() => {
-    if (typeof sessionStorage === "undefined") return;
-    setPinOk(sessionStorage.getItem(PIN_STORAGE_KEY) === "1");
-  }, []);
-
-  useEffect(() => {
     if (!pinOk || !session?.access_token) return;
     let cancelled = false;
     setLoading(true);
@@ -165,6 +162,14 @@ export default function AdminPage() {
   return (
     <div className="min-h-screen bg-slate-900 text-slate-200">
       <div className="max-w-6xl mx-auto px-4 py-8">
+        <div className="flex items-center justify-between gap-4 mb-4">
+          <button type="button" onClick={() => window.history.back()} className="p-2 text-zinc-400 hover:text-white" aria-label="Back">
+            <ArrowLeft className="w-6 h-6" />
+          </button>
+          <button type="button" onClick={() => setPinOk(false)} className="p-2 text-zinc-400 hover:text-white ml-auto" aria-label="Lock">
+            <Lock className="w-6 h-6" />
+          </button>
+        </div>
         <h1 className="text-2xl font-bold text-white">PrimeOS Admin</h1>
         <p className="text-slate-400 mt-1">Operator Signups</p>
         <div className="mt-4 inline-flex items-center gap-2 rounded-full bg-slate-800 border border-slate-700 px-4 py-2">
@@ -216,7 +221,7 @@ export default function AdminPage() {
                           <td className="px-4 py-3">{s.phone || "—"}</td>
                           <td className="px-4 py-3">{s.email || "—"}</td>
                           <td className="px-4 py-3">{s.city && s.state ? `${s.city}, ${s.state}` : s.city || s.state || "—"}</td>
-                          <td className="px-4 py-3">{s.pos || "—"}</td>
+                          <td className="px-4 py-3">{s.pos_system || s.pos || "—"}</td>
                           <td className="px-4 py-3">{s.invite_code || "—"}</td>
                           <td className="px-4 py-3 text-slate-400">{formatDate(s.signed_up)}</td>
                           <td className="px-2 py-3">{open ? <ChevronUp className="w-4 h-4 text-orange-400" /> : <ChevronDown className="w-4 h-4 text-slate-500" />}</td>
@@ -251,7 +256,8 @@ export default function AdminPage() {
                       <div>
                         <div className="font-medium text-white">{s.name || "—"}</div>
                         <div className="text-slate-400 text-sm mt-0.5">{s.store_name || "—"}</div>
-                        <div className="text-slate-500 text-xs mt-1">{formatDate(s.signed_up)}</div>
+                        <div className="text-slate-500 text-xs mt-1">POS: {s.pos_system || s.pos || "—"}</div>
+                        <div className="text-slate-500 text-xs mt-0.5">{formatDate(s.signed_up)}</div>
                       </div>
                       {open ? <ChevronUp className="w-5 h-5 text-orange-400 shrink-0" /> : <ChevronDown className="w-5 h-5 text-slate-500 shrink-0" />}
                     </div>
@@ -283,7 +289,7 @@ function DetailsBlock({ signup }: { signup: Signup }) {
         <span className="text-slate-500">City/State</span>
         <span>{[signup.city, signup.state].filter(Boolean).join(", ") || (o?.city && o?.state ? `${o.city}, ${o.state}` : "—")}</span>
         <span className="text-slate-500">POS</span>
-        <span>{signup.pos || "—"}</span>
+        <span>{signup.pos_system || signup.pos || "—"}</span>
         <span className="text-slate-500">Invite Code</span>
         <span>{signup.invite_code || "—"}</span>
       </div>

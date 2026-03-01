@@ -56,6 +56,7 @@ export async function GET(request: Request) {
           city: (meta.city as string) || (onboarding?.city ?? "") || "",
           state: (meta.state as string) || (onboarding?.state ?? "") || "",
           pos: (meta.pos as string) || "",
+          pos_system: (meta.pos_system as string) || (meta.pos as string) || "",
           invite_code: (meta.invite_code as string) || "",
           signed_up: u.created_at ?? "",
           onboarding: onboarding
