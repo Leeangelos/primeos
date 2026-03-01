@@ -541,7 +541,7 @@ export default function SchedulePage() {
       <div className="dashboard-toolbar p-3 sm:p-5 space-y-3">
         <div className="flex items-center gap-2 flex-wrap">
           <h1 className="text-lg font-semibold sm:text-2xl">Schedule</h1>
-          <EducationInfoIcon metricKey="labor_optimization" />
+          <EducationInfoIcon metricKey="labor_optimization" size="lg" />
         </div>
         <p className="text-xs text-muted">Week view. Total hours, labor cost, and projected SLPH by day.</p>
       </div>

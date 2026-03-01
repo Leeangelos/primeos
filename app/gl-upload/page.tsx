@@ -144,7 +144,7 @@ export default function GLUploadPage() {
             <h1 className="text-xl font-bold text-white">GL Upload</h1>
             <p className="text-xs text-slate-400 mt-0.5">{newUserStoreName}</p>
           </div>
-          <EducationInfoIcon metricKey="gl_upload" />
+          <EducationInfoIcon metricKey="gl_upload" size="lg" />
         </div>
         <div className="bg-zinc-900/50 border border-zinc-800 rounded-2xl p-6 text-center">
           <p className="text-sm text-zinc-300 mb-4">Upload your General Ledger to see a complete financial picture. Your accountant can export this from QuickBooks or your accounting software.</p>
@@ -164,7 +164,7 @@ export default function GLUploadPage() {
           <h1 className="text-xl font-bold text-white">GL Upload</h1>
           <p className="text-xs text-slate-400 mt-0.5">Upload your General Ledger for the cleanest data</p>
         </div>
-        <EducationInfoIcon metricKey="gl_upload" />
+        <EducationInfoIcon metricKey="gl_upload" size="lg" />
       </div>
 
       <div className="flex flex-wrap items-center gap-2">

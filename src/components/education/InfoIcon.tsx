@@ -4,7 +4,7 @@ import { useState, useCallback, useEffect } from "react";
 import { createPortal } from "react-dom";
 import { EDUCATION_CONTENT } from "@/src/lib/education-content";
 
-type Size = "sm" | "md";
+type Size = "sm" | "md" | "lg";
 
 type EducationInfoIconProps = {
   metricKey: string;
@@ -14,6 +14,7 @@ type EducationInfoIconProps = {
 const sizeClasses: Record<Size, string> = {
   sm: "text-base leading-none w-4 h-4 min-w-[16px] min-h-[16px]",
   md: "text-lg leading-none w-5 h-5 min-w-[20px] min-h-[20px]",
+  lg: "text-xl leading-none w-6 h-6 min-w-[24px] min-h-[24px]",
 };
 
 export function EducationInfoIcon({ metricKey, size = "sm" }: EducationInfoIconProps) {

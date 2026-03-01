@@ -139,7 +139,7 @@ export default function MenuIntelligencePage() {
             <h1 className="text-xl font-bold text-white">Menu Intelligence</h1>
             <p className="text-xs text-slate-400 mt-0.5">{newUserStoreName}</p>
           </div>
-          <EducationInfoIcon metricKey="menu_item_count" />
+          <EducationInfoIcon metricKey="menu_item_count" size="lg" />
         </div>
         <SmartQuestion page="menu" />
         <div className="bg-zinc-900/50 border border-zinc-800 rounded-2xl p-6 text-center">
@@ -158,7 +158,7 @@ export default function MenuIntelligencePage() {
             Live menu data from your public websites
           </p>
         </div>
-        <EducationInfoIcon metricKey="menu_item_count" />
+        <EducationInfoIcon metricKey="menu_item_count" size="lg" />
       </div>
       <SmartQuestion page="menu" />
       <div className="bg-blue-950/30 rounded-xl border border-blue-800/50 p-3">

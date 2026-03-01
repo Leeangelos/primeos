@@ -83,7 +83,7 @@ export default function InventoryPage() {
       <div className="dashboard-toolbar p-3 sm:p-5 space-y-3">
         <div className="flex items-center gap-2">
           <h1 className="text-lg font-semibold sm:text-2xl">Inventory</h1>
-          <EducationInfoIcon metricKey="inventory_par" />
+          <EducationInfoIcon metricKey="inventory_par" size="lg" />
         </div>
         <p className="text-xs text-muted">
           Par levels and on-hand counts. Tap count to update.

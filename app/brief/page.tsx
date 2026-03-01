@@ -236,7 +236,7 @@ export default function BriefPage() {
           <div className="flex items-center gap-2">
             <h1 className="text-lg font-semibold sm:text-2xl flex items-center gap-2">
               Morning Brief
-              <EducationInfoIcon metricKey="morning_brief" />
+              <EducationInfoIcon metricKey="morning_brief" size="lg" />
             </h1>
             <button type="button" onClick={() => setShowEducation(true)} className="inline-flex items-center justify-center min-h-[44px] min-w-[44px] rounded-full bg-muted/20 text-muted hover:bg-brand/20 hover:text-brand transition-colors text-xs font-bold" aria-label="Learn more">i</button>
           </div>
@@ -278,7 +278,7 @@ export default function BriefPage() {
         <div className="flex items-center gap-2">
           <h1 className="text-lg font-semibold sm:text-2xl flex items-center gap-2">
             Morning Brief
-            <EducationInfoIcon metricKey="morning_brief" />
+            <EducationInfoIcon metricKey="morning_brief" size="lg" />
           </h1>
           <button type="button" onClick={() => setShowEducation(true)} className="inline-flex items-center justify-center min-h-[44px] min-w-[44px] rounded-full bg-muted/20 text-muted hover:bg-brand/20 hover:text-brand transition-colors text-xs font-bold" aria-label="Learn more">i</button>
         </div>

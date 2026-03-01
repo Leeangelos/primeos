@@ -413,7 +413,6 @@ export default function VendorTrackerPage() {
                       invoice_date: quickInvoiceDate,
                       total: Number(quickTotal),
                     };
-                    console.log("quick-invoice request payload", payload);
                     const res = await fetch("/api/quick-invoice", {
                         method: "POST",
                         headers: { "Content-Type": "application/json" },
@@ -475,7 +474,7 @@ export default function VendorTrackerPage() {
           >
             Log Invoice
           </button>
-          <EducationInfoIcon metricKey="vendor_total_spend" />
+          <EducationInfoIcon metricKey="vendor_total_spend" size="lg" />
         </div>
       </div>
       <SmartQuestion page="vendor" />

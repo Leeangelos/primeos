@@ -196,7 +196,7 @@ export default function DeliveryEconomicsPage() {
             <EducationInfoIcon metricKey="delivery_mix_pct" size="sm" />
           </p>
         </div>
-        <EducationInfoIcon metricKey="delivery_economics" />
+        <EducationInfoIcon metricKey="delivery_economics" size="lg" />
       </div>
 
       <div className="mb-4">

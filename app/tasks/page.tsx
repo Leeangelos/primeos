@@ -189,7 +189,7 @@ export default function TasksPage() {
         <div className="dashboard-toolbar p-3 sm:p-5 space-y-3">
           <div className="flex items-center gap-2 flex-wrap">
             <h1 className="text-lg font-semibold sm:text-2xl">Manager Tasks</h1>
-            <EducationInfoIcon metricKey="task_management" />
+            <EducationInfoIcon metricKey="task_management" size="lg" />
           </div>
           <p className="text-xs text-muted">{newUserStoreName}</p>
         </div>
@@ -206,7 +206,7 @@ export default function TasksPage() {
       <div className="dashboard-toolbar p-3 sm:p-5 space-y-3">
         <div className="flex items-center gap-2 flex-wrap">
           <h1 className="text-lg font-semibold sm:text-2xl">Manager Tasks</h1>
-          <EducationInfoIcon metricKey="task_management" />
+          <EducationInfoIcon metricKey="task_management" size="lg" />
         </div>
         <p className="text-xs text-muted">Daily opening, closing, prep, and cleaning. Mark complete when done.</p>
 

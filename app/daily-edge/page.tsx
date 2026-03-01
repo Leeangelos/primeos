@@ -125,7 +125,7 @@ export default function DailyEdgePage() {
             <h1 className="text-xl font-bold text-white">The Daily Edge</h1>
             <p className="text-xs text-slate-400 mt-0.5">{newUserStoreName}</p>
           </div>
-          <EducationInfoIcon metricKey="daily_edge" />
+          <EducationInfoIcon metricKey="daily_edge" size="lg" />
         </div>
         <div className="bg-zinc-900/50 border border-zinc-800 rounded-2xl p-6 space-y-3">
           <p className="text-sm text-zinc-300">The Daily Edge surfaces industry news, tips, and trends tailored to your store. Once your system is connected, you&apos;ll see curated content here every morning.</p>
@@ -145,7 +145,7 @@ export default function DailyEdgePage() {
           <p className="text-xs text-slate-400 mt-0.5">Your numbers. Your trends. Every morning.</p>
         </div>
         <div className="flex items-center gap-2">
-          <EducationInfoIcon metricKey="daily_edge" />
+          <EducationInfoIcon metricKey="daily_edge" size="lg" />
           <div className="flex items-center gap-1 px-2 py-1 rounded-lg bg-purple-600/20 border border-purple-700/30">
             {liveArticles.length > 0 ? (
               <>

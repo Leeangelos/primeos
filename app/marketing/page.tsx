@@ -72,7 +72,7 @@ export default function MarketingPage() {
         <div className="dashboard-toolbar p-3 sm:p-5 space-y-3">
           <div className="flex items-center gap-2">
             <h1 className="text-lg font-semibold sm:text-2xl">Ad Accountability</h1>
-            <EducationInfoIcon metricKey="marketing_roas" />
+            <EducationInfoIcon metricKey="marketing_roas" size="lg" />
           </div>
           <p className="text-xs text-muted">{newUserStoreName}</p>
         </div>
@@ -91,7 +91,7 @@ export default function MarketingPage() {
       <div className="dashboard-toolbar p-3 sm:p-5 space-y-3">
         <div className="flex items-center gap-2">
           <h1 className="text-lg font-semibold sm:text-2xl">Ad Accountability</h1>
-          <EducationInfoIcon metricKey="marketing_roas" />
+          <EducationInfoIcon metricKey="marketing_roas" size="lg" />
         </div>
         <p className="text-xs text-muted">
           Every dollar in. Every dollar out. ROAS by campaign.
@@ -154,7 +154,7 @@ export default function MarketingPage() {
             <div>
               <div className="flex items-center gap-1.5 text-slate-400 text-xs uppercase tracking-wide mb-1">
                 Blended ROAS
-                <EducationInfoIcon metricKey="marketing_roas" />
+                <EducationInfoIcon metricKey="marketing_roas" size="lg" />
                 <EducationInfoIcon metricKey="campaign_roi" size="sm" />
               </div>
               <div

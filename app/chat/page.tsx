@@ -166,7 +166,7 @@ export default function ChatPage() {
         <div className="dashboard-toolbar p-3 sm:p-5 space-y-3 shrink-0">
           <div className="flex items-center gap-2 flex-wrap">
             <h1 className="text-lg font-semibold sm:text-2xl">Team Chat</h1>
-            <EducationInfoIcon metricKey="team_communication" />
+            <EducationInfoIcon metricKey="team_communication" size="lg" />
           </div>
           <p className="text-xs text-muted">In-app communication by store and channel. No personal numbers, searchable, organized.</p>
         </div>
@@ -213,7 +213,7 @@ export default function ChatPage() {
       <div className="dashboard-toolbar p-3 sm:p-5 space-y-3 shrink-0">
         <div className="flex items-center gap-2 flex-wrap">
           <h1 className="text-lg font-semibold sm:text-2xl">Team Chat</h1>
-          <EducationInfoIcon metricKey="team_communication" />
+          <EducationInfoIcon metricKey="team_communication" size="lg" />
         </div>
         <p className="text-xs text-muted">In-app communication by store and channel. No personal numbers, searchable, organized.</p>
 

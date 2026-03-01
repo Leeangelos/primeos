@@ -159,7 +159,7 @@ export default function PnlPage() {
       <div className="space-y-6 min-w-0 overflow-x-hidden pb-28">
         <div className="flex items-center justify-between gap-2 flex-wrap">
           <h1 className="text-lg font-semibold sm:text-2xl text-white">GP P&L</h1>
-          <EducationInfoIcon metricKey="gp_vs_net_profit" />
+          <EducationInfoIcon metricKey="gp_vs_net_profit" size="lg" />
         </div>
         <p className="text-xs text-muted">{newUserStoreName}</p>
         <div className="bg-zinc-900/50 border border-zinc-800 rounded-2xl p-6 text-center">
@@ -226,7 +226,7 @@ export default function PnlPage() {
       {/* GP vs NET education banner */}
       <div className="rounded-xl border border-slate-600 bg-slate-800/80 p-4 min-w-0">
         <p className="text-sm text-slate-200 leading-relaxed">
-          This is your <strong className="text-white">Gross Profit P&L</strong> — what you control daily. For your full picture including rent, insurance, and fixed costs, Actual P&L is coming in Phase 2.
+          This is your <strong className="text-white">Gross Profit P&L</strong> — what you control daily. For your full picture including rent, insurance, and fixed costs, see Actual P&L.
         </p>
       </div>
 

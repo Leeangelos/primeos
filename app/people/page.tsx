@@ -104,7 +104,7 @@ export default function PeoplePage() {
           <div className="flex items-center justify-between gap-2 flex-wrap">
             <div className="flex items-center gap-2">
               <h1 className="text-lg font-semibold sm:text-2xl">People Economics</h1>
-              <EducationInfoIcon metricKey="employee_cac" />
+              <EducationInfoIcon metricKey="employee_cac" size="lg" />
             </div>
           </div>
           <p className="text-xs text-muted">{newUserStoreName}</p>
@@ -123,7 +123,7 @@ export default function PeoplePage() {
         <div className="flex items-center justify-between gap-2 flex-wrap">
           <div className="flex items-center gap-2">
             <h1 className="text-lg font-semibold sm:text-2xl">People Economics</h1>
-            <EducationInfoIcon metricKey="employee_cac" />
+            <EducationInfoIcon metricKey="employee_cac" size="lg" />
           </div>
           <ExportButton
           pageName="People Economics"

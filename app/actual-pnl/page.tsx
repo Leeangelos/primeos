@@ -285,7 +285,7 @@ export default function ActualPnlPage() {
           <div className="flex items-center gap-2">
             <h1 className="text-lg font-semibold sm:text-2xl text-white">Actual P&L</h1>
             <FileSpreadsheet className="w-6 h-6 text-slate-500 shrink-0" aria-hidden />
-            <EducationInfoIcon metricKey="gp_vs_net_profit" />
+            <EducationInfoIcon metricKey="gp_vs_net_profit" size="lg" />
           </div>
         </div>
         <p className="text-xs text-muted">{newUserStoreName}</p>
@@ -304,7 +304,7 @@ export default function ActualPnlPage() {
         <div className="flex items-center gap-2">
           <h1 className="text-lg font-semibold sm:text-2xl text-white">Actual P&L</h1>
           <FileSpreadsheet className="w-6 h-6 text-slate-500 shrink-0" aria-hidden />
-          <EducationInfoIcon metricKey="gp_vs_net_profit" />
+          <EducationInfoIcon metricKey="gp_vs_net_profit" size="lg" />
         </div>
         <ExportButton
         pageName="Actual P&L"

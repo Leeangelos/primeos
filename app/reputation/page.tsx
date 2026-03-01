@@ -301,7 +301,7 @@ export default function ReputationPage() {
           <h1 className="text-xl font-bold text-white">Do We Suck?</h1>
           <p className="text-xs text-slate-400 mt-0.5">What the internet thinks about your business</p>
         </div>
-        <EducationInfoIcon metricKey="reputation" />
+        <EducationInfoIcon metricKey="reputation" size="lg" />
       </div>
       <SmartQuestion page="reputation" />
       <div className="mb-4">

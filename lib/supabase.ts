@@ -15,7 +15,6 @@ export function createClient(): SupabaseClient {
   }
   if (!urlLogged) {
     urlLogged = true;
-    console.log("[Supabase] NEXT_PUBLIC_SUPABASE_URL prefix:", url.slice(0, 10) + "...");
   }
   return createSupabaseClient(url, anonKey);
 }

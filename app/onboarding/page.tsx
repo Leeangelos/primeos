@@ -124,9 +124,6 @@ export default function OnboardingPage() {
   const [submitting, setSubmitting] = useState(false);
 
   const metadata = session?.user?.user_metadata as Record<string, unknown> | undefined;
-  if (typeof metadata === "object" && metadata !== null) {
-    console.log("Onboarding: user_metadata", metadata);
-  }
   const name = (metadata?.name as string) ?? "there";
   const storeNameRaw =
     (metadata?.store_name as string) ||
@@ -167,13 +164,11 @@ export default function OnboardingPage() {
       website_url: websiteUrl?.trim() || null,
     };
     try {
-      console.log("COMPLETING ONBOARDING", onboardingPayload);
       const res = await fetch("/api/onboarding", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(onboardingPayload),
       });
-      console.log("ONBOARDING API RESPONSE", res.status);
       if (!res.ok) {
         const err = await res.json().catch(() => ({}));
         console.error("ONBOARDING API ERROR", err);
@@ -181,7 +176,6 @@ export default function OnboardingPage() {
       if (typeof userId === "string" && userId) {
         localStorage.setItem(`primeos-onboarding-complete-${userId}`, "true");
       }
-      console.log("LOCALSTORAGE SET, REDIRECTING");
       window.location.href = "/";
     } catch (err) {
       console.error("ONBOARDING COMPLETE ERROR", err);

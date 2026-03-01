@@ -226,7 +226,7 @@ export default function CompetitorIntelPage() {
             <h1 className="text-xl font-bold text-white">Competitor Intel</h1>
             <p className="text-xs text-slate-400 mt-0.5">{newUserStoreName}</p>
           </div>
-          <EducationInfoIcon metricKey="competitor_intelligence" />
+          <EducationInfoIcon metricKey="competitor_intelligence" size="lg" />
         </div>
         <div className="bg-zinc-900/50 border border-zinc-800 rounded-2xl p-6 text-center">
           <p className="text-sm text-zinc-300">We&apos;re mapping competitors near your location. This data will populate soon.</p>
@@ -242,7 +242,7 @@ export default function CompetitorIntelPage() {
           <h1 className="text-xl font-bold text-white">Competitor Intel</h1>
           <p className="text-xs text-slate-400 mt-0.5">Know your market. Price with confidence.</p>
         </div>
-        <EducationInfoIcon metricKey="competitor_intelligence" />
+        <EducationInfoIcon metricKey="competitor_intelligence" size="lg" />
       </div>
 
       <div className="flex items-center gap-2">
@@ -289,7 +289,6 @@ export default function CompetitorIntelPage() {
             </div>
           )}
           {storeProfile && (() => {
-            console.log("storeProfile:", JSON.stringify(storeProfile, null, 2));
             return (
               <div className="bg-[#E65100]/10 border border-[#E65100]/30 rounded-xl p-4 mb-4">
                 {/* Badge row */}

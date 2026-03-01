@@ -141,7 +141,7 @@ export default function ValuationPage() {
           </h1>
           <p className="text-xs text-slate-400 mt-0.5">Business valuation estimator</p>
         </div>
-        <EducationInfoIcon metricKey="valuation" />
+        <EducationInfoIcon metricKey="valuation" size="lg" />
       </div>
 
       {/* Valuation Range Hero */}

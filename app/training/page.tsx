@@ -348,7 +348,7 @@ export default function TrainingPage() {
       <CollapsibleSection title="How to Read Your Actual P&L">
         <div className="rounded-lg border border-blue-900/50 bg-blue-950/30 p-4">
           <p className="mb-3">
-            Coming in Phase 2. Upload your CPA&apos;s monthly financials and PrimeOS will show you the gap between your GP P&L and your actual Net Profit.
+            Upload your CPA&apos;s monthly financials in Actual P&L and PrimeOS will show you the gap between your GP P&L and your actual Net Profit.
           </p>
           <p className="mb-0">
             The gap is your fixed cost burden — rent, insurance, utilities, loans, misc. Most operators don&apos;t see this number clearly until options are more limited.

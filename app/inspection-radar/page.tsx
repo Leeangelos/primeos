@@ -425,7 +425,7 @@ export default function InspectionRadarPage() {
             </h1>
             <p className="text-xs text-slate-400 mt-0.5">{newUserStoreName}</p>
           </div>
-          <EducationInfoIcon metricKey="inspection_radar" />
+          <EducationInfoIcon metricKey="inspection_radar" size="lg" />
         </div>
         <div className="bg-zinc-900/50 border border-zinc-800 rounded-2xl p-6 text-center">
           <p className="text-sm text-zinc-300">Health inspection data for your county will appear here soon.</p>
@@ -445,7 +445,7 @@ export default function InspectionRadarPage() {
           </h1>
           <p className="text-xs text-slate-400 mt-0.5">Inspector activity near your locations</p>
         </div>
-        <EducationInfoIcon metricKey="inspection_radar" />
+        <EducationInfoIcon metricKey="inspection_radar" size="lg" />
       </div>
 
       {/* Store Selector */}

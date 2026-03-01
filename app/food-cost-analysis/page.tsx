@@ -82,7 +82,7 @@ export default function FoodCostAnalysisPage() {
             <h1 className="text-xl font-bold text-white">Food Cost Analysis</h1>
             <p className="text-xs text-slate-400 mt-0.5">{newUserStoreName}</p>
           </div>
-          <EducationInfoIcon metricKey="theoretical_food_cost" />
+          <EducationInfoIcon metricKey="theoretical_food_cost" size="lg" />
         </div>
         <div className="bg-zinc-900/50 border border-zinc-800 rounded-2xl p-6 space-y-3">
           <p className="text-sm text-zinc-300">Food Cost Analysis compares theoretical (recipe) cost to actual spend so you can spot variance and leaks. Once invoice and sales data are connected, you&apos;ll see full breakdowns by category and month.</p>
@@ -100,7 +100,7 @@ export default function FoodCostAnalysisPage() {
           <h1 className="text-xl font-bold text-white">Food Cost Analysis</h1>
           <p className="text-xs text-slate-400 mt-0.5">Theoretical vs actual — where the money leaks</p>
         </div>
-        <EducationInfoIcon metricKey="theoretical_food_cost" />
+        <EducationInfoIcon metricKey="theoretical_food_cost" size="lg" />
       </div>
 
       <div className="flex items-center gap-2 mb-2">
