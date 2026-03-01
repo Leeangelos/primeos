@@ -25,7 +25,7 @@ export function TOSGate({ children }: { children: React.ReactNode }) {
   };
 
   // Login, signup, welcome, partner, terms, and privacy — skip TOS gate entirely (before any localStorage check)
-  if (["/", "/login", "/signup", "/welcome", "/partner", "/terms", "/privacy"].includes(pathname ?? "")) {
+  if (["/", "/login", "/signup", "/welcome", "/partner", "/onboarding", "/terms", "/privacy"].includes(pathname ?? "")) {
     return <>{children}</>;
   }
 

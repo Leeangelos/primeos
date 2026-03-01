@@ -7,6 +7,7 @@ import { BarChart3, Calendar, Check, ChevronDown, ChevronRight, ClipboardList, M
 import { Area, AreaChart, ReferenceLine, ResponsiveContainer } from "recharts";
 import { COLORS } from "@/src/lib/design-tokens";
 import { useRedAlert } from "@/src/lib/useRedAlert";
+import { useAuth } from "@/src/lib/auth-context";
 import { EducationInfoIcon } from "@/src/components/education/InfoIcon";
 import { formatPct } from "@/src/lib/formatters";
 import { EDUCATION_CONTENT } from "@/src/lib/education-content";
@@ -192,12 +193,20 @@ function PillarPill({
   );
 }
 
+type OnboardingData = {
+  food_cost_pct?: number | null;
+  labor_cost_pct?: number | null;
+  weekly_sales?: number | null;
+};
+
 export default function HomePage() {
+  const { session } = useAuth();
   const [selectedStore, setSelectedStore] = useState<StoreSlug>("kent");
   const [storeOpen, setStoreOpen] = useState(false);
   const [kpi, setKpi] = useState<KpiSnapshot | null>(null);
   const [loading, setLoading] = useState(true);
   const [usedSeedData, setUsedSeedData] = useState(false);
+  const [onboardingData, setOnboardingData] = useState<OnboardingData | null>(null);
   const [showEducation, setShowEducation] = useState(false);
   const [educationKey, setEducationKey] = useState<string | null>(null);
   const [showMissingBanner, setShowMissingBanner] = useState(true);
@@ -205,7 +214,26 @@ export default function HomePage() {
   const today = todayYYYYMMDD();
   const yesterday = yesterdayYYYYMMDD();
 
+  useEffect(() => {
+    const token = session?.access_token;
+    if (!token) return;
+    let cancelled = false;
+    fetch("/api/onboarding", { headers: { Authorization: `Bearer ${token}` } })
+      .then((res) => res.json())
+      .then((body) => {
+        if (!cancelled && body.completed && body.data) setOnboardingData(body.data);
+      })
+      .catch(() => {});
+    return () => { cancelled = true; };
+  }, [session?.access_token]);
+
   const pillarSeed = useMemo(() => {
+    if (onboardingData != null && onboardingData.food_cost_pct != null && onboardingData.labor_cost_pct != null) {
+      const foodCostPct = Number(onboardingData.food_cost_pct);
+      const laborPct = Number(onboardingData.labor_cost_pct);
+      const primePct = 100 - foodCostPct - laborPct;
+      return { foodCostPct, laborPct, primePct };
+    }
     const store = storeSlugForFetch(selectedStore);
     const forStore = SEED_DAILY_KPIS.filter((r) => r.store_id === store);
     const todayRow = forStore.find((r) => r.date === today);
@@ -216,7 +244,7 @@ export default function HomePage() {
     const laborPct = row.labor_pct;
     const primePct = 100 - foodCostPct - laborPct;
     return { foodCostPct, laborPct, primePct };
-  }, [selectedStore, today, yesterday]);
+  }, [selectedStore, today, yesterday, onboardingData]);
 
   const pillarGrades = useMemo(() => {
     if (!pillarSeed) {
@@ -283,33 +311,50 @@ export default function HomePage() {
         // fall through to seed
       }
       if (!cancelled) {
-        setUsedSeedData(true);
-        const seedForStore = SEED_DAILY_KPIS.filter((r) => r.store_id === store);
-        const todayRow = seedForStore.find((r) => r.date === today);
-        const yesterdayRow = seedForStore.find((r) => r.date === yesterday);
-        const row = todayRow ?? yesterdayRow ?? seedForStore[0];
-        if (row) {
+        if (onboardingData?.food_cost_pct != null && onboardingData?.labor_cost_pct != null) {
+          const food = Number(onboardingData.food_cost_pct);
+          const labor = Number(onboardingData.labor_cost_pct);
+          const weekly = onboardingData.weekly_sales != null ? Number(onboardingData.weekly_sales) : 0;
           setKpi({
-            sales: row.sales,
-            foodCostPct: row.food_cost_pct,
-            laborPct: row.labor_pct,
-            primePct: row.prime_pct,
-            isYesterday: !todayRow,
+            sales: weekly > 0 ? Math.round(weekly / 7) : 0,
+            foodCostPct: food,
+            laborPct: labor,
+            primePct: 100 - food - labor,
+            isYesterday: false,
           });
+          setUsedSeedData(false);
         } else {
-          setKpi(null);
+          setUsedSeedData(true);
+          const seedForStore = SEED_DAILY_KPIS.filter((r) => r.store_id === store);
+          const todayRow = seedForStore.find((r) => r.date === today);
+          const yesterdayRow = seedForStore.find((r) => r.date === yesterday);
+          const row = todayRow ?? yesterdayRow ?? seedForStore[0];
+          if (row) {
+            setKpi({
+              sales: row.sales,
+              foodCostPct: row.food_cost_pct,
+              laborPct: row.labor_pct,
+              primePct: row.prime_pct,
+              isYesterday: !todayRow,
+            });
+          } else {
+            setKpi(null);
+          }
         }
         setLoading(false);
       }
     }
     load();
     return () => { cancelled = true; };
-  }, [today, yesterday, selectedStore]);
+  }, [today, yesterday, selectedStore, onboardingData]);
 
   const dailyTargetSales = useMemo(() => {
+    if (onboardingData?.weekly_sales != null && onboardingData.weekly_sales > 0) {
+      return Math.round(Number(onboardingData.weekly_sales) / 7);
+    }
     if (selectedStore === "all") return SEED_STORES.find((s) => s.slug === "kent")?.avgDailySales ?? KENT_DAILY_TARGET;
     return SEED_STORES.find((s) => s.slug === selectedStore)?.avgDailySales ?? KENT_DAILY_TARGET;
-  }, [selectedStore]);
+  }, [selectedStore, onboardingData?.weekly_sales]);
 
   const benchmarks = useMemo(() => getBenchmarksForStore(selectedStore), [selectedStore]);
 

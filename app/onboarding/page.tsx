@@ -1,0 +1,276 @@
+"use client";
+
+import { useState } from "react";
+import { useRouter } from "next/navigation";
+import { useAuth } from "@/src/lib/auth-context";
+import { cn } from "@/lib/utils";
+
+type LetterGrade = "A" | "B" | "C" | "D" | "F";
+
+function gradePillarProduct(foodCostPct: number): LetterGrade {
+  if (foodCostPct <= 30) return "A";
+  if (foodCostPct <= 33) return "B";
+  if (foodCostPct <= 35) return "C";
+  if (foodCostPct <= 38) return "D";
+  return "F";
+}
+
+function gradePillarPeople(laborPct: number): LetterGrade {
+  if (laborPct <= 25) return "A";
+  if (laborPct <= 28) return "B";
+  if (laborPct <= 30) return "C";
+  if (laborPct <= 33) return "D";
+  return "F";
+}
+
+function gradePillarPerformance(primePct: number): LetterGrade {
+  if (primePct >= 65) return "A";
+  if (primePct >= 60) return "B";
+  if (primePct >= 55) return "C";
+  if (primePct >= 50) return "D";
+  return "F";
+}
+
+function pillarGradeColorClass(grade: LetterGrade): string {
+  if (grade === "A" || grade === "B") return "text-emerald-400";
+  if (grade === "C") return "text-amber-400";
+  return "text-red-400";
+}
+
+const GOAL_OPTIONS = [
+  { id: "food", emoji: "🍕", label: "Lower my food cost" },
+  { id: "team", emoji: "👥", label: "Manage my team better" },
+  { id: "numbers", emoji: "📊", label: "Understand my numbers" },
+];
+
+export default function OnboardingPage() {
+  const router = useRouter();
+  const { session } = useAuth();
+  const [step, setStep] = useState(1);
+  const [weeklySales, setWeeklySales] = useState<string>("");
+  const [foodCostPct, setFoodCostPct] = useState<string>("");
+  const [laborCostPct, setLaborCostPct] = useState<string>("");
+  const [employeeCount, setEmployeeCount] = useState<string>("");
+  const [monthlyRent, setMonthlyRent] = useState<string>("");
+  const [goals, setGoals] = useState<string[]>([]);
+  const [submitting, setSubmitting] = useState(false);
+
+  const name = (session?.user?.user_metadata?.name as string) ?? "there";
+  const storeName = (session?.user?.user_metadata?.store_name as string) ?? "Your store";
+
+  const toggleGoal = (id: string) => {
+    setGoals((prev) => (prev.includes(id) ? prev.filter((g) => g !== id) : [...prev, id]));
+  };
+
+  const handleComplete = async () => {
+    setSubmitting(true);
+    try {
+      const res = await fetch("/api/onboarding", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          user_id: session?.user?.id,
+          store_name: storeName,
+          weekly_sales: weeklySales ? Number(weeklySales) : null,
+          food_cost_pct: foodCostPct ? Number(foodCostPct) : null,
+          labor_cost_pct: laborCostPct ? Number(laborCostPct) : null,
+          employee_count: employeeCount ? Number(employeeCount) : null,
+          monthly_rent: monthlyRent ? Number(monthlyRent) : null,
+          goals,
+        }),
+      });
+      if (!res.ok) throw new Error("Save failed");
+      router.replace("/");
+      router.refresh();
+    } catch {
+      setSubmitting(false);
+    }
+  };
+
+  const foodNum = foodCostPct ? Number(foodCostPct) : 33;
+  const laborNum = laborCostPct ? Number(laborCostPct) : 30;
+  const primePct = 100 - foodNum - laborNum;
+  const productGrade = gradePillarProduct(foodNum);
+  const peopleGrade = gradePillarPeople(laborNum);
+  const processGrade = gradePillarPerformance(primePct);
+
+  const totalSteps = 4;
+
+  return (
+    <div className="min-h-screen bg-zinc-950 text-white flex flex-col items-center justify-center p-4">
+      <div className="w-full max-w-md">
+        <div className="flex justify-center gap-2 mb-8">
+          {Array.from({ length: totalSteps }).map((_, i) => (
+            <div
+              key={i}
+              className={cn(
+                "w-2 h-2 rounded-full transition-colors",
+                i + 1 === step ? "bg-[#E65100]" : "bg-zinc-700"
+              )}
+            />
+          ))}
+        </div>
+
+        {step === 1 && (
+          <div className="space-y-6 text-center">
+            <h1 className="text-2xl font-bold">Welcome to PrimeOS, {name}!</h1>
+            <p className="text-zinc-400">Let&apos;s set up your store. Takes about 60 seconds.</p>
+            <p className="text-zinc-500 text-sm">Your store: {storeName}</p>
+            <button
+              type="button"
+              onClick={() => setStep(2)}
+              className="w-full py-4 rounded-xl bg-[#E65100] text-white font-semibold text-lg"
+            >
+              Let&apos;s Go →
+            </button>
+          </div>
+        )}
+
+        {step === 2 && (
+          <div className="space-y-6">
+            <h2 className="text-xl font-bold">Enter a few numbers about your business.</h2>
+            <p className="text-zinc-400 text-sm">Don&apos;t worry about being exact — estimates work.</p>
+            <div className="space-y-4">
+              <div>
+                <label className="block text-xs text-zinc-500 mb-1">Average weekly sales ($)</label>
+                <input
+                  type="number"
+                  value={weeklySales}
+                  onChange={(e) => setWeeklySales(e.target.value)}
+                  placeholder="$8,000"
+                  className="w-full bg-zinc-900 border border-zinc-700 rounded-xl px-4 py-3 text-white placeholder:text-zinc-500"
+                />
+              </div>
+              <div>
+                <label className="block text-xs text-zinc-500 mb-1">Estimated food cost (%)</label>
+                <div className="flex gap-2">
+                  <input
+                    type="number"
+                    value={foodCostPct}
+                    onChange={(e) => setFoodCostPct(e.target.value)}
+                    placeholder="32"
+                    className="flex-1 bg-zinc-900 border border-zinc-700 rounded-xl px-4 py-3 text-white placeholder:text-zinc-500"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setFoodCostPct("33")}
+                    className="px-4 py-3 rounded-xl border border-zinc-600 text-zinc-400 text-sm whitespace-nowrap"
+                  >
+                    I don&apos;t know
+                  </button>
+                </div>
+              </div>
+              <div>
+                <label className="block text-xs text-zinc-500 mb-1">Estimated labor cost (%)</label>
+                <div className="flex gap-2">
+                  <input
+                    type="number"
+                    value={laborCostPct}
+                    onChange={(e) => setLaborCostPct(e.target.value)}
+                    placeholder="30"
+                    className="flex-1 bg-zinc-900 border border-zinc-700 rounded-xl px-4 py-3 text-white placeholder:text-zinc-500"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setLaborCostPct("30")}
+                    className="px-4 py-3 rounded-xl border border-zinc-600 text-zinc-400 text-sm whitespace-nowrap"
+                  >
+                    I don&apos;t know
+                  </button>
+                </div>
+              </div>
+              <div>
+                <label className="block text-xs text-zinc-500 mb-1">Number of employees</label>
+                <input
+                  type="number"
+                  value={employeeCount}
+                  onChange={(e) => setEmployeeCount(e.target.value)}
+                  placeholder="12"
+                  className="w-full bg-zinc-900 border border-zinc-700 rounded-xl px-4 py-3 text-white placeholder:text-zinc-500"
+                />
+              </div>
+              <div>
+                <label className="block text-xs text-zinc-500 mb-1">Monthly rent ($)</label>
+                <input
+                  type="number"
+                  value={monthlyRent}
+                  onChange={(e) => setMonthlyRent(e.target.value)}
+                  placeholder="$3,500"
+                  className="w-full bg-zinc-900 border border-zinc-700 rounded-xl px-4 py-3 text-white placeholder:text-zinc-500"
+                />
+              </div>
+            </div>
+            <button
+              type="button"
+              onClick={() => setStep(3)}
+              className="w-full py-4 rounded-xl bg-[#E65100] text-white font-semibold"
+            >
+              Next →
+            </button>
+          </div>
+        )}
+
+        {step === 3 && (
+          <div className="space-y-6">
+            <h2 className="text-xl font-bold">What matters most to you right now?</h2>
+            <div className="space-y-3">
+              {GOAL_OPTIONS.map((g) => (
+                <button
+                  key={g.id}
+                  type="button"
+                  onClick={() => toggleGoal(g.id)}
+                  className={cn(
+                    "w-full flex items-center gap-3 p-4 rounded-xl border-2 text-left transition-colors",
+                    goals.includes(g.id) ? "border-[#E65100] bg-[#E65100]/10" : "border-zinc-700 bg-zinc-900"
+                  )}
+                >
+                  <span className="text-2xl">{g.emoji}</span>
+                  <span className="font-medium">{g.label}</span>
+                </button>
+              ))}
+            </div>
+            <button
+              type="button"
+              onClick={() => setStep(4)}
+              className="w-full py-4 rounded-xl bg-[#E65100] text-white font-semibold"
+            >
+              Next →
+            </button>
+          </div>
+        )}
+
+        {step === 4 && (
+          <div className="space-y-6">
+            <h2 className="text-xl font-bold">Your dashboard is ready.</h2>
+            <p className="text-zinc-400">We built your PrimeOS around the numbers you just gave us.</p>
+            <div className="grid grid-cols-3 gap-2">
+              <div className="rounded-xl bg-zinc-900 border border-zinc-700 p-3 text-center">
+                <div className="text-lg mb-1">🍕</div>
+                <div className="text-xs text-zinc-500">Product</div>
+                <div className={cn("text-lg font-bold", pillarGradeColorClass(productGrade))}>{productGrade}</div>
+              </div>
+              <div className="rounded-xl bg-zinc-900 border border-zinc-700 p-3 text-center">
+                <div className="text-lg mb-1">👥</div>
+                <div className="text-xs text-zinc-500">People</div>
+                <div className={cn("text-lg font-bold", pillarGradeColorClass(peopleGrade))}>{peopleGrade}</div>
+              </div>
+              <div className="rounded-xl bg-zinc-900 border border-zinc-700 p-3 text-center">
+                <div className="text-lg mb-1">📊</div>
+                <div className="text-xs text-zinc-500">Process</div>
+                <div className={cn("text-lg font-bold", pillarGradeColorClass(processGrade))}>{processGrade}</div>
+              </div>
+            </div>
+            <button
+              type="button"
+              onClick={handleComplete}
+              disabled={submitting}
+              className="w-full py-4 rounded-xl bg-[#E65100] text-white font-semibold text-lg disabled:opacity-70"
+            >
+              {submitting ? "Saving…" : "Open My Dashboard →"}
+            </button>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
