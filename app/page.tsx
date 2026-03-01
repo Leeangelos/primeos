@@ -194,9 +194,12 @@ function PillarPill({
 }
 
 type OnboardingData = {
+  store_name?: string | null;
   food_cost_pct?: number | null;
   labor_cost_pct?: number | null;
   weekly_sales?: number | null;
+  employee_count?: number | null;
+  monthly_rent?: number | null;
 };
 
 export default function HomePage() {
@@ -261,6 +264,22 @@ export default function HomePage() {
     let cancelled = false;
     const store = storeSlugForFetch(selectedStore);
     async function load() {
+      if (onboardingData?.food_cost_pct != null && onboardingData?.labor_cost_pct != null) {
+        const food = Number(onboardingData.food_cost_pct);
+        const labor = Number(onboardingData.labor_cost_pct);
+        const weekly = onboardingData.weekly_sales != null ? Number(onboardingData.weekly_sales) : 0;
+        if (!cancelled) {
+          setKpi({
+            sales: weekly > 0 ? Math.round(weekly / 7) : 0,
+            foodCostPct: food,
+            laborPct: labor,
+            primePct: 100 - food - labor,
+            isYesterday: false,
+          });
+          setLoading(false);
+        }
+        return;
+      }
       try {
         const res = await fetch(`/api/daily-kpi?store=${store}&date=${today}`);
         const data = await res.json();
@@ -356,9 +375,34 @@ export default function HomePage() {
     return SEED_STORES.find((s) => s.slug === selectedStore)?.avgDailySales ?? KENT_DAILY_TARGET;
   }, [selectedStore, onboardingData?.weekly_sales]);
 
-  const benchmarks = useMemo(() => getBenchmarksForStore(selectedStore), [selectedStore]);
+  const isOnboardingUser = onboardingData != null;
+  const benchmarks = useMemo(() => {
+    if (isOnboardingUser && onboardingData?.food_cost_pct != null && onboardingData?.labor_cost_pct != null) {
+      const food = Number(onboardingData.food_cost_pct);
+      const labor = Number(onboardingData.labor_cost_pct);
+      const prime = 100 - food - labor;
+      return { foodCostTargetPct: food, laborTargetPct: labor, primeTargetPct: prime };
+    }
+    return getBenchmarksForStore(selectedStore);
+  }, [selectedStore, isOnboardingUser, onboardingData?.food_cost_pct, onboardingData?.labor_cost_pct]);
 
   const { last7Days, salesTrendPct, foodCostAvg, foodCostGrade } = useMemo(() => {
+    if (isOnboardingUser && onboardingData?.weekly_sales != null) {
+      const daily = Number(onboardingData.weekly_sales) / 7;
+      const foodPct = onboardingData?.food_cost_pct != null ? Number(onboardingData.food_cost_pct) : 33;
+      const dates = Array.from({ length: 7 }, (_, i) => {
+        const d = new Date();
+        d.setDate(d.getDate() - (6 - i));
+        return d.toISOString().slice(0, 10);
+      });
+      const last7 = dates.map((date) => ({ date, sales: Math.round(daily), foodCost: foodPct }));
+      return {
+        last7Days: last7,
+        salesTrendPct: 0,
+        foodCostAvg: foodPct,
+        foodCostGrade: gradeFoodCost(foodPct, benchmarks.foodCostTargetPct),
+      };
+    }
     const store = storeSlugForFetch(selectedStore);
     const forStore = SEED_DAILY_KPIS.filter((r) => r.store_id === store);
     const last7 = forStore.slice(-7).map((r) => ({ date: r.date, sales: r.sales, foodCost: r.food_cost_pct }));
@@ -369,9 +413,13 @@ export default function HomePage() {
     const foodCostAvg = last7.length > 0 ? Math.round((last7.reduce((s, d) => s + d.foodCost, 0) / last7.length) * 10) / 10 : 0;
     const foodCostGrade = gradeFoodCost(foodCostAvg, benchmarks.foodCostTargetPct);
     return { last7Days: last7, salesTrendPct, foodCostAvg, foodCostGrade };
-  }, [selectedStore, benchmarks.foodCostTargetPct]);
+  }, [selectedStore, benchmarks.foodCostTargetPct, isOnboardingUser, onboardingData?.weekly_sales, onboardingData?.food_cost_pct]);
 
-  const storeLabel = selectedStore === "all" ? "All" : getStoreLabel(selectedStore);
+  const storeLabel = isOnboardingUser && onboardingData?.store_name
+    ? onboardingData.store_name
+    : selectedStore === "all"
+      ? "All"
+      : getStoreLabel(selectedStore);
 
   const heroGrades = useMemo((): string[] => {
     if (!kpi) return [];
@@ -451,66 +499,71 @@ export default function HomePage() {
     return list;
   }, [kpi, dailyTargetSales, storeLabel, benchmarks]);
 
+  const winsStoreId = isOnboardingUser ? "all" : selectedStore;
   const wins = useMemo(
     () =>
       SEED_WINS.filter(
-        (w) => !w.storeId || w.storeId === "all" || w.storeId === selectedStore
+        (w) => !w.storeId || w.storeId === "all" || w.storeId === winsStoreId
       ),
-    [selectedStore]
+    [winsStoreId]
   );
   const displayedWins = showAllWins ? wins : wins.slice(0, 3);
 
   const trendArrow = salesTrendPct >= 0 ? "↑" : "↓";
 
-  const selectedStoreName = getStoreLabel(selectedStore);
+  const selectedStoreName = storeLabel;
   const stores = STORE_OPTIONS.map((opt) => ({ id: opt.slug, name: opt.name }));
   const score = calculateOperatorScore();
 
   return (
     <div className="space-y-6 pb-28">
-      <div className="relative mb-4">
-        <button
-          type="button"
-          onClick={() => setStoreOpen(!storeOpen)}
-          className="flex items-center gap-2 bg-slate-800 rounded-lg px-3 py-2 border border-slate-700 text-sm text-white min-h-[44px]"
-          aria-haspopup="listbox"
-          aria-expanded={storeOpen}
-          aria-label={`Store: ${selectedStoreName}. Select location.`}
-        >
-          <MapPin className="w-4 h-4 text-blue-400 shrink-0" aria-hidden />
-          <span className="truncate">{selectedStoreName}</span>
-          <ChevronDown className={`w-4 h-4 text-slate-400 shrink-0 transition-transform ${storeOpen ? "rotate-180" : ""}`} aria-hidden />
-        </button>
+      {!isOnboardingUser && (
+        <div className="relative mb-4">
+          <button
+            type="button"
+            onClick={() => setStoreOpen(!storeOpen)}
+            className="flex items-center gap-2 bg-slate-800 rounded-lg px-3 py-2 border border-slate-700 text-sm text-white min-h-[44px]"
+            aria-haspopup="listbox"
+            aria-expanded={storeOpen}
+            aria-label={`Store: ${selectedStoreName}. Select location.`}
+          >
+            <MapPin className="w-4 h-4 text-blue-400 shrink-0" aria-hidden />
+            <span className="truncate">{selectedStoreName}</span>
+            <ChevronDown className={`w-4 h-4 text-slate-400 shrink-0 transition-transform ${storeOpen ? "rotate-180" : ""}`} aria-hidden />
+          </button>
 
-        {storeOpen && (
-          <>
-            <div className="fixed inset-0 z-30" aria-hidden="true" onClick={() => setStoreOpen(false)} />
-            <div className="absolute top-full left-0 mt-1 z-40 w-64 bg-slate-800 rounded-xl border border-slate-700 shadow-lg shadow-black/30 overflow-hidden">
-              {stores.map((store) => (
-                <button
-                  key={store.id}
-                  type="button"
-                  onClick={() => {
-                    setSelectedStore(store.id as StoreSlug);
-                    setStoreOpen(false);
-                  }}
-                  className={`w-full flex items-center justify-between px-4 py-3 text-sm hover:bg-slate-700/50 transition-colors ${
-                    selectedStore === store.id ? "text-blue-400" : "text-slate-300"
-                  }`}
-                >
-                  <span>{store.name}</span>
-                  {selectedStore === store.id && <Check className="w-4 h-4 text-blue-400 shrink-0" aria-hidden />}
-                </button>
-              ))}
-            </div>
-          </>
-        )}
-      </div>
+          {storeOpen && (
+            <>
+              <div className="fixed inset-0 z-30" aria-hidden="true" onClick={() => setStoreOpen(false)} />
+              <div className="absolute top-full left-0 mt-1 z-40 w-64 bg-slate-800 rounded-xl border border-slate-700 shadow-lg shadow-black/30 overflow-hidden">
+                {stores.map((store) => (
+                  <button
+                    key={store.id}
+                    type="button"
+                    onClick={() => {
+                      setSelectedStore(store.id as StoreSlug);
+                      setStoreOpen(false);
+                    }}
+                    className={`w-full flex items-center justify-between px-4 py-3 text-sm hover:bg-slate-700/50 transition-colors ${
+                      selectedStore === store.id ? "text-blue-400" : "text-slate-300"
+                    }`}
+                  >
+                    <span>{store.name}</span>
+                    {selectedStore === store.id && <Check className="w-4 h-4 text-blue-400 shrink-0" aria-hidden />}
+                  </button>
+                ))}
+              </div>
+            </>
+          )}
+        </div>
+      )}
 
       <div className="flex items-start justify-between gap-4">
         <div>
           <div className="flex items-center gap-2">
-            <h1 className="text-2xl font-semibold">PrimeOS</h1>
+            <h1 className="text-2xl font-semibold">
+              {isOnboardingUser && onboardingData?.store_name ? onboardingData.store_name : "PrimeOS"}
+            </h1>
             <button type="button" onClick={() => setShowEducation(true)} className="inline-flex items-center justify-center min-h-[44px] min-w-[44px] h-8 w-8 rounded-full bg-muted/20 text-muted hover:bg-brand/20 hover:text-brand transition-colors text-xs font-bold" aria-label="Learn more">i</button>
           </div>
           <p className="mt-1 text-sm text-muted">
@@ -531,7 +584,7 @@ export default function HomePage() {
         </div>
       </div>
 
-      <WinNotifications storeId={selectedStore} />
+      <WinNotifications storeId={winsStoreId} />
 
       {showMissingBanner && (
         <div className="bg-amber-600/10 rounded-xl border border-amber-700/30 p-3 mb-4 flex items-start justify-between">

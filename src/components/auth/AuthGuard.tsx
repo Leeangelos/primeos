@@ -63,7 +63,7 @@ export function AuthGuard({ children }: { children: React.ReactNode }) {
     if (skipCheck) return;
 
     if (!welcomeAnimationDone) {
-      const t = setTimeout(() => setWelcomeAnimationDone(true), 3000);
+      const t = setTimeout(() => setWelcomeAnimationDone(true), 2900);
       return () => clearTimeout(t);
     }
 
