@@ -10,6 +10,8 @@ import {
   getComparableItems,
   getMenuGaps,
 } from "@/src/lib/menu-data";
+import { useAuth } from "@/src/lib/auth-context";
+import { isNewUser, getNewUserStoreName } from "@/src/lib/user-scope";
 import { formatDollars } from "@/src/lib/formatters";
 import { EducationInfoIcon } from "@/src/components/education/InfoIcon";
 import { DataDisclaimer } from "@/src/components/ui/DataDisclaimer";
@@ -85,6 +87,9 @@ function useComparableWithGaps() {
 }
 
 export default function MenuIntelligencePage() {
+  const { session } = useAuth();
+  const newUser = isNewUser(session);
+  const newUserStoreName = getNewUserStoreName(session);
   const [storeId, setStoreId] = useState("all");
   const [view, setView] = useState<"menu" | "compare" | "gaps" | "pricing-gaps">("menu");
   const [openCategories, setOpenCategories] = useState<Set<string>>(new Set());
@@ -123,6 +128,23 @@ export default function MenuIntelligencePage() {
       return next;
     });
   };
+
+  if (newUser) {
+    return (
+      <div className="space-y-4 pb-28 min-w-0 overflow-x-hidden">
+        <div className="flex items-center justify-between gap-2">
+          <div>
+            <h1 className="text-xl font-bold text-white">Menu Intelligence</h1>
+            <p className="text-xs text-slate-400 mt-0.5">{newUserStoreName}</p>
+          </div>
+          <EducationInfoIcon metricKey="menu_item_count" />
+        </div>
+        <div className="bg-zinc-900/50 border border-zinc-800 rounded-2xl p-6 text-center">
+          <p className="text-sm text-zinc-300">Menu intelligence requires POS data to analyze your best and worst sellers.</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-4 pb-28 min-w-0 overflow-x-hidden">

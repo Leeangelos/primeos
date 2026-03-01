@@ -17,6 +17,8 @@ import {
 import { MENU_DATA } from "@/src/lib/menu-data";
 import { SEED_STORES } from "@/src/lib/seed-data";
 import { getStoreLocation } from "@/src/lib/store-locations";
+import { useAuth } from "@/src/lib/auth-context";
+import { isNewUser, getNewUserStoreName } from "@/src/lib/user-scope";
 import { EducationInfoIcon } from "@/src/components/education/InfoIcon";
 import { DataDisclaimer } from "@/src/components/ui/DataDisclaimer";
 import DataSourceBadge from "@/src/components/ui/DataSourceBadge";
@@ -44,6 +46,9 @@ function getStoreName(storeId: string): string {
 }
 
 export default function CompetitorIntelPage() {
+  const { session } = useAuth();
+  const newUser = isNewUser(session);
+  const newUserStoreName = getNewUserStoreName(session);
   const [selectedStore, setSelectedStore] = useState("all");
   const [expandedCompetitor, setExpandedCompetitor] = useState<string | null>(null);
   const [view, setView] = useState<"overview" | "alerts" | "pricing">("overview");
@@ -210,6 +215,23 @@ export default function CompetitorIntelPage() {
 
   function toggleExpand(id: string) {
     setExpandedCompetitor((prev) => (prev === id ? null : id));
+  }
+
+  if (newUser) {
+    return (
+      <div className="space-y-4 pb-28 min-w-0 overflow-x-hidden">
+        <div className="flex items-center justify-between mb-4">
+          <div>
+            <h1 className="text-xl font-bold text-white">Competitor Intel</h1>
+            <p className="text-xs text-slate-400 mt-0.5">{newUserStoreName}</p>
+          </div>
+          <EducationInfoIcon metricKey="competitor_intelligence" />
+        </div>
+        <div className="bg-zinc-900/50 border border-zinc-800 rounded-2xl p-6 text-center">
+          <p className="text-sm text-zinc-300">We&apos;re mapping competitors near your location. This data will populate soon.</p>
+        </div>
+      </div>
+    );
   }
 
   return (

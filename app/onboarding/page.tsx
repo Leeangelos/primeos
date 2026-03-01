@@ -183,10 +183,10 @@ export default function OnboardingPage() {
   const totalSteps = 5;
 
   return (
-    <div className="min-h-screen bg-zinc-950 text-white flex flex-col justify-between px-4 py-6">
-      <div className="w-full max-w-md flex-1 flex flex-col justify-center mx-auto">
+    <div className="h-screen overflow-hidden bg-zinc-950 text-white flex flex-col px-4 py-4">
+      <div className="w-full max-w-md flex-1 flex flex-col justify-center mx-auto min-h-0">
         {step > 0 && (
-          <div className="flex justify-center gap-2 mb-4 shrink-0">
+          <div className="flex justify-center gap-2 mt-2 mb-2 shrink-0">
             {Array.from({ length: totalSteps }).map((_, i) => (
               <div
                 key={i}
@@ -222,18 +222,18 @@ export default function OnboardingPage() {
 
         {step === 1 && (
           <>
-            <div className="flex-1 flex flex-col justify-center space-y-3 text-center pt-8">
-              <h1 className="text-xl font-bold">Welcome to PrimeOS, {name}!</h1>
-              <p className="text-zinc-400 text-sm">Let&apos;s set up your store. Takes about 60 seconds.</p>
+            <div className="flex-1 flex flex-col justify-center space-y-2 text-center min-h-0">
+              <h1 className="text-lg font-bold">Welcome to PrimeOS, {name}!</h1>
+              <p className="text-zinc-400 text-xs">Let&apos;s set up your store. Takes about 60 seconds.</p>
               {storeName && storeName !== "Your store" && (
                 <p className="text-zinc-500 text-xs">Your store: {storeName}</p>
               )}
             </div>
-            <div className="shrink-0 pb-4">
+            <div className="shrink-0">
               <button
                 type="button"
                 onClick={() => setStep(2)}
-                className="w-full py-3 rounded-xl bg-[#E65100] text-white font-semibold text-base"
+                className="w-full py-2.5 rounded-xl bg-[#E65100] text-white font-semibold text-sm mt-2"
               >
                 Let&apos;s Go →
               </button>
@@ -243,10 +243,10 @@ export default function OnboardingPage() {
 
         {step === 2 && (
           <>
-            <div className="flex-1 flex flex-col justify-center min-h-0">
-              <h2 className="text-lg font-bold mb-1">Enter a few numbers about your business.</h2>
-              <p className="text-zinc-400 text-xs mb-3">Don&apos;t worry about being exact — estimates work.</p>
-              <div className="space-y-2">
+            <div className="flex-1 flex flex-col justify-center min-h-0 overflow-auto">
+              <h2 className="text-lg font-bold mb-0.5">Enter a few numbers about your business.</h2>
+              <p className="text-zinc-400 text-xs mb-2">Don&apos;t worry about being exact — estimates work.</p>
+              <div className="space-y-1.5">
                 <div>
                   <label className="block text-xs text-zinc-500 mb-0.5">Average weekly sales ($)</label>
                   <input
@@ -254,7 +254,7 @@ export default function OnboardingPage() {
                     value={weeklySales}
                     onChange={(e) => setWeeklySales(e.target.value)}
                     placeholder="$8,000"
-                    className="w-full bg-zinc-900 border border-zinc-700 rounded-lg px-3 py-2 text-white placeholder:text-zinc-500 text-sm"
+                    className="w-full h-10 py-1.5 bg-zinc-900 border border-zinc-700 rounded-lg px-3 text-white placeholder:text-zinc-500 text-sm"
                   />
                 </div>
                 <div>
@@ -265,12 +265,12 @@ export default function OnboardingPage() {
                       value={foodCostPct}
                       onChange={(e) => setFoodCostPct(e.target.value)}
                       placeholder="32"
-                      className="flex-1 bg-zinc-900 border border-zinc-700 rounded-lg px-3 py-2 text-white placeholder:text-zinc-500 text-sm"
+                      className="flex-1 h-10 py-1.5 bg-zinc-900 border border-zinc-700 rounded-lg px-3 text-white placeholder:text-zinc-500 text-sm"
                     />
                     <button
                       type="button"
                       onClick={() => setFoodCostPct("33")}
-                      className="px-3 py-1 rounded-lg border border-zinc-600 text-zinc-400 text-xs whitespace-nowrap"
+                      className="px-2 py-0.5 rounded border border-zinc-600 text-zinc-400 text-xs whitespace-nowrap"
                     >
                       I don&apos;t know
                     </button>
@@ -284,12 +284,12 @@ export default function OnboardingPage() {
                       value={laborCostPct}
                       onChange={(e) => setLaborCostPct(e.target.value)}
                       placeholder="30"
-                      className="flex-1 bg-zinc-900 border border-zinc-700 rounded-lg px-3 py-2 text-white placeholder:text-zinc-500 text-sm"
+                      className="flex-1 h-10 py-1.5 bg-zinc-900 border border-zinc-700 rounded-lg px-3 text-white placeholder:text-zinc-500 text-sm"
                     />
                     <button
                       type="button"
                       onClick={() => setLaborCostPct("30")}
-                      className="px-3 py-1 rounded-lg border border-zinc-600 text-zinc-400 text-xs whitespace-nowrap"
+                      className="px-2 py-0.5 rounded border border-zinc-600 text-zinc-400 text-xs whitespace-nowrap"
                     >
                       I don&apos;t know
                     </button>
@@ -302,7 +302,7 @@ export default function OnboardingPage() {
                     value={employeeCount}
                     onChange={(e) => setEmployeeCount(e.target.value)}
                     placeholder="12"
-                    className="w-full bg-zinc-900 border border-zinc-700 rounded-lg px-3 py-2 text-white placeholder:text-zinc-500 text-sm"
+                    className="w-full h-10 py-1.5 bg-zinc-900 border border-zinc-700 rounded-lg px-3 text-white placeholder:text-zinc-500 text-sm"
                   />
                 </div>
                 <div>
@@ -312,16 +312,16 @@ export default function OnboardingPage() {
                     value={monthlyRent}
                     onChange={(e) => setMonthlyRent(e.target.value)}
                     placeholder="$3,500"
-                    className="w-full bg-zinc-900 border border-zinc-700 rounded-lg px-3 py-2 text-white placeholder:text-zinc-500 text-sm"
+                    className="w-full h-10 py-1.5 bg-zinc-900 border border-zinc-700 rounded-lg px-3 text-white placeholder:text-zinc-500 text-sm"
                   />
                 </div>
               </div>
             </div>
-            <div className="shrink-0 pb-4 mt-2">
+            <div className="shrink-0">
               <button
                 type="button"
                 onClick={() => setStep(3)}
-                className="w-full py-2.5 rounded-xl bg-[#E65100] text-white font-semibold text-sm"
+                className="w-full py-2.5 rounded-xl bg-[#E65100] text-white font-semibold text-sm mt-2"
               >
                 Next →
               </button>
@@ -331,10 +331,10 @@ export default function OnboardingPage() {
 
         {step === 3 && (
           <>
-            <div className="flex-1 flex flex-col justify-center min-h-0">
-              <h2 className="text-lg font-bold mb-1">Let&apos;s find you online.</h2>
-              <p className="text-zinc-400 text-xs mb-3">This helps PrimeOS pull your real Google reviews, competitor data, and local insights.</p>
-              <div className="space-y-2">
+            <div className="flex-1 flex flex-col justify-center min-h-0 overflow-auto">
+              <h2 className="text-lg font-bold mb-0.5">Let&apos;s find you online.</h2>
+              <p className="text-zinc-400 text-xs mb-2">This helps PrimeOS pull your real Google reviews, competitor data, and local insights.</p>
+              <div className="space-y-1.5">
                 <div>
                   <label className="block text-xs text-zinc-500 mb-0.5">Your Google Business name *</label>
                   <input
@@ -342,7 +342,7 @@ export default function OnboardingPage() {
                     value={googleBusinessName}
                     onChange={(e) => setGoogleBusinessName(e.target.value)}
                     placeholder="e.g., Joe's Pizza"
-                    className="w-full bg-zinc-900 border border-zinc-700 rounded-lg px-3 py-2 text-white placeholder:text-zinc-500 text-sm"
+                    className="w-full h-10 py-1.5 bg-zinc-900 border border-zinc-700 rounded-lg px-3 text-white placeholder:text-zinc-500 text-sm"
                   />
                   <p className="text-xs text-zinc-500 mt-0.5">Exactly as it appears on Google Maps</p>
                 </div>
@@ -353,61 +353,65 @@ export default function OnboardingPage() {
                     value={streetAddress}
                     onChange={(e) => setStreetAddress(e.target.value)}
                     placeholder="e.g., 123 Main St"
-                    className="w-full bg-zinc-900 border border-zinc-700 rounded-lg px-3 py-2 text-white placeholder:text-zinc-500 text-sm"
+                    className="w-full h-10 py-1.5 bg-zinc-900 border border-zinc-700 rounded-lg px-3 text-white placeholder:text-zinc-500 text-sm"
                   />
                 </div>
-                <div>
-                  <label className="block text-xs text-zinc-500 mb-0.5">City *</label>
-                  <input
-                    type="text"
-                    value={city}
-                    onChange={(e) => setCity(e.target.value)}
-                    placeholder="e.g., Kent"
-                    className="w-full bg-zinc-900 border border-zinc-700 rounded-lg px-3 py-2 text-white placeholder:text-zinc-500 text-sm"
-                  />
+                <div className="grid grid-cols-2 gap-2">
+                  <div>
+                    <label className="block text-xs text-zinc-500 mb-0.5">City *</label>
+                    <input
+                      type="text"
+                      value={city}
+                      onChange={(e) => setCity(e.target.value)}
+                      placeholder="e.g., Kent"
+                      className="w-full h-10 py-1.5 bg-zinc-900 border border-zinc-700 rounded-lg px-3 text-white placeholder:text-zinc-500 text-sm"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-xs text-zinc-500 mb-0.5">State *</label>
+                    <select
+                      value={state}
+                      onChange={(e) => setState(e.target.value)}
+                      className="w-full h-10 py-1.5 bg-zinc-900 border border-zinc-700 rounded-lg px-3 text-white text-sm"
+                    >
+                      <option value="">Select</option>
+                      {US_STATES.map((s) => (
+                        <option key={s} value={s}>{s}</option>
+                      ))}
+                    </select>
+                  </div>
                 </div>
-                <div>
-                  <label className="block text-xs text-zinc-500 mb-0.5">State *</label>
-                  <select
-                    value={state}
-                    onChange={(e) => setState(e.target.value)}
-                    className="w-full bg-zinc-900 border border-zinc-700 rounded-lg px-3 py-2 text-white text-sm"
-                  >
-                    <option value="">Select state</option>
-                    {US_STATES.map((s) => (
-                      <option key={s} value={s}>{s}</option>
-                    ))}
-                  </select>
+                <div className="grid grid-cols-2 gap-2">
+                  <div>
+                    <label className="block text-xs text-zinc-500 mb-0.5">Zip code *</label>
+                    <input
+                      type="text"
+                      value={zipCode}
+                      onChange={(e) => setZipCode(e.target.value)}
+                      placeholder="e.g., 44240"
+                      className="w-full h-10 py-1.5 bg-zinc-900 border border-zinc-700 rounded-lg px-3 text-white placeholder:text-zinc-500 text-sm"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-xs text-zinc-500 mb-0.5">County</label>
+                    <input
+                      type="text"
+                      value={county}
+                      onChange={(e) => setCounty(e.target.value)}
+                      placeholder="e.g., Portage"
+                      className="w-full h-10 py-1.5 bg-zinc-900 border border-zinc-700 rounded-lg px-3 text-white placeholder:text-zinc-500 text-sm"
+                    />
+                  </div>
                 </div>
-                <div>
-                  <label className="block text-xs text-zinc-500 mb-0.5">Zip code *</label>
-                  <input
-                    type="text"
-                    value={zipCode}
-                    onChange={(e) => setZipCode(e.target.value)}
-                    placeholder="e.g., 44240"
-                    className="w-full bg-zinc-900 border border-zinc-700 rounded-lg px-3 py-2 text-white placeholder:text-zinc-500 text-sm"
-                  />
-                </div>
-                <div>
-                  <label className="block text-xs text-zinc-500 mb-0.5">County</label>
-                  <input
-                    type="text"
-                    value={county}
-                    onChange={(e) => setCounty(e.target.value)}
-                    placeholder="e.g., Portage County"
-                    className="w-full bg-zinc-900 border border-zinc-700 rounded-lg px-3 py-2 text-white placeholder:text-zinc-500 text-sm"
-                  />
-                  <p className="text-xs text-zinc-500 mt-0.5">Helps us track local health inspections</p>
-                </div>
+                <p className="text-xs text-zinc-500">County helps us track local health inspections.</p>
               </div>
             </div>
-            <div className="shrink-0 pb-4">
+            <div className="shrink-0">
               <button
                 type="button"
                 onClick={() => setStep(4)}
                 disabled={!googleBusinessName.trim() || !streetAddress.trim() || !city.trim() || !state || !zipCode.trim()}
-                className="w-full py-2.5 rounded-xl bg-[#E65100] text-white font-semibold text-sm disabled:opacity-50 disabled:cursor-not-allowed"
+                className="w-full py-2.5 rounded-xl bg-[#E65100] text-white font-semibold text-sm mt-2 disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 Next →
               </button>
@@ -417,8 +421,8 @@ export default function OnboardingPage() {
 
         {step === 4 && (
           <>
-            <div className="flex-1 flex flex-col justify-center min-h-0 space-y-3">
-              <h2 className="text-lg font-bold">What matters most to you right now?</h2>
+            <div className="flex-1 flex flex-col justify-center min-h-0">
+              <h2 className="text-lg font-bold mb-1">What matters most to you right now?</h2>
               <div className="space-y-2">
                 {GOAL_OPTIONS.map((g) => (
                   <button
@@ -426,21 +430,21 @@ export default function OnboardingPage() {
                     type="button"
                     onClick={() => toggleGoal(g.id)}
                     className={cn(
-                      "w-full flex items-center gap-3 p-3 rounded-xl border-2 text-left transition-colors text-sm",
+                      "w-full flex items-center gap-2 p-2.5 rounded-xl border-2 text-left transition-colors text-xs",
                       goals.includes(g.id) ? "border-[#E65100] bg-[#E65100]/10" : "border-zinc-700 bg-zinc-900"
                     )}
                   >
-                    <span className="text-xl">{g.emoji}</span>
+                    <span className="text-lg">{g.emoji}</span>
                     <span className="font-medium">{g.label}</span>
                   </button>
                 ))}
               </div>
             </div>
-            <div className="shrink-0 pb-4">
+            <div className="shrink-0">
               <button
                 type="button"
                 onClick={() => setStep(5)}
-                className="w-full py-2.5 rounded-xl bg-[#E65100] text-white font-semibold text-sm"
+                className="w-full py-2.5 rounded-xl bg-[#E65100] text-white font-semibold text-sm mt-2"
               >
                 Next →
               </button>
@@ -451,8 +455,8 @@ export default function OnboardingPage() {
         {step === 5 && (
           <>
             <div className="flex-1 flex flex-col justify-center min-h-0">
-              <h2 className="text-lg font-bold mb-1">Your dashboard is ready.</h2>
-              <p className="text-zinc-400 text-xs mb-3">We built your PrimeOS around the numbers you just gave us.</p>
+              <h2 className="text-lg font-bold mb-0.5">Your dashboard is ready.</h2>
+              <p className="text-zinc-400 text-xs mb-2">We built your PrimeOS around the numbers you just gave us.</p>
               <div className="grid grid-cols-3 gap-2">
                 <div className="rounded-lg bg-zinc-900 border border-zinc-700 p-2 text-center">
                   <div className="text-base mb-0.5">🍕</div>
@@ -471,12 +475,12 @@ export default function OnboardingPage() {
                 </div>
               </div>
             </div>
-            <div className="shrink-0 pb-4 mt-3">
+            <div className="shrink-0">
               <button
                 type="button"
                 onClick={handleComplete}
                 disabled={submitting}
-                className="w-full py-3 rounded-xl bg-[#E65100] text-white font-semibold text-base disabled:opacity-70"
+                className="w-full py-2.5 rounded-xl bg-[#E65100] text-white font-semibold text-sm mt-2 disabled:opacity-70"
               >
                 {submitting ? "Saving…" : "Open My Dashboard →"}
               </button>

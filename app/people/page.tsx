@@ -3,6 +3,8 @@
 import { useMemo } from "react";
 import { cn } from "@/lib/utils";
 import { COCKPIT_TARGETS, type CockpitStoreSlug } from "@/lib/cockpit-config";
+import { useAuth } from "@/src/lib/auth-context";
+import { isNewUser, getNewUserStoreName } from "@/src/lib/user-scope";
 import { EducationInfoIcon } from "@/src/components/education/InfoIcon";
 import { ExportButton } from "@/src/components/ui/ExportButton";
 import { formatPct } from "@/src/lib/formatters";
@@ -64,6 +66,9 @@ function churnGrade(pct: number): "green" | "yellow" | "red" {
 }
 
 export default function PeoplePage() {
+  const { session } = useAuth();
+  const newUser = isNewUser(session);
+  const newUserStoreName = getNewUserStoreName(session);
   const employees = SEED_EMPLOYEES;
 
   const activeCount = useMemo(() => employees.filter((e) => e.status === "active").length, [employees]);
@@ -89,6 +94,25 @@ export default function PeoplePage() {
   }, [employees]);
 
   const churnColor = churnGrade(QUARTERLY_CHURN_RATE) === "green" ? "text-emerald-400" : churnGrade(QUARTERLY_CHURN_RATE) === "yellow" ? "text-amber-400" : "text-red-400";
+
+  if (newUser) {
+    return (
+      <div className="space-y-4 min-w-0 overflow-x-hidden pb-28">
+        <div className="dashboard-toolbar p-3 sm:p-5 space-y-3">
+          <div className="flex items-center justify-between gap-2 flex-wrap">
+            <div className="flex items-center gap-2">
+              <h1 className="text-lg font-semibold sm:text-2xl">People Economics</h1>
+              <EducationInfoIcon metricKey="employee_cac" />
+            </div>
+          </div>
+          <p className="text-xs text-muted">{newUserStoreName}</p>
+        </div>
+        <div className="bg-zinc-900/50 border border-zinc-800 rounded-2xl p-6 text-center">
+          <p className="text-sm text-zinc-300">Your team roster will appear here. Start by adding shifts in the Schedule.</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-4 min-w-0 overflow-x-hidden pb-28">

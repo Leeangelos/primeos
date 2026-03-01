@@ -3,6 +3,8 @@
 import { useState, useEffect, useMemo } from "react";
 import { Shield, ShieldAlert, ShieldCheck, ChevronDown, Circle, FileText, ExternalLink } from "lucide-react";
 import { SEED_STORES } from "@/src/lib/seed-data";
+import { useAuth } from "@/src/lib/auth-context";
+import { isNewUser, getNewUserStoreName } from "@/src/lib/user-scope";
 import { EducationInfoIcon } from "@/src/components/education/InfoIcon";
 
 // Operator's own inspection history
@@ -324,6 +326,9 @@ const CHECKLIST_STORAGE_KEY = "primeos_inspection_checklist";
 const CHECKLIST_COMPLETED_KEY = "primeos_checklist_completed";
 
 export default function InspectionRadarPage() {
+  const { session } = useAuth();
+  const newUser = isNewUser(session);
+  const newUserStoreName = getNewUserStoreName(session);
   const [selectedStore, setSelectedStore] = useState<"kent" | "aurora" | "lindseys" | "all">("kent");
   const [activeTab, setActiveTab] = useState<"radar" | "history" | "checklist">("radar");
   const [expandedInspection, setExpandedInspection] = useState<string | null>(null);
@@ -406,6 +411,26 @@ export default function InspectionRadarPage() {
     if (current.criticalViolations < prev.criticalViolations) return "improving";
     if (current.criticalViolations > prev.criticalViolations) return "watching";
     return "steady";
+  }
+
+  if (newUser) {
+    return (
+      <div className="space-y-4 pb-28">
+        <div className="flex items-center justify-between mb-4">
+          <div>
+            <h1 className="text-xl font-bold text-white flex items-center gap-2">
+              <Shield className="w-5 h-5 text-blue-400" />
+              Health Inspection Radar
+            </h1>
+            <p className="text-xs text-slate-400 mt-0.5">{newUserStoreName}</p>
+          </div>
+          <EducationInfoIcon metricKey="inspection_radar" />
+        </div>
+        <div className="bg-zinc-900/50 border border-zinc-800 rounded-2xl p-6 text-center">
+          <p className="text-sm text-zinc-300">Health inspection data for your county will appear here soon.</p>
+        </div>
+      </div>
+    );
   }
 
   return (

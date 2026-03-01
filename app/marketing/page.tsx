@@ -3,6 +3,8 @@
 import { useState, useMemo } from "react";
 import { ChevronDown } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { useAuth } from "@/src/lib/auth-context";
+import { isNewUser, getNewUserStoreName } from "@/src/lib/user-scope";
 import { EducationInfoIcon } from "@/src/components/education/InfoIcon";
 import { formatPct } from "@/src/lib/formatters";
 import { SEED_MARKETING_CAMPAIGNS, type SeedMarketingCampaign } from "@/src/lib/seed-data";
@@ -46,6 +48,9 @@ function getWeekEnd(): string {
 type DateRange = "daily" | "weekly" | "monthly" | "custom";
 
 export default function MarketingPage() {
+  const { session } = useAuth();
+  const newUser = isNewUser(session);
+  const newUserStoreName = getNewUserStoreName(session);
   const campaigns = SEED_MARKETING_CAMPAIGNS;
   const [expandedCampaign, setExpandedCampaign] = useState<string | null>(null);
   const [range, setRange] = useState<DateRange>("monthly");
@@ -58,6 +63,23 @@ export default function MarketingPage() {
     const blendedRoas = totalSpend > 0 ? totalRevenue / totalSpend : 0;
     return { totalSpend, totalRevenue, blendedRoas };
   }, [campaigns]);
+
+  if (newUser) {
+    return (
+      <div className="space-y-4 min-w-0 overflow-x-hidden pb-28">
+        <div className="dashboard-toolbar p-3 sm:p-5 space-y-3">
+          <div className="flex items-center gap-2">
+            <h1 className="text-lg font-semibold sm:text-2xl">Ad Accountability</h1>
+            <EducationInfoIcon metricKey="marketing_roas" />
+          </div>
+          <p className="text-xs text-muted">{newUserStoreName}</p>
+        </div>
+        <div className="bg-zinc-900/50 border border-zinc-800 rounded-2xl p-6 text-center">
+          <p className="text-sm text-zinc-300">Marketing insights build from your sales and customer data. Connect your POS to get started.</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-4 min-w-0 overflow-x-hidden pb-28">

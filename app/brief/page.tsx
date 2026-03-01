@@ -8,6 +8,8 @@ import { COCKPIT_STORE_SLUGS, COCKPIT_TARGETS, type CockpitStoreSlug } from "@/l
 import { getStoreColor } from "@/lib/store-colors";
 import { cn } from "@/lib/utils";
 import { formatPct } from "@/src/lib/formatters";
+import { useAuth } from "@/src/lib/auth-context";
+import { isNewUser, getNewUserStoreName } from "@/src/lib/user-scope";
 import { useRedAlert } from "@/src/lib/useRedAlert";
 import { SEED_MORNING_BRIEF_BY_STORE } from "@/src/lib/seed-data";
 import { EducationInfoIcon } from "@/src/components/education/InfoIcon";
@@ -103,6 +105,9 @@ function getSeedBriefForStore(store: BriefStore): string | null {
 }
 
 export default function BriefPage() {
+  const { session } = useAuth();
+  const newUser = isNewUser(session);
+  const newUserStoreName = getNewUserStoreName(session);
   const today = todayYYYYMMDD();
   const yesterday = prevDay(today);
   const [date, setDate] = useState(yesterday);
@@ -196,6 +201,26 @@ export default function BriefPage() {
   function pctColor(val: number | null, redAbove: number): string {
     if (val == null) return "text-muted";
     return val > redAbove ? "text-red-400" : "text-emerald-400";
+  }
+
+  if (newUser) {
+    return (
+      <div className="space-y-5 min-w-0 overflow-x-hidden pb-28">
+        <div className="dashboard-toolbar p-3 sm:p-5 space-y-3">
+          <div className="flex items-center gap-2">
+            <h1 className="text-lg font-semibold sm:text-2xl flex items-center gap-2">
+              Morning Brief
+              <EducationInfoIcon metricKey="morning_brief" />
+            </h1>
+            <button type="button" onClick={() => setShowEducation(true)} className="inline-flex items-center justify-center min-h-[44px] min-w-[44px] rounded-full bg-muted/20 text-muted hover:bg-brand/20 hover:text-brand transition-colors text-xs font-bold" aria-label="Learn more">i</button>
+          </div>
+          <p className="text-xs text-muted">{newUserStoreName}</p>
+        </div>
+        <div className="bg-zinc-900/50 border border-zinc-800 rounded-2xl p-6 text-center">
+          <p className="text-sm text-zinc-300">Your Morning Brief builds automatically from your daily data. Connect your POS to start receiving daily insights.</p>
+        </div>
+      </div>
+    );
   }
 
   return (

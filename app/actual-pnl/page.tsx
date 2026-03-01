@@ -2,6 +2,8 @@
 
 import { useState, useRef, useEffect, useMemo } from "react";
 import { FileUp, Camera, Image, FileText, FileSpreadsheet, ChevronDown } from "lucide-react";
+import { useAuth } from "@/src/lib/auth-context";
+import { isNewUser, getNewUserStoreName } from "@/src/lib/user-scope";
 import { EducationInfoIcon } from "@/src/components/education/InfoIcon";
 import { ExportButton } from "@/src/components/ui/ExportButton";
 import { formatPct, formatDollars } from "@/src/lib/formatters";
@@ -160,6 +162,9 @@ const NET_PROFIT_PLAYBOOK = [
 ];
 
 export default function ActualPnlPage() {
+  const { session } = useAuth();
+  const newUser = isNewUser(session);
+  const newUserStoreName = getNewUserStoreName(session);
   const [uploadedMonths, setUploadedMonths] = useState<Record<string, boolean>>({});
   const [uploadedPnlData, setUploadedPnlData] = useState<Record<string, PnlRawData>>({});
   const [viewMode, setViewMode] = useState<"upload" | "processing" | "pnl">("upload");
@@ -271,6 +276,24 @@ export default function ActualPnlPage() {
       miscPct: pct(d.misc),
     };
   }, [currentMonthKey, uploadedPnlData]);
+
+  if (newUser) {
+    return (
+      <div className="space-y-4 pb-28">
+        <div className="flex items-center justify-between gap-2 flex-wrap">
+          <div className="flex items-center gap-2">
+            <h1 className="text-lg font-semibold sm:text-2xl text-white">Actual P&L</h1>
+            <FileSpreadsheet className="w-6 h-6 text-slate-500 shrink-0" aria-hidden />
+            <EducationInfoIcon metricKey="gp_vs_net_profit" />
+          </div>
+        </div>
+        <p className="text-xs text-muted">{newUserStoreName}</p>
+        <div className="bg-zinc-900/50 border border-zinc-800 rounded-2xl p-6 text-center">
+          <p className="text-sm text-zinc-300">Your P&L will populate when transaction data starts flowing. Tap any (i) icon to learn what each line item means.</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-4 pb-28">

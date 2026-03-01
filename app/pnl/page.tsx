@@ -8,6 +8,8 @@ import {
   type CockpitStoreSlug,
 } from "@/lib/cockpit-config";
 import { getStoreColor } from "@/lib/store-colors";
+import { useAuth } from "@/src/lib/auth-context";
+import { isNewUser, getNewUserStoreName } from "@/src/lib/user-scope";
 import { EducationInfoIcon } from "@/src/components/education/InfoIcon";
 import { ExportButton } from "@/src/components/ui/ExportButton";
 import { formatPct as formatPctShared, formatDollars as formatDollarsBase } from "@/src/lib/formatters";
@@ -74,6 +76,9 @@ function pctToGrade(pct: number, targetMax: number): "green" | "yellow" | "red" 
 }
 
 export default function PnlPage() {
+  const { session } = useAuth();
+  const newUser = isNewUser(session);
+  const newUserStoreName = getNewUserStoreName(session);
   const [storeFilter, setStoreFilter] = useState<"all" | CockpitStoreSlug>("kent");
   const [shareToast, setShareToast] = useState(false);
   const [shareGenerating, setShareGenerating] = useState(false);
@@ -146,6 +151,21 @@ export default function PnlPage() {
       // clipboard failed
     }
     setShareGenerating(false);
+  }
+
+  if (newUser) {
+    return (
+      <div className="space-y-6 min-w-0 overflow-x-hidden pb-28">
+        <div className="flex items-center justify-between gap-2 flex-wrap">
+          <h1 className="text-lg font-semibold sm:text-2xl text-white">GP P&L</h1>
+          <EducationInfoIcon metricKey="gp_vs_net_profit" />
+        </div>
+        <p className="text-xs text-muted">{newUserStoreName}</p>
+        <div className="bg-zinc-900/50 border border-zinc-800 rounded-2xl p-6 text-center">
+          <p className="text-sm text-zinc-300">Your P&L will populate when transaction data starts flowing. Tap any (i) icon to learn what each line item means.</p>
+        </div>
+      </div>
+    );
   }
 
   return (

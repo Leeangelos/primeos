@@ -2,6 +2,8 @@
 
 import { useState, useMemo, useEffect } from "react";
 import { Scale, Info } from "lucide-react";
+import { useAuth } from "@/src/lib/auth-context";
+import { isNewUser, getNewUserStoreName } from "@/src/lib/user-scope";
 import { formatDollars, formatPct } from "@/src/lib/formatters";
 import { EducationInfoIcon } from "@/src/components/education/InfoIcon";
 import { DataDisclaimer } from "@/src/components/ui/DataDisclaimer";
@@ -49,6 +51,9 @@ const VARIANCE_ITEMS = [
 const STORE_OPTIONS = SEED_STORES.map((s) => ({ value: s.slug, label: s.name }));
 
 export default function FoodCostAnalysisPage() {
+  const { session } = useAuth();
+  const newUser = isNewUser(session);
+  const newUserStoreName = getNewUserStoreName(session);
   const [selectedStore, setSelectedStore] = useState("kent");
   const [selectedMonth, setSelectedMonth] = useState(5); // default last month
   const [expandedItem, setExpandedItem] = useState<string | null>(null);
@@ -67,6 +72,23 @@ export default function FoodCostAnalysisPage() {
   const theoreticalPct = revenue ? (theoretical / revenue) * 100 : 0;
   const actualPct = revenue ? (actual / revenue) * 100 : 0;
   const variancePct = theoretical ? (variance / theoretical) * 100 : 0;
+
+  if (newUser) {
+    return (
+      <div className="space-y-4 pb-28 min-w-0 overflow-x-hidden">
+        <div className="flex items-center justify-between mb-4">
+          <div>
+            <h1 className="text-xl font-bold text-white">Food Cost Analysis</h1>
+            <p className="text-xs text-slate-400 mt-0.5">{newUserStoreName}</p>
+          </div>
+          <EducationInfoIcon metricKey="theoretical_food_cost" />
+        </div>
+        <div className="bg-zinc-900/50 border border-zinc-800 rounded-2xl p-6 text-center">
+          <p className="text-sm text-zinc-300">Your food cost breakdown appears here once invoice and sales data are connected.</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-4 pb-28 min-w-0 overflow-x-hidden">
