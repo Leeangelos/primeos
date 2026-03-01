@@ -24,8 +24,8 @@ export function TOSGate({ children }: { children: React.ReactNode }) {
     setAccepted(true);
   };
 
-  // Login, signup, welcome, terms, and privacy are always accessible without accepting TOS
-  if (["/login", "/signup", "/welcome", "/terms", "/privacy"].includes(pathname)) {
+  // Login, signup, welcome, partner, terms, and privacy — skip TOS gate entirely (before any localStorage check)
+  if (["/login", "/signup", "/welcome", "/partner", "/terms", "/privacy"].includes(pathname ?? "")) {
     return <>{children}</>;
   }
 

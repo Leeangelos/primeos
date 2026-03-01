@@ -4,7 +4,7 @@ import { useState, useEffect } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 
-const HIDE_CONSENT_PATHS = ["/login", "/signup", "/welcome"];
+const HIDE_CONSENT_PATHS = ["/login", "/signup", "/welcome", "/partner"];
 
 export function ConsentBanner() {
   const pathname = usePathname();
