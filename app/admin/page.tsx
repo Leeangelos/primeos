@@ -40,6 +40,19 @@ type Signup = {
   onboarding: Onboarding | null;
 };
 
+type WaitlistEntry = {
+  id: string;
+  name: string;
+  email: string;
+  phone: string | null;
+  business_name: string;
+  business_type: string;
+  city_state: string | null;
+  message: string | null;
+  status: string;
+  created_at: string;
+};
+
 function PinScreen({
   onCorrect,
   onShake,
@@ -119,10 +132,15 @@ function formatDate(iso: string) {
 export default function AdminPage() {
   const { session } = useAuth();
   const [pinOk, setPinOk] = useState(false);
+  const [adminTab, setAdminTab] = useState<"signups" | "waitlist">("signups");
   const [signups, setSignups] = useState<Signup[]>([]);
+  const [waitlist, setWaitlist] = useState<WaitlistEntry[]>([]);
   const [loading, setLoading] = useState(true);
+  const [loadingWaitlist, setLoadingWaitlist] = useState(false);
   const [fetchError, setFetchError] = useState<string | null>(null);
+  const [fetchErrorWaitlist, setFetchErrorWaitlist] = useState<string | null>(null);
   const [expandedId, setExpandedId] = useState<string | null>(null);
+  const [expandedWaitlistId, setExpandedWaitlistId] = useState<string | null>(null);
 
   useEffect(() => {
     if (!pinOk || !session?.access_token) return;
@@ -150,6 +168,32 @@ export default function AdminPage() {
     };
   }, [pinOk, session?.access_token]);
 
+  useEffect(() => {
+    if (!pinOk || !session?.access_token || adminTab !== "waitlist") return;
+    let cancelled = false;
+    setLoadingWaitlist(true);
+    setFetchErrorWaitlist(null);
+    fetch("/api/admin/waitlist", {
+      headers: { Authorization: `Bearer ${session.access_token}` },
+    })
+      .then((r) => {
+        if (!r.ok) throw new Error(r.status === 403 ? "Access denied" : "Failed to load");
+        return r.json();
+      })
+      .then((data) => {
+        if (!cancelled) setWaitlist(data.waitlist ?? []);
+      })
+      .catch((e) => {
+        if (!cancelled) setFetchErrorWaitlist(e.message ?? "Error loading waitlist");
+      })
+      .finally(() => {
+        if (!cancelled) setLoadingWaitlist(false);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [pinOk, session?.access_token, adminTab]);
+
   if (!pinOk) {
     return (
       <PinScreen
@@ -171,24 +215,45 @@ export default function AdminPage() {
           </button>
         </div>
         <h1 className="text-2xl font-bold text-white">PrimeOS Admin</h1>
-        <p className="text-slate-400 mt-1">Operator Signups</p>
-        <div className="mt-4 inline-flex items-center gap-2 rounded-full bg-slate-800 border border-slate-700 px-4 py-2">
-          <span className="text-orange-400 font-semibold tabular-nums">{signups.length}</span>
-          <span className="text-slate-400 text-sm">total signups</span>
+        <div className="mt-3 flex gap-2 border-b border-slate-700">
+          <button
+            type="button"
+            onClick={() => setAdminTab("signups")}
+            className={cn(
+              "px-4 py-2 text-sm font-medium rounded-t-lg border-b-2 -mb-px transition-colors",
+              adminTab === "signups"
+                ? "text-orange-400 border-orange-500 bg-slate-800/80"
+                : "text-slate-400 border-transparent hover:text-white"
+            )}
+          >
+            Signups ({signups.length})
+          </button>
+          <button
+            type="button"
+            onClick={() => setAdminTab("waitlist")}
+            className={cn(
+              "px-4 py-2 text-sm font-medium rounded-t-lg border-b-2 -mb-px transition-colors",
+              adminTab === "waitlist"
+                ? "text-orange-400 border-orange-500 bg-slate-800/80"
+                : "text-slate-400 border-transparent hover:text-white"
+            )}
+          >
+            Waitlist ({waitlist.length})
+          </button>
         </div>
 
-        {loading && (
+        {adminTab === "signups" && loading && (
           <div className="flex items-center justify-center py-16">
             <Loader2 className="w-8 h-8 text-orange-500 animate-spin" />
           </div>
         )}
-        {fetchError && (
+        {adminTab === "signups" && fetchError && (
           <p className="mt-4 text-red-400">{fetchError}</p>
         )}
-        {!loading && !fetchError && signups.length === 0 && (
+        {adminTab === "signups" && !loading && !fetchError && signups.length === 0 && (
           <p className="mt-6 text-slate-500">No signups yet.</p>
         )}
-        {!loading && !fetchError && signups.length > 0 && (
+        {adminTab === "signups" && !loading && !fetchError && signups.length > 0 && (
           <>
             {/* Desktop table */}
             <div className="hidden md:block mt-8 rounded-xl border border-slate-700 overflow-hidden">
@@ -272,7 +337,145 @@ export default function AdminPage() {
             </div>
           </>
         )}
+
+        {adminTab === "waitlist" && loadingWaitlist && (
+          <div className="flex items-center justify-center py-16">
+            <Loader2 className="w-8 h-8 text-orange-500 animate-spin" />
+          </div>
+        )}
+        {adminTab === "waitlist" && fetchErrorWaitlist && (
+          <p className="mt-4 text-red-400">{fetchErrorWaitlist}</p>
+        )}
+        {adminTab === "waitlist" && !loadingWaitlist && !fetchErrorWaitlist && waitlist.length === 0 && (
+          <p className="mt-6 text-slate-500">No waitlist entries yet.</p>
+        )}
+        {adminTab === "waitlist" && !loadingWaitlist && !fetchErrorWaitlist && waitlist.length > 0 && (
+          <>
+            <div className="hidden md:block mt-8 rounded-xl border border-slate-700 overflow-hidden">
+              <table className="w-full text-left text-sm">
+                <thead className="bg-slate-800 border-b border-slate-700">
+                  <tr>
+                    <th className="px-4 py-3 font-medium text-slate-300">Name</th>
+                    <th className="px-4 py-3 font-medium text-slate-300">Business</th>
+                    <th className="px-4 py-3 font-medium text-slate-300">Type</th>
+                    <th className="px-4 py-3 font-medium text-slate-300">City/State</th>
+                    <th className="px-4 py-3 font-medium text-slate-300">Date</th>
+                    <th className="px-4 py-3 font-medium text-slate-300">Status</th>
+                    <th className="w-10" />
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-slate-700">
+                  {waitlist.map((w) => {
+                    const open = expandedWaitlistId === w.id;
+                    return (
+                      <Fragment key={w.id}>
+                        <tr
+                          onClick={() => setExpandedWaitlistId(open ? null : w.id)}
+                          className="bg-slate-800/50 hover:bg-slate-800 cursor-pointer"
+                        >
+                          <td className="px-4 py-3">{w.name || "—"}</td>
+                          <td className="px-4 py-3">{w.business_name || "—"}</td>
+                          <td className="px-4 py-3">
+                            {w.business_type === "pizza" ? (
+                              <span className="inline-flex items-center gap-1">
+                                <span>🍕</span>
+                                <span className="capitalize">{w.business_type}</span>
+                              </span>
+                            ) : (
+                              <span className="capitalize">{w.business_type}</span>
+                            )}
+                          </td>
+                          <td className="px-4 py-3">{w.city_state || "—"}</td>
+                          <td className="px-4 py-3 text-slate-400">{formatDate(w.created_at)}</td>
+                          <td className="px-4 py-3">
+                            <StatusBadge status={w.status} />
+                          </td>
+                          <td className="px-2 py-3">{open ? <ChevronUp className="w-4 h-4 text-orange-400" /> : <ChevronDown className="w-4 h-4 text-slate-500" />}</td>
+                        </tr>
+                        {open && (
+                          <tr key={`${w.id}-exp`} className="bg-slate-900/80">
+                            <td colSpan={7} className="px-4 py-4">
+                              <WaitlistDetailsBlock entry={w} />
+                            </td>
+                          </tr>
+                        )}
+                      </Fragment>
+                    );
+                  })}
+                </tbody>
+              </table>
+            </div>
+            <div className="md:hidden mt-6 space-y-3">
+              {waitlist.map((w) => {
+                const open = expandedWaitlistId === w.id;
+                return (
+                  <div
+                    key={w.id}
+                    onClick={() => setExpandedWaitlistId(open ? null : w.id)}
+                    className={cn(
+                      "rounded-xl border overflow-hidden",
+                      open ? "border-orange-500/50 bg-slate-800/80" : "border-slate-700 bg-slate-800/50"
+                    )}
+                  >
+                    <div className="p-4 flex items-start justify-between gap-2">
+                      <div>
+                        <div className="font-medium text-white">{w.name || "—"}</div>
+                        <div className="text-slate-400 text-sm mt-0.5">{w.business_name || "—"}</div>
+                        <div className="text-slate-500 text-xs mt-1">
+                          {w.business_type === "pizza" ? "🍕 Pizza" : w.business_type} · {formatDate(w.created_at)}
+                        </div>
+                        <div className="mt-2">
+                          <StatusBadge status={w.status} />
+                        </div>
+                      </div>
+                      {open ? <ChevronUp className="w-5 h-5 text-orange-400 shrink-0" /> : <ChevronDown className="w-5 h-5 text-slate-500 shrink-0" />}
+                    </div>
+                    {open && (
+                      <div className="px-4 pb-4">
+                        <WaitlistDetailsBlock entry={w} />
+                      </div>
+                    )}
+                  </div>
+                );
+              })}
+            </div>
+          </>
+        )}
       </div>
+    </div>
+  );
+}
+
+function StatusBadge({ status }: { status: string }) {
+  const styles: Record<string, string> = {
+    new: "bg-orange-500/20 text-orange-400 border-orange-500/40",
+    contacted: "bg-blue-500/20 text-blue-400 border-blue-500/40",
+    converted: "bg-green-500/20 text-green-400 border-green-500/40",
+    passed: "bg-zinc-500/20 text-zinc-400 border-zinc-500/40",
+  };
+  const s = status in styles ? status : "new";
+  return (
+    <span className={cn("inline-flex items-center rounded-full border px-2 py-0.5 text-xs font-medium capitalize", styles[s] || styles.new)}>
+      {s}
+    </span>
+  );
+}
+
+function WaitlistDetailsBlock({ entry }: { entry: WaitlistEntry }) {
+  const isPizza = entry.business_type === "pizza";
+  return (
+    <div className="text-sm space-y-3 text-slate-300">
+      <div className="grid grid-cols-2 gap-x-4 gap-y-1">
+        <span className="text-slate-500">Email</span>
+        <span>{entry.email || "—"}</span>
+        <span className="text-slate-500">Phone</span>
+        <span>{entry.phone || "—"}</span>
+        <span className="text-slate-500">Message</span>
+        <span className="col-span-2">{entry.message || "—"}</span>
+      </div>
+      <p className={cn("text-xs pt-2 border-t border-slate-700", isPizza ? "text-orange-400" : "text-slate-500")}>
+        {isPizza ? "Pizza operator — fast track" : "Non-pizza — Hillcrest lead"}
+      </p>
     </div>
   );
 }

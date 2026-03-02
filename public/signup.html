@@ -178,6 +178,65 @@
                 By signing up, you agree to our <a href="/terms" target="_blank">Terms of Service</a> and <a href="/privacy" target="_blank">Privacy Policy</a>.
               </p>
             </form>
+
+            <div id="no-code-section" style="text-align: center; margin-top: 16px;">
+              <a href="#" id="no-code-link" onclick="showWaitlistForm(event)" style="color: #E65100; text-decoration: underline; font-size: 14px;">Don't have an invite code?</a>
+            </div>
+
+            <div id="waitlist-form-container" style="display: none; margin-top: 24px;">
+              <h3 style="color: white; font-size: 20px; font-weight: 600; margin-bottom: 4px;">Join the Waiting List</h3>
+              <p style="color: #a1a1aa; font-size: 14px; margin-bottom: 20px;">Tell us about your business and we'll be in touch.</p>
+
+              <div style="display: flex; flex-direction: column; gap: 12px;">
+                <input type="text" id="wl-name" placeholder="Your Name" required
+                  style="background: #18181b; border: 1px solid #3f3f46; border-radius: 8px; padding: 12px; color: white; font-size: 16px;" />
+
+                <input type="email" id="wl-email" placeholder="Email Address" required
+                  style="background: #18181b; border: 1px solid #3f3f46; border-radius: 8px; padding: 12px; color: white; font-size: 16px;" />
+
+                <input type="tel" id="wl-phone" placeholder="Phone Number"
+                  style="background: #18181b; border: 1px solid #3f3f46; border-radius: 8px; padding: 12px; color: white; font-size: 16px;" />
+
+                <input type="text" id="wl-business" placeholder="Business Name" required
+                  style="background: #18181b; border: 1px solid #3f3f46; border-radius: 8px; padding: 12px; color: white; font-size: 16px;" />
+
+                <input type="text" id="wl-city" placeholder="City, State"
+                  style="background: #18181b; border: 1px solid #3f3f46; border-radius: 8px; padding: 12px; color: white; font-size: 16px;" />
+
+                <label style="color: #a1a1aa; font-size: 14px; margin-bottom: -4px;">What type of food does your business sell?</label>
+                <select id="wl-type" required
+                  style="background: #18181b; border: 1px solid #3f3f46; border-radius: 8px; padding: 12px; color: white; font-size: 16px; -webkit-appearance: none;">
+                  <option value="" disabled selected>Select your business type</option>
+                  <option value="pizza">Pizza</option>
+                  <option value="burger">Burgers</option>
+                  <option value="mexican">Mexican</option>
+                  <option value="italian">Italian (non-pizza)</option>
+                  <option value="american">American / Bar & Grill</option>
+                  <option value="seafood">Seafood</option>
+                  <option value="asian">Asian</option>
+                  <option value="deli">Deli / Subs</option>
+                  <option value="bakery">Bakery / Café</option>
+                  <option value="other">Other</option>
+                </select>
+
+                <textarea id="wl-message" placeholder="Anything else you'd like us to know? (optional)" rows="3"
+                  style="background: #18181b; border: 1px solid #3f3f46; border-radius: 8px; padding: 12px; color: white; font-size: 16px; resize: vertical;"></textarea>
+
+                <button onclick="submitWaitlist()" id="wl-submit-btn"
+                  style="background: #E65100; color: white; border: none; border-radius: 8px; padding: 14px; font-size: 16px; font-weight: 600; cursor: pointer; margin-top: 4px;">
+                  Join Waiting List
+                </button>
+
+                <div id="wl-success" style="display: none; text-align: center; padding: 16px;">
+                  <p style="color: #34d399; font-size: 16px; font-weight: 600;">✓ You're on the list!</p>
+                  <p style="color: #a1a1aa; font-size: 14px; margin-top: 4px;">We'll reach out soon. Keep an eye on your inbox.</p>
+                </div>
+
+                <div id="wl-error" style="display: none; text-align: center;">
+                  <p style="color: #f87171; font-size: 14px;"></p>
+                </div>
+              </div>
+            </div>
           </div>
         </div>
       </main>
@@ -256,6 +315,65 @@
             });
         });
       })();
+
+      function showWaitlistForm(e) {
+        e.preventDefault();
+        document.getElementById("waitlist-form-container").style.display = "block";
+        var link = document.getElementById("no-code-link");
+        link.textContent = "Have an invite code? Enter it above.";
+        link.onclick = function(ev) {
+          ev.preventDefault();
+          document.getElementById("waitlist-form-container").style.display = "none";
+          this.textContent = "Don't have an invite code?";
+          this.onclick = showWaitlistForm;
+        };
+      }
+
+      async function submitWaitlist() {
+        var name = document.getElementById("wl-name").value.trim();
+        var email = document.getElementById("wl-email").value.trim();
+        var phone = document.getElementById("wl-phone").value.trim();
+        var business_name = document.getElementById("wl-business").value.trim();
+        var business_type = document.getElementById("wl-type").value;
+        var city_state = document.getElementById("wl-city").value.trim();
+        var message = document.getElementById("wl-message").value.trim();
+
+        if (!name || !email || !business_name || !business_type) {
+          var errEl = document.getElementById("wl-error");
+          errEl.style.display = "block";
+          errEl.querySelector("p").textContent = "Please fill in all required fields.";
+          return;
+        }
+
+        var btn = document.getElementById("wl-submit-btn");
+        btn.disabled = true;
+        btn.textContent = "Submitting...";
+        btn.style.opacity = "0.6";
+
+        try {
+          var res = await fetch("/api/waitlist", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ name: name, email: email, phone: phone, business_name: business_name, business_type: business_type, city_state: city_state, message: message })
+          });
+
+          if (!res.ok) throw new Error("Submission failed");
+
+          document.getElementById("wl-submit-btn").style.display = "none";
+          document.querySelectorAll("#waitlist-form-container input, #waitlist-form-container select, #waitlist-form-container textarea").forEach(function(el) { el.style.display = "none"; });
+          var label = document.querySelector("#waitlist-form-container label");
+          if (label) label.style.display = "none";
+          document.getElementById("wl-success").style.display = "block";
+          document.getElementById("wl-error").style.display = "none";
+        } catch (err) {
+          var errEl = document.getElementById("wl-error");
+          errEl.style.display = "block";
+          errEl.querySelector("p").textContent = "Something went wrong. Email us at hello@getprimeos.com";
+          btn.disabled = false;
+          btn.textContent = "Join Waiting List";
+          btn.style.opacity = "1";
+        }
+      }
     </script>
   </body>
 </html>
