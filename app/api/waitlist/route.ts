@@ -11,6 +11,11 @@ export async function POST(request: Request) {
     const business_name = (body.business_name as string)?.trim();
     const business_type = (body.business_type as string)?.trim();
     const city_state = (body.city_state as string)?.trim() || null;
+    const locations = (body.locations as string)?.trim() || null;
+    const weekly_sales = (body.weekly_sales as string)?.trim() || null;
+    const years_in_business = (body.years_in_business as string)?.trim() || null;
+    const biggest_challenge = (body.biggest_challenge as string)?.trim() || null;
+    const referral_source = (body.referral_source as string)?.trim() || null;
     const message = (body.message as string)?.trim() || null;
 
     if (!name || !email || !business_name || !business_type) {
@@ -27,11 +32,16 @@ export async function POST(request: Request) {
     const { error: dbError } = await supabase.from("waitlist").insert({
       name,
       email,
-      phone,
+      phone: phone || null,
       business_name,
       business_type,
-      city_state,
-      message,
+      city_state: city_state || null,
+      locations: locations || null,
+      weekly_sales: weekly_sales || null,
+      years_in_business: years_in_business || null,
+      biggest_challenge: biggest_challenge || null,
+      referral_source: referral_source || null,
+      message: message || null,
       status: "new",
     });
 
@@ -59,7 +69,12 @@ export async function POST(request: Request) {
           <p><strong>Phone:</strong> ${phone || "Not provided"}</p>
           <p><strong>Business:</strong> ${business_name}</p>
           <p><strong>Type:</strong> ${business_type}</p>
-          <p><strong>Location:</strong> ${city_state || "Not provided"}</p>
+          <p><strong>City/State:</strong> ${city_state || "Not provided"}</p>
+          <p><strong>Locations:</strong> ${locations || "Not provided"}</p>
+          <p><strong>Weekly Sales:</strong> ${weekly_sales || "Not provided"}</p>
+          <p><strong>Years in Business:</strong> ${years_in_business || "Not provided"}</p>
+          <p><strong>Biggest Challenge:</strong> ${biggest_challenge || "Not provided"}</p>
+          <p><strong>How They Heard About Us:</strong> ${referral_source || "Not provided"}</p>
           ${message ? `<p><strong>Message:</strong> ${message}</p>` : ""}
           <hr style="border-color: #3f3f46;" />
           <p style="color: #71717a; font-size: 12px;">

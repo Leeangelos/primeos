@@ -48,6 +48,11 @@ type WaitlistEntry = {
   business_name: string;
   business_type: string;
   city_state: string | null;
+  locations: string | null;
+  weekly_sales: string | null;
+  years_in_business: string | null;
+  biggest_challenge: string | null;
+  referral_source: string | null;
   message: string | null;
   status: string;
   created_at: string;
@@ -388,7 +393,12 @@ export default function AdminPage() {
                           <td className="px-4 py-3">{w.city_state || "—"}</td>
                           <td className="px-4 py-3 text-slate-400">{formatDate(w.created_at)}</td>
                           <td className="px-4 py-3">
-                            <StatusBadge status={w.status} />
+                            <span className="inline-flex flex-wrap items-center gap-1.5">
+                              <StatusBadge status={w.status} />
+                              {(w.weekly_sales === "$20,000 - $50,000" || w.weekly_sales === "$50,000+") && (
+                                <span className="inline-flex items-center rounded-full border border-orange-500/40 bg-orange-500/20 px-2 py-0.5 text-xs font-medium text-orange-400">🔥 High Volume</span>
+                              )}
+                            </span>
                           </td>
                           <td className="px-2 py-3">{open ? <ChevronUp className="w-4 h-4 text-orange-400" /> : <ChevronDown className="w-4 h-4 text-slate-500" />}</td>
                         </tr>
@@ -424,8 +434,11 @@ export default function AdminPage() {
                         <div className="text-slate-500 text-xs mt-1">
                           {w.business_type === "pizza" ? "🍕 Pizza" : w.business_type} · {formatDate(w.created_at)}
                         </div>
-                        <div className="mt-2">
+                        <div className="mt-2 flex flex-wrap items-center gap-1.5">
                           <StatusBadge status={w.status} />
+                          {(w.weekly_sales === "$20,000 - $50,000" || w.weekly_sales === "$50,000+") && (
+                            <span className="inline-flex items-center rounded-full border border-orange-500/40 bg-orange-500/20 px-2 py-0.5 text-xs font-medium text-orange-400">🔥 High Volume</span>
+                          )}
                         </div>
                       </div>
                       {open ? <ChevronUp className="w-5 h-5 text-orange-400 shrink-0" /> : <ChevronDown className="w-5 h-5 text-slate-500 shrink-0" />}
@@ -466,12 +479,22 @@ function WaitlistDetailsBlock({ entry }: { entry: WaitlistEntry }) {
   return (
     <div className="text-sm space-y-3 text-slate-300">
       <div className="grid grid-cols-2 gap-x-4 gap-y-1">
-        <span className="text-slate-500">Email</span>
-        <span>{entry.email || "—"}</span>
-        <span className="text-slate-500">Phone</span>
-        <span>{entry.phone || "—"}</span>
-        <span className="text-slate-500">Message</span>
-        <span className="col-span-2">{entry.message || "—"}</span>
+        <span className="text-zinc-400">Email</span>
+        <span className="text-white">{entry.email || "—"}</span>
+        <span className="text-zinc-400">Phone</span>
+        <span className="text-white">{entry.phone || "—"}</span>
+        <span className="text-zinc-400">Locations</span>
+        <span className="text-white">{entry.locations || "—"}</span>
+        <span className="text-zinc-400">Weekly Sales</span>
+        <span className="text-white">{entry.weekly_sales || "—"}</span>
+        <span className="text-zinc-400">Years in Business</span>
+        <span className="text-white">{entry.years_in_business || "—"}</span>
+        <span className="text-zinc-400">Biggest Challenge</span>
+        <span className="text-white">{entry.biggest_challenge || "—"}</span>
+        <span className="text-zinc-400">Referral Source</span>
+        <span className="text-white">{entry.referral_source || "—"}</span>
+        <span className="text-zinc-400">Message</span>
+        <span className="col-span-2 text-white">{entry.message || "—"}</span>
       </div>
       <p className={cn("text-xs pt-2 border-t border-slate-700", isPizza ? "text-orange-400" : "text-slate-500")}>
         {isPizza ? "Pizza operator — fast track" : "Non-pizza — Hillcrest lead"}
