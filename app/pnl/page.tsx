@@ -123,9 +123,10 @@ export default function PnlPage() {
     setShareGenerating(true);
     const textBody = [
       `Revenue: ${formatDollars(pnl.totalSales)}`,
-      `COGS: ${formatDollars(pnl.totalCOGS)} (${formatPct(pnl.cogsPct)})`,
-      `Gross Profit: ${formatDollars(pnl.grossProfit)} (${formatPct(pnl.gpPct)})`,
+      `Food: ${formatDollars(pnl.totalFood)} (${formatPct(pnl.foodPct)})`,
       `Labor: ${formatDollars(pnl.totalLabor)} (${formatPct(pnl.laborPct)})`,
+      `Disposables: ${formatDollars(pnl.totalDisposables)} (${formatPct(pnl.dispPct)})`,
+      `Gross Profit: ${formatDollars(pnl.grossProfit)} (${formatPct(pnl.gpPct)})`,
     ].join("\n");
     const shareText = `PrimeOS — GP P&L\n${storeName}\n${mtdLabel}\n\n${textBody}\n\nPowered by PrimeOS — getprimeos.com`;
     try {
@@ -208,7 +209,7 @@ export default function PnlPage() {
             <span>{shareGenerating ? "Generating..." : "Share"}</span>
           </button>
         </div>
-        <p className="text-xs text-muted">Month-to-date rolling view. What you control daily.</p>
+        <p className="text-xs text-muted">Current snapshot — how you&apos;re doing right now. Month-to-date.</p>
         <div className="flex flex-wrap gap-2">
           <select
             value={storeFilter}
@@ -242,26 +243,33 @@ export default function PnlPage() {
             <span className="text-xs text-slate-500 uppercase tracking-wide">Revenue</span>
             <EducationInfoIcon metricKey="revenue_pl" size="sm" />
           </div>
-          <div className="flex justify-between items-center gap-2 py-1.5">
-            <div className="flex items-center gap-2 min-w-0">
-              <span className="text-slate-300">Total Sales</span>
-              <EducationInfoIcon metricKey="daily_sales" />
-            </div>
-            <span className="tabular-nums font-medium text-emerald-400 shrink-0">{formatDollars(pnl.totalSales)}</span>
-          </div>
+          <LineItem
+            label="Net Sales"
+            amount={formatDollars(pnl.totalSales)}
+            metricKey="daily_sales"
+            amountColor="green"
+          />
         </div>
 
         <div className="p-4 border-b border-slate-700">
           <div className="flex items-center gap-1.5 mb-2">
-          <span className="text-xs text-slate-500 uppercase tracking-wide">Cost of Goods</span>
-          <EducationInfoIcon metricKey="cogs_pl" size="sm" />
-        </div>
+            <span className="text-xs text-slate-500 uppercase tracking-wide">Cost of Goods</span>
+            <EducationInfoIcon metricKey="cogs_pl" size="sm" />
+          </div>
           <LineItem
-            label="Food"
+            label="Food Cost"
             amount={formatDollars(pnl.totalFood)}
             pct={formatPct(pnl.foodPct)}
             grade={pctToGrade(pnl.foodPct, 31)}
             metricKey="food_cost"
+            amountColor="red"
+          />
+          <LineItem
+            label="Labor Cost"
+            amount={formatDollars(pnl.totalLabor)}
+            pct={formatPct(pnl.laborPct)}
+            grade={pctToGrade(pnl.laborPct, 22)}
+            metricKey="labor_pct"
             amountColor="red"
           />
           <LineItem
@@ -271,34 +279,12 @@ export default function PnlPage() {
             metricKey="disposables_pct"
             amountColor="red"
           />
-          <Divider />
-          <LineItem
-            label="Total COGS"
-            amount={formatDollars(pnl.totalCOGS)}
-            pct={formatPct(pnl.cogsPct)}
-            bold
-            grade={pctToGrade(pnl.cogsPct, 35)}
-            metricKey="cogs_pl"
-            amountColor="red"
-          />
         </div>
 
-        <div className="p-4 border-b border-slate-700">
-          <div className="text-xs text-slate-500 uppercase tracking-wide mb-2">Labor</div>
-          <LineItem
-            label="Total Labor"
-            amount={formatDollars(pnl.totalLabor)}
-            pct={formatPct(pnl.laborPct)}
-            grade={pctToGrade(pnl.laborPct, 22)}
-            metricKey="labor_pct"
-            amountColor="red"
-          />
-        </div>
-
-        <div className="p-4 bg-slate-700/50">
-          <div className="flex justify-between items-center gap-2">
+        <div className="p-4 border-t border-zinc-700 bg-slate-800/80">
+          <div className="flex justify-between items-center gap-2 pt-1">
             <div className="flex items-center gap-2 min-w-0">
-              <span className="text-white font-bold">Gross Profit</span>
+              <span className="text-white font-bold text-base">Gross Profit</span>
               <EducationInfoIcon metricKey="gross_profit_pl" />
             </div>
             <div className="text-right shrink-0 flex items-center justify-end gap-1">

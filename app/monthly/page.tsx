@@ -93,6 +93,12 @@ function MonthlyContent() {
   const storeForSeed = storeFilter === "all" ? "kent" : storeFilter;
   const storeName = storeFilter === "all" ? "All Locations" : COCKPIT_TARGETS[storeFilter].name;
 
+  const { startDate: prevStart, endDate: prevEnd } = useMemo(() => {
+    const prevMonth = month === 0 ? 11 : month - 1;
+    const prevYear = month === 0 ? year - 1 : year;
+    return getMonthStartEnd(prevYear, prevMonth);
+  }, [year, month]);
+
   const pnl = useMemo(() => {
     const rows = SEED_DAILY_KPIS.filter(
       (r) => r.store_id === storeForSeed && r.date >= startDate && r.date <= endDate
@@ -108,6 +114,7 @@ function MonthlyContent() {
     const cogsPct = totalSales > 0 ? (totalCOGS / totalSales) * 100 : 0;
     const laborPct = totalSales > 0 ? (totalLabor / totalSales) * 100 : 0;
     const gpPct = totalSales > 0 ? (grossProfit / totalSales) * 100 : 0;
+    const primePct = totalSales > 0 ? 100 - foodPct - laborPct - dispPct : 0;
     return {
       totalSales,
       totalFood,
@@ -120,8 +127,25 @@ function MonthlyContent() {
       cogsPct,
       laborPct,
       gpPct,
+      primePct,
     };
   }, [storeForSeed, startDate, endDate]);
+
+  const prevPnl = useMemo(() => {
+    const rows = SEED_DAILY_KPIS.filter(
+      (r) => r.store_id === storeForSeed && r.date >= prevStart && r.date <= prevEnd
+    );
+    const totalSales = rows.reduce((s, r) => s + r.sales, 0);
+    const totalFood = rows.reduce((s, r) => s + r.food_dollars, 0);
+    const totalLabor = rows.reduce((s, r) => s + r.labor_dollars, 0);
+    const totalDisposables = rows.reduce((s, r) => s + Math.round(r.sales * 0.035 * 100) / 100, 0);
+    const grossProfit = totalSales - totalFood - totalLabor - totalDisposables;
+    const foodPct = totalSales > 0 ? (totalFood / totalSales) * 100 : 0;
+    const laborPct = totalSales > 0 ? (totalLabor / totalSales) * 100 : 0;
+    const gpPct = totalSales > 0 ? (grossProfit / totalSales) * 100 : 0;
+    const primePct = totalSales > 0 ? 100 - foodPct - laborPct - (totalDisposables / totalSales) * 100 : 0;
+    return { totalSales, foodPct, laborPct, primePct, grossProfit, gpPct };
+  }, [storeForSeed, prevStart, prevEnd]);
 
   const prevMonth = () => {
     if (month === 0) {
@@ -146,7 +170,7 @@ function MonthlyContent() {
       <div className="space-y-6 min-w-0 overflow-x-hidden pb-28">
         <div className="dashboard-toolbar p-3 sm:p-5 space-y-3">
           <div className="flex items-center gap-2">
-            <h1 className="text-lg font-semibold sm:text-2xl">Monthly P&L Summary</h1>
+            <h1 className="text-lg font-semibold sm:text-2xl">Monthly Summary</h1>
             <button type="button" onClick={() => setShowEducation(true)} className="inline-flex items-center justify-center min-h-[44px] min-w-[44px] rounded-full bg-muted/20 text-muted hover:bg-brand/20 hover:text-brand transition-colors text-xs font-bold" aria-label="Learn more">i</button>
           </div>
           <p className="text-xs text-muted">{newUserStoreName}</p>
@@ -162,9 +186,10 @@ function MonthlyContent() {
     <div className="space-y-6 min-w-0 overflow-x-hidden pb-28">
       <div className="dashboard-toolbar p-3 sm:p-5 space-y-3">
         <div className="flex items-center gap-2">
-          <h1 className="text-lg font-semibold sm:text-2xl">Monthly P&L Summary</h1>
+          <h1 className="text-lg font-semibold sm:text-2xl">Monthly Summary</h1>
           <button type="button" onClick={() => setShowEducation(true)} className="inline-flex items-center justify-center min-h-[44px] min-w-[44px] rounded-full bg-muted/20 text-muted hover:bg-brand/20 hover:text-brand transition-colors text-xs font-bold" aria-label="Learn more">i</button>
         </div>
+        <p className="text-xs text-muted">Month-over-month trend view. Compare this month to last.</p>
         <div className="flex items-center gap-2 min-w-0">
           <button
             type="button"
@@ -197,6 +222,84 @@ function MonthlyContent() {
               <option key={slug} value={slug}>{COCKPIT_TARGETS[slug].name}</option>
             ))}
           </select>
+        </div>
+      </div>
+
+      {/* Month at a Glance — trend view */}
+      <div className="rounded-xl border border-slate-700 bg-slate-800/80 p-4 min-w-0">
+        <h3 className="text-sm font-semibold text-white mb-3">Month at a Glance</h3>
+        <p className="text-xs text-zinc-400 mb-4">Current month vs prior month. Green = improvement, red = decline.</p>
+        <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+          {(() => {
+            const salesDiff = prevPnl.totalSales > 0 ? ((pnl.totalSales - prevPnl.totalSales) / prevPnl.totalSales) * 100 : 0;
+            const salesUp = pnl.totalSales >= prevPnl.totalSales;
+            return (
+              <div className="bg-zinc-900/60 rounded-lg p-3 border border-zinc-800">
+                <p className="text-xs text-zinc-500 uppercase tracking-wide">Sales</p>
+                <p className="text-lg font-bold text-white tabular-nums mt-0.5">{formatDollars(pnl.totalSales)}</p>
+                <p className={`text-xs mt-1 flex items-center gap-1 ${salesUp ? "text-emerald-400" : "text-red-400"}`}>
+                  {salesUp ? "↑" : "↓"} {Math.abs(salesDiff).toFixed(1)}% vs prior month
+                </p>
+              </div>
+            );
+          })()}
+          {(() => {
+            const foodBetter = pnl.foodPct <= prevPnl.foodPct;
+            const foodDiff = (pnl.foodPct - prevPnl.foodPct).toFixed(1);
+            return (
+              <div className="bg-zinc-900/60 rounded-lg p-3 border border-zinc-800">
+                <p className="text-xs text-zinc-500 uppercase tracking-wide">Food Cost %</p>
+                <p className="text-lg font-bold text-white tabular-nums mt-0.5">{formatPct(pnl.foodPct)}</p>
+                <p className={`text-xs mt-1 flex items-center gap-1 ${foodBetter ? "text-emerald-400" : "text-red-400"}`}>
+                  {foodBetter ? "↓" : "↑"} {foodDiff}pp vs prior
+                </p>
+              </div>
+            );
+          })()}
+          {(() => {
+            const laborBetter = pnl.laborPct <= prevPnl.laborPct;
+            const laborDiff = (pnl.laborPct - prevPnl.laborPct).toFixed(1);
+            return (
+              <div className="bg-zinc-900/60 rounded-lg p-3 border border-zinc-800">
+                <p className="text-xs text-zinc-500 uppercase tracking-wide">Labor %</p>
+                <p className="text-lg font-bold text-white tabular-nums mt-0.5">{formatPct(pnl.laborPct)}</p>
+                <p className={`text-xs mt-1 flex items-center gap-1 ${laborBetter ? "text-emerald-400" : "text-red-400"}`}>
+                  {laborBetter ? "↓" : "↑"} {laborDiff}pp vs prior
+                </p>
+              </div>
+            );
+          })()}
+          {(() => {
+            const primeBetter = pnl.primePct >= prevPnl.primePct;
+            const primeDiff = (pnl.primePct - prevPnl.primePct).toFixed(1);
+            return (
+              <div className="bg-zinc-900/60 rounded-lg p-3 border border-zinc-800">
+                <p className="text-xs text-zinc-500 uppercase tracking-wide">PRIME %</p>
+                <p className="text-lg font-bold text-white tabular-nums mt-0.5">{formatPct(pnl.primePct)}</p>
+                <p className={`text-xs mt-1 flex items-center gap-1 ${primeBetter ? "text-emerald-400" : "text-red-400"}`}>
+                  {primeBetter ? "↑" : "↓"} {primeDiff}pp vs prior
+                </p>
+              </div>
+            );
+          })()}
+          {(() => {
+            const gpBetter = pnl.gpPct >= prevPnl.gpPct;
+            const gpDiff = (pnl.gpPct - prevPnl.gpPct).toFixed(1);
+            return (
+              <div className="bg-zinc-900/60 rounded-lg p-3 border border-zinc-800">
+                <p className="text-xs text-zinc-500 uppercase tracking-wide">Gross Profit %</p>
+                <p className="text-lg font-bold text-white tabular-nums mt-0.5">{formatPct(pnl.gpPct)}</p>
+                <p className={`text-xs mt-1 flex items-center gap-1 ${gpBetter ? "text-emerald-400" : "text-red-400"}`}>
+                  {gpBetter ? "↑" : "↓"} {gpDiff}pp vs prior
+                </p>
+              </div>
+            );
+          })()}
+          <div className="bg-zinc-900/60 rounded-lg p-3 border border-zinc-800">
+            <p className="text-xs text-zinc-500 uppercase tracking-wide">Gross Profit</p>
+            <p className="text-lg font-bold text-emerald-400 tabular-nums mt-0.5">{formatDollars(pnl.grossProfit)}</p>
+            <p className="text-xs text-zinc-500 mt-1">This month</p>
+          </div>
         </div>
       </div>
 

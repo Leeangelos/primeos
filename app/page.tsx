@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { useMemo, useState, useEffect, useCallback, useRef } from "react";
 import { createPortal } from "react-dom";
-import { BarChart3, Calendar, Check, ChevronDown, ChevronRight, ClipboardList, MapPin, Sparkles, TriangleAlert, AlertTriangle, X } from "lucide-react";
+import { BarChart3, Calendar, Check, ChevronDown, ChevronRight, ChevronUp, ClipboardList, MapPin, Sparkles, TriangleAlert, AlertTriangle, X } from "lucide-react";
 import { Area, AreaChart, ReferenceLine, ResponsiveContainer } from "recharts";
 import { COLORS } from "@/src/lib/design-tokens";
 import { useRedAlert } from "@/src/lib/useRedAlert";
@@ -143,54 +143,178 @@ function storeSlugForFetch(slug: StoreSlug): string {
   return slug === "all" ? "kent" : slug;
 }
 
-function PillarPill({
+type PillarId = "product" | "people" | "process";
+
+const PILLAR_LINKS = {
+  product: [
+    { href: "/food-cost-analysis", title: "Food Cost Analysis", desc: "Break down theoretical vs actual food cost" },
+    { href: "/vendor-tracker", title: "Vendor Tracker", desc: "Track vendor pricing and spot cost creep" },
+    { href: "/menu-intelligence", title: "Menu Intelligence", desc: "Find margin gaps in your menu" },
+    { href: "/recipes", title: "Recipes", desc: "Lock in portions and ingredient costs" },
+  ],
+  people: [
+    { href: "/schedule", title: "Schedule", desc: "Manage shifts and catch overtime before it hits" },
+    { href: "/people", title: "People Economics", desc: "Understand your true labor costs per employee" },
+    { href: "/tasks", title: "Manager Tasks", desc: "Keep your team accountable daily" },
+    { href: "/daily", title: "Daily KPIs", desc: "Track labor against sales every day" },
+  ],
+  process: [
+    { href: "/actual-pnl", title: "Actual P&L", desc: "See your full profit and loss picture" },
+    { href: "/pnl", title: "GP P&L", desc: "Focus on gross profit and the numbers you control" },
+    { href: "/brief", title: "Morning Brief", desc: "Get your daily snapshot" },
+    { href: "/weekly", title: "Weekly Snapshot", desc: "Track trends week over week" },
+  ],
+} as const;
+
+function PillarCard({
   emoji,
   label,
   grade,
-  metricKey,
+  isExpanded,
+  onToggle,
 }: {
   emoji: string;
   label: string;
   grade: LetterGrade;
-  metricKey: string;
+  isExpanded: boolean;
+  onToggle: () => void;
 }) {
-  const rootRef = useRef<HTMLDivElement | null>(null);
-
-  const openEducation = useCallback(() => {
-    const btn = rootRef.current?.querySelector(
-      'button[data-testid="education-info-icon"]'
-    ) as HTMLButtonElement | null;
-    btn?.click();
-  }, []);
-
   return (
-    <div
-      ref={rootRef}
-      role="button"
-      tabIndex={0}
-      onClick={openEducation}
-      onKeyDown={(e) => {
-        if (e.key === "Enter" || e.key === " ") {
-          e.preventDefault();
-          openEducation();
-        }
-      }}
-      className="flex-1 min-w-0 flex items-center justify-between gap-2 rounded-full bg-zinc-900 border border-zinc-800 px-3 py-2 min-h-[44px] cursor-pointer active:opacity-90"
-      aria-label={`${label} pillar grade ${grade}. Tap to learn more.`}
+    <button
+      type="button"
+      onClick={onToggle}
+      className="w-full flex items-center justify-between gap-2 rounded-full bg-zinc-900 border border-zinc-800 px-3 py-2 min-h-[44px] cursor-pointer active:opacity-90 text-left"
+      aria-expanded={isExpanded}
+      aria-label={`${label} pillar grade ${grade}. Tap to ${isExpanded ? "collapse" : "expand"}.`}
     >
       <div className="flex items-center gap-2 min-w-0">
-        <span className="text-base leading-none" aria-hidden="true">
-          {emoji}
-        </span>
-        <span className="text-xs font-semibold text-white truncate">
-          {label}
-        </span>
+        <span className="text-base leading-none" aria-hidden="true">{emoji}</span>
+        <span className="text-xs font-semibold text-white truncate">{label}</span>
       </div>
       <div className="flex items-center gap-2 shrink-0">
-        <EducationInfoIcon metricKey={metricKey} size="sm" />
-        <span className={`text-sm font-bold ${pillarGradeColorClass(grade)}`}>
-          {grade}
-        </span>
+        <span className={`text-sm font-bold ${pillarGradeColorClass(grade)}`}>{grade}</span>
+        <span className="text-zinc-500" aria-hidden="true">{isExpanded ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}</span>
+      </div>
+    </button>
+  );
+}
+
+function PillarPanel({
+  pillarId,
+  isOpen,
+  kpi,
+  pillarGrades,
+}: {
+  pillarId: PillarId;
+  isOpen: boolean;
+  kpi: KpiSnapshot | null;
+  pillarGrades: { product: LetterGrade; people: LetterGrade; performance: LetterGrade };
+}) {
+  const grade = pillarId === "product" ? pillarGrades.product : pillarId === "people" ? pillarGrades.people : pillarGrades.performance;
+  const gradeColor = pillarGradeColorClass(grade);
+
+  if (!isOpen) return null;
+
+  if (pillarId === "product") {
+    const value = kpi ? formatPct(kpi.foodCostPct) : "—";
+    return (
+      <div className="bg-zinc-900/50 border-t border-zinc-700 overflow-hidden transition-all duration-200">
+        <div className="p-4 space-y-4">
+          <div className="flex items-start justify-between gap-2">
+            <div>
+              <p className="text-2xl font-bold tabular-nums text-white">{value}</p>
+              <p className={`text-lg font-semibold ${gradeColor}`}>{grade}</p>
+              <p className="text-xs text-zinc-500 mt-1">A: ≤30% | B: 30-33% | C: 33-35% | D: 35-38% | F: &gt;38%</p>
+            </div>
+            <EducationInfoIcon metricKey="pillar_product" size="sm" />
+          </div>
+          <p className="text-xs text-zinc-400 font-medium uppercase tracking-wide">What moves this grade:</p>
+          <div className="flex flex-col gap-2">
+            {PILLAR_LINKS.product.map((link) => (
+              <Link key={link.href} href={link.href} className="flex items-center justify-between gap-2 rounded-lg bg-zinc-800 hover:bg-zinc-700 p-3 transition-colors">
+                <div className="min-w-0">
+                  <p className="text-sm font-medium text-white">{link.title}</p>
+                  <p className="text-xs text-zinc-400">{link.desc}</p>
+                </div>
+                <ChevronRight className="w-4 h-4 text-zinc-500 shrink-0" aria-hidden />
+              </Link>
+            ))}
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  if (pillarId === "people") {
+    const value = kpi ? formatPct(kpi.laborPct) : "—";
+    return (
+      <div className="bg-zinc-900/50 border-t border-zinc-700 overflow-hidden transition-all duration-200">
+        <div className="p-4 space-y-4">
+          <div className="flex items-start justify-between gap-2">
+            <div>
+              <p className="text-2xl font-bold tabular-nums text-white">{value}</p>
+              <p className={`text-lg font-semibold ${gradeColor}`}>{grade}</p>
+              <p className="text-xs text-zinc-500 mt-1">A: ≤25% | B: 25-28% | C: 28-30% | D: 30-33% | F: &gt;33%</p>
+            </div>
+            <EducationInfoIcon metricKey="pillar_people" size="sm" />
+          </div>
+          <p className="text-xs text-zinc-400 font-medium uppercase tracking-wide">What moves this grade:</p>
+          <div className="flex flex-col gap-2">
+            {PILLAR_LINKS.people.map((link) => (
+              <Link key={link.href} href={link.href} className="flex items-center justify-between gap-2 rounded-lg bg-zinc-800 hover:bg-zinc-700 p-3 transition-colors">
+                <div className="min-w-0">
+                  <p className="text-sm font-medium text-white">{link.title}</p>
+                  <p className="text-xs text-zinc-400">{link.desc}</p>
+                </div>
+                <ChevronRight className="w-4 h-4 text-zinc-500 shrink-0" aria-hidden />
+              </Link>
+            ))}
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  // process — PRIME
+  const primePct = kpi ? kpi.primePct : 0;
+  const foodPct = kpi ? kpi.foodCostPct : 0;
+  const laborPct = kpi ? kpi.laborPct : 0;
+  const foodWorse = foodPct > laborPct;
+  return (
+    <div className="bg-zinc-900/50 border-t border-zinc-700 overflow-hidden transition-all duration-200">
+      <div className="p-4 space-y-4">
+        <div className="flex items-start justify-between gap-2">
+          <div>
+            <p className="text-2xl font-bold tabular-nums text-white">{kpi ? formatPct(kpi.primePct) : "—"}</p>
+            <p className={`text-lg font-semibold ${gradeColor}`}>{grade}</p>
+            <p className="text-xs text-zinc-500 mt-1">A: ≥65% | B: 60-65% | C: 55-60% | D: 50-55% | F: &lt;50%</p>
+          </div>
+          <EducationInfoIcon metricKey="pillar_process" size="sm" />
+        </div>
+        <div>
+          <p className="text-xs text-zinc-400 font-medium uppercase tracking-wide mb-2">Your PRIME breakdown:</p>
+          <p className="text-sm text-zinc-300">
+            100% − Food ({formatPct(foodPct)}) − Labor ({formatPct(laborPct)}) = PRIME ({formatPct(primePct)})
+          </p>
+          <p className="text-xs text-zinc-500 mt-1">
+            <span className={foodWorse ? "text-amber-400" : "text-zinc-400"}>Food</span>
+            {" · "}
+            <span className={!foodWorse ? "text-amber-400" : "text-zinc-400"}>Labor</span>
+            — {foodWorse ? "Food" : "Labor"} is the bigger drag right now.
+          </p>
+        </div>
+        <p className="text-xs text-zinc-400 font-medium uppercase tracking-wide">What moves this grade:</p>
+        <div className="flex flex-col gap-2">
+          {PILLAR_LINKS.process.map((link) => (
+            <Link key={link.href} href={link.href} className="flex items-center justify-between gap-2 rounded-lg bg-zinc-800 hover:bg-zinc-700 p-3 transition-colors">
+              <div className="min-w-0">
+                <p className="text-sm font-medium text-white">{link.title}</p>
+                <p className="text-xs text-zinc-400">{link.desc}</p>
+              </div>
+              <ChevronRight className="w-4 h-4 text-zinc-500 shrink-0" aria-hidden />
+            </Link>
+          ))}
+        </div>
       </div>
     </div>
   );
@@ -217,6 +341,7 @@ export default function HomePage() {
   const [educationKey, setEducationKey] = useState<string | null>(null);
   const [showMissingBanner, setShowMissingBanner] = useState(true);
   const [showAllWins, setShowAllWins] = useState(false);
+  const [expandedPillar, setExpandedPillar] = useState<PillarId | null>(null);
   const [operatorProfile, setOperatorProfile] = useState<Record<string, unknown>>({});
   const today = todayYYYYMMDD();
   const yesterday = yesterdayYYYYMMDD();
@@ -621,9 +746,18 @@ export default function HomePage() {
           3 Pillars of Success
         </p>
         <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
-          <PillarPill emoji="🍕" label="Product" grade={pillarGrades.product} metricKey="pillar_product" />
-          <PillarPill emoji="👥" label="People" grade={pillarGrades.people} metricKey="pillar_people" />
-          <PillarPill emoji="📊" label="Process" grade={pillarGrades.performance} metricKey="pillar_process" />
+          <div className="min-w-0 rounded-xl border border-zinc-800 overflow-hidden">
+            <PillarCard emoji="🍕" label="Product" grade={pillarGrades.product} isExpanded={expandedPillar === "product"} onToggle={() => setExpandedPillar((p) => (p === "product" ? null : "product"))} />
+            <PillarPanel pillarId="product" isOpen={expandedPillar === "product"} kpi={kpi} pillarGrades={pillarGrades} />
+          </div>
+          <div className="min-w-0 rounded-xl border border-zinc-800 overflow-hidden">
+            <PillarCard emoji="👥" label="People" grade={pillarGrades.people} isExpanded={expandedPillar === "people"} onToggle={() => setExpandedPillar((p) => (p === "people" ? null : "people"))} />
+            <PillarPanel pillarId="people" isOpen={expandedPillar === "people"} kpi={kpi} pillarGrades={pillarGrades} />
+          </div>
+          <div className="min-w-0 rounded-xl border border-zinc-800 overflow-hidden">
+            <PillarCard emoji="📊" label="Process" grade={pillarGrades.performance} isExpanded={expandedPillar === "process"} onToggle={() => setExpandedPillar((p) => (p === "process" ? null : "process"))} />
+            <PillarPanel pillarId="process" isOpen={expandedPillar === "process"} kpi={kpi} pillarGrades={pillarGrades} />
+          </div>
         </div>
       </div>
 
