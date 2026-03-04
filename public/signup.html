@@ -355,14 +355,13 @@
                 return;
               }
               var d = result.data || {};
-              var parts = [d.error || "Something went wrong. Please try again."];
-              if (d.detail) parts.push("Detail: " + d.detail);
-              if (d.step) parts.push("Step: " + d.step);
-              errorEl.textContent = parts.join(" ");
+              if (d.detail || d.step) console.error("Signup error", d);
+              errorEl.textContent = "Something went wrong. Please try again or reach out to us at hello@getprimeos.com";
               errorEl.style.display = "block";
             })
             .catch(function(e) {
-              errorEl.textContent = "Network or request failed. " + (e && e.message ? e.message : String(e));
+              console.error("Signup request failed", e);
+              errorEl.textContent = "Something went wrong. Please try again or reach out to us at hello@getprimeos.com";
               errorEl.style.display = "block";
             })
             .finally(function() {

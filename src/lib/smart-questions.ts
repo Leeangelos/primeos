@@ -19,7 +19,7 @@ export const SMART_QUESTIONS: SmartQuestion[] = [
   { id: "avg_tenure_months", page: "people", question: "How long does your average employee stay (months)?", type: "number", placeholder: "8", field: "avg_tenure_months" },
   { id: "main_distributor", page: "vendor", question: "Who is your main food distributor?", type: "text", placeholder: "e.g., Sysco, US Foods, Hillcrest", field: "main_distributor" },
   { id: "delivery_platforms", page: "marketing", question: "Which delivery platforms are you on?", type: "multi_select", options: ["DoorDash", "UberEats", "Grubhub", "Slice", "Direct Only", "None"], field: "delivery_platforms" },
-  { id: "review_response_goal", page: "reputation", question: "How quickly do you want to respond to reviews?", type: "select", options: ["Within 24 hours", "Within 48 hours", "Weekly", "I dont respond"], field: "review_response_goal" },
+  { id: "review_response_goal", page: "reputation", question: "How quickly do you want to respond to reviews?", type: "select", options: ["Within 24 hours", "Within 48 hours", "Weekly", "I don't respond"], field: "review_response_goal" },
   { id: "daily_sales_goal", page: "daily", question: "What is your daily sales goal?", type: "number", placeholder: "2500", field: "daily_sales_goal" },
 ];
 

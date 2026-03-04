@@ -210,7 +210,7 @@ export const EDUCATION_CONTENT: Record<string, EducationEntry> = {
     whatItMeans:
       "Snap a photo of any vendor invoice. AI extracts every line item — product names, quantities, unit prices, totals. You review and approve. No manual data entry. Most operators don't track individual product prices because it's tedious; when cheese goes up $0.40/lb you don't notice until month-end when food cost is 3 points over. Invoice scanning catches price changes the day they happen. Approved invoices can update ingredient costs in Recipe Cards so theoretical food cost stays accurate.",
     whenRedPlaybook: [
-      "If you aren't scanning invoices, many operators find they're flying blind on vendor price changes",
+      "Consider scanning invoices to track vendor pricing automatically. Many operators find this reduces data entry time and catches price increases faster.",
       "Consider reconciling scanned totals to actual payments — catch duplicate or wrong charges",
       "Consider using line-item data to re-bid: compare unit prices across vendors and consider renegotiating",
       "Consider flagging invoices that don't match PO or delivery — catch short shipments and billing errors",
@@ -810,7 +810,7 @@ export const EDUCATION_CONTENT: Record<string, EducationEntry> = {
     whatItMeans:
       "Total money collected from all sales channels before any expenses are subtracted. Also called Top Line.",
     whyItMatters:
-      "Revenue is the starting point but it's not profit. A store doing $100K/month in revenue can still lose money if costs aren't controlled.",
+      "Revenue is the starting point but it's not Gross Profit. A store doing $100K/month in revenue can still lose money if costs aren't controlled.",
     whenRedPlaybook: [
       "Consider tracking revenue by channel — dine-in, delivery, catering. Knowing where the money comes from helps you invest in the right areas.",
     ],
@@ -992,7 +992,7 @@ export const EDUCATION_CONTENT: Record<string, EducationEntry> = {
     whyItMatters:
       "Not all menu items are created equal. A $15 pizza with 60% margin makes you $9. A $12 sub with 40% margin makes you $4.80. Selling more of the high-margin items changes everything.",
     whenRedPlaybook: [
-      "Consider highlighting your top 5 highest-margin items for your team. If they suggest those items first, your mix shifts toward more profit with the same number of customers.",
+      "Consider highlighting your top 5 highest-margin items for your team. If they suggest those items first, your mix shifts toward more Gross Profit with the same number of customers.",
     ],
   },
   menu_gap_pct: {
@@ -1280,7 +1280,7 @@ export const EDUCATION_CONTENT: Record<string, EducationEntry> = {
     whatItMeans:
       "Your monthly rent payment for your restaurant space. This is a fixed cost — it stays the same regardless of how much you sell.",
     whyItMatters:
-      "Rent should be 6-10% of revenue. If you are above 10%, the space is eating too much profit. This is the hardest cost to change short-term.",
+      "Rent should be 6-10% of revenue. If you are above 10%, the space is eating too much Gross Profit. This is the hardest cost to change short-term.",
     whenRedPlaybook: [
       "Consider that growing revenue is the fastest way to improve your rent-to-revenue ratio.",
     ],

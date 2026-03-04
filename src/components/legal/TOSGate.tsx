@@ -69,7 +69,7 @@ export function TOSGate({ children }: { children: React.ReactNode }) {
             </li>
             <li className="flex items-start gap-2">
               <span className="text-slate-500 mt-0.5">→</span>
-              <span>AI content may contain inaccuracies. Always verify before acting.</span>
+              <span>AI content may contain inaccuracies. Consider verifying information before acting on it.</span>
             </li>
             <li className="flex items-start gap-2">
               <span className="text-slate-500 mt-0.5">→</span>

@@ -129,7 +129,7 @@ function MerchContent() {
           <p className="text-xs text-muted">{newUserStoreName}</p>
         </div>
         <div className="bg-zinc-900/50 border border-zinc-800 rounded-2xl p-6 text-center">
-          <p className="text-sm text-zinc-300">Your team merch store is coming soon. Stay tuned.</p>
+          <p className="text-sm text-zinc-300">Your team merch store is available in Phase 2.</p>
         </div>
       </div>
     );
@@ -422,7 +422,7 @@ function MerchContent() {
 
       {checkoutToast && (
         <div className="fixed bottom-20 left-4 right-4 z-50 bg-slate-800 border border-slate-700 rounded-xl px-4 py-2.5 shadow-lg text-center">
-          <p className="text-xs text-slate-300">Demo Mode — Merch checkout is coming in Phase 2.</p>
+          <p className="text-xs text-slate-300">Demo Mode — Merch checkout is available in Phase 2.</p>
         </div>
       )}
     </>

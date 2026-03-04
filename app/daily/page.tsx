@@ -894,6 +894,7 @@ function DailyPageContent() {
               <input
                 id="daily-net-sales"
                 type="number"
+                min={0}
                 inputMode="decimal"
                 placeholder="e.g., 5420.00"
                 value={netSales}
@@ -910,6 +911,7 @@ function DailyPageContent() {
               <input
                 id="daily-food"
                 type="number"
+                min={0}
                 inputMode="decimal"
                 placeholder="e.g., 1670.00"
                 value={foodCost}
@@ -926,6 +928,7 @@ function DailyPageContent() {
               <input
                 id="daily-labor"
                 type="number"
+                min={0}
                 inputMode="decimal"
                 placeholder="e.g., 1252.00"
                 value={laborCost}
@@ -942,6 +945,7 @@ function DailyPageContent() {
               <input
                 id="daily-disposables"
                 type="number"
+                min={0}
                 inputMode="decimal"
                 placeholder="e.g., 190.00"
                 value={disposablesCost}
@@ -958,6 +962,7 @@ function DailyPageContent() {
               <input
                 id="daily-transactions"
                 type="number"
+                min={0}
                 inputMode="decimal"
                 placeholder="e.g., 287"
                 value={tickets}
@@ -974,6 +979,7 @@ function DailyPageContent() {
               <input
                 id="daily-hours"
                 type="number"
+                min={0}
                 inputMode="decimal"
                 placeholder="e.g., 86.5"
                 value={laborHours}
@@ -1142,19 +1148,19 @@ function DailyPageContent() {
             <div className="px-3 pb-3 pt-1 space-y-3 border-t border-border/40">
               <label className="block min-w-0">
                 <span className="block text-sm text-slate-400">Voids ($)</span>
-                <input type="number" inputMode="decimal" placeholder="e.g., 0" value={voidAmount} onChange={(e) => setVoidAmount(e.target.value)} className={inputCls} />
+                <input type="number" min={0} inputMode="decimal" placeholder="e.g., 0" value={voidAmount} onChange={(e) => setVoidAmount(e.target.value)} className={inputCls} />
               </label>
               <label className="block min-w-0">
                 <span className="block text-sm text-slate-400">Waste ($)</span>
-                <input type="number" inputMode="decimal" placeholder="e.g., 0" value={waste} onChange={(e) => setWaste(e.target.value)} className={inputCls} />
+                <input type="number" min={0} inputMode="decimal" placeholder="e.g., 0" value={waste} onChange={(e) => setWaste(e.target.value)} className={inputCls} />
               </label>
               <label className="block min-w-0">
                 <span className="block text-sm text-slate-400">Scheduled Hours</span>
-                <input type="number" inputMode="decimal" placeholder="—" value={scheduledHours} onChange={(e) => setScheduledHours(e.target.value)} className={inputCls} />
+                <input type="number" min={0} inputMode="decimal" placeholder="—" value={scheduledHours} onChange={(e) => setScheduledHours(e.target.value)} className={inputCls} />
               </label>
               <label className="block min-w-0">
                 <span className="block text-sm text-slate-400">Avg Bump Time (min)</span>
-                <input type="number" inputMode="decimal" placeholder="—" value={bumpTimeMinutes} onChange={(e) => setBumpTimeMinutes(e.target.value)} className={inputCls} />
+                <input type="number" min={0} inputMode="decimal" placeholder="—" value={bumpTimeMinutes} onChange={(e) => setBumpTimeMinutes(e.target.value)} className={inputCls} />
               </label>
               <label className="block min-w-0">
                 <span className="block text-sm text-slate-400">Notes</span>

@@ -4,10 +4,11 @@
  */
 
 export function formatPct(value: number | null | undefined): string {
-  if (value == null || Number.isNaN(value)) return "—";
+  if (value == null || Number.isNaN(value) || !isFinite(value)) return "—";
   return value.toFixed(1) + "%";
 }
 
 export function formatDollars(value: number): string {
+  if (!isFinite(value) || isNaN(value)) return "—";
   return "$" + value.toLocaleString("en-US", { minimumFractionDigits: 0, maximumFractionDigits: 0 });
 }
