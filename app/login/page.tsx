@@ -64,12 +64,12 @@ function LoginContent() {
 
   return (
     <div
-      className="fixed inset-0 z-[9999] flex flex-col bg-zinc-950 overflow-y-auto md:items-center md:justify-center"
+      className="fixed inset-0 z-[9999] flex flex-col items-center justify-center bg-zinc-950 overflow-y-auto min-h-[100dvh] md:items-center md:justify-center"
       style={{ userSelect: "none" }}
       aria-modal="true"
       role="dialog"
     >
-      <div className="pointer-events-auto w-full max-w-md px-6 py-8 md:py-8 md:px-4 md:mx-auto flex-shrink-0 min-h-0">
+      <div className="pointer-events-auto w-full max-w-md px-6 py-6 sm:py-8 md:py-8 md:px-4 md:mx-auto flex-shrink-0">
       <div className="text-center mb-6">
         <h1 className="text-2xl font-bold text-white">PrimeOS</h1>
         <p className="text-sm text-slate-400 mt-1">The Operating System for Pizza</p>

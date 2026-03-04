@@ -123,7 +123,7 @@ const NAV_BAR_HEIGHT = "4rem"; /* h-16 */
 export function BottomNav() {
   const pathname = usePathname();
   const router = useRouter();
-  if (pathname === "/onboarding") return null;
+  if (pathname === "/onboarding" || pathname === "/login") return null;
   const { theme } = useTheme();
   const { session } = useAuth();
   const isLight = theme === "light";
