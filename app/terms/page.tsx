@@ -35,7 +35,7 @@ export default function TermsPage() {
           <p>
             By accessing or using PrimeOS, you agree to be bound by these Terms of Service and our Privacy Policy. If you do not agree, do not use PrimeOS. PrimeOS is operated by Ambition & Legacy LLC, Kent, Ohio 44240.
           </p>
-          <p>Contact: hello@getprimeos.com</p>
+          <p>Contact: <a href="mailto:hello@getprimeos.com" className="text-[#E65100] underline">hello@getprimeos.com</a></p>
         </Section>
 
         <Section number="2" title="Nature of Service">
@@ -179,7 +179,7 @@ export default function TermsPage() {
           <p>If you have questions about these Terms of Service, contact us:</p>
           <p className="mt-2">Ambition & Legacy LLC</p>
           <p>Kent, Ohio 44240</p>
-          <p>Email: hello@getprimeos.com</p>
+          <p>Email: <a href="mailto:hello@getprimeos.com" className="text-[#E65100] underline">hello@getprimeos.com</a></p>
         </Section>
       </div>
 

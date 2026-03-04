@@ -85,11 +85,12 @@ function gradePillarPeople(laborPct: number): LetterGrade {
   return "F";
 }
 
+/** Process pillar: COGS % (Food + Labor + Disposables). Lower is better. A ≤50%, B 50-55%, C 55-60%, D 60-65%, F >65%. */
 function gradePillarPerformance(primePct: number): LetterGrade {
-  if (primePct >= 65) return "A";
-  if (primePct >= 60) return "B";
-  if (primePct >= 55) return "C";
-  if (primePct >= 50) return "D";
+  if (primePct <= 50) return "A";
+  if (primePct <= 55) return "B";
+  if (primePct <= 60) return "C";
+  if (primePct <= 65) return "D";
   return "F";
 }
 
@@ -275,10 +276,11 @@ function PillarPanel({
     );
   }
 
-  // process — PRIME
+  // process — PRIME (COGS %)
   const primePct = kpi ? kpi.primePct : 0;
   const foodPct = kpi ? kpi.foodCostPct : 0;
   const laborPct = kpi ? kpi.laborPct : 0;
+  const dispPct = Math.max(0, primePct - foodPct - laborPct);
   const foodWorse = foodPct > laborPct;
   return (
     <div className="bg-zinc-900/50 border-t border-zinc-700 overflow-hidden transition-all duration-200">
@@ -287,14 +289,14 @@ function PillarPanel({
           <div>
             <p className="text-2xl font-bold tabular-nums text-white">{kpi ? formatPct(kpi.primePct) : "—"}</p>
             <p className={`text-lg font-semibold ${gradeColor}`}>{grade}</p>
-            <p className="text-xs text-zinc-500 mt-1">A: ≥65% | B: 60-65% | C: 55-60% | D: 50-55% | F: &lt;50%</p>
+            <p className="text-xs text-zinc-500 mt-1">A: ≤50% | B: 50-55% | C: 55-60% | D: 60-65% | F: &gt;65%</p>
           </div>
           <EducationInfoIcon metricKey="pillar_process" size="sm" />
         </div>
         <div>
-          <p className="text-xs text-zinc-400 font-medium uppercase tracking-wide mb-2">Your PRIME breakdown:</p>
+          <p className="text-xs text-zinc-400 font-medium uppercase tracking-wide mb-2">COGS breakdown:</p>
           <p className="text-sm text-zinc-300">
-            100% − Food ({formatPct(foodPct)}) − Labor ({formatPct(laborPct)}) = PRIME ({formatPct(primePct)})
+            Food ({formatPct(foodPct)}) + Labor ({formatPct(laborPct)}) + Disposables ({formatPct(dispPct)}) = COGS ({formatPct(primePct)})
           </p>
           <p className="text-xs text-zinc-500 mt-1">
             <span className={foodWorse ? "text-amber-400" : "text-zinc-400"}>Food</span>
@@ -376,7 +378,8 @@ export default function HomePage() {
     if (onboardingData != null && onboardingData.food_cost_pct != null && onboardingData.labor_cost_pct != null) {
       const foodCostPct = Number(onboardingData.food_cost_pct);
       const laborPct = Number(onboardingData.labor_cost_pct);
-      const primePct = 100 - foodCostPct - laborPct;
+      const dispEst = 4;
+      const primePct = foodCostPct + laborPct + dispEst;
       return { foodCostPct, laborPct, primePct };
     }
     const store = storeSlugForFetch(selectedStore);
@@ -387,7 +390,7 @@ export default function HomePage() {
     if (!row) return null;
     const foodCostPct = row.food_cost_pct;
     const laborPct = row.labor_pct;
-    const primePct = 100 - foodCostPct - laborPct;
+    const primePct = row.prime_pct;
     return { foodCostPct, laborPct, primePct };
   }, [selectedStore, today, yesterday, onboardingData]);
 
@@ -411,11 +414,12 @@ export default function HomePage() {
         const labor = Number(onboardingData.labor_cost_pct);
         const weekly = onboardingData.weekly_sales != null ? Number(onboardingData.weekly_sales) : 0;
         if (!cancelled) {
+          const dispEst = 4;
           setKpi({
             sales: weekly > 0 ? Math.round(weekly / 7) : 0,
             foodCostPct: food,
             laborPct: labor,
-            primePct: 100 - food - labor,
+            primePct: food + labor + dispEst,
             isYesterday: false,
           });
           setLoading(false);
@@ -480,7 +484,7 @@ export default function HomePage() {
             sales: weekly > 0 ? Math.round(weekly / 7) : 0,
             foodCostPct: food,
             laborPct: labor,
-            primePct: 100 - food - labor,
+            primePct: food + labor + 4,
             isYesterday: false,
           });
           setUsedSeedData(false);
@@ -522,8 +526,7 @@ export default function HomePage() {
     if (isOnboardingUser && onboardingData?.food_cost_pct != null && onboardingData?.labor_cost_pct != null) {
       const food = Number(onboardingData.food_cost_pct);
       const labor = Number(onboardingData.labor_cost_pct);
-      const prime = 100 - food - labor;
-      return { foodCostTargetPct: food, laborTargetPct: labor, primeTargetPct: prime };
+      return { foodCostTargetPct: food, laborTargetPct: labor, primeTargetPct: 55 };
     }
     return getBenchmarksForStore(selectedStore);
   }, [selectedStore, isOnboardingUser, onboardingData?.food_cost_pct, onboardingData?.labor_cost_pct]);

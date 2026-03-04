@@ -107,14 +107,14 @@ function MonthlyContent() {
     const totalFood = rows.reduce((s, r) => s + r.food_dollars, 0);
     const totalLabor = rows.reduce((s, r) => s + r.labor_dollars, 0);
     const totalDisposables = rows.reduce((s, r) => s + Math.round(r.sales * 0.035 * 100) / 100, 0);
-    const totalCOGS = totalFood + totalDisposables;
-    const grossProfit = totalSales - totalCOGS - totalLabor;
+    const totalCOGS = totalFood + totalLabor + totalDisposables;
+    const grossProfit = totalSales - totalCOGS;
     const foodPct = totalSales > 0 ? (totalFood / totalSales) * 100 : 0;
     const dispPct = totalSales > 0 ? (totalDisposables / totalSales) * 100 : 0;
-    const cogsPct = totalSales > 0 ? (totalCOGS / totalSales) * 100 : 0;
     const laborPct = totalSales > 0 ? (totalLabor / totalSales) * 100 : 0;
+    const cogsPct = totalSales > 0 ? (totalCOGS / totalSales) * 100 : 0;
     const gpPct = totalSales > 0 ? (grossProfit / totalSales) * 100 : 0;
-    const primePct = totalSales > 0 ? 100 - foodPct - laborPct - dispPct : 0;
+    const primePct = cogsPct;
     return {
       totalSales,
       totalFood,
@@ -139,11 +139,12 @@ function MonthlyContent() {
     const totalFood = rows.reduce((s, r) => s + r.food_dollars, 0);
     const totalLabor = rows.reduce((s, r) => s + r.labor_dollars, 0);
     const totalDisposables = rows.reduce((s, r) => s + Math.round(r.sales * 0.035 * 100) / 100, 0);
-    const grossProfit = totalSales - totalFood - totalLabor - totalDisposables;
+    const totalCOGS = totalFood + totalLabor + totalDisposables;
+    const grossProfit = totalSales - totalCOGS;
     const foodPct = totalSales > 0 ? (totalFood / totalSales) * 100 : 0;
     const laborPct = totalSales > 0 ? (totalLabor / totalSales) * 100 : 0;
+    const primePct = totalSales > 0 ? (totalCOGS / totalSales) * 100 : 0;
     const gpPct = totalSales > 0 ? (grossProfit / totalSales) * 100 : 0;
-    const primePct = totalSales > 0 ? 100 - foodPct - laborPct - (totalDisposables / totalSales) * 100 : 0;
     return { totalSales, foodPct, laborPct, primePct, grossProfit, gpPct };
   }, [storeForSeed, prevStart, prevEnd]);
 
@@ -270,14 +271,14 @@ function MonthlyContent() {
             );
           })()}
           {(() => {
-            const primeBetter = pnl.primePct >= prevPnl.primePct;
-            const primeDiff = (pnl.primePct - prevPnl.primePct).toFixed(1);
+            const primeBetter = pnl.primePct <= prevPnl.primePct;
+            const primeDiff = (prevPnl.primePct - pnl.primePct).toFixed(1);
             return (
               <div className="bg-zinc-900/60 rounded-lg p-3 border border-zinc-800">
-                <p className="text-xs text-zinc-500 uppercase tracking-wide">PRIME %</p>
+                <p className="text-xs text-zinc-500 uppercase tracking-wide">COGS %</p>
                 <p className="text-lg font-bold text-white tabular-nums mt-0.5">{formatPct(pnl.primePct)}</p>
                 <p className={`text-xs mt-1 flex items-center gap-1 ${primeBetter ? "text-emerald-400" : "text-red-400"}`}>
-                  {primeBetter ? "↑" : "↓"} {primeDiff}pp vs prior
+                  {primeBetter ? "↓" : "↑"} {Math.abs(Number(primeDiff)).toFixed(1)}pp vs prior
                 </p>
               </div>
             );
@@ -394,7 +395,7 @@ function MonthlyContent() {
             <div className="space-y-3 text-sm">
               <div>
                 <h4 className="font-medium text-white mb-1">What This Page Measures</h4>
-                <p className="text-muted text-xs leading-relaxed">One month of sales, labor, food, disposables, voids, waste, and customers rolled up by store. PRIME % for the month tells you if you made money after the big three costs. A $80K month at 58% PRIME means you left $2,400 on the table vs a 55% target.</p>
+                <p className="text-muted text-xs leading-relaxed">One month of sales, labor, food, disposables, voids, waste, and customers rolled up by store. COGS % for the month is Food + Labor + Disposables as % of revenue. Lower is better; target ≤55%. A $80K month at 58% COGS means you left $2,400 on the table vs a 55% target.</p>
               </div>
               <div>
                 <h4 className="font-medium text-white mb-1">Why Monthly Beats Daily Guesswork</h4>
@@ -409,7 +410,7 @@ function MonthlyContent() {
               </div>
               <div className="rounded-lg border border-red-500/30 bg-red-500/5 p-3">
                 <h4 className="font-medium text-red-400 text-xs mb-2">📕 When the Month Goes Red</h4>
-                <p className="text-muted text-xs leading-relaxed">PRIME over target for the full month = you're leaving thousands on the table. Break it down by store. One store dragging the average? Fix that location. All stores red? Labor and food discipline slipped — tighten portions, trim overlap, and re-bid high-cost vendors. Don't wait for the accountant. Fix it now.</p>
+                <p className="text-muted text-xs leading-relaxed">COGS over 55% for the full month means you're leaving thousands on the table. Break it down by store. One store dragging the average? Fix that location. All stores red? Labor and food discipline slipped — tighten portions, trim overlap, and re-bid high-cost vendors. Don't wait for the accountant. Fix it now.</p>
               </div>
             </div>
           </div>

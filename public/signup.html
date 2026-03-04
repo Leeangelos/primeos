@@ -356,12 +356,12 @@
               }
               var d = result.data || {};
               if (d.detail || d.step) console.error("Signup error", d);
-              errorEl.textContent = "Something went wrong. Please try again or reach out to us at hello@getprimeos.com";
+              errorEl.innerHTML = "Something went wrong. Please try again or reach out to us at <a href=\"mailto:hello@getprimeos.com\" style=\"color:#E65100;text-decoration:underline\">hello@getprimeos.com</a>";
               errorEl.style.display = "block";
             })
             .catch(function(e) {
               console.error("Signup request failed", e);
-              errorEl.textContent = "Something went wrong. Please try again or reach out to us at hello@getprimeos.com";
+              errorEl.innerHTML = "Something went wrong. Please try again or reach out to us at <a href=\"mailto:hello@getprimeos.com\" style=\"color:#E65100;text-decoration:underline\">hello@getprimeos.com</a>";
               errorEl.style.display = "block";
             })
             .finally(function() {
@@ -426,7 +426,7 @@
         } catch (err) {
           var errEl = document.getElementById("wl-error");
           errEl.style.display = "block";
-          errEl.querySelector("p").textContent = "Something went wrong. Email us at hello@getprimeos.com";
+          errEl.querySelector("p").innerHTML = "Something went wrong. Email us at <a href=\"mailto:hello@getprimeos.com\" style=\"color:#E65100;text-decoration:underline\">hello@getprimeos.com</a>";
           btn.disabled = false;
           btn.textContent = "Submit Application";
           btn.style.opacity = "1";

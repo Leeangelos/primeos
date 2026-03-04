@@ -55,10 +55,7 @@ function getRawMetricsForStore(storeId: StoreSlug): RawMetrics {
 
   const food_cost_pct = daily?.food_cost_pct ?? null;
   const labor_pct = daily?.labor_pct ?? null;
-  const prime_pct =
-    daily && typeof daily.food_cost_pct === "number" && typeof daily.labor_pct === "number"
-      ? 100 - daily.food_cost_pct - daily.labor_pct
-      : daily?.prime_pct ?? null;
+  const prime_pct = daily?.prime_pct ?? null;
 
   const rplh = weekly?.slph ?? daily?.slph ?? null;
   const google_rating = rep ? 4.3 + (storeId === "kent" ? 0.3 : storeId === "aurora" ? 0.2 : 0.0) : null;
@@ -118,25 +115,25 @@ const WIN_DEFINITIONS: WinDefinition[] = [
     },
   },
   {
-    id: "prime_above_60",
+    id: "cogs_below_55",
     metric: "prime_pct",
-    title: "PRIME Above 60%",
-    messageTemplate: "PRIME at {value}%. You're running clean. This is what control looks like.",
+    title: "COGS Below 55%",
+    messageTemplate: "COGS at {value}%. You're running clean. This is what control looks like.",
     emoji: "🔥",
     condition: (m) => {
       if (m.prime_pct == null) return { active: false };
-      return { active: m.prime_pct >= 60, value: rounded(m.prime_pct) };
+      return { active: m.prime_pct <= 55 && m.prime_pct > 50, value: rounded(m.prime_pct) };
     },
   },
   {
-    id: "prime_above_55",
+    id: "cogs_below_50",
     metric: "prime_pct",
-    title: "PRIME Holding Strong",
-    messageTemplate: "PRIME at {value}%. Solid ground. Keep the pressure on food and labor.",
-    emoji: "💪",
+    title: "COGS Below 50%",
+    messageTemplate: "COGS at {value}%. Excellent cost control. That's money in the bank.",
+    emoji: "🏆",
     condition: (m) => {
       if (m.prime_pct == null) return { active: false };
-      return { active: m.prime_pct >= 55 && m.prime_pct < 60, value: rounded(m.prime_pct) };
+      return { active: m.prime_pct <= 50, value: rounded(m.prime_pct) };
     },
   },
   {

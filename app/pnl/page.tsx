@@ -107,13 +107,17 @@ export default function PnlPage() {
     const totalFood = rows.reduce((s, r) => s + r.food_dollars, 0);
     const totalLabor = rows.reduce((s, r) => s + r.labor_dollars, 0);
     const totalDisposables = rows.reduce((s, r) => s + Math.round(r.sales * 0.035 * 100) / 100, 0);
-    const totalCOGS = totalFood + totalDisposables;
-    const grossProfit = totalSales - totalCOGS - totalLabor;
+    const totalCOGS = totalFood + totalLabor + totalDisposables;
+    const grossProfit = totalSales - totalCOGS;
+    const totalFixed = 0;
+    const netProfit = grossProfit - totalFixed;
     const foodPct = totalSales > 0 ? (totalFood / totalSales) * 100 : 0;
     const dispPct = totalSales > 0 ? (totalDisposables / totalSales) * 100 : 0;
     const cogsPct = totalSales > 0 ? (totalCOGS / totalSales) * 100 : 0;
     const laborPct = totalSales > 0 ? (totalLabor / totalSales) * 100 : 0;
     const gpPct = totalSales > 0 ? (grossProfit / totalSales) * 100 : 0;
+    const fixedPct = totalSales > 0 ? (totalFixed / totalSales) * 100 : 0;
+    const netProfitPct = totalSales > 0 ? (netProfit / totalSales) * 100 : 0;
     return {
       totalSales,
       totalFood,
@@ -121,11 +125,15 @@ export default function PnlPage() {
       totalDisposables,
       totalCOGS,
       grossProfit,
+      totalFixed,
+      netProfit,
       foodPct,
       dispPct,
       cogsPct,
       laborPct,
       gpPct,
+      fixedPct,
+      netProfitPct,
     };
   }, [storeForSeed, startDate, endDate]);
 
@@ -340,7 +348,7 @@ export default function PnlPage() {
 
         <div className="p-4 border-b border-slate-700">
           <div className="flex items-center gap-1.5 mb-2">
-            <span className="text-xs text-slate-500 uppercase tracking-wide">Cost of Goods</span>
+            <span className="text-xs text-slate-500 uppercase tracking-wide">Cost of Goods Sold (COGS)</span>
             <EducationInfoIcon metricKey="cogs_pl" size="sm" />
           </div>
           <LineItem
@@ -366,9 +374,19 @@ export default function PnlPage() {
             metricKey="disposables_pct"
             amountColor="red"
           />
+          <div className="flex justify-between items-center gap-2 py-1.5 mt-1 pt-2 border-t border-zinc-700">
+            <div className="flex items-center gap-2 min-w-0">
+              <span className="text-slate-200 font-semibold">Total COGS</span>
+              <EducationInfoIcon metricKey="cogs_pl" />
+            </div>
+            <div className="flex items-center gap-2 shrink-0">
+              <span className="font-semibold tabular-nums text-red-400">{formatDollars(pnl.totalCOGS)}</span>
+              <span className="text-xs tabular-nums text-slate-400">{formatPct(pnl.cogsPct)}</span>
+            </div>
+          </div>
         </div>
 
-        <div className="p-4 border-t border-zinc-700 bg-slate-800/80">
+        <div className="p-4 border-t border-zinc-700">
           <div className="flex justify-between items-center gap-2 pt-1">
             <div className="flex items-center gap-2 min-w-0">
               <span className="text-white font-bold text-base">Gross Profit</span>
@@ -376,10 +394,41 @@ export default function PnlPage() {
             </div>
             <div className="text-right shrink-0 flex items-center justify-end gap-1">
               <span className="text-emerald-400 font-bold text-lg tabular-nums">{formatDollars(pnl.grossProfit)}</span>
-              <span className="text-xs text-slate-400 ml-2 tabular-nums flex items-center gap-1">
-                {formatPct(pnl.gpPct)}
-                <EducationInfoIcon metricKey="gross_profit_margin_pct" size="sm" />
-              </span>
+              <span className="text-xs text-slate-400 ml-2 tabular-nums">{formatPct(pnl.gpPct)}</span>
+            </div>
+          </div>
+        </div>
+
+        <div className="p-4 border-t border-zinc-700">
+          <div className="flex items-center gap-1.5 mb-2">
+            <span className="text-xs text-slate-500 uppercase tracking-wide">Fixed Expenses</span>
+            <EducationInfoIcon metricKey="occupancy_pct" size="sm" />
+          </div>
+          <LineItem label="Rent / Mortgage" amount={formatDollars(0)} />
+          <LineItem label="Insurance" amount={formatDollars(0)} />
+          <LineItem label="Utilities" amount={formatDollars(0)} />
+          <LineItem label="Loan Payments" amount={formatDollars(0)} />
+          <div className="flex justify-between items-center gap-2 py-1.5 mt-1 pt-2 border-t border-zinc-700">
+            <div className="flex items-center gap-2 min-w-0">
+              <span className="text-slate-200 font-semibold">Total Fixed Expenses</span>
+              <EducationInfoIcon metricKey="gp_vs_net_profit" />
+            </div>
+            <div className="shrink-0">
+              <span className="font-semibold tabular-nums text-slate-300">{formatDollars(pnl.totalFixed)}</span>
+              {pnl.totalSales > 0 && <span className="text-xs text-slate-400 ml-2">{formatPct(pnl.fixedPct)}</span>}
+            </div>
+          </div>
+        </div>
+
+        <div className="p-4 border-t-2 border-zinc-600 bg-slate-800/80">
+          <div className="flex justify-between items-center gap-2 pt-1">
+            <div className="flex items-center gap-2 min-w-0">
+              <span className="text-white font-bold text-lg">Net Profit / ROI</span>
+              <EducationInfoIcon metricKey="net_profit_pl" />
+            </div>
+            <div className="text-right shrink-0 flex items-center gap-2">
+              <span className="text-emerald-400 font-bold text-xl tabular-nums">{formatDollars(pnl.netProfit)}</span>
+              <span className="text-sm text-slate-400 tabular-nums">{formatPct(pnl.netProfitPct)}</span>
             </div>
           </div>
         </div>

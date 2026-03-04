@@ -38,14 +38,14 @@ export const EDUCATION_CONTENT: Record<string, EducationEntry> = {
   },
 
   prime_cost: {
-    title: "Prime Cost %",
+    title: "COGS % (PRIME)",
     whatItMeans:
-      "Labor % + Food Cost % (sometimes includes disposables). The number that drives whether the store makes money. Industry benchmark: 55–58%. Above 60%, Gross Profit shrinks. Every point over 55% on a $50K week is about $500. Prime is the lever operators control — portioning, scheduling, waste, and purchasing.",
+      "Your total Cost of Goods Sold — food, labor, and disposables combined as a percentage of revenue. Industry benchmark: 55% or below. Lower is better. Every point over 55% on a $50K week is about $500 left on the table. COGS is the lever operators control — portioning, scheduling, waste, and purchasing.",
     whenRedPlaybook: [
       "Consider identifying which leg is high — labor or food — and attack that first; don't spread effort thin",
       "Consider locking in a 2-week schedule at target labor % and avoid adding shifts without a sales spike",
       "Consider running theoretical vs actual food cost on top 10 items — biggest gaps are waste or over-portioning",
-      "Consider comparing prime by day of week — one bad day can drag the week; adjust the pattern",
+      "Consider comparing COGS by day of week — one bad day can drag the week; adjust the pattern",
       "If both labor and food are red, many operators find it helpful to address labor first — it's usually the faster win",
     ],
   },
@@ -105,7 +105,7 @@ export const EDUCATION_CONTENT: Record<string, EducationEntry> = {
   cogs: {
     title: "Cost of Goods Sold",
     whatItMeans:
-      "Food + Labor + Disposables (PRIME Cost). In PrimeOS, COGS means the total cost of what you control daily: food, beverage, packaging (disposables), and labor. PRIME ÷ Sales = prime cost %. COGS goes up with higher prices from vendors, waste, over-portioning, or theft. Track it weekly — by the time the accountant tells you, the month is gone.",
+      "Food + Labor + Disposables as a percentage of revenue. Your total Cost of Goods Sold. Industry benchmark: 55% or below. Lower is better. COGS goes up with higher prices from vendors, waste, over-portioning, or theft. Track it weekly — by the time the accountant tells you, the month is gone.",
     whenRedPlaybook: [
       "Consider comparing COGS to receiving and invoices — are you paying for more than you're ringing?",
       "Consider reconciling inventory: beginning + purchases − ending should match COGS; big variance = waste or shrink",
@@ -118,7 +118,7 @@ export const EDUCATION_CONTENT: Record<string, EducationEntry> = {
   gross_profit: {
     title: "Gross Profit",
     whatItMeans:
-      "Sales minus COGS (food + labor + disposables). What's left after the cost of the product. Gross Profit pays for rent and everything else. Gross Margin (Gross Profit ÷ sales) should be 65–70%+ in pizza. If Gross Profit drops, either sales dropped or COGS rose — or both. This is the first line of defense before fixed costs.",
+      "What's left after subtracting all Cost of Goods Sold from revenue. This is the money available to cover your fixed expenses and generate profit. Industry benchmark: 45% or above. If Gross Profit drops, either sales dropped or COGS rose — or both.",
     whenRedPlaybook: [
       "Consider separating the impact: did sales fall or COGS rise? Focus on the right lever",
       "If COGS rose, consider running the food cost and COGS playbooks — vendor prices, waste, portioning",
@@ -295,9 +295,9 @@ export const EDUCATION_CONTENT: Record<string, EducationEntry> = {
   },
 
   net_profit: {
-    title: "Net Profit",
+    title: "Net Profit / ROI",
     whatItMeans:
-      "What's actually left after every single expense is paid — food, labor, disposables, rent, insurance, utilities, loans, marketing, everything. This is your real take-home before taxes and owner distributions. Most independent pizzerias operate at 5-12% Net Profit. Below 5%, one bad month can create pressure.",
+      "Your true bottom line — what's left after all costs, both variable (COGS) and fixed (rent, insurance, utilities). This is what you actually take home. Industry benchmark: 15% or above. Below 5%, one bad month can create pressure.",
     whenRedPlaybook: [
       "Consider identifying the biggest gap: is it GP (variable costs) or fixed costs dragging you down?",
       "If GP is healthy but net is low, your fixed cost structure is the problem — consider focusing on the occupancy, insurance, and utilities playbooks",
@@ -706,13 +706,13 @@ export const EDUCATION_CONTENT: Record<string, EducationEntry> = {
     ],
   },
   prime_pct: {
-    title: "PRIME %",
+    title: "COGS % (PRIME)",
     whatItMeans:
-      "What's left after you subtract Food Cost and Labor from your sales. PRIME stands for Profit Remaining After Ingredients, Materials, and Employees. This is the money available to cover rent, utilities, and profit.",
+      "Your total Cost of Goods Sold — food, labor, and disposables combined as a percentage of revenue. Industry benchmark: 55% or below. Lower is better.",
     whyItMatters:
-      "PRIME is the truest measure of how efficiently you run your store. Two stores can have the same sales but completely different PRIME numbers based on how tight they run.",
+      "COGS is the truest measure of how efficiently you run your store. Two stores can have the same sales but completely different COGS based on how tight they run.",
     whenRedPlaybook: [
-      "Consider tracking PRIME weekly, not monthly. Monthly is too late to adjust. Industry benchmark: 55-65%.",
+      "Consider tracking COGS weekly, not monthly. Monthly is too late to adjust. Industry benchmark: 55% or below.",
     ],
   },
   needs_attention: {
@@ -816,21 +816,21 @@ export const EDUCATION_CONTENT: Record<string, EducationEntry> = {
     ],
   },
   cogs_pl: {
-    title: "COGS (Cost of Goods Sold)",
+    title: "Total COGS",
     whatItMeans:
-      "The total cost of all food, beverages, and disposable supplies used to generate your sales. This is what it costs to make what you sell.",
+      "Food + Labor + Disposables as a percentage of revenue. Your total Cost of Goods Sold. Industry benchmark: 55% or below. Lower is better.",
     whyItMatters:
-      "COGS is the biggest controllable expense in most restaurants. A 2% improvement on a $1M store saves $20,000 per year.",
+      "COGS is the biggest controllable expense. A 2% improvement on a $1M store saves $20,000 per year.",
     whenRedPlaybook: [
-      "Consider doing weekly inventory counts on your top 10 items by cost. That's where most waste and variance hides. Industry benchmark: 28-33% of revenue.",
+      "Consider doing weekly inventory counts on your top 10 items by cost. That's where most waste and variance hides.",
     ],
   },
   gross_profit_pl: {
     title: "Gross Profit",
     whatItMeans:
-      "Revenue minus COGS. The money left after paying for the food and supplies that made the sales. This is not your take-home — rent, labor, and other expenses still come out.",
+      "What's left after subtracting all Cost of Goods Sold from revenue. This is the money available to cover your fixed expenses and generate profit. Industry benchmark: 45% or above.",
     whyItMatters:
-      "Gross Profit tells you how much room you have to cover all your other expenses. If Gross Profit is thin, no amount of cost-cutting elsewhere will save you.",
+      "Gross Profit tells you how much room you have to cover rent, insurance, utilities, and Net Profit. If Gross Profit is thin, no amount of cost-cutting elsewhere will save you.",
     whenRedPlaybook: [
       "Consider tracking Gross Profit by week, not just by month. If Gross Profit drops mid-month, you have time to adjust before the month closes.",
     ],
@@ -838,31 +838,31 @@ export const EDUCATION_CONTENT: Record<string, EducationEntry> = {
   gross_profit_margin_pct: {
     title: "Gross Profit Margin %",
     whatItMeans:
-      "Gross Profit divided by Revenue, shown as a percentage. If you keep 67 cents from every dollar after paying for food, your Gross Profit Margin is 67%.",
+      "Gross Profit divided by Revenue, shown as a percentage. What's left after COGS. Industry benchmark: 45% or above.",
     whyItMatters:
       "This tells you how efficiently you turn ingredients into revenue. Two stores with the same revenue can have very different Gross Profit Margins based on menu pricing and waste.",
     whenRedPlaybook: [
-      "Consider comparing your margin across locations and over time. A declining margin with stable sales often means vendor prices crept up. Industry benchmark: 65-72%.",
+      "Consider comparing your margin across locations and over time. A declining margin with stable sales often means vendor prices crept up. Industry benchmark: 45% or above.",
     ],
   },
   net_profit_pl: {
-    title: "Net Profit",
+    title: "Net Profit / ROI",
     whatItMeans:
-      "What's left after ALL expenses — food, labor, rent, utilities, insurance, everything. This is the actual money the business earned (or lost).",
+      "Your true bottom line — what's left after all costs, both variable (COGS) and fixed (rent, insurance, utilities). This is what you actually take home. Industry benchmark: 15% or above.",
     whyItMatters:
       "Net Profit is the final scorecard. Everything above this line is a lever you can pull to improve it.",
     whenRedPlaybook: [
-      "Consider targeting 8-12% Net Profit Margin. Below 5% means the business is fragile — one bad month could tip you into a loss.",
+      "Consider targeting 15% or above. Below 5% means the business is fragile — one bad month could tip you into a loss.",
     ],
   },
   net_profit_margin_pct: {
     title: "Net Profit Margin %",
     whatItMeans:
-      "Net Profit divided by Revenue, shown as a percentage. If you keep 10 cents of actual profit from every dollar of sales, your Net Profit Margin is 10%.",
+      "Net Profit divided by Revenue, shown as a percentage. If you keep 15 cents of actual profit from every dollar of sales, your Net Profit Margin is 15%.",
     whyItMatters:
       "This is the number that determines whether the business is healthy, surviving, or bleeding. It accounts for everything.",
     whenRedPlaybook: [
-      "Consider that most independent pizzerias operate between 5-15% Net Profit Margin. If you're below 5%, focus on the biggest expense categories first. Industry benchmark: 8-12%.",
+      "Consider that most independent pizzerias aim for 15% or above. If you're below 5%, focus on the biggest expense categories first. Industry benchmark: 15% or above.",
     ],
   },
   the_gap: {
@@ -1252,7 +1252,7 @@ export const EDUCATION_CONTENT: Record<string, EducationEntry> = {
     whyItMatters:
       "Celebrating wins is not just feel-good. Operators who track positive trends are 3 to 4 times more likely to sustain them. Knowing what good looks like helps you repeat it.",
     whenRedPlaybook: [
-      "Consider sharing wins with your team. When the crew sees that food cost hit 29% or PRIME broke 60%, they know their work matters.",
+      "Consider sharing wins with your team. When the crew sees that food cost hit 29% or COGS is below 55%, they know their work matters.",
     ],
   },
   team_pulse: {
