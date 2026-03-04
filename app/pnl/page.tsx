@@ -84,7 +84,17 @@ export default function PnlPage() {
   const [shareGenerating, setShareGenerating] = useState(false);
   const shareRef = useRef<HTMLDivElement>(null);
 
-  const { startDate, endDate, label: mtdLabel } = useMemo(() => getMTDRange(), []);
+  const [useCustomRange, setUseCustomRange] = useState(false);
+  const [customStartMonth, setCustomStartMonth] = useState(1);
+  const [customStartYear, setCustomStartYear] = useState(() => new Date().getFullYear());
+  const [customEndMonth, setCustomEndMonth] = useState(() => new Date().getMonth() + 1);
+  const [customEndYear, setCustomEndYear] = useState(() => new Date().getFullYear());
+  const [appliedCustomRange, setAppliedCustomRange] = useState<{ startDate: string; endDate: string; label: string } | null>(null);
+
+  const { startDate, endDate, label: mtdLabel } = useMemo(() => {
+    if (appliedCustomRange) return appliedCustomRange;
+    return getMTDRange();
+  }, [appliedCustomRange]);
 
   const storeForSeed = storeFilter === "all" ? "kent" : storeFilter;
   const storeName = storeFilter === "all" ? "All Locations" : COCKPIT_TARGETS[storeFilter].name;
@@ -210,18 +220,95 @@ export default function PnlPage() {
           </button>
         </div>
         <p className="text-xs text-muted">Current snapshot — how you&apos;re doing right now. Month-to-date.</p>
-        <div className="flex flex-wrap gap-2">
+        <div className="flex flex-wrap gap-2 items-center">
           <select
             value={storeFilter}
             onChange={(e) => setStoreFilter(e.target.value as "all" | CockpitStoreSlug)}
-            className="dashboard-input rounded-lg border border-border/50 bg-black/30 px-3 py-2 text-sm font-medium focus:border-brand/60 focus:ring-1 focus:ring-brand/40 focus:outline-none"
+            className="dashboard-input rounded-lg border border-border/50 bg-black/30 px-3 py-2 text-sm font-medium focus:border-brand/60 focus:ring-1 focus:ring-brand/40 focus:outline-none min-h-[44px]"
           >
             <option value="all">All Stores</option>
             {COCKPIT_STORE_SLUGS.map((slug) => (
               <option key={slug} value={slug}>{COCKPIT_TARGETS[slug].name}</option>
             ))}
           </select>
+          <button
+            type="button"
+            onClick={() => { if (useCustomRange) setAppliedCustomRange(null); setUseCustomRange(!useCustomRange); }}
+            className="min-h-[44px] rounded-lg border border-zinc-700 bg-zinc-800 px-3 py-2 text-sm text-zinc-400 hover:text-white"
+          >
+            Custom Range
+          </button>
+          {appliedCustomRange && (
+            <button type="button" onClick={() => setAppliedCustomRange(null)} className="min-h-[44px] rounded-lg border border-zinc-600 px-3 py-2 text-xs text-zinc-400 hover:text-white">Clear custom</button>
+          )}
         </div>
+        {useCustomRange && (
+          <div className="rounded-xl border border-zinc-800 bg-zinc-900 p-4 space-y-3">
+            <p className="text-xs text-zinc-400">Select start and end month</p>
+            <div className="flex flex-wrap items-end gap-3">
+              <label>
+                <span className="block text-xs text-zinc-500 mb-1">Start</span>
+                <div className="flex gap-2">
+                  <select
+                    value={customStartMonth}
+                    onChange={(e) => setCustomStartMonth(Number(e.target.value))}
+                    className="min-h-[44px] rounded-lg border border-zinc-700 bg-zinc-900 px-3 py-2 text-sm text-white"
+                  >
+                    {["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"].map((m, i) => (
+                      <option key={m} value={i + 1}>{m}</option>
+                    ))}
+                  </select>
+                  <select
+                    value={customStartYear}
+                    onChange={(e) => setCustomStartYear(Number(e.target.value))}
+                    className="min-h-[44px] rounded-lg border border-zinc-700 bg-zinc-900 px-3 py-2 text-sm text-white"
+                  >
+                    {[2024, 2025, 2026, 2027].map((y) => (
+                      <option key={y} value={y}>{y}</option>
+                    ))}
+                  </select>
+                </div>
+              </label>
+              <label>
+                <span className="block text-xs text-zinc-500 mb-1">End</span>
+                <div className="flex gap-2">
+                  <select
+                    value={customEndMonth}
+                    onChange={(e) => setCustomEndMonth(Number(e.target.value))}
+                    className="min-h-[44px] rounded-lg border border-zinc-700 bg-zinc-900 px-3 py-2 text-sm text-white"
+                  >
+                    {["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"].map((m, i) => (
+                      <option key={m} value={i + 1}>{m}</option>
+                    ))}
+                  </select>
+                  <select
+                    value={customEndYear}
+                    onChange={(e) => setCustomEndYear(Number(e.target.value))}
+                    className="min-h-[44px] rounded-lg border border-zinc-700 bg-zinc-900 px-3 py-2 text-sm text-white"
+                  >
+                    {[2024, 2025, 2026, 2027].map((y) => (
+                      <option key={y} value={y}>{y}</option>
+                    ))}
+                  </select>
+                </div>
+              </label>
+              <button
+                type="button"
+                onClick={() => {
+                  const startDate = `${customStartYear}-${String(customStartMonth).padStart(2, "0")}-01`;
+                  const lastDay = new Date(customEndYear, customEndMonth, 0).getDate();
+                  const endDate = `${customEndYear}-${String(customEndMonth).padStart(2, "0")}-${String(lastDay).padStart(2, "0")}`;
+                  const startLabel = new Date(customStartYear, customStartMonth - 1, 1).toLocaleDateString("en-US", { month: "long", year: "numeric" });
+                  const endLabel = new Date(customEndYear, customEndMonth - 1, 1).toLocaleDateString("en-US", { month: "long", year: "numeric" });
+                  setAppliedCustomRange({ startDate, endDate, label: `${startLabel} — ${endLabel}` });
+                }}
+                className="min-h-[44px] rounded-lg bg-[#E65100] text-white px-4 py-2 text-sm font-semibold"
+              >
+                Apply
+              </button>
+            </div>
+          </div>
+        )}
       </div>
 
       {/* GP vs NET education banner */}
@@ -234,7 +321,7 @@ export default function PnlPage() {
       <div ref={shareRef}>
       <div className="bg-slate-800 rounded-xl border border-slate-700 overflow-hidden min-w-0">
         <div className="flex justify-between items-center p-4 border-b border-slate-700">
-          <h3 className="text-sm font-semibold text-white">{mtdLabel} MTD</h3>
+          <h3 className="text-sm font-semibold text-white">{appliedCustomRange ? `P&L: ${appliedCustomRange.label}` : `${mtdLabel} MTD`}</h3>
           <span className="text-xs text-slate-400">{storeName}</span>
         </div>
 

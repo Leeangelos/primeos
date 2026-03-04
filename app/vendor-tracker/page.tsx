@@ -68,8 +68,11 @@ export default function VendorTrackerPage() {
   const { session } = useAuth();
   const newUser = isNewUser(session);
   const [selectedStore, setSelectedStore] = useState("kent");
-  const [selectedMonth, setSelectedMonth] = useState(2);
-  const [selectedYear, setSelectedYear] = useState(2026);
+  const [selectedMonth, setSelectedMonth] = useState(() => {
+    const n = new Date();
+    return n.getMonth() + 1;
+  });
+  const [selectedYear, setSelectedYear] = useState(() => new Date().getFullYear());
   const [expandedVendor, setExpandedVendor] = useState<string | null>(null);
   const [view, setView] = useState<"movers" | "all" | "annual" | "cc" | "occupancy">("movers");
   const [showAddEntry, setShowAddEntry] = useState(false);

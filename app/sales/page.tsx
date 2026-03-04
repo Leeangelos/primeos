@@ -19,7 +19,7 @@ import {
   SEED_SALES_CHANNEL_PCT,
 } from "@/src/lib/seed-data";
 
-type PeriodKey = "this_week" | "last_week" | "this_month" | "custom";
+type PeriodKey = "today" | "yesterday" | "this_week" | "last_week" | "this_month" | "custom";
 
 function getMondayBefore(dateStr: string): string {
   const d = new Date(dateStr + "T12:00:00Z");
@@ -38,11 +38,17 @@ function yesterdayLocal(): string {
   t.setDate(t.getDate() - 1);
   return `${t.getFullYear()}-${String(t.getMonth() + 1).padStart(2, "0")}-${String(t.getDate()).padStart(2, "0")}`;
 }
-function getPeriodRange(key: PeriodKey): { start: string; end: string; label: string } {
+function getPeriodRange(key: PeriodKey, customStart?: string, customEnd?: string): { start: string; end: string; label: string } {
   const now = new Date();
   const today = todayLocal();
   const yesterdayStr = yesterdayLocal();
 
+  if (key === "today") {
+    return { start: today, end: today, label: "Today" };
+  }
+  if (key === "yesterday") {
+    return { start: yesterdayStr, end: yesterdayStr, label: "Yesterday" };
+  }
   if (key === "this_week") {
     const mon = getMondayBefore(today);
     return { start: mon, end: yesterdayStr, label: "This Week" };
@@ -63,7 +69,10 @@ function getPeriodRange(key: PeriodKey): { start: string; end: string; label: st
     const first = `${y}-${String(m + 1).padStart(2, "0")}-01`;
     return { start: first, end: yesterdayStr, label: "This Month" };
   }
-  // custom = last 7 days
+  // custom = use provided range or default last 7 days
+  if (customStart && customEnd) {
+    return { start: customStart, end: customEnd, label: "Custom" };
+  }
   const end = new Date(now);
   end.setDate(end.getDate() - 1);
   const start = new Date(end);
@@ -71,11 +80,21 @@ function getPeriodRange(key: PeriodKey): { start: string; end: string; label: st
   return {
     start: `${start.getFullYear()}-${String(start.getMonth() + 1).padStart(2, "0")}-${String(start.getDate()).padStart(2, "0")}`,
     end: `${end.getFullYear()}-${String(end.getMonth() + 1).padStart(2, "0")}-${String(end.getDate()).padStart(2, "0")}`,
-    label: "Last 7 Days",
+    label: "Custom",
   };
 }
 
-function getComparisonRange(key: PeriodKey): { start: string; end: string; label: string } | null {
+function getComparisonRange(key: PeriodKey, customStart?: string, customEnd?: string): { start: string; end: string; label: string } | null {
+  if (key === "today") {
+    const y = yesterdayLocal();
+    return { start: y, end: y, label: "Yesterday" };
+  }
+  if (key === "yesterday") {
+    const t = new Date();
+    t.setDate(t.getDate() - 2);
+    const d = `${t.getFullYear()}-${String(t.getMonth() + 1).padStart(2, "0")}-${String(t.getDate()).padStart(2, "0")}`;
+    return { start: d, end: d, label: "Day before" };
+  }
   if (key === "this_week") return getPeriodRange("last_week");
   if (key === "last_week") {
     const r = getPeriodRange("last_week");
@@ -101,7 +120,7 @@ function getComparisonRange(key: PeriodKey): { start: string; end: string; label
     return { start: first, end, label: "Last Month" };
   }
   // custom: compare to the 7 days before the current custom range
-  const r = getPeriodRange("custom");
+  const r = getPeriodRange("custom", customStart, customEnd);
   const rangeStart = new Date(r.start + "T12:00:00Z");
   const compEnd = new Date(rangeStart);
   compEnd.setUTCDate(compEnd.getUTCDate() - 1);
@@ -119,8 +138,9 @@ function fmt(n: number): string {
 }
 
 const PERIODS: { key: PeriodKey; label: string }[] = [
+  { key: "today", label: "Today" },
+  { key: "yesterday", label: "Yesterday" },
   { key: "this_week", label: "This Week" },
-  { key: "last_week", label: "Last Week" },
   { key: "this_month", label: "This Month" },
   { key: "custom", label: "Custom" },
 ];
@@ -133,9 +153,25 @@ const CHANNEL_LABELS: Record<string, string> = {
 };
 
 export default function SalesPage() {
-  const [period, setPeriod] = useState<PeriodKey>("this_week");
+  const [period, setPeriod] = useState<PeriodKey>("today");
+  const [customStart, setCustomStart] = useState("");
+  const [customEnd, setCustomEnd] = useState("");
+  const [appliedCustomStart, setAppliedCustomStart] = useState("");
+  const [appliedCustomEnd, setAppliedCustomEnd] = useState("");
 
-  const { start, end, label } = useMemo(() => getPeriodRange(period), [period]);
+  const { start, end, label } = useMemo(
+    () => getPeriodRange(period, appliedCustomStart || undefined, appliedCustomEnd || undefined),
+    [period, appliedCustomStart, appliedCustomEnd]
+  );
+
+  const rangeLabel = useMemo(() => {
+    if (start === end) {
+      return new Date(start + "T12:00:00").toLocaleDateString("en-US", { month: "long", day: "numeric", year: "numeric" });
+    }
+    const s = new Date(start + "T12:00:00");
+    const e = new Date(end + "T12:00:00");
+    return `${s.toLocaleDateString("en-US", { month: "short", day: "numeric" })} — ${e.toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })}`;
+  }, [start, end]);
 
   const dailyRows = useMemo(() => {
     return SEED_DAILY_KPIS.filter(
@@ -153,7 +189,10 @@ export default function SalesPage() {
     ? dailyRows.reduce((worst, r) => (r.sales < worst.sales ? r : worst), dailyRows[0])
     : null;
 
-  const comparisonRange = useMemo(() => getComparisonRange(period), [period]);
+  const comparisonRange = useMemo(
+    () => getComparisonRange(period, appliedCustomStart || undefined, appliedCustomEnd || undefined),
+    [period, appliedCustomStart, appliedCustomEnd]
+  );
   const comparisonRows = useMemo(() => {
     if (!comparisonRange) return [];
     return SEED_DAILY_KPIS.filter(
@@ -213,24 +252,65 @@ export default function SalesPage() {
         </div>
         <p className="text-xs text-muted">Daily sales and comparison by period.</p>
 
+        <p className="text-sm font-medium text-white">Sales for {rangeLabel}</p>
+
         {/* Date range selector */}
-        <div className="flex flex-wrap gap-2">
+        <div className="flex gap-2 overflow-x-auto pb-1 min-h-[44px] items-center">
           {PERIODS.map((p) => (
             <button
               key={p.key}
               type="button"
               onClick={() => setPeriod(p.key)}
               className={cn(
-                "min-h-[44px] rounded-lg border px-3 py-2 text-sm font-medium transition-colors shrink-0",
+                "min-h-[44px] rounded-lg px-3 py-2 text-sm font-medium transition-colors shrink-0 border",
                 period === p.key
-                  ? "border-brand/50 bg-brand/15 text-brand"
-                  : "border-border/50 bg-black/30 text-muted hover:border-border hover:bg-black/40"
+                  ? "bg-[#E65100] border-[#E65100] text-white"
+                  : "bg-zinc-800 border-zinc-700 text-zinc-300 hover:text-white"
               )}
             >
               {p.label}
             </button>
           ))}
         </div>
+
+        {period === "custom" && (
+          <div className="rounded-xl border border-zinc-800 bg-zinc-900 p-4 space-y-3">
+            <p className="text-xs text-zinc-400">Custom date range</p>
+            <div className="flex flex-wrap items-end gap-3">
+              <label className="block">
+                <span className="block text-xs text-zinc-500 mb-1">Start date</span>
+                <input
+                  type="date"
+                  value={customStart}
+                  onChange={(e) => setCustomStart(e.target.value)}
+                  className="min-h-[44px] rounded-lg border border-zinc-700 bg-zinc-900 px-3 py-2 text-sm text-white w-full min-w-[140px]"
+                />
+              </label>
+              <label className="block">
+                <span className="block text-xs text-zinc-500 mb-1">End date</span>
+                <input
+                  type="date"
+                  value={customEnd}
+                  onChange={(e) => setCustomEnd(e.target.value)}
+                  className="min-h-[44px] rounded-lg border border-zinc-700 bg-zinc-900 px-3 py-2 text-sm text-white w-full min-w-[140px]"
+                />
+              </label>
+              <button
+                type="button"
+                onClick={() => {
+                  if (customStart && customEnd) {
+                    setAppliedCustomStart(customStart);
+                    setAppliedCustomEnd(customEnd);
+                  }
+                }}
+                disabled={!customStart || !customEnd}
+                className="min-h-[44px] rounded-lg bg-[#E65100] text-white px-4 py-2 text-sm font-semibold disabled:opacity-50 disabled:pointer-events-none"
+              >
+                Apply
+              </button>
+            </div>
+          </div>
+        )}
       </div>
 
       {/* Summary card: Total Sales, Avg Daily, Best Day, Worst Day */}

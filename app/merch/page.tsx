@@ -305,7 +305,7 @@ function MerchContent() {
                           ) : (
                             <span className="text-xs text-muted flex-1 py-2">{item.sizes[0] || "One Size"}</span>
                           )}
-                          <button type="button" onClick={() => addToCart(item)} className={cn("rounded-lg border px-4 py-2 min-h-[44px] text-sm font-bold transition-colors shrink-0", addedItemId === item.id ? "border-emerald-600 bg-emerald-600 text-white" : isLindseys ? "border-zinc-600 bg-zinc-600 text-white hover:bg-zinc-500" : "border-orange-500/50 bg-orange-500 text-white hover:bg-orange-600")}>{addedItemId === item.id ? "✓ Added" : "Order"}</button>
+                          <button type="button" onClick={() => addToCart(item)} className={cn("rounded-lg border px-4 py-2 min-h-[44px] text-sm font-bold transition-colors shrink-0", addedItemId === item.id ? "border-emerald-600 bg-emerald-600 text-white" : isLindseys ? "border-zinc-600 bg-zinc-600 text-white hover:bg-zinc-500" : "border-orange-500/50 bg-orange-500 text-white hover:bg-orange-600")}>{addedItemId === item.id ? "✓ Added" : "Add to Cart"}</button>
                         </div>
                       </div>
                     </div>
@@ -326,21 +326,24 @@ function MerchContent() {
             <h3 className="text-lg font-bold text-white mb-4">Your Cart</h3>
 
             {cart.length === 0 ? (
-              <p className="text-sm text-slate-400 py-4">Cart is empty</p>
+              <p className="text-sm text-slate-400 py-4">Your cart is empty</p>
             ) : (
               <>
                 {cart.map((item, idx) => (
-                  <div key={idx} className="flex items-center justify-between py-3 border-b border-slate-700">
-                    <div>
+                  <div key={idx} className="flex items-center justify-between gap-2 py-3 border-b border-slate-700">
+                    <div className="min-w-0 flex-1">
                       <div className="text-sm text-white">{item.name}</div>
-                      <div className="text-xs text-slate-400">Qty: {item.qty} × ${item.price}</div>
+                      <div className="text-xs text-slate-400">Qty: {item.qty} · Size: {item.size} · ${item.price} each</div>
                     </div>
-                    <div className="text-sm text-white font-medium">${(item.qty * item.price).toFixed(2)}</div>
+                    <div className="flex items-center gap-2 shrink-0">
+                      <span className="text-sm text-white font-medium tabular-nums">${(item.qty * item.price).toFixed(2)}</span>
+                      <button type="button" onClick={() => removeFromCart(idx)} className="min-h-[44px] min-w-[44px] flex items-center justify-center rounded-lg border border-slate-600 text-slate-400 hover:text-white hover:border-slate-500" aria-label="Remove from cart">✕</button>
+                    </div>
                   </div>
                 ))}
 
                 <div className="flex justify-between items-center mt-4 pt-3 border-t border-slate-700">
-                  <span className="text-base font-bold text-white">Total</span>
+                  <span className="text-base font-bold text-white">Subtotal</span>
                   <span className="text-base font-bold text-emerald-400">${cartTotal.toFixed(2)}</span>
                 </div>
 
@@ -402,7 +405,7 @@ function MerchContent() {
             <span className="text-white font-semibold">{cartCount} {cartCount === 1 ? "item" : "items"}</span>
             <span className="text-[#E65100] font-bold">${cartTotal.toFixed(2)}</span>
           </div>
-          <button type="button" onClick={handleCheckout} className="bg-[#E65100] text-white font-semibold px-6 py-2.5 rounded-xl">
+          <button type="button" onClick={() => { setCheckoutToast(true); setTimeout(() => setCheckoutToast(false), 3000); setShowCart(true); }} className="bg-[#E65100] text-white font-semibold px-6 py-2.5 rounded-xl min-h-[44px]">
             Checkout
           </button>
         </div>
@@ -413,7 +416,8 @@ function MerchContent() {
         <button
           type="button"
           onClick={() => setShowCart(true)}
-          className="fixed bottom-24 right-4 z-40 bg-[#E65100] text-white w-12 h-12 rounded-full flex items-center justify-center shadow-lg relative"
+          className="fixed bottom-24 right-4 z-40 bg-[#E65100] text-white min-h-[44px] min-w-[44px] w-12 h-12 rounded-full flex items-center justify-center shadow-lg relative"
+          aria-label="View cart"
         >
           <span className="text-lg">🛒</span>
           <span className="absolute -top-1 -right-1 bg-white text-[#E65100] text-xs font-bold w-5 h-5 rounded-full flex items-center justify-center">{cartCount}</span>

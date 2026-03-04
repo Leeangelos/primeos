@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useMemo } from "react";
 import { MapPin, ChevronDown, Check } from "lucide-react";
 import { useAuth } from "@/src/lib/auth-context";
 import { isNewUser, getNewUserStoreName } from "@/src/lib/user-scope";
@@ -33,17 +33,32 @@ const FORM_ROLES = [
 ] as const;
 type FormRole = (typeof FORM_ROLES)[number]["value"];
 
-function getWeekDates(): string[] {
-  const out: string[] = [];
+function getCurrentWeekMonday(): string {
   const today = new Date();
   const dow = today.getDay();
   const mondayOffset = dow === 0 ? -6 : 1 - dow;
+  const monday = new Date(today);
+  monday.setDate(monday.getDate() + mondayOffset);
+  return `${monday.getFullYear()}-${String(monday.getMonth() + 1).padStart(2, "0")}-${String(monday.getDate()).padStart(2, "0")}`;
+}
+
+function getWeekDatesFromMonday(mondayStr: string): string[] {
+  const out: string[] = [];
+  const [y, m, d] = mondayStr.split("-").map(Number);
+  const monday = new Date(y, m - 1, d);
   for (let i = 0; i < 7; i++) {
-    const d = new Date(today);
-    d.setDate(d.getDate() + mondayOffset + i);
-    out.push(`${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`);
+    const day = new Date(monday);
+    day.setDate(day.getDate() + i);
+    out.push(`${day.getFullYear()}-${String(day.getMonth() + 1).padStart(2, "0")}-${String(day.getDate()).padStart(2, "0")}`);
   }
   return out;
+}
+
+function formatWeekRangeLabel(weekDates: string[]): string {
+  if (weekDates.length < 7) return "";
+  const mon = new Date(weekDates[0] + "T12:00:00");
+  const sun = new Date(weekDates[6] + "T12:00:00");
+  return `Mon ${mon.toLocaleDateString("en-US", { month: "short", day: "numeric" })} — Sun ${sun.toLocaleDateString("en-US", { month: "short", day: "numeric" })}`;
 }
 
 function timeTo12h(t: string): string {
@@ -392,8 +407,30 @@ const emptyForm: ShiftForm = {
 export default function SchedulePage() {
   const { session } = useAuth();
   const newUser = isNewUser(session);
-  const weekDates = getWeekDates();
+  const [weekMonday, setWeekMonday] = useState<string>(() => getCurrentWeekMonday());
+  const weekDates = useMemo(() => getWeekDatesFromMonday(weekMonday), [weekMonday]);
   const [shifts, setShifts] = useState<SeedShift[]>(() => SEED_SCHEDULE);
+
+  const currentMonday = getCurrentWeekMonday();
+  const canGoPrev = true;
+  const canGoNext = (() => {
+    const cur = new Date(currentMonday + "T12:00:00").getTime();
+    const sel = new Date(weekMonday + "T12:00:00").getTime();
+    const diffWeeks = (sel - cur) / (7 * 86400000);
+    return diffWeeks < 2;
+  })();
+
+  function goPrevWeek() {
+    const d = new Date(weekMonday + "T12:00:00");
+    d.setDate(d.getDate() - 7);
+    setWeekMonday(`${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`);
+  }
+  function goNextWeek() {
+    if (!canGoNext) return;
+    const d = new Date(weekMonday + "T12:00:00");
+    d.setDate(d.getDate() + 7);
+    setWeekMonday(`${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`);
+  }
   const [modalState, setModalState] = useState<ModalState>({ mode: "closed" });
   const [form, setForm] = useState<ShiftForm>(emptyForm);
   const [formErrors, setFormErrors] = useState<Partial<Record<keyof ShiftForm, string>>>({});
@@ -627,10 +664,13 @@ export default function SchedulePage() {
             Day
           </button>
         </div>
-        <p className="text-xs text-muted">
-          Week of {new Date(weekDates[0] + "T12:00:00Z").toLocaleDateString("en-US", { month: "short", day: "numeric" })} –{" "}
-          {new Date(weekDates[6] + "T12:00:00Z").toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })}
-        </p>
+        <div className="flex items-center justify-center gap-2 w-full sm:w-auto">
+          <button type="button" onClick={goPrevWeek} className="min-h-[44px] min-w-[44px] flex items-center justify-center rounded-lg border border-zinc-700 bg-zinc-900 text-zinc-400 hover:text-white hover:border-zinc-600 transition-colors" aria-label="Previous week">←</button>
+          <span className="text-sm font-medium text-white min-w-[200px] text-center">
+            {formatWeekRangeLabel(weekDates)}
+          </span>
+          <button type="button" onClick={goNextWeek} disabled={!canGoNext} className="min-h-[44px] min-w-[44px] flex items-center justify-center rounded-lg border border-zinc-700 bg-zinc-900 text-zinc-400 hover:text-white hover:border-zinc-600 disabled:opacity-50 disabled:pointer-events-none transition-colors" aria-label="Next week">→</button>
+        </div>
       </div>
 
       {view === "day" ? (
