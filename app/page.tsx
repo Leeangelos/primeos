@@ -534,7 +534,7 @@ export default function HomePage() {
   const { last7Days, salesTrendPct, foodCostAvg, foodCostGrade } = useMemo(() => {
     if (isOnboardingUser && onboardingData?.weekly_sales != null) {
       const daily = Number(onboardingData.weekly_sales) / 7;
-      const foodPct = onboardingData?.food_cost_pct != null ? Number(onboardingData.food_cost_pct) : 33;
+      const foodPct = onboardingData?.food_cost_pct != null ? Number(onboardingData.food_cost_pct) : 30;
       const dates = Array.from({ length: 7 }, (_, i) => {
         const d = new Date();
         d.setDate(d.getDate() - (6 - i));
@@ -771,7 +771,7 @@ export default function HomePage() {
           <div className="flex items-start gap-2">
             <AlertTriangle className="w-4 h-4 text-amber-400 mt-0.5 flex-shrink-0" />
             <div>
-              <p className="text-sm text-amber-300 font-medium">Yesterday&apos;s numbers are missing</p>
+              <p className="text-sm text-amber-300 font-medium">Yesterday's numbers are missing</p>
               <p className="text-xs text-amber-400/70 mt-0.5">
                 You entered data for 5 of 7 days last week. Missing: Tuesday, Thursday.
               </p>
@@ -811,7 +811,7 @@ export default function HomePage() {
             return (
               <div className="bg-slate-800 rounded-xl p-4 border-l-4 min-w-0 border-slate-700" style={{ borderLeftColor: salesBorder }}>
                 <div className="flex items-center justify-between mb-1">
-                  <span className="text-xs text-slate-400 uppercase tracking-wide">{isOnboardingUser ? "Estimated Daily Sales" : "Today&apos;s Sales"}</span>
+                  <span className="text-xs text-slate-400 uppercase tracking-wide">{isOnboardingUser ? "Estimated Daily Sales" : "Today's Sales"}</span>
                   <EducationInfoIcon metricKey="todays_sales" />
                 </div>
                 <div className="text-2xl font-bold tabular-nums" style={{ color: salesGrade === "green" ? COLORS.grade.green : COLORS.grade.red }}>
@@ -894,7 +894,7 @@ export default function HomePage() {
         <div className="grid grid-cols-2 gap-3 min-w-0">
           <div className="bg-slate-800 rounded-xl p-4 border border-slate-700 min-w-0">
             <div className="flex items-center justify-between mb-1">
-              <span className="text-xs text-slate-400 uppercase tracking-wide">Today&apos;s Sales</span>
+              <span className="text-xs text-slate-400 uppercase tracking-wide">Today's Sales</span>
               <EducationInfoIcon metricKey="todays_sales" />
             </div>
             <div className="text-2xl font-bold text-slate-500">—</div>
@@ -946,7 +946,7 @@ export default function HomePage() {
                 </AreaChart>
               </ResponsiveContainer>
             </div>
-            <p className="text-xs text-slate-500 mt-2">Ready for live data? Reach out at <a href="mailto:hello@getprimeos.com" className="text-[#E65100] underline font-semibold">hello@getprimeos.com</a> and we&apos;ll get your system connected.</p>
+            <p className="text-xs text-slate-500 mt-2">Ready for live data? Reach out at <a href="mailto:hello@getprimeos.com" className="text-[#E65100] underline font-semibold">hello@getprimeos.com</a> and we'll get your system connected.</p>
           </div>
         ) : (
         <div className="grid grid-cols-2 gap-4 min-w-0">
@@ -1033,7 +1033,7 @@ export default function HomePage() {
         })() ?? (
           <>
             <p className="text-sm text-slate-300 leading-relaxed">
-              Your morning brief generates after daily KPIs are entered. Enter today&apos;s numbers to unlock.
+              Your morning brief generates after daily KPIs are entered. Enter today's numbers to unlock.
             </p>
             <Link href="/daily" className="inline-flex items-center gap-1 text-sm text-blue-400 hover:text-blue-300 mt-3">
               Enter daily numbers <ChevronRight className="w-4 h-4 shrink-0" aria-hidden />
@@ -1045,7 +1045,7 @@ export default function HomePage() {
       <div className="grid grid-cols-3 gap-3 min-w-0">
         <Link href="/daily" className="bg-slate-800 rounded-xl p-3 border border-slate-700 flex flex-col items-center justify-center gap-2 min-h-[44px] active:bg-slate-700 transition-colors min-w-[44px]">
           <ClipboardList className="w-6 h-6 text-blue-400 shrink-0" aria-hidden />
-          <span className="text-xs text-slate-300 text-center leading-tight">Enter Today&apos;s Numbers</span>
+          <span className="text-xs text-slate-300 text-center leading-tight">Enter Today's Numbers</span>
         </Link>
         <Link href="/weekly" className="bg-slate-800 rounded-xl p-3 border border-slate-700 flex flex-col items-center justify-center gap-2 min-h-[44px] active:bg-slate-700 transition-colors min-w-[44px]">
           <BarChart3 className="w-6 h-6 text-emerald-400 shrink-0" aria-hidden />
@@ -1053,7 +1053,7 @@ export default function HomePage() {
         </Link>
         <Link href="/schedule" className="bg-slate-800 rounded-xl p-3 border border-slate-700 flex flex-col items-center justify-center gap-2 min-h-[44px] active:bg-slate-700 transition-colors min-w-[44px]">
           <Calendar className="w-6 h-6 text-amber-400 shrink-0" aria-hidden />
-          <span className="text-xs text-slate-300 text-center leading-tight">This Week&apos;s Schedule</span>
+          <span className="text-xs text-slate-300 text-center leading-tight">This Week's Schedule</span>
         </Link>
       </div>
 
@@ -1061,7 +1061,7 @@ export default function HomePage() {
         {isOnboardingUser ? (
           <div className="rounded-xl border p-4 border-slate-700 bg-slate-800/50">
             <p className="text-[10px] text-slate-500 uppercase tracking-wide mb-1">Business Health Score</p>
-            <p className="text-sm text-slate-400">Ready for live data? Reach out at <a href="mailto:hello@getprimeos.com" className="text-[#E65100] underline font-semibold">hello@getprimeos.com</a> and we&apos;ll get your system connected.</p>
+            <p className="text-sm text-slate-400">Ready for live data? Reach out at <a href="mailto:hello@getprimeos.com" className="text-[#E65100] underline font-semibold">hello@getprimeos.com</a> and we'll get your system connected.</p>
             <p className="text-xs text-slate-500 mt-2">Based on 6 weeks of data across financials, reputation, and operations.</p>
           </div>
         ) : (

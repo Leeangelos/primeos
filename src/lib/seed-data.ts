@@ -19,9 +19,9 @@ export type StoreBenchmarks = {
 };
 
 export const STORE_BENCHMARKS: Record<string, StoreBenchmarks> = {
-  kent: { foodCostTargetPct: 33, laborTargetPct: 28, primeTargetPct: 55 },
-  aurora: { foodCostTargetPct: 33, laborTargetPct: 28, primeTargetPct: 55 },
-  lindseys: { foodCostTargetPct: 35, laborTargetPct: 30, primeTargetPct: 58 },
+  kent: { foodCostTargetPct: 30, laborTargetPct: 25, primeTargetPct: 55 },
+  aurora: { foodCostTargetPct: 30, laborTargetPct: 25, primeTargetPct: 55 },
+  lindseys: { foodCostTargetPct: 30, laborTargetPct: 25, primeTargetPct: 55 },
 };
 
 /** Reputation KPIs used on Do We Suck? page. */
