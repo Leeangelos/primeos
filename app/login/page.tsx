@@ -63,142 +63,166 @@ function LoginContent() {
   }
 
   return (
-    <div
-      className="fixed inset-0 z-[9999] flex flex-col items-center justify-center bg-zinc-950 overflow-y-auto min-h-[100dvh] md:items-center md:justify-center"
-      style={{ userSelect: "none" }}
-      aria-modal="true"
-      role="dialog"
-    >
-      <div className="pointer-events-auto w-full max-w-md px-6 py-6 sm:py-8 md:py-8 md:px-4 md:mx-auto flex-shrink-0">
-      <div className="text-center mb-6">
-        <h1 className="text-2xl font-bold text-white">PrimeOS</h1>
-        <p className="text-sm text-slate-400 mt-1">The Operating System for Pizza</p>
-      </div>
+    <>
+      <style dangerouslySetInnerHTML={{ __html: `
+        @keyframes glow-pulse {
+          0%, 100% { opacity: 0.1; }
+          50% { opacity: 0.25; }
+        }
+        @keyframes fade-in {
+          from { opacity: 0; transform: translateY(8px); }
+          to { opacity: 1; transform: translateY(0); }
+        }
+        @keyframes border-shimmer {
+          0%, 100% { border-color: rgba(63,63,70,0.3); }
+          50% { border-color: rgba(82,82,91,0.5); }
+        }
+        .login-glow-pulse {
+          animation: glow-pulse 4s ease-in-out infinite;
+        }
+        .login-fade-in {
+          animation: fade-in 500ms ease-out forwards;
+        }
+        .login-border-shimmer {
+          animation: border-shimmer 6s ease-in-out infinite;
+        }
+      `}} />
+      <div
+        className="fixed inset-0 z-[9999] flex flex-col min-h-[100dvh] bg-zinc-950 overflow-y-auto justify-between md:justify-center md:items-center"
+        style={{ userSelect: "none" }}
+        aria-modal="true"
+        role="dialog"
+      >
+        <div className="pointer-events-auto w-full max-w-sm mx-auto px-6 pt-8 pb-6 md:py-10 flex flex-col gap-6 md:gap-8">
+          <header className="flex flex-col items-center pt-2">
+            <div className="relative inline-block">
+              <div
+                className="absolute inset-0 rounded-full login-glow-pulse"
+                style={{ boxShadow: "0 0 40px rgba(230,81,0,0.2)", background: "transparent" }}
+                aria-hidden
+              />
+              <h1 className="relative text-2xl font-bold text-white">PrimeOS</h1>
+            </div>
+            <p className="text-sm text-zinc-400 mt-1">The Operating System for Independent Pizza</p>
+          </header>
 
-      {welcome && (
-        <div className="bg-emerald-900/30 border border-emerald-700 rounded-xl p-4 mb-4">
-          <p className="text-sm text-emerald-200">Account created! Log in with your email and password to get started.</p>
-        </div>
-      )}
+          {welcome && (
+            <div className="bg-emerald-900/30 border border-emerald-700 rounded-xl p-4 login-fade-in">
+              <p className="text-sm text-emerald-200">Account created! Log in with your email and password to get started.</p>
+            </div>
+          )}
 
-      <div className="bg-slate-800 rounded-xl border border-slate-700 p-5 mb-4">
-        {showResetForm ? (
-          <div>
-            {resetSent ? (
-              <div className="text-center">
-                <p className="text-sm text-emerald-400 font-medium mb-2">Check your email</p>
-                <p className="text-xs text-slate-400">We sent a password reset link to {resetEmail}</p>
-                <button type="button" onClick={() => { setShowResetForm(false); setResetSent(false); }} className="mt-4 text-xs text-blue-400 hover:text-blue-300">
-                  Back to login
-                </button>
+          <div className="login-fade-in login-border-shimmer bg-zinc-900/80 backdrop-blur-sm border border-zinc-700/50 rounded-2xl p-6 shadow-lg shadow-black/20">
+            {showResetForm ? (
+              <div>
+                {resetSent ? (
+                  <div className="text-center">
+                    <p className="text-sm text-emerald-400 font-medium mb-2">Check your email</p>
+                    <p className="text-xs text-zinc-400">We sent a password reset link to {resetEmail}</p>
+                    <button type="button" onClick={() => { setShowResetForm(false); setResetSent(false); }} className="mt-4 text-xs text-[#E65100] hover:text-[#F4651A]">
+                      Back to login
+                    </button>
+                  </div>
+                ) : (
+                  <form onSubmit={handleResetPassword} className="space-y-4">
+                    <div>
+                      <label className="text-xs text-zinc-400 mb-1.5 block">Email address</label>
+                      <input
+                        type="email"
+                        value={resetEmail}
+                        onChange={(e) => setResetEmail(e.target.value)}
+                        required
+                        className="w-full bg-zinc-800 border border-zinc-600 rounded-xl text-white placeholder-zinc-500 py-3 px-4 text-sm focus:outline-none focus:ring-2 focus:ring-[#E65100]/50 focus:border-[#E65100]"
+                        placeholder="you@example.com"
+                      />
+                    </div>
+                    {resetError && <p className="text-xs text-red-400">{resetError}</p>}
+                    <button type="submit" className="w-full min-h-[48px] py-3.5 rounded-xl bg-[#E65100] hover:bg-[#F4651A] text-white text-sm font-semibold transition-colors active:scale-[0.98]">
+                      Send Reset Link
+                    </button>
+                    <button type="button" onClick={() => setShowResetForm(false)} className="w-full text-sm text-[#E65100] hover:text-[#F4651A] mt-2 text-left">
+                      Back to login
+                    </button>
+                  </form>
+                )}
               </div>
             ) : (
-              <form onSubmit={handleResetPassword} className="space-y-4">
-                <div>
-                  <label className="text-xs text-slate-400 mb-1.5 block">Email address</label>
-                  <input
-                    type="email"
-                    value={resetEmail}
-                    onChange={(e) => setResetEmail(e.target.value)}
-                    required
-                    className="w-full bg-slate-700 border border-slate-600 rounded-xl text-white h-12 px-4 text-sm"
-                    placeholder="you@example.com"
-                  />
-                </div>
-                {resetError && <p className="text-xs text-red-400">{resetError}</p>}
-                <button type="submit" className="w-full min-h-[48px] py-3 rounded-xl bg-[#E65100] hover:bg-[#f3731a] text-white text-sm font-semibold transition-colors">
-                  Send Reset Link
-                </button>
-                <button type="button" onClick={() => setShowResetForm(false)} className="w-full text-xs text-slate-400 hover:text-slate-300 mt-2">
-                  Back to login
-                </button>
-              </form>
+              <>
+                <h2 className="text-lg font-semibold text-white mb-4 text-left">Log In</h2>
+                <form onSubmit={handleSubmit} className="space-y-4">
+                  {error && (
+                    <div className="p-2.5 rounded-lg bg-red-600/20 border border-red-700/30 text-xs text-red-300">
+                      {error}
+                    </div>
+                  )}
+                  <div>
+                    <label htmlFor="login-email" className="block text-xs text-zinc-400 mb-1.5 text-left">
+                      Email
+                    </label>
+                    <input
+                      id="login-email"
+                      type="email"
+                      value={email}
+                      onChange={(e) => setEmail(e.target.value)}
+                      required
+                      autoComplete="email"
+                      className="w-full bg-zinc-800 border border-zinc-600 rounded-xl text-white placeholder-zinc-500 py-3 px-4 text-sm focus:outline-none focus:ring-2 focus:ring-[#E65100]/50 focus:border-[#E65100]"
+                      placeholder="you@company.com"
+                    />
+                  </div>
+                  <div>
+                    <label htmlFor="login-password" className="block text-xs text-zinc-400 mb-1.5 text-left">
+                      Password
+                    </label>
+                    <input
+                      id="login-password"
+                      type="password"
+                      value={password}
+                      onChange={(e) => setPassword(e.target.value)}
+                      required
+                      autoComplete="current-password"
+                      className="w-full bg-zinc-800 border border-zinc-600 rounded-xl text-white placeholder-zinc-500 py-3 px-4 text-sm focus:outline-none focus:ring-2 focus:ring-[#E65100]/50 focus:border-[#E65100]"
+                      placeholder="••••••••"
+                    />
+                  </div>
+                  <button
+                    type="submit"
+                    disabled={loading}
+                    className={`w-full min-h-[48px] py-3.5 rounded-xl text-sm font-semibold transition-all active:scale-[0.98] ${
+                      loading
+                        ? "bg-zinc-700 text-zinc-500 cursor-not-allowed"
+                        : "bg-[#E65100] hover:bg-[#F4651A] text-white"
+                    }`}
+                  >
+                    {loading ? "Signing in…" : "Log In"}
+                  </button>
+                  <button type="button" onClick={() => setShowResetForm(true)} className="text-sm text-[#E65100] hover:text-[#F4651A] text-left block w-full mt-1">
+                    Forgot password?
+                  </button>
+                </form>
+              </>
             )}
           </div>
-        ) : (
-          <>
-            <h2 className="text-base font-semibold text-white mb-4">Log In</h2>
-            <form onSubmit={handleSubmit} className="space-y-4">
-              {error && (
-                <div className="p-2.5 rounded-lg bg-red-600/20 border border-red-700/30 text-xs text-red-300">
-                  {error}
-                </div>
-              )}
-              <div>
-                <label htmlFor="login-email" className="block text-xs text-slate-400 mb-1.5">
-                  Email
-                </label>
-                <input
-                  id="login-email"
-                  type="email"
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  required
-                  autoComplete="email"
-                  className="w-full rounded-lg border border-slate-600 bg-slate-900 px-3 py-2.5 text-sm text-white placeholder-slate-500 focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
-                  placeholder="you@company.com"
-                />
-              </div>
-              <div>
-                <label htmlFor="login-password" className="block text-xs text-slate-400 mb-1.5">
-                  Password
-                </label>
-                <input
-                  id="login-password"
-                  type="password"
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  required
-                  autoComplete="current-password"
-                  className="w-full rounded-lg border border-slate-600 bg-slate-900 px-3 py-2.5 text-sm text-white placeholder-slate-500 focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
-                  placeholder="••••••••"
-                />
-              </div>
-              <button
-                type="submit"
-                disabled={loading}
-                className={`w-full min-h-[48px] py-3 rounded-xl text-sm font-semibold transition-colors ${
-                  loading
-                    ? "bg-slate-700 text-slate-500 cursor-not-allowed"
-                    : "bg-[#E65100] hover:bg-[#f3731a] text-white"
-                }`}
-              >
-                {loading ? "Signing in…" : "Log In"}
-              </button>
-              <button type="button" onClick={() => setShowResetForm(true)} className="text-xs text-blue-400 hover:text-blue-300">
-                Forgot password?
-              </button>
-            </form>
-            <div className="mt-4 text-center">
-              <a
-                href="/welcome"
-                className="text-xs text-slate-400 hover:text-slate-200 underline underline-offset-4"
-              >
-                Learn more about PrimeOS
-              </a>
-            </div>
-          </>
-        )}
-      </div>
 
-      <div className="w-full bg-gradient-to-r from-[#E65100]/20 to-zinc-900 border border-[#E65100]/30 rounded-2xl p-5 mb-4">
-        <p className="text-lg font-bold text-white">First time here?</p>
-        <p className="text-sm text-zinc-400 mt-1">See how PrimeOS helps independent pizzeria operators stop running blind.</p>
-        <Link href="/welcome" className="bg-[#E65100] text-white px-6 py-2.5 rounded-xl font-semibold text-sm mt-3 inline-block hover:bg-[#f3731a] transition-colors min-h-[44px] flex items-center justify-center w-full sm:w-auto">
-          Learn More →
-        </Link>
-      </div>
+          <div className="bg-gradient-to-br from-zinc-800/60 to-zinc-900/60 border border-zinc-700/30 rounded-2xl p-5 login-fade-in">
+            <p className="text-lg font-semibold text-white">First time here?</p>
+            <p className="text-sm text-zinc-400 mt-1">See how PrimeOS helps independent pizzeria operators stop running blind.</p>
+            <Link href="/welcome" className="mt-3 w-full inline-flex items-center justify-center bg-[#E65100] hover:bg-[#F4651A] text-white font-semibold rounded-xl py-3 transition-colors">
+              Learn More →
+            </Link>
+          </div>
 
-      <div className="text-center space-y-2">
-        <p className="text-xs text-slate-500">
-          <Link href="/terms" className="text-slate-400 hover:text-slate-300 underline underline-offset-2">Terms of Service</Link>
-          {" · "}
-          <Link href="/privacy" className="text-slate-400 hover:text-slate-300 underline underline-offset-2">Privacy Policy</Link>
-        </p>
-        <p className="text-xs text-slate-600">© PrimeOS</p>
+          <footer className="text-center space-y-1 pt-2 pb-1">
+            <p className="text-xs text-zinc-500">
+              <Link href="/terms" className="hover:text-zinc-400 underline underline-offset-2">Terms of Service</Link>
+              {" · "}
+              <Link href="/privacy" className="hover:text-zinc-400 underline underline-offset-2">Privacy Policy</Link>
+            </p>
+            <p className="text-xs text-zinc-600">© 2026 Ambition & Legacy LLC</p>
+          </footer>
+        </div>
       </div>
-      </div>
-    </div>
+    </>
   );
 }
 
