@@ -31,7 +31,7 @@ function getMTDRange(): { startDate: string; endDate: string; label: string } {
   const start = `${year}-${String(month + 1).padStart(2, "0")}-01`;
   const yesterday = new Date(now);
   yesterday.setDate(yesterday.getDate() - 1);
-  const end = yesterday.toISOString().slice(0, 10);
+  const end = `${yesterday.getFullYear()}-${String(yesterday.getMonth() + 1).padStart(2, "0")}-${String(yesterday.getDate()).padStart(2, "0")}`;
   const label = new Date(year, month, 1).toLocaleDateString("en-US", { month: "long", year: "numeric" });
   return { startDate: start, endDate: end, label };
 }

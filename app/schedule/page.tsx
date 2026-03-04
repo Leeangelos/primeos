@@ -41,7 +41,7 @@ function getWeekDates(): string[] {
   for (let i = 0; i < 7; i++) {
     const d = new Date(today);
     d.setDate(d.getDate() + mondayOffset + i);
-    out.push(d.toISOString().slice(0, 10));
+    out.push(`${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`);
   }
   return out;
 }

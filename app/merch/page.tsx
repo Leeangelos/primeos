@@ -412,7 +412,7 @@ function MerchContent() {
       {cartCount > 0 && (
         <button
           type="button"
-          onClick={scrollToCart}
+          onClick={() => setShowCart(true)}
           className="fixed bottom-24 right-4 z-40 bg-[#E65100] text-white w-12 h-12 rounded-full flex items-center justify-center shadow-lg relative"
         >
           <span className="text-lg">🛒</span>
@@ -422,7 +422,7 @@ function MerchContent() {
 
       {checkoutToast && (
         <div className="fixed bottom-20 left-4 right-4 z-50 bg-slate-800 border border-slate-700 rounded-xl px-4 py-2.5 shadow-lg text-center">
-          <p className="text-xs text-slate-300">Demo Mode — Merch checkout is available in Phase 2.</p>
+          <p className="text-xs text-slate-300">Checkout is available in Phase 2.</p>
         </div>
       )}
     </>

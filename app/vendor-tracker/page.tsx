@@ -75,13 +75,17 @@ export default function VendorTrackerPage() {
   const [showAddEntry, setShowAddEntry] = useState(false);
   const [entryVendorId, setEntryVendorId] = useState("");
   const [entryAmount, setEntryAmount] = useState("");
-  const [entryDate, setEntryDate] = useState(() => new Date().toISOString().split("T")[0]);
+  function todayLocal(): string {
+    const t = new Date();
+    return `${t.getFullYear()}-${String(t.getMonth() + 1).padStart(2, "0")}-${String(t.getDate()).padStart(2, "0")}`;
+  }
+  const [entryDate, setEntryDate] = useState(() => todayLocal());
   const [entryInvoice, setEntryInvoice] = useState("");
   const [addedEntries, setAddedEntries] = useState<VendorCost[]>([]);
   const [saveToast, setSaveToast] = useState(false);
   const [showQuickInvoice, setShowQuickInvoice] = useState(false);
   const [quickVendorName, setQuickVendorName] = useState("");
-  const [quickInvoiceDate, setQuickInvoiceDate] = useState(() => new Date().toISOString().split("T")[0]);
+  const [quickInvoiceDate, setQuickInvoiceDate] = useState(() => todayLocal());
   const [quickTotal, setQuickTotal] = useState("");
   const [quickSaving, setQuickSaving] = useState(false);
   const [quickToast, setQuickToast] = useState<"idle" | "saved" | "error">("idle");
@@ -206,7 +210,7 @@ export default function VendorTrackerPage() {
 
     setEntryVendorId("");
     setEntryAmount("");
-    setEntryDate(new Date().toISOString().split("T")[0]);
+    setEntryDate(todayLocal());
     setEntryInvoice("");
     setShowAddEntry(false);
 

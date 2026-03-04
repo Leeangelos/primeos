@@ -117,7 +117,10 @@ function WeeklyPageContent() {
   const newUser = isNewUser(session);
   const newUserStoreName = getNewUserStoreName(session);
   const searchParams = useSearchParams();
-  const today = new Date().toISOString().slice(0, 10);
+  const today = (() => {
+    const t = new Date();
+    return `${t.getFullYear()}-${String(t.getMonth() + 1).padStart(2, "0")}-${String(t.getDate()).padStart(2, "0")}`;
+  })();
   const defaultMonday = getWeekStart(today);
   const [weekStart, setWeekStart] = useState(defaultMonday);
   const [store, setStore] = useState<"all" | CockpitStoreSlug>("all");

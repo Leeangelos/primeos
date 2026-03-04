@@ -291,14 +291,15 @@ function DailyPageContent() {
       }
     }
 
-    const entryDate = new Date(businessDate + "T12:00:00Z");
-    const today = new Date();
-    today.setHours(0, 0, 0, 0);
-    if (entryDate > today) {
+    if (businessDate > todayYYYYMMDD()) {
       newWarnings.push({ field: "date", message: "Can't enter data for a future date.", severity: "error" });
     }
 
-    const daysOld = Math.floor((today.getTime() - entryDate.getTime()) / 86400000);
+    const todayMidnight = new Date();
+    todayMidnight.setHours(0, 0, 0, 0);
+    const [ey, em, ed] = businessDate.split("-").map(Number);
+    const entryLocal = new Date(ey, em - 1, ed);
+    const daysOld = Math.floor((todayMidnight.getTime() - entryLocal.getTime()) / 86400000);
     if (daysOld >= 7) {
       newWarnings.push({
         field: "date",
@@ -574,11 +575,11 @@ function DailyPageContent() {
     "w-full min-h-[44px] h-11 px-3 text-sm font-medium tabular-nums placeholder:text-muted focus:border-brand/60 focus:ring-1 focus:ring-brand/40 focus:outline-none rounded-xl border bg-slate-700 text-white dashboard-input";
 
   const { isOldDate, diffDays } = useMemo(() => {
-    const selectedDate = new Date(businessDate + "T12:00:00Z");
     const today = new Date();
     today.setHours(0, 0, 0, 0);
-    selectedDate.setHours(0, 0, 0, 0);
-    const diff = Math.floor((today.getTime() - selectedDate.getTime()) / (1000 * 60 * 60 * 24));
+    const [y, m, d] = businessDate.split("-").map(Number);
+    const selectedLocal = new Date(y, m - 1, d);
+    const diff = Math.floor((today.getTime() - selectedLocal.getTime()) / (1000 * 60 * 60 * 24));
     return { isOldDate: diff > 7, diffDays: diff };
   }, [businessDate]);
 

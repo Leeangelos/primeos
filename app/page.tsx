@@ -44,7 +44,7 @@ function todayYYYYMMDD(): string {
 function yesterdayYYYYMMDD(): string {
   const t = new Date();
   t.setDate(t.getDate() - 1);
-  return t.toISOString().slice(0, 10);
+  return `${t.getFullYear()}-${String(t.getMonth() + 1).padStart(2, "0")}-${String(t.getDate()).padStart(2, "0")}`;
 }
 
 type KpiSnapshot = {

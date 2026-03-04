@@ -29,12 +29,19 @@ function getMondayBefore(dateStr: string): string {
   return d.toISOString().slice(0, 10);
 }
 
+function todayLocal(): string {
+  const t = new Date();
+  return `${t.getFullYear()}-${String(t.getMonth() + 1).padStart(2, "0")}-${String(t.getDate()).padStart(2, "0")}`;
+}
+function yesterdayLocal(): string {
+  const t = new Date();
+  t.setDate(t.getDate() - 1);
+  return `${t.getFullYear()}-${String(t.getMonth() + 1).padStart(2, "0")}-${String(t.getDate()).padStart(2, "0")}`;
+}
 function getPeriodRange(key: PeriodKey): { start: string; end: string; label: string } {
   const now = new Date();
-  const today = now.toISOString().slice(0, 10);
-  const yesterday = new Date(now);
-  yesterday.setDate(yesterday.getDate() - 1);
-  const yesterdayStr = yesterday.toISOString().slice(0, 10);
+  const today = todayLocal();
+  const yesterdayStr = yesterdayLocal();
 
   if (key === "this_week") {
     const mon = getMondayBefore(today);
@@ -62,8 +69,8 @@ function getPeriodRange(key: PeriodKey): { start: string; end: string; label: st
   const start = new Date(end);
   start.setDate(start.getDate() - 6);
   return {
-    start: start.toISOString().slice(0, 10),
-    end: end.toISOString().slice(0, 10),
+    start: `${start.getFullYear()}-${String(start.getMonth() + 1).padStart(2, "0")}-${String(start.getDate()).padStart(2, "0")}`,
+    end: `${end.getFullYear()}-${String(end.getMonth() + 1).padStart(2, "0")}-${String(end.getDate()).padStart(2, "0")}`,
     label: "Last 7 Days",
   };
 }
