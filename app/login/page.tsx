@@ -64,12 +64,12 @@ function LoginContent() {
 
   return (
     <div
-      className="fixed inset-0 z-[9999] flex items-center justify-center bg-zinc-950 overflow-y-auto"
+      className="fixed inset-0 z-[9999] flex flex-col bg-zinc-950 overflow-y-auto md:items-center md:justify-center"
       style={{ userSelect: "none" }}
       aria-modal="true"
       role="dialog"
     >
-      <div className="pointer-events-auto w-full max-w-md mx-auto py-8 px-4">
+      <div className="pointer-events-auto w-full max-w-md px-6 py-8 md:py-8 md:px-4 md:mx-auto flex-shrink-0 min-h-0">
       <div className="text-center mb-6">
         <h1 className="text-2xl font-bold text-white">PrimeOS</h1>
         <p className="text-sm text-slate-400 mt-1">The Operating System for Pizza</p>
@@ -81,15 +81,7 @@ function LoginContent() {
         </div>
       )}
 
-      <div className="w-full bg-gradient-to-r from-[#E65100]/20 to-zinc-900 border border-[#E65100]/30 rounded-2xl p-5 mb-6">
-        <p className="text-lg font-bold text-white">First time here?</p>
-        <p className="text-sm text-zinc-400 mt-1">See how PrimeOS helps independent pizzeria operators stop running blind.</p>
-        <Link href="/welcome" className="bg-[#E65100] text-white px-6 py-2.5 rounded-xl font-semibold text-sm mt-3 inline-block hover:bg-[#f3731a] transition-colors">
-          Learn More →
-        </Link>
-      </div>
-
-      <div className="bg-slate-800 rounded-xl border border-slate-700 p-5">
+      <div className="bg-slate-800 rounded-xl border border-slate-700 p-5 mb-4">
         {showResetForm ? (
           <div>
             {resetSent ? (
@@ -114,7 +106,7 @@ function LoginContent() {
                   />
                 </div>
                 {resetError && <p className="text-xs text-red-400">{resetError}</p>}
-                <button type="submit" className="w-full py-3 rounded-xl bg-[#E65100] hover:bg-[#f3731a] text-white text-sm font-semibold transition-colors">
+                <button type="submit" className="w-full min-h-[48px] py-3 rounded-xl bg-[#E65100] hover:bg-[#f3731a] text-white text-sm font-semibold transition-colors">
                   Send Reset Link
                 </button>
                 <button type="button" onClick={() => setShowResetForm(false)} className="w-full text-xs text-slate-400 hover:text-slate-300 mt-2">
@@ -165,10 +157,10 @@ function LoginContent() {
               <button
                 type="submit"
                 disabled={loading}
-                className={`w-full py-3 rounded-xl text-sm font-semibold transition-colors ${
+                className={`w-full min-h-[48px] py-3 rounded-xl text-sm font-semibold transition-colors ${
                   loading
                     ? "bg-slate-700 text-slate-500 cursor-not-allowed"
-                    : "bg-blue-600 hover:bg-blue-500 text-white"
+                    : "bg-[#E65100] hover:bg-[#f3731a] text-white"
                 }`}
               >
                 {loading ? "Signing in…" : "Log In"}
@@ -187,6 +179,23 @@ function LoginContent() {
             </div>
           </>
         )}
+      </div>
+
+      <div className="w-full bg-gradient-to-r from-[#E65100]/20 to-zinc-900 border border-[#E65100]/30 rounded-2xl p-5 mb-4">
+        <p className="text-lg font-bold text-white">First time here?</p>
+        <p className="text-sm text-zinc-400 mt-1">See how PrimeOS helps independent pizzeria operators stop running blind.</p>
+        <Link href="/welcome" className="bg-[#E65100] text-white px-6 py-2.5 rounded-xl font-semibold text-sm mt-3 inline-block hover:bg-[#f3731a] transition-colors min-h-[44px] flex items-center justify-center w-full sm:w-auto">
+          Learn More →
+        </Link>
+      </div>
+
+      <div className="text-center space-y-2">
+        <p className="text-xs text-slate-500">
+          <Link href="/terms" className="text-slate-400 hover:text-slate-300 underline underline-offset-2">Terms of Service</Link>
+          {" · "}
+          <Link href="/privacy" className="text-slate-400 hover:text-slate-300 underline underline-offset-2">Privacy Policy</Link>
+        </p>
+        <p className="text-xs text-slate-600">© PrimeOS</p>
       </div>
       </div>
     </div>
