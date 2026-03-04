@@ -168,8 +168,8 @@ export default function ActualPnlPage() {
   const [uploadedMonths, setUploadedMonths] = useState<Record<string, boolean>>({});
   const [uploadedPnlData, setUploadedPnlData] = useState<Record<string, PnlRawData>>({});
   const [viewMode, setViewMode] = useState<"upload" | "processing" | "pnl">("upload");
-  const [month, setMonth] = useState(1); // February = 1
-  const [year, setYear] = useState(2026);
+  const [month, setMonth] = useState(() => new Date().getMonth());
+  const [year, setYear] = useState(() => new Date().getFullYear());
   const [playbookOpen, setPlaybookOpen] = useState(true);
   const photoInputRef = useRef<HTMLInputElement>(null);
   const galleryInputRef = useRef<HTMLInputElement>(null);

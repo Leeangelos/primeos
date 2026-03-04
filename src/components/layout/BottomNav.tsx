@@ -39,6 +39,7 @@ import {
   Search,
   X,
   Handshake,
+  HelpCircle,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { createClient } from "@/lib/supabase";
@@ -128,6 +129,7 @@ export function BottomNav() {
   const isLight = theme === "light";
   const [moreOpen, setMoreOpen] = useState(false);
   const [drawerSearch, setDrawerSearch] = useState("");
+  const [helpOpen, setHelpOpen] = useState(false);
   const dragStartYRef = useRef<number | null>(null);
   const searchInputRef = useRef<HTMLInputElement | null>(null);
   const [upgradeModal, setUpgradeModal] = useState<{ requiredTier: string; pageName: string } | null>(null);
@@ -135,6 +137,7 @@ export function BottomNav() {
   const closeMore = useCallback(() => {
     setMoreOpen(false);
     setDrawerSearch("");
+    setHelpOpen(false);
   }, []);
 
   const handleLogout = async () => {
@@ -403,6 +406,27 @@ export function BottomNav() {
             </div>
           )}
           <div className={cn("pt-4 mt-4 border-t", isLight ? "border-zinc-200" : "border-zinc-800")}>
+            <button
+              type="button"
+              onClick={() => { setHelpOpen(true); }}
+              className={cn(
+                "flex items-center gap-3 w-full px-4 py-3 rounded-xl border active:opacity-90 min-h-[44px]",
+                isLight ? "bg-zinc-50 border-zinc-200 active:bg-zinc-100" : "bg-slate-800 border-slate-700 active:bg-slate-700/50"
+              )}
+            >
+              <div className={cn(
+                "w-8 h-8 rounded-lg flex items-center justify-center border",
+                isLight ? "bg-white border-zinc-200" : "bg-slate-800 border-slate-700"
+              )}>
+                <HelpCircle className={cn("w-4 h-4", "text-[#E65100]")} />
+              </div>
+              <div className="flex-1 text-left">
+                <div className={cn("text-sm font-medium", isLight ? "text-zinc-900" : "text-white")}>Help & Support</div>
+                <div className={cn("text-xs", isLight ? "text-zinc-600" : "text-slate-500")}>Get in touch — we&apos;re here for you</div>
+              </div>
+            </button>
+          </div>
+          <div className={cn("pt-4 mt-4 border-t", isLight ? "border-zinc-200" : "border-zinc-800")}>
             <Link
               href="/partner"
               onClick={closeMore}
@@ -433,7 +457,7 @@ export function BottomNav() {
             <button
               type="button"
               onClick={handleLogout}
-              className="flex items-center gap-3 w-full px-4 py-3 mt-4 rounded-xl text-red-500 hover:bg-red-500/10 transition-colors"
+              className="flex items-center gap-3 w-full px-4 py-3 mt-4 rounded-xl text-red-500 hover:bg-red-500/10 transition-colors min-h-[44px]"
             >
               <LogOut className="w-5 h-5" />
               <span className="text-sm font-medium">Log Out</span>
@@ -442,6 +466,36 @@ export function BottomNav() {
           </div>
         </div>
       </div>
+
+      {/* Help & Support panel — only when drawer is open */}
+      {moreOpen && helpOpen && (
+        <>
+          <div className="fixed inset-0 z-[55] bg-black/50" onClick={() => setHelpOpen(false)} aria-hidden />
+          <div
+            className={cn(
+              "fixed left-4 right-4 z-[56] rounded-2xl border p-5 shadow-xl mx-auto",
+              isLight ? "bg-white border-zinc-200" : "bg-slate-900 border-slate-700"
+            )}
+            style={{ top: "50%", transform: "translateY(-50%)", maxWidth: "calc(100vw - 2rem)" }}
+            role="dialog"
+            aria-labelledby="help-title"
+          >
+            <h3 id="help-title" className={cn("text-base font-semibold mb-2", isLight ? "text-zinc-900" : "text-white")}>Help & Support</h3>
+            <p className={cn("text-sm mb-3", isLight ? "text-zinc-600" : "text-slate-400")}>Need help? We&apos;re here for you.</p>
+            <p className="text-sm mb-2">
+              <a href="mailto:hello@getprimeos.com" className="text-[#E65100] underline font-medium">hello@getprimeos.com</a>
+            </p>
+            <p className={cn("text-xs mb-4", isLight ? "text-zinc-600" : "text-slate-500")}>Tap to send us a message and we&apos;ll get back to you within 24 hours.</p>
+            <button
+              type="button"
+              onClick={() => setHelpOpen(false)}
+              className={cn("w-full py-3 rounded-xl text-sm font-medium min-h-[44px]", isLight ? "bg-zinc-200 text-zinc-900" : "bg-slate-700 text-white")}
+            >
+              Close
+            </button>
+          </div>
+        </>
+      )}
 
       {/* 3. Nav bar — ALWAYS RENDERED, LAST IN DOM; z-[60] above common z-50 overlays */}
       <nav
