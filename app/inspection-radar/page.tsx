@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useMemo } from "react";
 import { Shield, ShieldAlert, ShieldCheck, ChevronDown, Circle, FileText, ExternalLink } from "lucide-react";
-import { SEED_STORES } from "@/src/lib/seed-data";
+import { COCKPIT_STORE_SLUGS, COCKPIT_TARGETS } from "@/lib/cockpit-config";
 import { useAuth } from "@/src/lib/auth-context";
 import { isNewUser, getNewUserStoreName } from "@/src/lib/user-scope";
 import { EducationInfoIcon } from "@/src/components/education/InfoIcon";
@@ -22,91 +22,7 @@ interface OwnInspection {
   county: string;
 }
 
-const OWN_INSPECTIONS: OwnInspection[] = [
-  {
-    id: "own1",
-    store: "LeeAngelo's Kent",
-    storeId: "kent",
-    date: "2025-10-15",
-    type: "Standard",
-    criticalViolations: 0,
-    nonCriticalViolations: 2,
-    details: ["Equipment cleanliness — prep table edge (non-critical, corrected)", "Floor tile grout in walk-in needs resealing (non-critical)"],
-    correctedOnSite: 1,
-    inspector: "Portage County Health District",
-    county: "Portage",
-  },
-  {
-    id: "own2",
-    store: "LeeAngelo's Kent",
-    storeId: "kent",
-    date: "2025-04-08",
-    type: "Standard",
-    criticalViolations: 1,
-    nonCriticalViolations: 1,
-    details: ["Handwashing sink partially obstructed by bus tub (critical, corrected on site)", "Ceiling vent above prep area needs cleaning (non-critical)"],
-    correctedOnSite: 1,
-    inspector: "Portage County Health District",
-    county: "Portage",
-  },
-  {
-    id: "own3",
-    store: "LeeAngelo's Aurora",
-    storeId: "aurora",
-    date: "2025-11-20",
-    type: "Standard",
-    criticalViolations: 0,
-    nonCriticalViolations: 1,
-    details: ["Light shield missing above prep station (non-critical)"],
-    correctedOnSite: 0,
-    inspector: "Portage County Health District",
-    county: "Portage",
-  },
-  {
-    id: "own4",
-    store: "LeeAngelo's Aurora",
-    storeId: "aurora",
-    date: "2025-05-12",
-    type: "Standard",
-    criticalViolations: 0,
-    nonCriticalViolations: 0,
-    details: [],
-    correctedOnSite: 0,
-    inspector: "Portage County Health District",
-    county: "Portage",
-  },
-  {
-    id: "own5",
-    store: "Lindsey's",
-    storeId: "lindseys",
-    date: "2025-09-03",
-    type: "Standard",
-    criticalViolations: 1,
-    nonCriticalViolations: 3,
-    details: [
-      "Cold holding unit at 43°F — above 41°F threshold (critical, corrected on site)",
-      "Employee break items stored near food prep area (non-critical)",
-      "Sanitizer test strips expired (non-critical, corrected)",
-      "Back door seal has gap (non-critical)",
-    ],
-    correctedOnSite: 2,
-    inspector: "Stark County Health Department",
-    county: "Stark",
-  },
-  {
-    id: "own6",
-    store: "Lindsey's",
-    storeId: "lindseys",
-    date: "2025-03-18",
-    type: "Standard",
-    criticalViolations: 0,
-    nonCriticalViolations: 1,
-    details: ["Mop sink area needs better drainage (non-critical)"],
-    correctedOnSite: 0,
-    inspector: "Stark County Health Department",
-    county: "Stark",
-  },
-];
+const OWN_INSPECTIONS: OwnInspection[] = [];
 
 // Nearby inspection activity (what the radar tracks)
 interface NearbyInspection {
@@ -122,33 +38,9 @@ interface NearbyInspection {
   nearStore: string;
 }
 
-const NEARBY_INSPECTIONS_KENT: NearbyInspection[] = [
-  { id: "n1", establishment: "China Star", address: "135 E Main St, Kent", distance: 0.3, date: "2026-02-24", criticalViolations: 2, nonCriticalViolations: 4, type: "Standard", county: "Portage", nearStore: "kent" },
-  { id: "n2", establishment: "Taco Bell", address: "1075 S Water St, Kent", distance: 0.8, date: "2026-02-24", criticalViolations: 0, nonCriticalViolations: 1, type: "Standard", county: "Portage", nearStore: "kent" },
-  { id: "n3", establishment: "Rosie's Italian Grille", address: "210 W Erie St, Kent", distance: 0.4, date: "2026-02-23", criticalViolations: 1, nonCriticalViolations: 2, type: "Standard", county: "Portage", nearStore: "kent" },
-  { id: "n4", establishment: "Ray's Place", address: "135 Franklin Ave, Kent", distance: 0.2, date: "2026-02-23", criticalViolations: 0, nonCriticalViolations: 3, type: "Standard", county: "Portage", nearStore: "kent" },
-  { id: "n5", establishment: "Mike's Place", address: "1700 SR 59, Kent", distance: 1.2, date: "2026-02-22", criticalViolations: 1, nonCriticalViolations: 1, type: "Follow-up", county: "Portage", nearStore: "kent" },
-  { id: "n6", establishment: "Panini's Bar & Grill", address: "235 N Water St, Kent", distance: 0.5, date: "2026-02-22", criticalViolations: 0, nonCriticalViolations: 2, type: "Standard", county: "Portage", nearStore: "kent" },
-  { id: "n7", establishment: "Subway", address: "310 S Water St, Kent", distance: 0.6, date: "2026-02-21", criticalViolations: 0, nonCriticalViolations: 0, type: "Standard", county: "Portage", nearStore: "kent" },
-  { id: "n8", establishment: "Pizza Hut", address: "1096 S Water St, Kent", distance: 0.9, date: "2026-02-20", criticalViolations: 1, nonCriticalViolations: 2, type: "Standard", county: "Portage", nearStore: "kent" },
-  { id: "n9", establishment: "Sakura Japanese", address: "138 N Water St, Kent", distance: 0.4, date: "2026-02-19", criticalViolations: 0, nonCriticalViolations: 1, type: "Standard", county: "Portage", nearStore: "kent" },
-  { id: "n10", establishment: "Twisted Meltz", address: "150 E Main St, Kent", distance: 0.3, date: "2026-02-18", criticalViolations: 0, nonCriticalViolations: 0, type: "Standard", county: "Portage", nearStore: "kent" },
-];
-
-const NEARBY_INSPECTIONS_AURORA: NearbyInspection[] = [
-  { id: "na1", establishment: "McDonald's", address: "94 Barrington Town Ctr, Aurora", distance: 0.5, date: "2026-02-25", criticalViolations: 1, nonCriticalViolations: 2, type: "Standard", county: "Portage", nearStore: "aurora" },
-  { id: "na2", establishment: "Yours Truly", address: "60 Barrington Town Ctr, Aurora", distance: 0.4, date: "2026-02-23", criticalViolations: 0, nonCriticalViolations: 1, type: "Standard", county: "Portage", nearStore: "aurora" },
-  { id: "na3", establishment: "Chipotle", address: "240 W Garfield Rd, Aurora", distance: 1.1, date: "2026-02-21", criticalViolations: 0, nonCriticalViolations: 0, type: "Standard", county: "Portage", nearStore: "aurora" },
-  { id: "na4", establishment: "Cravings Cafe", address: "15 Aurora Commons", distance: 0.3, date: "2026-02-19", criticalViolations: 0, nonCriticalViolations: 2, type: "Standard", county: "Portage", nearStore: "aurora" },
-];
-
-const NEARBY_INSPECTIONS_LINDSEYS: NearbyInspection[] = [
-  { id: "nl1", establishment: "Bellacino's", address: "2739 Whipple Ave NW, Canton", distance: 0.2, date: "2026-02-25", criticalViolations: 0, nonCriticalViolations: 1, type: "Standard", county: "Stark", nearStore: "lindseys" },
-  { id: "nl2", establishment: "Arby's", address: "2650 Whipple Ave NW, Canton", distance: 0.3, date: "2026-02-24", criticalViolations: 1, nonCriticalViolations: 3, type: "Standard", county: "Stark", nearStore: "lindseys" },
-  { id: "nl3", establishment: "Donatos Pizza", address: "4428 Belden Village St NW, Canton", distance: 1.5, date: "2026-02-22", criticalViolations: 0, nonCriticalViolations: 0, type: "Standard", county: "Stark", nearStore: "lindseys" },
-  { id: "nl4", establishment: "Bob Evans", address: "4690 Mega St NW, Canton", distance: 1.8, date: "2026-02-20", criticalViolations: 2, nonCriticalViolations: 4, type: "Standard", county: "Stark", nearStore: "lindseys" },
-  { id: "nl5", establishment: "Handel's Ice Cream", address: "2860 Whipple Ave NW, Canton", distance: 0.4, date: "2026-02-18", criticalViolations: 0, nonCriticalViolations: 0, type: "Standard", county: "Stark", nearStore: "lindseys" },
-];
+const NEARBY_INSPECTIONS_KENT: NearbyInspection[] = [];
+const NEARBY_INSPECTIONS_AURORA: NearbyInspection[] = [];
+const NEARBY_INSPECTIONS_LINDSEYS: NearbyInspection[] = [];
 
 interface ThreatAssessment {
   level: "low" | "elevated" | "high" | "imminent";
@@ -306,7 +198,7 @@ const COMMON_PIZZA_VIOLATIONS = [
 
 const STORE_OPTIONS = [
   { value: "all", label: "All Locations" },
-  ...SEED_STORES.map((s) => ({ value: s.slug, label: s.name })),
+  ...COCKPIT_STORE_SLUGS.map((slug) => ({ value: slug, label: COCKPIT_TARGETS[slug]?.name ?? slug })),
 ];
 
 function formatDate(dateStr: string): string {

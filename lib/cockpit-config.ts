@@ -52,6 +52,17 @@ export function getCockpitTargets(slug: CockpitStoreSlug): CockpitTargets {
   return COCKPIT_TARGETS[slug];
 }
 
+/** KPI benchmarks for grading (food cost %, labor %, PRIME %). Used on home dashboard. */
+export function getBenchmarksForStore(slug: CockpitStoreSlug | "all"): { foodCostTargetPct: number; laborTargetPct: number; primeTargetPct: number } {
+  const key = slug === "all" ? "kent" : slug;
+  const t = COCKPIT_TARGETS[key];
+  return {
+    foodCostTargetPct: 30,
+    laborTargetPct: t.laborMax,
+    primeTargetPct: t.primeMax,
+  };
+}
+
 /** Status for daily scoreboard: on_track | over | under. null = no value. */
 export type CockpitStatusLabel = "on_track" | "over" | "under";
 

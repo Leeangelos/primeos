@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useMemo, useState, useEffect } from "react";
 import {
   BarChart,
   Bar,
@@ -14,10 +14,7 @@ import { cn } from "@/lib/utils";
 import { EducationInfoIcon } from "@/src/components/education/InfoIcon";
 import { ExportButton } from "@/src/components/ui/ExportButton";
 import { formatPct } from "@/src/lib/formatters";
-import {
-  SEED_DAILY_KPIS,
-  SEED_SALES_CHANNEL_PCT,
-} from "@/src/lib/seed-data";
+import { COCKPIT_STORE_SLUGS, COCKPIT_TARGETS } from "@/lib/cockpit-config";
 
 type PeriodKey = "today" | "yesterday" | "this_week" | "last_week" | "this_month" | "custom";
 
@@ -153,16 +150,31 @@ const CHANNEL_LABELS: Record<string, string> = {
 };
 
 export default function SalesPage() {
-  const [period, setPeriod] = useState<PeriodKey>("today");
+  const [store, setStore] = useState("kent");
+  const [period, setPeriod] = useState<PeriodKey>("this_week");
   const [customStart, setCustomStart] = useState("");
   const [customEnd, setCustomEnd] = useState("");
   const [appliedCustomStart, setAppliedCustomStart] = useState("");
   const [appliedCustomEnd, setAppliedCustomEnd] = useState("");
+  const [rangeData, setRangeData] = useState<{ sales: { business_day: string; net_sales?: number }[] } | null>(null);
 
   const { start, end, label } = useMemo(
     () => getPeriodRange(period, appliedCustomStart || undefined, appliedCustomEnd || undefined),
     [period, appliedCustomStart, appliedCustomEnd]
   );
+
+  useEffect(() => {
+    let cancelled = false;
+    const rangeDays = 60;
+    fetch(`/api/dashboard/daily-data?store_id=${encodeURIComponent(store)}&range=${rangeDays}`)
+      .then((r) => r.json())
+      .then((d) => {
+        if (cancelled || !d.sales) return;
+        setRangeData({ sales: d.sales ?? [] });
+      })
+      .catch(() => setRangeData(null));
+    return () => { cancelled = true; };
+  }, [store, period]);
 
   const rangeLabel = useMemo(() => {
     if (start === end) {
@@ -174,10 +186,12 @@ export default function SalesPage() {
   }, [start, end]);
 
   const dailyRows = useMemo(() => {
-    return SEED_DAILY_KPIS.filter(
-      (r) => r.date >= start && r.date <= end && r.store_id === "kent"
-    ).sort((a, b) => a.date.localeCompare(b.date));
-  }, [start, end]);
+    if (!rangeData?.sales?.length) return [];
+    return rangeData.sales
+      .filter((r) => r.business_day >= start && r.business_day <= end)
+      .map((r) => ({ date: r.business_day, sales: r.net_sales ?? 0 }))
+      .sort((a, b) => a.date.localeCompare(b.date));
+  }, [rangeData, start, end]);
 
   const totalSales = useMemo(() => dailyRows.reduce((s, r) => s + r.sales, 0), [dailyRows]);
   const dayCount = dailyRows.length;
@@ -194,14 +208,11 @@ export default function SalesPage() {
     [period, appliedCustomStart, appliedCustomEnd]
   );
   const comparisonRows = useMemo(() => {
-    if (!comparisonRange) return [];
-    return SEED_DAILY_KPIS.filter(
-      (r) =>
-        r.date >= comparisonRange.start &&
-        r.date <= comparisonRange.end &&
-        r.store_id === "kent"
-    );
-  }, [comparisonRange]);
+    if (!comparisonRange || !rangeData?.sales?.length) return [];
+    return rangeData.sales
+      .filter((r) => r.business_day >= comparisonRange!.start && r.business_day <= comparisonRange!.end)
+      .map((r) => ({ date: r.business_day, sales: r.net_sales ?? 0 }));
+  }, [rangeData, comparisonRange]);
   const comparisonTotal = useMemo(
     () => comparisonRows.reduce((s, r) => s + r.sales, 0),
     [comparisonRows]
@@ -225,14 +236,7 @@ export default function SalesPage() {
     [dailyRows]
   );
 
-  const channelBreakdown = useMemo(() => {
-    if (totalSales <= 0) return [];
-    return Object.entries(SEED_SALES_CHANNEL_PCT).map(([key, pct]) => ({
-      channel: CHANNEL_LABELS[key] || key,
-      pct,
-      amount: Math.round((totalSales * pct) / 100),
-    }));
-  }, [totalSales]);
+  const channelBreakdown = useMemo((): { channel: string; pct: number; amount: number }[] => [], []);
 
   return (
     <div className="space-y-4 min-w-0 overflow-x-hidden pb-28">
@@ -250,8 +254,19 @@ export default function SalesPage() {
           })}
         />
         </div>
-        <p className="text-xs text-muted">Daily sales and comparison by period.</p>
-
+        <p className="text-xs text-muted">Daily sales and comparison by period. <span className="text-emerald-500/90">● POS</span></p>
+        <div className="flex flex-wrap items-center gap-2">
+          <label className="text-sm text-zinc-400">Store</label>
+          <select
+            value={store}
+            onChange={(e) => setStore(e.target.value)}
+            className="rounded-lg border border-zinc-700 bg-zinc-900 px-3 py-1.5 text-sm text-white"
+          >
+            {COCKPIT_STORE_SLUGS.map((slug) => (
+              <option key={slug} value={slug}>{COCKPIT_TARGETS[slug]?.name ?? slug}</option>
+            ))}
+          </select>
+        </div>
         <p className="text-sm font-medium text-white">Sales for {rangeLabel}</p>
 
         {/* Date range selector */}

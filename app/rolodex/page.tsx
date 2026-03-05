@@ -3,8 +3,6 @@
 import { useState, useMemo } from "react";
 import { createPortal } from "react-dom";
 import { cn } from "@/lib/utils";
-import { SEED_TRUSTED_CONTACTS, type SeedContact } from "@/src/lib/seed-data";
-
 const CATEGORIES = [
   { key: "all", label: "All" },
   { key: "vendor", label: "Vendors" },
@@ -28,7 +26,9 @@ function categoryLabel(cat: string): string {
   return CATEGORY_LABELS[cat] || cat;
 }
 
-function matchesFilter(c: SeedContact, filter: Category): boolean {
+type Contact = { id: string; name: string; category: string; phone?: string; email?: string; notes?: string };
+
+function matchesFilter(c: Contact, filter: Category): boolean {
   if (filter === "all") return true;
   if (filter === "repairs") return c.category === "service_contract" || c.category === "skilled_labor";
   return c.category === filter;
@@ -38,7 +38,7 @@ export default function RolodexPage() {
   const [search, setSearch] = useState("");
   const [filter, setFilter] = useState<Category>("all");
   const [showForm, setShowForm] = useState(false);
-  const [editing, setEditing] = useState<SeedContact | null>(null);
+  const [editing, setEditing] = useState<Contact | null>(null);
   const [saving, setSaving] = useState(false);
   const [showEducation, setShowEducation] = useState(false);
 
@@ -48,8 +48,7 @@ export default function RolodexPage() {
   const [fEmail, setFEmail] = useState("");
   const [fNotes, setFNotes] = useState("");
 
-  // Demo: always use seed data (no API), so we never have empty state
-  const allContacts = SEED_TRUSTED_CONTACTS;
+  const allContacts: Contact[] = [];
 
   const filteredContacts = useMemo(() => {
     let list = allContacts.filter((c) => matchesFilter(c, filter));
@@ -77,7 +76,7 @@ export default function RolodexPage() {
     setShowForm(false);
   }
 
-  function startEdit(c: SeedContact) {
+  function startEdit(c: Contact) {
     setFName(c.name);
     setFCategory(c.category);
     setFPhone(c.phone || "");

@@ -1,14 +1,16 @@
 "use client";
 
-import { useState, useRef } from "react";
+import { useState, useRef, useEffect, useCallback } from "react";
 import { createPortal } from "react-dom";
 import { Pencil, CheckCircle, AlertTriangle, Check, Plus } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { EducationInfoIcon } from "@/src/components/education/InfoIcon";
 import { ExportButton } from "@/src/components/ui/ExportButton";
-import { SEED_INVOICES, type SeedInvoice, type SeedInvoiceLineItem } from "@/src/lib/seed-data";
 import { VENDORS, type Vendor } from "@/src/lib/vendor-data";
 import { formatDollars } from "@/src/lib/formatters";
+
+type InvoiceLineItem = { name?: string; product?: string; qty: number; unit?: string; unit_price: number; extended_price: number };
+type Invoice = { id: string; vendor_name: string; invoice_number: string | null; invoice_date: string | null; total: number; line_items: InvoiceLineItem[]; status: string };
 
 function matchVendor(invoiceVendorName: string, storeId: string): Vendor | null {
   if (!invoiceVendorName || invoiceVendorName === "Unknown") return null;
@@ -36,23 +38,32 @@ function matchVendor(invoiceVendorName: string, storeId: string): Vendor | null 
   return null;
 }
 
-function recalcLine(item: SeedInvoiceLineItem): SeedInvoiceLineItem {
+function recalcLine(item: InvoiceLineItem): InvoiceLineItem {
   const ext = item.qty * item.unit_price;
   return { ...item, extended_price: Math.round(ext * 100) / 100 };
 }
 
-function recalcDraft(d: SeedInvoice): SeedInvoice {
+function recalcDraft(d: Invoice): Invoice {
   const items = d.line_items.map(recalcLine);
   const total = items.reduce((s, l) => s + l.extended_price, 0);
   return { ...d, line_items: items, total: Math.round(total * 100) / 100 };
 }
 
 export default function InvoicesPage() {
-  const [invoices, setInvoices] = useState<SeedInvoice[]>(SEED_INVOICES);
+  const [invoices, setInvoices] = useState<Invoice[]>([]);
   const [approvedInvoices, setApprovedInvoices] = useState<Record<string, string>>({});
-  const [selected, setSelected] = useState<SeedInvoice | null>(null);
+  const [selected, setSelected] = useState<Invoice | null>(null);
   const [editingInvoice, setEditingInvoice] = useState<string | null>(null);
-  const [editDraft, setEditDraft] = useState<SeedInvoice | null>(null);
+  const [editDraft, setEditDraft] = useState<Invoice | null>(null);
+  const [loading, setLoading] = useState(true);
+
+  const loadInvoices = useCallback(async () => {
+    setLoading(true);
+    const res = await fetch("/api/invoices").then((r) => r.json());
+    if (res.ok && Array.isArray(res.invoices)) setInvoices(res.invoices);
+    setLoading(false);
+  }, []);
+  useEffect(() => { loadInvoices(); }, [loadInvoices]);
   const [scanning, setScanning] = useState(false);
   const [vendorPrompts, setVendorPrompts] = useState<Record<string, "pending" | "added" | "dismissed">>({});
   const [vendorAddToast, setVendorAddToast] = useState<string | null>(null);
@@ -60,13 +71,13 @@ export default function InvoicesPage() {
 
   const selectedStore = "kent";
 
-  function handleAddToVendorTracker(invoice: SeedInvoice, vendor: Vendor) {
+  function handleAddToVendorTracker(invoice: Invoice, vendor: Vendor) {
     setVendorPrompts((prev) => ({ ...prev, [invoice.id]: "added" }));
     setVendorAddToast(vendor.vendor_name);
     setTimeout(() => setVendorAddToast(null), 2500);
   }
 
-  function handleNewVendorDetected(invoice: SeedInvoice) {
+  function handleNewVendorDetected(invoice: Invoice) {
     setVendorPrompts((prev) => ({ ...prev, [invoice.id]: "dismissed" }));
     setVendorAddToast("New vendor — go to Vendor Settings to add " + invoice.vendor_name);
     setTimeout(() => setVendorAddToast(null), 3500);
@@ -89,7 +100,7 @@ export default function InvoicesPage() {
     });
   }
 
-  function openEdit(inv: SeedInvoice) {
+  function openEdit(inv: Invoice) {
     setSelected(inv);
     setEditingInvoice(inv.id);
     setEditDraft(recalcDraft(JSON.parse(JSON.stringify(inv))));
@@ -129,12 +140,12 @@ export default function InvoicesPage() {
     setApprovedInvoices((prev) => ({ ...prev, [invoiceId]: new Date().toISOString() }));
   }
 
-  function updateDraft(updater: (d: SeedInvoice) => SeedInvoice) {
+  function updateDraft(updater: (d: Invoice) => Invoice) {
     if (!editDraft) return;
     setEditDraft(recalcDraft(updater(editDraft)));
   }
 
-  function updateLine(index: number, patch: Partial<SeedInvoiceLineItem>) {
+  function updateLine(index: number, patch: Partial<InvoiceLineItem>) {
     if (!editDraft) return;
     const items = [...editDraft.line_items];
     items[index] = recalcLine({ ...items[index], ...patch });
@@ -524,7 +535,7 @@ export default function InvoicesPage() {
                 ) : (
                   <ul className="space-y-2">
                     {(displayInvoice?.line_items?.length ? displayInvoice.line_items : []).map(
-                      (item: SeedInvoiceLineItem, idx: number) => (
+                      (item: InvoiceLineItem, idx: number) => (
                         <li
                           key={idx}
                           className="flex items-center justify-between gap-2 py-1.5 border-b border-slate-700/50 last:border-0 text-sm"

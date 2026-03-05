@@ -7,7 +7,6 @@ import { useAuth } from "@/src/lib/auth-context";
 import { isNewUser } from "@/src/lib/user-scope";
 import { EducationInfoIcon } from "@/src/components/education/InfoIcon";
 import { EDUCATION_CONTENT } from "@/src/lib/education-content";
-import { SEED_CHAT_MESSAGES } from "@/src/lib/seed-data";
 import { COCKPIT_STORE_SLUGS, COCKPIT_TARGETS, type CockpitStoreSlug } from "@/lib/cockpit-config";
 import { getStoreColor } from "@/lib/store-colors";
 import { cn } from "@/lib/utils";
@@ -110,7 +109,7 @@ export default function ChatPage() {
     if (data.ok && Array.isArray(data.messages) && data.messages.length > 0) {
       setMessages(data.messages);
     } else {
-      setMessages(SEED_CHAT_MESSAGES.filter((m) => m.channel === channel));
+      setMessages([]);
     }
     setLoading(false);
   }, [store, channel, newUser]);

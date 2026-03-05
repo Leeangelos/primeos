@@ -3,8 +3,9 @@
 import { useState } from "react";
 import { createPortal } from "react-dom";
 import { EducationInfoIcon } from "@/src/components/education/InfoIcon";
-import { SEED_PARTY_ORDERS, type SeedPartyOrder } from "@/src/lib/seed-data";
 import { cn } from "@/lib/utils";
+
+type PartyOrder = { id: string; customer_name: string; party_date: string; party_time: string | null; guest_count?: number; items: { name: string; qty: number; price: number }[]; subtotal?: number; tax?: number; total: number; deposit_paid: number; status?: string };
 
 const todayDateString = () => {
   const d = new Date();
@@ -15,24 +16,20 @@ function formatItemSummary(items: { name: string; qty: number; price: number }[]
   return items.map((i) => `${i.qty}× ${i.name}`).join(", ");
 }
 
-function depositStatus(order: SeedPartyOrder): string {
+function depositStatus(order: PartyOrder): string {
   if (order.deposit_paid <= 0) return "Deposit pending";
   if (order.deposit_paid >= order.total) return "Deposit paid (full)";
   return `Deposit paid $${order.deposit_paid.toFixed(0)} · $${(order.total - order.deposit_paid).toFixed(0)} due`;
 }
 
 export default function PartiesPage() {
-  const [selected, setSelected] = useState<SeedPartyOrder | null>(null);
+  const [selected, setSelected] = useState<PartyOrder | null>(null);
 
   const today = todayDateString();
-  const upcoming = SEED_PARTY_ORDERS.filter((p) => p.party_date >= today).sort(
-    (a, b) => new Date(a.party_date).getTime() - new Date(b.party_date).getTime()
-  );
-  const completed = SEED_PARTY_ORDERS.filter((p) => p.party_date < today).sort(
-    (a, b) => new Date(b.party_date).getTime() - new Date(a.party_date).getTime()
-  );
+  const upcoming: PartyOrder[] = [];
+  const completed: PartyOrder[] = [];
 
-  const Card = ({ order }: { order: SeedPartyOrder }) => (
+  const Card = ({ order }: { order: PartyOrder }) => (
     <button
       type="button"
       onClick={() => setSelected(order)}
@@ -67,7 +64,7 @@ export default function PartiesPage() {
       <section className="space-y-3">
         <h2 className="text-sm font-semibold text-white px-1">Upcoming</h2>
         {upcoming.length === 0 ? (
-          <p className="text-sm text-muted py-4 text-center">No upcoming catering orders.</p>
+          <p className="text-sm text-muted py-4 text-center">Catering orders will appear here.</p>
         ) : (
           <div className="space-y-2">
             {upcoming.map((p) => (
@@ -100,11 +97,11 @@ export default function PartiesPage() {
 
             <div className="flex items-center gap-2 mb-1">
               <h3 className="text-base font-semibold text-white">{selected.customer_name}</h3>
-              <span className="text-[10px] uppercase font-bold px-2 py-0.5 rounded border bg-muted/10 text-muted border-border/30">{selected.status}</span>
+              <span className="text-[10px] uppercase font-bold px-2 py-0.5 rounded border bg-muted/10 text-muted border-border/30">{selected.status ?? "—"}</span>
             </div>
             <div className="text-xs text-muted mb-4">
               {new Date(selected.party_date + "T12:00:00Z").toLocaleDateString("en-US", { weekday: "long", month: "long", day: "numeric", year: "numeric" })}
-              {selected.party_time ? ` at ${selected.party_time}` : ""} — {selected.guest_count} guests
+              {selected.party_time ? ` at ${selected.party_time}` : ""} — {selected.guest_count != null ? selected.guest_count : "—"} guests
             </div>
 
             <div className="rounded-lg border border-border/50 p-3 mb-3">

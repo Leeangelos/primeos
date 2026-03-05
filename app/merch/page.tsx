@@ -7,7 +7,6 @@ import { Shirt } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/src/lib/auth-context";
 import { isNewUser, getNewUserStoreName } from "@/src/lib/user-scope";
-import { SEED_MERCH } from "@/src/lib/seed-data";
 
 type MerchItem = {
   id: string;
@@ -62,7 +61,7 @@ function MerchContent() {
     if (res.ok && Array.isArray(res.items) && res.items.length > 0) {
       setItems(res.items);
     } else {
-      setItems(SEED_MERCH);
+      setItems([]);
     }
     setLoading(false);
   }, [brand]);

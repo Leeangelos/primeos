@@ -12,7 +12,7 @@ import { isNewUser } from "@/src/lib/user-scope";
 import { EducationInfoIcon } from "@/src/components/education/InfoIcon";
 import { formatPct } from "@/src/lib/formatters";
 import { EDUCATION_CONTENT } from "@/src/lib/education-content";
-import { SEED_STORES, STORE_BENCHMARKS } from "@/src/lib/seed-data";
+import { COCKPIT_STORE_SLUGS, COCKPIT_TARGETS, getBenchmarksForStore as getBenchmarksFromCockpit } from "@/lib/cockpit-config";
 import { calculateOperatorScore } from "@/src/lib/score-engine";
 import { WinNotifications } from "@/src/components/ui/WinNotifications";
 import { SmartQuestion } from "@/src/components/ui/SmartQuestion";
@@ -148,8 +148,7 @@ function gradeSales(sales: number, target: number): Grade {
 }
 
 function getBenchmarksForStore(storeSlug: StoreSlug): { foodCostTargetPct: number; laborTargetPct: number; primeTargetPct: number } {
-  const key = storeSlug === "all" ? "kent" : storeSlug;
-  return STORE_BENCHMARKS[key] ?? STORE_BENCHMARKS.kent;
+  return getBenchmarksFromCockpit(storeSlug === "all" ? "kent" : (storeSlug as "kent" | "aurora" | "lindseys"));
 }
 
 function gradeToHex(grade: Grade): string {
@@ -161,13 +160,13 @@ type AlertItem = { severity: "red" | "yellow"; key: string; label: string; messa
 type StoreSlug = "kent" | "aurora" | "lindseys" | "all";
 
 const STORE_OPTIONS: { slug: StoreSlug; name: string }[] = [
-  ...SEED_STORES.map((s) => ({ slug: s.slug as StoreSlug, name: s.name })),
+  ...COCKPIT_STORE_SLUGS.map((s) => ({ slug: s as StoreSlug, name: COCKPIT_TARGETS[s].name })),
   { slug: "all", name: "All Locations" },
 ];
 
 function getStoreLabel(slug: StoreSlug): string {
   if (slug === "all") return "All Locations";
-  return SEED_STORES.find((s) => s.slug === slug)?.name ?? slug;
+  return COCKPIT_TARGETS[slug as "kent" | "aurora" | "lindseys"]?.name ?? slug;
 }
 
 /** For API/seed: use single store slug; "all" → kent for demo combined view. */
@@ -588,8 +587,8 @@ export default function HomePage() {
     if (onboardingData?.weekly_sales != null && onboardingData.weekly_sales > 0) {
       return Math.round(Number(onboardingData.weekly_sales) / 7);
     }
-    if (selectedStore === "all") return SEED_STORES.find((s) => s.slug === "kent")?.avgDailySales ?? KENT_DAILY_TARGET;
-    return SEED_STORES.find((s) => s.slug === selectedStore)?.avgDailySales ?? KENT_DAILY_TARGET;
+    if (selectedStore === "all") return KENT_DAILY_TARGET;
+    return KENT_DAILY_TARGET;
   }, [selectedStore, onboardingData?.weekly_sales]);
 
   const isOnboardingUser = onboardingData != null;

@@ -7,7 +7,7 @@ import { isNewUser, getNewUserStoreName } from "@/src/lib/user-scope";
 import { formatDollars, formatPct } from "@/src/lib/formatters";
 import { EducationInfoIcon } from "@/src/components/education/InfoIcon";
 import { DataDisclaimer } from "@/src/components/ui/DataDisclaimer";
-import { SEED_STORES } from "@/src/lib/seed-data";
+import { COCKPIT_STORE_SLUGS, COCKPIT_TARGETS } from "@/lib/cockpit-config";
 
 const GL_CATEGORIES = [
   { range: "4000-4999", label: "Revenue", color: "text-emerald-400" },
@@ -40,7 +40,7 @@ const PNL_COMPARISON = {
   marketing: { gl: 1850, pnl: 1800, label: "Marketing" },
 };
 
-const STORE_OPTIONS = SEED_STORES.map((s) => ({ value: s.slug, label: s.name }));
+const STORE_OPTIONS = COCKPIT_STORE_SLUGS.map((slug) => ({ value: slug, label: COCKPIT_TARGETS[slug]?.name ?? slug }));
 
 const MONTHS = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
 

@@ -3,8 +3,6 @@
 import { useState, useMemo } from "react";
 import { cn } from "@/lib/utils";
 import { EducationInfoIcon } from "@/src/components/education/InfoIcon";
-import { SEED_INVENTORY, type SeedInventoryItem } from "@/src/lib/seed-data";
-
 const CATEGORIES = [
   { key: "all", label: "All" },
   { key: "cheese", label: "Cheese" },
@@ -37,10 +35,12 @@ function formatLastCounted(dateStr: string): string {
   });
 }
 
+type InventoryItem = { id: string; name: string; category: string; vendor: string; current_count: number; par_level: number; unit: string; last_counted: string };
+
 export default function InventoryPage() {
   const [search, setSearch] = useState("");
   const [filter, setFilter] = useState("all");
-  const [items, setItems] = useState<SeedInventoryItem[]>(() => SEED_INVENTORY);
+  const [items, setItems] = useState<InventoryItem[]>([]);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editValue, setEditValue] = useState("");
 
@@ -58,7 +58,7 @@ export default function InventoryPage() {
     return list;
   }, [items, filter, search]);
 
-  function startEdit(item: SeedInventoryItem) {
+  function startEdit(item: InventoryItem) {
     setEditingId(item.id);
     setEditValue(String(item.current_count));
   }

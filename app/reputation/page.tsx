@@ -12,12 +12,11 @@ import {
 } from "lucide-react";
 import { useAuth } from "@/src/lib/auth-context";
 import { isNewUser, getNewUserStoreName } from "@/src/lib/user-scope";
-import { SEED_STORES } from "@/src/lib/seed-data";
+import { COCKPIT_STORE_SLUGS, COCKPIT_TARGETS, type CockpitStoreSlug } from "@/lib/cockpit-config";
 import { EducationInfoIcon } from "@/src/components/education/InfoIcon";
 import DataSourceBadge from "@/src/components/ui/DataSourceBadge";
 import { SmartQuestion } from "@/src/components/ui/SmartQuestion";
 import { useAllStoreProfiles } from "@/src/hooks/usePlacesData";
-import { SEED_REPUTATION_KPIS_BY_STORE } from "@/src/lib/seed-data";
 
 // Store reputation data
 const REPUTATION_DATA: Record<
@@ -107,8 +106,10 @@ const REPUTATION_ALERTS = [
 
 const STORE_OPTIONS = [
   { value: "all", label: "All Locations" },
-  ...SEED_STORES.map((s) => ({ value: s.slug, label: s.name })),
+  ...COCKPIT_STORE_SLUGS.map((slug) => ({ value: slug, label: COCKPIT_TARGETS[slug]?.name ?? slug })),
 ];
+
+const EMPTY_REPUTATION_KPIS = { responseRatePct: 0, aiVisibilityScore: 0 };
 
 const GOOGLE_PROFILE_URL: Record<string, string> = {
   kent: "https://www.google.com/maps/search/LeeAngelo's+Kent+OH",
@@ -270,7 +271,7 @@ export default function ReputationPage() {
   const marketKey = selectedStore === "all" ? "kent" : selectedStore;
   const marketData = MARKET_RATINGS[marketKey] ?? [];
   const marketPosition = useMemo(() => {
-    const yourName = selectedStore === "all" ? "LeeAngelo's Kent" : SEED_STORES.find((s) => s.slug === selectedStore)?.name ?? "";
+    const yourName = selectedStore === "all" ? "LeeAngelo's Kent" : COCKPIT_TARGETS[selectedStore as keyof typeof COCKPIT_TARGETS]?.name ?? "";
     const idx = marketData.findIndex((m) => m.name.includes("LeeAngelo") || m.name.includes("Lindsey"));
     return idx >= 0 ? idx + 1 : 0;
   }, [marketData, selectedStore]);
@@ -279,14 +280,14 @@ export default function ReputationPage() {
     if (selectedStore === "all") {
       const stores = ["kent", "aurora", "lindseys"] as const;
       const avgResponse = Math.round(
-        stores.reduce((s, id) => s + (SEED_REPUTATION_KPIS_BY_STORE[id]?.responseRatePct ?? 0), 0) / stores.length
+        stores.reduce((s, id) => s + (EMPTY_REPUTATION_KPIS.responseRatePct ?? 0), 0) / stores.length
       );
       const avgAi = Math.round(
-        stores.reduce((s, id) => s + (SEED_REPUTATION_KPIS_BY_STORE[id]?.aiVisibilityScore ?? 0), 0) / stores.length
+        stores.reduce((s, id) => s + (EMPTY_REPUTATION_KPIS.aiVisibilityScore ?? 0), 0) / stores.length
       );
       return { responseRatePct: avgResponse, aiVisibilityScore: avgAi };
     }
-    return SEED_REPUTATION_KPIS_BY_STORE[selectedStore] ?? SEED_REPUTATION_KPIS_BY_STORE.kent;
+    return EMPTY_REPUTATION_KPIS;
   }, [selectedStore]);
 
   const pinnedStoreDisplay = newUser ? newUserStoreName : (PINNED_STORE_DISPLAY[selectedStore] ?? PINNED_STORE_DISPLAY.all);
@@ -299,7 +300,7 @@ export default function ReputationPage() {
       <div className="flex items-center justify-between mb-4">
         <div>
           <h1 className="text-xl font-bold text-white">Do We Suck?</h1>
-          <p className="text-xs text-slate-400 mt-0.5">What the internet thinks about your business</p>
+          <p className="text-xs text-slate-400 mt-0.5">What the internet thinks about your business. <span className="text-emerald-500/90">● Google</span></p>
         </div>
         <EducationInfoIcon metricKey="reputation" size="lg" />
       </div>

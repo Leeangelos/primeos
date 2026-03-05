@@ -10,11 +10,11 @@ import {
 } from "@/src/lib/vendor-data";
 import { useAuth } from "@/src/lib/auth-context";
 import { isNewUser, getNewUserStoreName } from "@/src/lib/user-scope";
-import { SEED_STORES } from "@/src/lib/seed-data";
+import { COCKPIT_STORE_SLUGS, COCKPIT_TARGETS } from "@/lib/cockpit-config";
 import { formatDollars } from "@/src/lib/formatters";
 
 const STORE_PREFIX: Record<string, string> = { kent: "knt", aurora: "aur", lindseys: "lin" };
-const STORE_OPTIONS = SEED_STORES.map((s) => ({ value: s.slug, label: s.name }));
+const STORE_OPTIONS = COCKPIT_STORE_SLUGS.map((slug) => ({ value: slug, label: COCKPIT_TARGETS[slug]?.name ?? slug }));
 
 const ALL_PLATFORMS = [
   { id: "doordash", name: "DoorDash", icon: "🚗", desc: "Commission: 15-30%" },

@@ -6,8 +6,6 @@ import { cn } from "@/lib/utils";
 import { useAuth } from "@/src/lib/auth-context";
 import { isNewUser, getNewUserStoreName } from "@/src/lib/user-scope";
 import { EducationInfoIcon } from "@/src/components/education/InfoIcon";
-import { SEED_RECIPES, type SeedRecipe, type SeedRecipeIngredient } from "@/src/lib/seed-data";
-
 const CATEGORIES = [
   { key: "all", label: "All" },
   { key: "pizza", label: "Pizza" },
@@ -19,11 +17,14 @@ const CATEGORIES = [
 
 type Category = (typeof CATEGORIES)[number]["key"];
 
-function ingredientLineCost(i: SeedRecipeIngredient): number {
+type RecipeIngredient = { name: string; qty: number; cost_per_unit: number; unit?: string };
+type Recipe = { id: string; name: string; category: string; size?: string; menu_price: number; ingredients: RecipeIngredient[] };
+
+function ingredientLineCost(i: RecipeIngredient): number {
   return Math.round(i.qty * i.cost_per_unit * 100) / 100;
 }
 
-function recipeTotalCost(r: SeedRecipe): number {
+function recipeTotalCost(r: Recipe): number {
   return r.ingredients.reduce((sum, i) => sum + ingredientLineCost(i), 0);
 }
 
@@ -56,7 +57,7 @@ export default function RecipesPage() {
   const [onboardingWebsite, setOnboardingWebsite] = useState<string | null>(null);
   const [search, setSearch] = useState("");
   const [filter, setFilter] = useState<Category>("all");
-  const [selected, setSelected] = useState<SeedRecipe | null>(null);
+  const [selected, setSelected] = useState<Recipe | null>(null);
   const [showEducation, setShowEducation] = useState(false);
 
   useEffect(() => {
@@ -71,7 +72,8 @@ export default function RecipesPage() {
   }, [newUser, session?.access_token]);
 
   const filteredRecipes = useMemo(() => {
-    let list = SEED_RECIPES.filter((r) => filter === "all" || r.category === filter);
+    const recipeList: Recipe[] = [];
+    let list = recipeList.filter((r) => filter === "all" || r.category === filter);
     const q = search.trim().toLowerCase();
     if (q) {
       list = list.filter(
@@ -160,7 +162,12 @@ export default function RecipesPage() {
 
       {/* Single column grid — full width cards on mobile */}
       <div className="px-3 sm:px-5 space-y-3">
-        {filteredRecipes.map((r) => {
+        {filteredRecipes.length === 0 ? (
+          <div className="rounded-xl border border-slate-700 bg-slate-800/50 p-6 text-center">
+            <p className="text-slate-400 text-sm">Items from your POS will appear here. Add recipe details to see food cost.</p>
+          </div>
+        ) : (
+          filteredRecipes.map((r) => {
           const totalCost = recipeTotalCost(r);
           const fcPct = foodCostPct(totalCost, r.menu_price);
           const margin = marginPct(totalCost, r.menu_price);
@@ -209,7 +216,8 @@ export default function RecipesPage() {
               </div>
             </button>
           );
-        })}
+        })
+        )}
       </div>
 
       {/* Recipe detail modal — ingredients, costs, total, sell price, Gross Margin */}
@@ -257,7 +265,7 @@ export default function RecipesPage() {
                           className="flex justify-between items-baseline gap-2 text-sm"
                         >
                           <span className="text-slate-200">
-                            {i.name} — {i.qty} {i.unit}
+                            {i.name} — {i.qty} {i.unit ?? "ea"}
                           </span>
                           <span className="text-white font-medium tabular-nums shrink-0">
                             ${lineCost.toFixed(2)}

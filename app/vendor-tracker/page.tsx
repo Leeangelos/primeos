@@ -28,7 +28,7 @@ import { formatPct, formatDollars } from "@/src/lib/formatters";
 import { EducationInfoIcon } from "@/src/components/education/InfoIcon";
 import { DataDisclaimer } from "@/src/components/ui/DataDisclaimer";
 import { SmartQuestion } from "@/src/components/ui/SmartQuestion";
-import { SEED_STORES } from "@/src/lib/seed-data";
+import { COCKPIT_STORE_SLUGS, COCKPIT_TARGETS } from "@/lib/cockpit-config";
 
 const STORE_REVENUE: Record<string, number> = { kent: 44000, aurora: 52000, lindseys: 32000 };
 const MONTH_NAMES = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
@@ -41,7 +41,7 @@ const CC_PROCESSING_BY_STORE: Record<string, { processorName: string; quotedRate
   lindseys: { processorName: "Square", quotedRatePct: 2.5, monthlyVolume: 52000, monthlyFees: 1456 },
 };
 
-const STORE_OPTIONS = SEED_STORES.map((s) => ({ value: s.slug, label: s.name }));
+const STORE_OPTIONS = COCKPIT_STORE_SLUGS.map((s) => ({ value: s, label: COCKPIT_TARGETS[s].name }));
 
 // 12 months Mar 2025 – Feb 2026 for annual view
 const ANNUAL_MONTHS: { month: number; year: number; short: string }[] = [];

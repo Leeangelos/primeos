@@ -7,7 +7,6 @@ import { useAuth } from "@/src/lib/auth-context";
 import { isNewUser, getNewUserStoreName } from "@/src/lib/user-scope";
 import { EducationInfoIcon } from "@/src/components/education/InfoIcon";
 import { EDUCATION_CONTENT } from "@/src/lib/education-content";
-import { SEED_TASKS, SEED_EMPLOYEES } from "@/src/lib/seed-data";
 import { COCKPIT_STORE_SLUGS, COCKPIT_TARGETS, type CockpitStoreSlug } from "@/lib/cockpit-config";
 import { getStoreColor } from "@/lib/store-colors";
 import { cn } from "@/lib/utils";
@@ -109,8 +108,7 @@ export default function TasksPage() {
     if (data.ok && Array.isArray(data.tasks) && data.tasks.length > 0) {
       setTasks(data.tasks);
     } else {
-      const byStore = SEED_TASKS.filter((t) => t.store_id === store);
-      setTasks(category === "all" ? byStore : byStore.filter((t) => t.category === category));
+      setTasks([]);
     }
     setLoading(false);
   }, [store, date, category]);
@@ -123,7 +121,6 @@ export default function TasksPage() {
   const activeTasks = tasks.filter((t) => t.status !== "completed");
   const completedTasksList = tasks.filter((t) => t.status === "completed");
 
-  const employees = SEED_EMPLOYEES.filter((e) => e.status === "active");
 
   async function handleComplete(taskId: string, selectedName: string) {
     if (!selectedName?.trim()) return;
@@ -299,17 +296,14 @@ export default function TasksPage() {
                 {completingTaskId === task.id ? (
                   <div className="mt-2 p-3 rounded-xl bg-slate-700/50 border border-slate-600 relative z-20 min-w-0 flex-1 sm:flex-initial flex flex-col gap-3 pb-28">
                     <div className="mb-1">
-                      <select
+                      <input
+                        type="text"
                         value={completingSelectedName}
                         onChange={(e) => setCompletingSelectedName(e.target.value)}
+                        placeholder="Who completed this?"
                         className="w-full bg-slate-700 border border-slate-600 rounded-lg text-xs text-white h-10 px-2 min-h-[44px]"
                         autoFocus
-                      >
-                        <option value="">Who completed this?</option>
-                        {employees.map((emp) => (
-                          <option key={emp.id} value={emp.name}>{emp.name} ({ROLES[emp.role] ?? emp.role})</option>
-                        ))}
-                      </select>
+                      />
                     </div>
                     <button
                       type="button"

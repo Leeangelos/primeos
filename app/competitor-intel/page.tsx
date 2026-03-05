@@ -15,7 +15,7 @@ import {
   type Competitor,
 } from "@/src/lib/competitor-data";
 import { MENU_DATA } from "@/src/lib/menu-data";
-import { SEED_STORES } from "@/src/lib/seed-data";
+import { COCKPIT_STORE_SLUGS, COCKPIT_TARGETS, type CockpitStoreSlug } from "@/lib/cockpit-config";
 import { getStoreLocation } from "@/src/lib/store-locations";
 import { useAuth } from "@/src/lib/auth-context";
 import { isNewUser, getNewUserStoreName } from "@/src/lib/user-scope";
@@ -26,7 +26,7 @@ import { usePlacesData } from "@/src/hooks/usePlacesData";
 
 const STORE_OPTIONS = [
   { value: "all", label: "All Locations" },
-  ...SEED_STORES.map((s) => ({ value: s.slug, label: s.name })),
+  ...COCKPIT_STORE_SLUGS.map((slug) => ({ value: slug, label: COCKPIT_TARGETS[slug]?.name ?? slug })),
 ];
 
 function formatTime(isoString: string): string {
@@ -42,7 +42,7 @@ function formatTime(isoString: string): string {
 }
 
 function getStoreName(storeId: string): string {
-  return SEED_STORES.find((s) => s.slug === storeId)?.name ?? storeId;
+  return COCKPIT_TARGETS[storeId as CockpitStoreSlug]?.name ?? storeId;
 }
 
 export default function CompetitorIntelPage() {
@@ -240,7 +240,7 @@ export default function CompetitorIntelPage() {
       <div className="flex items-center justify-between mb-4">
         <div>
           <h1 className="text-xl font-bold text-white">Competitor Intel</h1>
-          <p className="text-xs text-slate-400 mt-0.5">Know your market. Price with confidence.</p>
+          <p className="text-xs text-slate-400 mt-0.5">Know your market. Price with confidence. {isLiveData && <span className="text-emerald-500/90">● Google</span>}</p>
         </div>
         <EducationInfoIcon metricKey="competitor_intelligence" size="lg" />
       </div>
@@ -263,7 +263,7 @@ export default function CompetitorIntelPage() {
       <div className="flex items-center gap-2 mb-2 flex-wrap">
         {isLiveData && <DataSourceBadge source="google" lastUpdated="Live" />}
         {!isLiveData && placesLoading && <span className="text-[10px] text-slate-500">Loading live data...</span>}
-        {!isLiveData && !placesLoading && <DataSourceBadge source="manual" lastUpdated="Seed data" />}
+        {!isLiveData && !placesLoading && <DataSourceBadge source="manual" lastUpdated="No data" />}
       </div>
 
       <div className="flex bg-slate-800 rounded-lg p-0.5 border border-slate-700 mb-4">
