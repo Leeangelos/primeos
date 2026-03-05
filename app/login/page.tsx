@@ -89,15 +89,15 @@ function LoginContent() {
       `}} />
       <div
         className="fixed inset-0 z-[9999] flex flex-col min-h-[100dvh] bg-zinc-950 overflow-y-auto justify-between md:justify-center md:items-center"
-        style={{ userSelect: "none" }}
+        style={{ userSelect: "none", pointerEvents: "auto" }}
         aria-modal="true"
         role="dialog"
       >
-        <div className="pointer-events-auto w-full max-w-sm mx-auto px-6 pt-8 pb-6 md:py-10 flex flex-col gap-6 md:gap-8">
+        <div className="w-full max-w-sm mx-auto px-6 pt-8 pb-6 md:py-10 flex flex-col gap-6 md:gap-8">
           <header className="flex flex-col items-center pt-2">
             <div className="relative inline-block">
               <div
-                className="absolute inset-0 rounded-full login-glow-pulse"
+                className="absolute inset-0 rounded-full login-glow-pulse pointer-events-none"
                 style={{ boxShadow: "0 0 40px rgba(230,81,0,0.2)", background: "transparent" }}
                 aria-hidden
               />
@@ -149,7 +149,7 @@ function LoginContent() {
             ) : (
               <>
                 <h2 className="text-lg font-semibold text-white mb-4 text-left">Log In</h2>
-                <form onSubmit={handleSubmit} className="space-y-4">
+                <form onSubmit={handleSubmit} className="space-y-4" style={{ touchAction: "manipulation" }}>
                   {error && (
                     <div className="p-2.5 rounded-lg bg-red-600/20 border border-red-700/30 text-xs text-red-300">
                       {error}
