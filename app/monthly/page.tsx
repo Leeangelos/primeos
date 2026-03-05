@@ -176,7 +176,7 @@ function MonthlyContent() {
           </div>
           <p className="text-xs text-muted">{newUserStoreName}</p>
         </div>
-        <div className="bg-zinc-900/50 border border-zinc-800 rounded-2xl p-6 text-center">
+        <div className="bg-zinc-900/50 rounded-xl border border-zinc-800/50 shadow-sm p-6 text-center">
           <p className="text-sm text-zinc-300">Your Monthly Summary will generate at the end of each month once daily data is flowing.</p>
         </div>
       </div>
@@ -235,7 +235,7 @@ function MonthlyContent() {
             const salesDiff = prevPnl.totalSales > 0 ? ((pnl.totalSales - prevPnl.totalSales) / prevPnl.totalSales) * 100 : 0;
             const salesUp = pnl.totalSales >= prevPnl.totalSales;
             return (
-              <div className="bg-zinc-900/60 rounded-lg p-3 border border-zinc-800">
+              <div className="bg-zinc-900/60 rounded-xl p-3 border border-zinc-800/50 shadow-sm">
                 <p className="text-xs text-zinc-500 uppercase tracking-wide">Sales</p>
                 <p className="text-lg font-bold text-white tabular-nums mt-0.5">{formatDollars(pnl.totalSales)}</p>
                 <p className={`text-xs mt-1 flex items-center gap-1 ${salesUp ? "text-emerald-400" : "text-red-400"}`}>
@@ -248,7 +248,7 @@ function MonthlyContent() {
             const foodBetter = pnl.foodPct <= prevPnl.foodPct;
             const foodDiff = (pnl.foodPct - prevPnl.foodPct).toFixed(1);
             return (
-              <div className="bg-zinc-900/60 rounded-lg p-3 border border-zinc-800">
+              <div className="bg-zinc-900/60 rounded-xl p-3 border border-zinc-800/50 shadow-sm">
                 <p className="text-xs text-zinc-500 uppercase tracking-wide">Food Cost %</p>
                 <p className="text-lg font-bold text-white tabular-nums mt-0.5">{formatPct(pnl.foodPct)}</p>
                 <p className={`text-xs mt-1 flex items-center gap-1 ${foodBetter ? "text-emerald-400" : "text-red-400"}`}>
@@ -261,7 +261,7 @@ function MonthlyContent() {
             const laborBetter = pnl.laborPct <= prevPnl.laborPct;
             const laborDiff = (pnl.laborPct - prevPnl.laborPct).toFixed(1);
             return (
-              <div className="bg-zinc-900/60 rounded-lg p-3 border border-zinc-800">
+              <div className="bg-zinc-900/60 rounded-xl p-3 border border-zinc-800/50 shadow-sm">
                 <p className="text-xs text-zinc-500 uppercase tracking-wide">Labor %</p>
                 <p className="text-lg font-bold text-white tabular-nums mt-0.5">{formatPct(pnl.laborPct)}</p>
                 <p className={`text-xs mt-1 flex items-center gap-1 ${laborBetter ? "text-emerald-400" : "text-red-400"}`}>
@@ -274,7 +274,7 @@ function MonthlyContent() {
             const primeBetter = pnl.primePct <= prevPnl.primePct;
             const primeDiff = (prevPnl.primePct - pnl.primePct).toFixed(1);
             return (
-              <div className="bg-zinc-900/60 rounded-lg p-3 border border-zinc-800">
+              <div className="bg-zinc-900/60 rounded-xl p-3 border border-zinc-800/50 shadow-sm">
                 <p className="text-xs text-zinc-500 uppercase tracking-wide">COGS %</p>
                 <p className="text-lg font-bold text-white tabular-nums mt-0.5">{formatPct(pnl.primePct)}</p>
                 <p className={`text-xs mt-1 flex items-center gap-1 ${primeBetter ? "text-emerald-400" : "text-red-400"}`}>
@@ -287,7 +287,7 @@ function MonthlyContent() {
             const gpBetter = pnl.gpPct >= prevPnl.gpPct;
             const gpDiff = (pnl.gpPct - prevPnl.gpPct).toFixed(1);
             return (
-              <div className="bg-zinc-900/60 rounded-lg p-3 border border-zinc-800">
+              <div className="bg-zinc-900/60 rounded-xl p-3 border border-zinc-800/50 shadow-sm">
                 <p className="text-xs text-zinc-500 uppercase tracking-wide">Gross Profit %</p>
                 <p className="text-lg font-bold text-white tabular-nums mt-0.5">{formatPct(pnl.gpPct)}</p>
                 <p className={`text-xs mt-1 flex items-center gap-1 ${gpBetter ? "text-emerald-400" : "text-red-400"}`}>
@@ -296,7 +296,7 @@ function MonthlyContent() {
               </div>
             );
           })()}
-          <div className="bg-zinc-900/60 rounded-lg p-3 border border-zinc-800">
+          <div className="bg-zinc-900/60 rounded-xl p-3 border border-zinc-800/50 shadow-sm">
             <p className="text-xs text-zinc-500 uppercase tracking-wide">Gross Profit</p>
             <p className="text-lg font-bold text-emerald-400 tabular-nums mt-0.5">{formatDollars(pnl.grossProfit)}</p>
             <p className="text-xs text-zinc-500 mt-1">This month</p>

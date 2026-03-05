@@ -610,7 +610,7 @@ function DailyPageContent() {
           <p className="text-xs text-muted">{newUserStoreName}</p>
         </div>
         <SmartQuestion page="daily" />
-        <div className="bg-zinc-900/50 border border-zinc-800 rounded-2xl p-6 space-y-4">
+        <div className="bg-zinc-900/50 rounded-xl border border-zinc-800/50 shadow-sm p-6 space-y-4">
           <p className="text-sm text-zinc-300">Here you&apos;ll enter today&apos;s sales, food cost, labor, and other KPIs. Your numbers will appear in the layout below once we connect your system.</p>
           <div className="grid grid-cols-2 gap-3 text-left">
             <div className="rounded-lg border border-zinc-700 bg-zinc-800/50 p-3">
@@ -1244,7 +1244,7 @@ function DailyPageContent() {
               </div>
             </div>
 
-            <div className="rounded-2xl bg-zinc-900 border border-zinc-800 p-4 space-y-4">
+            <div className="rounded-xl bg-zinc-900 border border-zinc-800/50 shadow-sm p-4 space-y-4">
               <div className="space-y-2">
                 <p className="text-xs text-slate-300">
                   Did you recognize a team member by name today for specific work?

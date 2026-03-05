@@ -228,7 +228,7 @@ export default function CompetitorIntelPage() {
           </div>
           <EducationInfoIcon metricKey="competitor_intelligence" size="lg" />
         </div>
-        <div className="bg-zinc-900/50 border border-zinc-800 rounded-2xl p-6 text-center">
+        <div className="bg-zinc-900/50 rounded-xl border border-zinc-800/50 shadow-sm p-6 text-center">
           <p className="text-sm text-zinc-300">We&apos;re mapping competitors near your location. This data will populate soon.</p>
         </div>
       </div>

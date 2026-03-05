@@ -142,7 +142,7 @@ export default function MenuIntelligencePage() {
           <EducationInfoIcon metricKey="menu_item_count" size="lg" />
         </div>
         <SmartQuestion page="menu" />
-        <div className="bg-zinc-900/50 border border-zinc-800 rounded-2xl p-6 text-center">
+        <div className="bg-zinc-900/50 rounded-xl border border-zinc-800/50 shadow-sm p-6 text-center">
           <p className="text-sm text-zinc-300">Menu intelligence requires POS data to analyze your best and worst sellers.</p>
         </div>
       </div>

@@ -243,7 +243,7 @@ export default function BriefPage() {
           <p className="text-sm font-medium text-white">{newUserStoreName}</p>
           <p className="text-xs text-muted">Today, {todayLabel}</p>
         </div>
-        <div className="bg-zinc-900/50 border border-zinc-800 rounded-2xl p-6 space-y-4">
+        <div className="bg-zinc-900/50 rounded-xl border border-zinc-800/50 shadow-sm p-6 space-y-4">
           <div className="space-y-2">
             <div className="flex justify-between text-sm">
               <span className="text-zinc-500">Yesterday&apos;s Sales</span>

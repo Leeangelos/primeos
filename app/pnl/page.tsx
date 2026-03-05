@@ -181,7 +181,7 @@ export default function PnlPage() {
           <EducationInfoIcon metricKey="gp_vs_net_profit" size="lg" />
         </div>
         <p className="text-xs text-muted">{newUserStoreName}</p>
-        <div className="bg-zinc-900/50 border border-zinc-800 rounded-2xl p-6 text-center">
+        <div className="bg-zinc-900/50 rounded-xl border border-zinc-800/50 shadow-sm p-6 text-center">
           <p className="text-sm text-zinc-300">Your P&L will populate when transaction data starts flowing. Tap any (i) icon to learn what each line item means.</p>
         </div>
       </div>
@@ -251,7 +251,7 @@ export default function PnlPage() {
           )}
         </div>
         {useCustomRange && (
-          <div className="rounded-xl border border-zinc-800 bg-zinc-900 p-4 space-y-3">
+          <div className="rounded-xl border border-zinc-800/50 shadow-sm bg-zinc-900 p-4 space-y-3">
             <p className="text-xs text-zinc-400">Select start and end month</p>
             <div className="flex flex-wrap items-end gap-3">
               <label>

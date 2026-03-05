@@ -146,6 +146,39 @@ body {
   scrollbar-width: none;
 }
 
+@keyframes fade-in {
+  from { opacity: 0; transform: translateY(4px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+@keyframes shimmer {
+  0% { transform: translateX(-100%); }
+  100% { transform: translateX(100%); }
+}
+@keyframes glow-pulse {
+  0%, 100% { opacity: 0.1; }
+  50% { opacity: 0.25; }
+}
+.animate-fade-in {
+  animation: fade-in 300ms ease-out both;
+}
+
+@keyframes win-shimmer {
+  0% { transform: translateX(-100%) skewX(-12deg); }
+  100% { transform: translateX(200%) skewX(-12deg); }
+}
+.win-card-shimmer {
+  position: relative;
+  overflow: hidden;
+}
+.win-card-shimmer::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(105deg, transparent 0%, rgba(255,255,255,0.05) 45%, rgba(255,255,255,0.08) 50%, rgba(255,255,255,0.05) 55%, transparent 100%);
+  animation: win-shimmer 8s ease-in-out infinite;
+  pointer-events: none;
+}
+
 @keyframes slide-up {
   from { transform: translateY(100%); }
   to { transform: translateY(0); }

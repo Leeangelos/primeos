@@ -71,7 +71,7 @@ export default function RootLayout({
                     <NotificationPrompt />
                     <AddToHomeScreenPrompt />
 
-                    <main className="glass glow rounded-2xl p-3 sm:p-5 pb-28 mt-4">{children}</main>
+                    <main className="glass glow rounded-2xl p-3 sm:p-5 pb-28 mt-4 animate-fade-in">{children}</main>
 
                     <footer className="text-center py-4 pb-28">
                       <p className="text-xs text-slate-500">© 2026 Ambition & Legacy LLC. All rights reserved.</p>

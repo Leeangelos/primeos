@@ -110,7 +110,7 @@ export default function PeoplePage() {
           <p className="text-xs text-muted">{newUserStoreName}</p>
         </div>
         <SmartQuestion page="people" />
-        <div className="bg-zinc-900/50 border border-zinc-800 rounded-2xl p-6 text-center">
+        <div className="bg-zinc-900/50 rounded-xl border border-zinc-800/50 shadow-sm p-6 text-center">
           <p className="text-sm text-zinc-300">Your team roster will appear here. Start by adding shifts in the Schedule.</p>
         </div>
       </div>

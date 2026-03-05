@@ -180,11 +180,13 @@ function PillarCard({
   isExpanded: boolean;
   onToggle: () => void;
 }) {
+  const borderAccent = grade === "A" || grade === "B" ? "border-l-emerald-400" : grade === "C" ? "border-l-amber-400" : "border-l-red-400";
+  const gradeGlow = grade === "A" || grade === "B" ? "shadow-[0_0_8px_rgba(52,211,153,0.3)]" : grade === "C" ? "shadow-[0_0_8px_rgba(251,191,36,0.3)]" : "shadow-[0_0_8px_rgba(248,113,113,0.3)]";
   return (
     <button
       type="button"
       onClick={onToggle}
-      className="w-full flex items-center justify-between gap-2 rounded-full bg-zinc-900 border border-zinc-800 px-3 py-2 min-h-[44px] cursor-pointer active:opacity-90 text-left"
+      className={`w-full flex items-center justify-between gap-2 rounded-full bg-zinc-900 border border-zinc-800 border-l-[3px] ${borderAccent} px-3 py-2 min-h-[44px] cursor-pointer active:opacity-90 text-left transition-all duration-300 ease-in-out`}
       aria-expanded={isExpanded}
       aria-label={`${label} pillar grade ${grade}. Tap to ${isExpanded ? "collapse" : "expand"}.`}
     >
@@ -193,8 +195,8 @@ function PillarCard({
         <span className="text-xs font-semibold text-white truncate">{label}</span>
       </div>
       <div className="flex items-center gap-2 shrink-0">
-        <span className={`text-sm font-bold ${pillarGradeColorClass(grade)}`}>{grade}</span>
-        <span className="text-zinc-500" aria-hidden="true">{isExpanded ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}</span>
+        <span className={`text-sm font-bold ${pillarGradeColorClass(grade)} ${gradeGlow}`}>{grade}</span>
+        <span className="text-zinc-500 transition-transform duration-300" aria-hidden="true">{isExpanded ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}</span>
       </div>
     </button>
   );
@@ -219,7 +221,7 @@ function PillarPanel({
   if (pillarId === "product") {
     const value = kpi ? formatPct(kpi.foodCostPct) : "—";
     return (
-      <div className="bg-zinc-900/50 border-t border-zinc-700 overflow-hidden transition-all duration-200">
+      <div className="bg-zinc-900/50 border-t border-zinc-700 overflow-hidden transition-all duration-300 ease-in-out">
         <div className="p-4 space-y-4">
           <div className="flex items-start justify-between gap-2">
             <div>
@@ -249,7 +251,7 @@ function PillarPanel({
   if (pillarId === "people") {
     const value = kpi ? formatPct(kpi.laborPct) : "—";
     return (
-      <div className="bg-zinc-900/50 border-t border-zinc-700 overflow-hidden transition-all duration-200">
+      <div className="bg-zinc-900/50 border-t border-zinc-700 overflow-hidden transition-all duration-300 ease-in-out">
         <div className="p-4 space-y-4">
           <div className="flex items-start justify-between gap-2">
             <div>
@@ -283,7 +285,7 @@ function PillarPanel({
   const dispPct = Math.max(0, primePct - foodPct - laborPct);
   const foodWorse = foodPct > laborPct;
   return (
-    <div className="bg-zinc-900/50 border-t border-zinc-700 overflow-hidden transition-all duration-200">
+    <div className="bg-zinc-900/50 border-t border-zinc-700 overflow-hidden transition-all duration-300 ease-in-out">
       <div className="p-4 space-y-4">
         <div className="flex items-start justify-between gap-2">
           <div>
@@ -749,15 +751,15 @@ export default function HomePage() {
           3 Pillars of Success
         </p>
         <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
-          <div className="min-w-0 rounded-xl border border-zinc-800 overflow-hidden">
+          <div className="min-w-0 rounded-xl border border-zinc-800 overflow-hidden transition-all duration-300 ease-in-out">
             <PillarCard emoji="🍕" label="Product" grade={pillarGrades.product} isExpanded={expandedPillar === "product"} onToggle={() => setExpandedPillar((p) => (p === "product" ? null : "product"))} />
             <PillarPanel pillarId="product" isOpen={expandedPillar === "product"} kpi={kpi} pillarGrades={pillarGrades} />
           </div>
-          <div className="min-w-0 rounded-xl border border-zinc-800 overflow-hidden">
+          <div className="min-w-0 rounded-xl border border-zinc-800 overflow-hidden transition-all duration-300 ease-in-out">
             <PillarCard emoji="👥" label="People" grade={pillarGrades.people} isExpanded={expandedPillar === "people"} onToggle={() => setExpandedPillar((p) => (p === "people" ? null : "people"))} />
             <PillarPanel pillarId="people" isOpen={expandedPillar === "people"} kpi={kpi} pillarGrades={pillarGrades} />
           </div>
-          <div className="min-w-0 rounded-xl border border-zinc-800 overflow-hidden">
+          <div className="min-w-0 rounded-xl border border-zinc-800 overflow-hidden transition-all duration-300 ease-in-out">
             <PillarCard emoji="📊" label="Process" grade={pillarGrades.performance} isExpanded={expandedPillar === "process"} onToggle={() => setExpandedPillar((p) => (p === "process" ? null : "process"))} />
             <PillarPanel pillarId="process" isOpen={expandedPillar === "process"} kpi={kpi} pillarGrades={pillarGrades} />
           </div>
@@ -796,7 +798,7 @@ export default function HomePage() {
       {loading ? (
         <div className="grid grid-cols-2 gap-3 min-w-0">
           {[1, 2, 3, 4].map((i) => (
-            <div key={i} className="bg-slate-800 rounded-xl p-4 border border-slate-700 animate-pulse min-w-0">
+            <div key={i} className="bg-zinc-800 rounded-xl p-4 border border-zinc-800/50 shadow-sm animate-pulse min-w-0">
               <div className="h-3 w-16 bg-slate-600 rounded mb-2" />
               <div className="h-8 w-20 bg-slate-600 rounded" />
               <div className="h-3 w-24 bg-slate-600 rounded mt-2" />
@@ -809,7 +811,7 @@ export default function HomePage() {
             const salesGrade = gradeSales(kpi.sales, dailyTargetSales);
             const salesBorder = gradeToHex(salesGrade);
             return (
-              <div className="bg-slate-800 rounded-xl p-4 border-l-4 min-w-0 border-slate-700" style={{ borderLeftColor: salesBorder }}>
+              <div className={`bg-slate-800 rounded-xl p-4 border-t-[3px] min-w-0 border border-zinc-800/50 shadow-sm transition-transform duration-200 sm:hover:scale-[1.01] ${salesGrade === "green" ? "border-t-emerald-400" : "border-t-red-400"}`}>
                 <div className="flex items-center justify-between mb-1">
                   <span className="text-xs text-slate-400 uppercase tracking-wide">{isOnboardingUser ? "Estimated Daily Sales" : "Today's Sales"}</span>
                   <EducationInfoIcon metricKey="todays_sales" />
@@ -827,7 +829,7 @@ export default function HomePage() {
             const grade = gradeFoodCost(kpi.foodCostPct, benchmarks.foodCostTargetPct);
             const borderColor = gradeToHex(grade);
             return (
-              <div className="bg-slate-800 rounded-xl p-4 border-l-4 min-w-0 border-slate-700" style={{ borderLeftColor: borderColor }}>
+              <div className={`bg-slate-800 rounded-xl p-4 border-t-[3px] min-w-0 border border-zinc-800/50 shadow-sm transition-transform duration-200 sm:hover:scale-[1.01] ${grade === "green" ? "border-t-emerald-400" : grade === "yellow" ? "border-t-amber-400" : "border-t-red-400"}`}>
                 <div className="flex items-center justify-between mb-1">
                   <span className="text-xs text-slate-400 uppercase tracking-wide">Food Cost</span>
                   <EducationInfoIcon metricKey="food_cost_pct" />
@@ -843,7 +845,7 @@ export default function HomePage() {
             const grade = gradeLabor(kpi.laborPct, benchmarks.laborTargetPct);
             const borderColor = gradeToHex(grade);
             return (
-              <div className="bg-slate-800 rounded-xl p-4 border-l-4 min-w-0 border-slate-700" style={{ borderLeftColor: borderColor }}>
+              <div className={`bg-slate-800 rounded-xl p-4 border-t-[3px] min-w-0 border border-zinc-800/50 shadow-sm transition-transform duration-200 sm:hover:scale-[1.01] ${grade === "green" ? "border-t-emerald-400" : grade === "yellow" ? "border-t-amber-400" : "border-t-red-400"}`}>
                 <div className="flex items-center justify-between mb-1">
                   <span className="text-xs text-slate-400 uppercase tracking-wide">Labor %</span>
                   <EducationInfoIcon metricKey="labor_pct_home" />
@@ -859,7 +861,7 @@ export default function HomePage() {
             const grade = gradePrime(kpi.primePct, benchmarks.primeTargetPct);
             const borderColor = gradeToHex(grade);
             return (
-              <div className="bg-slate-800 rounded-xl p-4 border-l-4 min-w-0 border-slate-700" style={{ borderLeftColor: borderColor }}>
+              <div className={`bg-slate-800 rounded-xl p-4 border-t-[3px] min-w-0 border border-zinc-800/50 shadow-sm transition-transform duration-200 sm:hover:scale-[1.01] ${grade === "green" ? "border-t-emerald-400" : grade === "yellow" ? "border-t-amber-400" : "border-t-red-400"}`}>
                 <div className="flex items-center justify-between mb-1">
                   <span className="text-xs text-slate-400 uppercase tracking-wide">PRIME %</span>
                   <EducationInfoIcon metricKey="prime_pct" />
@@ -874,14 +876,14 @@ export default function HomePage() {
           {isOnboardingUser && (onboardingData?.employee_count != null || onboardingData?.monthly_rent != null) && (
             <div className="grid grid-cols-2 gap-3 min-w-0 col-span-2">
               {onboardingData?.employee_count != null && (
-                <div className="bg-slate-800 rounded-xl p-4 border border-slate-700 min-w-0">
+                <div className="bg-slate-800 rounded-xl p-4 border border-zinc-800/50 shadow-sm min-w-0">
                   <span className="text-xs text-slate-400 uppercase tracking-wide">Employee count</span>
                   <div className="text-2xl font-bold tabular-nums text-white mt-1">{Number(onboardingData.employee_count)}</div>
                   <div className="text-xs text-slate-500">From your setup</div>
                 </div>
               )}
               {onboardingData?.monthly_rent != null && (
-                <div className="bg-slate-800 rounded-xl p-4 border border-slate-700 min-w-0">
+                <div className="bg-slate-800 rounded-xl p-4 border border-zinc-800/50 shadow-sm min-w-0">
                   <span className="text-xs text-slate-400 uppercase tracking-wide">Monthly rent</span>
                   <div className="text-2xl font-bold tabular-nums text-white mt-1">${Number(onboardingData.monthly_rent).toLocaleString("en-US", { maximumFractionDigits: 0 })}</div>
                   <div className="text-xs text-slate-500">From your setup</div>
@@ -892,7 +894,7 @@ export default function HomePage() {
         </div>
       ) : (
         <div className="grid grid-cols-2 gap-3 min-w-0">
-          <div className="bg-slate-800 rounded-xl p-4 border border-slate-700 min-w-0">
+          <div className="bg-slate-800 rounded-xl p-4 border border-zinc-800/50 shadow-sm min-w-0">
             <div className="flex items-center justify-between mb-1">
               <span className="text-xs text-slate-400 uppercase tracking-wide">Today's Sales</span>
               <EducationInfoIcon metricKey="todays_sales" />
@@ -900,7 +902,7 @@ export default function HomePage() {
             <div className="text-2xl font-bold text-slate-500">—</div>
             <div className="text-xs text-slate-500">Target: ${(dailyTargetSales / 1000).toFixed(1)}K/day</div>
           </div>
-          <div className="bg-slate-800 rounded-xl p-4 border border-slate-700 min-w-0">
+          <div className="bg-slate-800 rounded-xl p-4 border border-zinc-800/50 shadow-sm min-w-0">
             <div className="flex items-center justify-between mb-1">
               <span className="text-xs text-slate-400 uppercase tracking-wide">Food Cost</span>
               <EducationInfoIcon metricKey="food_cost_pct" />
@@ -908,7 +910,7 @@ export default function HomePage() {
             <div className="text-2xl font-bold text-slate-500">—</div>
             <div className="text-xs text-slate-500">Target: ≤{benchmarks.foodCostTargetPct}%</div>
           </div>
-          <div className="bg-slate-800 rounded-xl p-4 border border-slate-700 min-w-0">
+          <div className="bg-slate-800 rounded-xl p-4 border border-zinc-800/50 shadow-sm min-w-0">
             <div className="flex items-center justify-between mb-1">
               <span className="text-xs text-slate-400 uppercase tracking-wide">Labor %</span>
               <EducationInfoIcon metricKey="labor_pct_home" />
@@ -916,7 +918,7 @@ export default function HomePage() {
             <div className="text-2xl font-bold text-slate-500">—</div>
             <div className="text-xs text-slate-500">Target: ≤{benchmarks.laborTargetPct}%</div>
           </div>
-          <div className="bg-slate-800 rounded-xl p-4 border border-slate-700 min-w-0">
+          <div className="bg-slate-800 rounded-xl p-4 border border-zinc-800/50 shadow-sm min-w-0">
             <div className="flex items-center justify-between mb-1">
               <span className="text-xs text-slate-400 uppercase tracking-wide">PRIME %</span>
               <EducationInfoIcon metricKey="prime_pct" />
@@ -929,7 +931,7 @@ export default function HomePage() {
 
       </div>
 
-      <div className="bg-slate-800 rounded-xl p-4 border border-slate-700 min-w-0">
+      <div className="bg-slate-800 rounded-xl p-4 border border-zinc-800/50 shadow-sm min-w-0">
         <h3 className="text-sm font-semibold text-slate-400 uppercase tracking-wide mb-3">7-Day Trend</h3>
         {isOnboardingUser ? (
           <div className="min-w-0">

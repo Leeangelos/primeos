@@ -193,7 +193,7 @@ export default function TasksPage() {
           </div>
           <p className="text-xs text-muted">{newUserStoreName}</p>
         </div>
-        <div className="bg-zinc-900/50 border border-zinc-800 rounded-2xl p-6 text-center">
+        <div className="bg-zinc-900/50 rounded-xl border border-zinc-800/50 shadow-sm p-6 text-center">
           <p className="text-sm text-zinc-300 mb-4">Your task list is ready. Start adding tasks to keep your team on track.</p>
           <button type="button" onClick={() => setShowAddTask(true)} className="px-4 py-2.5 rounded-xl bg-[#E65100] text-white font-semibold text-sm hover:bg-[#f3731a] transition-colors">Add Task</button>
         </div>

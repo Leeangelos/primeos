@@ -354,7 +354,7 @@ export default function VendorTrackerPage() {
         <>
           <div className="fixed inset-0 bg-black/60 z-40" onClick={() => setShowQuickInvoice(false)} />
           <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
-            <div className="bg-zinc-900 border border-zinc-700 rounded-2xl p-6 w-full max-w-md space-y-4 overflow-hidden">
+            <div className="bg-zinc-900 rounded-xl border border-zinc-800/50 shadow-sm p-6 w-full max-w-md space-y-4 overflow-hidden">
               <h3 className="text-lg font-bold text-white">Log Invoice</h3>
               <div>
                 <label className="text-sm text-zinc-400">Vendor Name</label>

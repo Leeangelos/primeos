@@ -99,7 +99,7 @@ export default function RecipesPage() {
           </div>
           <p className="text-xs text-muted">{newUserStoreName}</p>
         </div>
-        <div className="bg-zinc-900/50 border border-zinc-800 rounded-2xl p-6 text-center">
+        <div className="bg-zinc-900/50 rounded-xl border border-zinc-800/50 shadow-sm p-6 text-center">
           <p className="text-sm text-zinc-300">{websiteMsg}</p>
           {!onboardingWebsite && (
             <p className="text-xs text-zinc-400 mt-2">Add your recipes manually or provide your website URL so PrimeOS can help.</p>

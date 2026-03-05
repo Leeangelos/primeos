@@ -127,7 +127,7 @@ export default function DailyEdgePage() {
           </div>
           <EducationInfoIcon metricKey="daily_edge" size="lg" />
         </div>
-        <div className="bg-zinc-900/50 border border-zinc-800 rounded-2xl p-6 space-y-3">
+        <div className="bg-zinc-900/50 rounded-xl border border-zinc-800/50 shadow-sm p-6 space-y-3">
           <p className="text-sm text-zinc-300">The Daily Edge surfaces industry news, tips, and trends tailored to your store. Once your system is connected, you&apos;ll see curated content here every morning.</p>
           <p className="text-sm text-zinc-300">Ready for live data? Reach out to us and we&apos;ll get your system connected.</p>
           <a href="mailto:hello@getprimeos.com" className="text-[#E65100] underline font-semibold inline-block">hello@getprimeos.com</a>

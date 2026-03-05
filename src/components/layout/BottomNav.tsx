@@ -95,7 +95,7 @@ function NavSection({
               href={item.href}
               onClick={() => setMoreOpen(false)}
               className={cn(
-                "flex items-center gap-3 px-4 py-3 active:opacity-90",
+                "flex items-center gap-3 px-4 py-3 rounded-lg active:opacity-90 transition-colors duration-150",
                 isLight ? (isActive ? "bg-orange-50" : "active:bg-zinc-100") : (isActive ? "bg-orange-950/20" : "active:bg-slate-700/50")
               )}
             >
@@ -182,15 +182,16 @@ export function BottomNav() {
       {moreOpen && (
         <div
           className="fixed inset-0 z-40 bg-black/50"
+          style={{ animation: "fade-in 200ms ease-out both" }}
           onClick={closeMore}
           aria-hidden
         />
       )}
 
-      {/* 2. More drawer — slides up ABOVE the nav bar; z-[61] so above nav when open; fully hidden when closed */}
+      {/* 2. More drawer — slides up ABOVE the nav bar */}
       <div
         className={cn(
-          "fixed left-0 right-0 z-50 rounded-t-2xl transition-[transform,opacity] duration-300 ease-out border-t overflow-hidden",
+          "fixed left-0 right-0 z-50 rounded-t-2xl transition-[transform,opacity] duration-250 ease-out border-t overflow-hidden",
           isLight ? "bg-white border-zinc-200" : "bg-slate-900 border-slate-700",
           moreOpen ? "translate-y-0 opacity-100 visible" : "translate-y-full pointer-events-none opacity-0 invisible"
         )}
@@ -410,7 +411,7 @@ export function BottomNav() {
               type="button"
               onClick={() => { setHelpOpen(true); }}
               className={cn(
-                "flex items-center gap-3 w-full px-4 py-3 rounded-xl border active:opacity-90 min-h-[44px]",
+                "flex items-center gap-3 w-full px-4 py-3 rounded-xl border border-l-[3px] border-l-[#E65100] active:opacity-90 min-h-[44px] transition-colors duration-150",
                 isLight ? "bg-zinc-50 border-zinc-200 active:bg-zinc-100" : "bg-slate-800 border-slate-700 active:bg-slate-700/50"
               )}
             >
@@ -507,38 +508,42 @@ export function BottomNav() {
           <Link
             href="/"
             onClick={closeMore}
-            className="flex flex-col items-center justify-center gap-0.5 min-w-[44px] min-h-[44px] flex-1 max-w-[80px] transition-colors"
+            className="flex flex-col items-center justify-center gap-0.5 min-w-[44px] min-h-[44px] flex-1 max-w-[80px] transition-colors duration-200"
             aria-current={isHomeActive ? "page" : undefined}
           >
             <LayoutDashboard className={cn("w-5 h-5 shrink-0", isHomeActive ? "text-[#E65100]" : "text-zinc-500")} aria-hidden />
             <span className={cn("text-[10px] font-medium whitespace-nowrap leading-tight", isHomeActive ? "text-[#E65100]" : "text-zinc-500")}>Home</span>
+            {isHomeActive && <div className="w-1 h-1 rounded-full bg-[#E65100] mt-0.5" aria-hidden />}
           </Link>
           <Link
             href="/daily"
             onClick={closeMore}
-            className="flex flex-col items-center justify-center gap-0.5 min-w-[44px] min-h-[44px] flex-1 max-w-[80px] transition-colors"
+            className="flex flex-col items-center justify-center gap-0.5 min-w-[44px] min-h-[44px] flex-1 max-w-[80px] transition-colors duration-200"
             aria-current={isDailyActive ? "page" : undefined}
           >
             <ClipboardList className={cn("w-5 h-5 shrink-0", isDailyActive ? "text-[#E65100]" : "text-zinc-500")} aria-hidden />
             <span className={cn("text-[10px] font-medium whitespace-nowrap leading-tight", isDailyActive ? "text-[#E65100]" : "text-zinc-500")}>Daily</span>
+            {isDailyActive && <div className="w-1 h-1 rounded-full bg-[#E65100] mt-0.5" aria-hidden />}
           </Link>
           <Link
             href="/brief"
             onClick={closeMore}
-            className="flex flex-col items-center justify-center gap-0.5 min-w-[44px] min-h-[44px] flex-1 max-w-[80px] transition-colors"
+            className="flex flex-col items-center justify-center gap-0.5 min-w-[44px] min-h-[44px] flex-1 max-w-[80px] transition-colors duration-200"
             aria-current={isBriefActive ? "page" : undefined}
           >
             <Sparkles className={cn("w-5 h-5 shrink-0", isBriefActive ? "text-[#E65100]" : "text-zinc-500")} aria-hidden />
             <span className={cn("text-[10px] font-medium whitespace-nowrap leading-tight", isBriefActive ? "text-[#E65100]" : "text-zinc-500")}>Brief</span>
+            {isBriefActive && <div className="w-1 h-1 rounded-full bg-[#E65100] mt-0.5" aria-hidden />}
           </Link>
           <Link
             href="/training"
             onClick={closeMore}
-            className="flex flex-col items-center justify-center gap-0.5 min-w-[44px] min-h-[44px] flex-1 max-w-[80px] transition-colors"
+            className="flex flex-col items-center justify-center gap-0.5 min-w-[44px] min-h-[44px] flex-1 max-w-[80px] transition-colors duration-200"
             aria-current={isGuideActive ? "page" : undefined}
           >
             <GraduationCap className={cn("w-5 h-5 shrink-0", isGuideActive ? "text-[#E65100]" : "text-zinc-500")} aria-hidden />
             <span className={cn("text-[10px] font-medium whitespace-nowrap leading-tight", isGuideActive ? "text-[#E65100]" : "text-zinc-500")}>Guide</span>
+            {isGuideActive && <div className="w-1 h-1 rounded-full bg-[#E65100] mt-0.5" aria-hidden />}
           </Link>
           <button
             type="button"

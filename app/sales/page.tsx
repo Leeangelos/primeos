@@ -274,7 +274,7 @@ export default function SalesPage() {
         </div>
 
         {period === "custom" && (
-          <div className="rounded-xl border border-zinc-800 bg-zinc-900 p-4 space-y-3">
+          <div className="rounded-xl border border-zinc-800/50 shadow-sm bg-zinc-900 p-4 space-y-3">
             <p className="text-xs text-zinc-400">Custom date range</p>
             <div className="flex flex-wrap items-end gap-3">
               <label className="block">

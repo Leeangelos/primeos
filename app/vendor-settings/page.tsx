@@ -237,7 +237,7 @@ export default function VendorSettingsPage() {
           </div>
           <Settings className="w-5 h-5 text-slate-500 shrink-0" />
         </div>
-        <div className="bg-zinc-900/50 border border-zinc-800 rounded-2xl p-6 text-center">
+        <div className="bg-zinc-900/50 rounded-xl border border-zinc-800/50 shadow-sm p-6 text-center">
           <p className="text-sm text-zinc-300">Your vendor settings will appear here once you start logging invoices and adding vendors.</p>
         </div>
       </div>

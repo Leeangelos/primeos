@@ -54,14 +54,18 @@ export function EducationInfoIcon({ metricKey, size = "sm" }: EducationInfoIconP
     >
       {/* Backdrop — tap to close */}
       <div
-        className="absolute inset-0 bg-black/60 backdrop-blur-sm"
+        className="absolute inset-0 bg-black/60 backdrop-blur-sm transition-opacity duration-150"
+        style={{ opacity: mounted ? 1 : 0 }}
         onClick={close}
         aria-hidden="true"
       />
       {/* Bottom sheet — slides up on mobile */}
       <div
-        className="relative w-full max-w-lg bg-slate-800 rounded-t-2xl max-h-[80vh] overflow-y-auto shadow-2xl transition-transform duration-300 ease-out sm:rounded-2xl sm:max-h-[85vh]"
-        style={{ transform: mounted ? "translateY(0)" : "translateY(100%)" }}
+        className="relative w-full max-w-lg bg-slate-800 rounded-t-2xl max-h-[80vh] overflow-y-auto shadow-2xl transition-all duration-200 ease-out sm:rounded-2xl sm:max-h-[85vh]"
+        style={{
+          transform: mounted ? "translateY(0) scale(1)" : "translateY(100%) scale(0.95)",
+          opacity: mounted ? 1 : 0,
+        }}
         onClick={(e) => e.stopPropagation()}
       >
         {/* Close button */}

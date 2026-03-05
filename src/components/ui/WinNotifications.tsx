@@ -22,7 +22,7 @@ export function WinNotifications({ storeId }: Props) {
         {wins.map((win) => (
           <div
             key={win.id}
-            className="bg-emerald-950/30 border border-emerald-800/50 rounded-xl px-4 py-3 flex items-start gap-2 min-w-[240px] max-w-xs"
+            className="win-card-shimmer bg-emerald-950/30 border border-emerald-800/50 rounded-xl px-4 py-3 flex items-start gap-2 min-w-[240px] max-w-xs"
           >
             <div className="text-xl leading-none" aria-hidden="true">
               {win.emoji}

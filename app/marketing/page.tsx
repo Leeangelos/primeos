@@ -76,7 +76,7 @@ export default function MarketingPage() {
           </div>
           <p className="text-xs text-muted">{newUserStoreName}</p>
         </div>
-        <div className="bg-zinc-900/50 border border-zinc-800 rounded-2xl p-6 space-y-3">
+        <div className="bg-zinc-900/50 rounded-xl border border-zinc-800/50 shadow-sm p-6 space-y-3">
           <p className="text-sm text-zinc-300">Ad Accountability tracks ROAS by campaign so you can see which spend drives sales. Once your data is connected, you&apos;ll see daily, weekly, and monthly breakdowns here.</p>
           <p className="text-sm text-zinc-300">Ready for live data? Reach out to us and we&apos;ll get your system connected.</p>
           <a href="mailto:hello@getprimeos.com" className="text-[#E65100] underline font-semibold inline-block">hello@getprimeos.com</a>

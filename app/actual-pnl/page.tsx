@@ -289,7 +289,7 @@ export default function ActualPnlPage() {
           </div>
         </div>
         <p className="text-xs text-muted">{newUserStoreName}</p>
-        <div className="bg-zinc-900/50 border border-zinc-800 rounded-2xl p-6 space-y-3">
+        <div className="bg-zinc-900/50 rounded-xl border border-zinc-800/50 shadow-sm p-6 space-y-3">
           <p className="text-sm text-zinc-300">Actual P&L shows the full picture: revenue, food, labor, disposables, then fixed costs (rent, insurance, utilities, loans) down to net profit. Tap any (i) icon to learn what each line means. Once your data is connected, upload your CPA&apos;s financials to see your real net profit here.</p>
           <p className="text-sm text-zinc-300">Ready for live data? Reach out to us and we&apos;ll get your system connected.</p>
           <a href="mailto:hello@getprimeos.com" className="text-[#E65100] underline font-semibold inline-block">hello@getprimeos.com</a>

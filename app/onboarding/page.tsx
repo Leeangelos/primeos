@@ -235,7 +235,7 @@ export default function OnboardingPage() {
 
         {step === 1 && (
           <>
-            <div className="flex-1 flex flex-col justify-center space-y-2 text-center min-h-0">
+            <div className="flex-1 flex flex-col justify-center space-y-2 text-center min-h-0 animate-fade-in">
               <h1 className="text-lg font-bold">Welcome to PrimeOS, {name}!</h1>
               <p className="text-zinc-400 text-xs">Let&apos;s set up your store. Takes about 60 seconds.</p>
               {storeName && storeName !== "Your store" && (
@@ -246,7 +246,7 @@ export default function OnboardingPage() {
               <button
                 type="button"
                 onClick={() => setStep(2)}
-                className="w-full py-2.5 rounded-xl bg-[#E65100] text-white font-semibold text-sm mt-2"
+                className="w-full py-2.5 rounded-xl bg-[#E65100] text-white font-semibold text-sm mt-2 active:scale-[0.98] transition-transform"
               >
                 Let&apos;s Go →
               </button>
@@ -256,7 +256,7 @@ export default function OnboardingPage() {
 
         {step === 2 && (
           <>
-            <div className="flex-1 flex flex-col justify-center min-h-0 overflow-auto">
+            <div className="flex-1 flex flex-col justify-center min-h-0 overflow-auto animate-fade-in">
               <h2 className="text-lg font-bold mb-0.5">Enter a few numbers about your business.</h2>
               <p className="text-zinc-400 text-xs mb-2">Don&apos;t worry about being exact — estimates work.</p>
               <div className="space-y-1.5">
@@ -334,7 +334,7 @@ export default function OnboardingPage() {
               <button
                 type="button"
                 onClick={() => setStep(3)}
-                className="w-full py-2.5 rounded-xl bg-[#E65100] text-white font-semibold text-sm mt-2"
+                className="w-full py-2.5 rounded-xl bg-[#E65100] text-white font-semibold text-sm mt-2 active:scale-[0.98] transition-transform"
               >
                 Next →
               </button>
@@ -504,7 +504,7 @@ export default function OnboardingPage() {
                 type="button"
                 onClick={handleComplete}
                 disabled={submitting}
-                className="w-full py-2.5 rounded-xl bg-[#E65100] text-white font-semibold text-sm mt-2 disabled:opacity-70"
+                className="w-full py-2.5 rounded-xl bg-[#E65100] text-white font-semibold text-sm mt-2 disabled:opacity-70 active:scale-[0.98] transition-transform shadow-[0_0_12px_rgba(230,81,0,0.3)]"
               >
                 {submitting ? "Saving…" : "Open My Dashboard →"}
               </button>
