@@ -1,11 +1,13 @@
 "use client";
 
-import { useMemo } from "react";
+import { useMemo, useState, useCallback } from "react";
 import { cn } from "@/lib/utils";
 import { COCKPIT_TARGETS, type CockpitStoreSlug } from "@/lib/cockpit-config";
 import { useAuth } from "@/src/lib/auth-context";
 import { isNewUser, getNewUserStoreName } from "@/src/lib/user-scope";
 import { EducationInfoIcon } from "@/src/components/education/InfoIcon";
+
+type TeamEnergy = "low" | "medium" | "high" | null;
 import { ExportButton } from "@/src/components/ui/ExportButton";
 import { SmartQuestion } from "@/src/components/ui/SmartQuestion";
 import { formatPct } from "@/src/lib/formatters";
@@ -66,11 +68,51 @@ function churnGrade(pct: number): "green" | "yellow" | "red" {
   return "red";
 }
 
+function todayYYYYMMDD(): string {
+  const t = new Date();
+  return `${t.getFullYear()}-${String(t.getMonth() + 1).padStart(2, "0")}-${String(t.getDate()).padStart(2, "0")}`;
+}
+
 export default function PeoplePage() {
   const { session, loading } = useAuth();
   const newUser = isNewUser(session);
   const newUserStoreName = getNewUserStoreName(session);
   const employees = SEED_EMPLOYEES;
+
+  const [pulseRecognized, setPulseRecognized] = useState<boolean | null>(null);
+  const [pulseCallouts, setPulseCallouts] = useState<boolean | null>(null);
+  const [pulseCalloutCount, setPulseCalloutCount] = useState("");
+  const [pulseEnergy, setPulseEnergy] = useState<TeamEnergy>(null);
+  const [pulseSaving, setPulseSaving] = useState(false);
+  const [pulseToast, setPulseToast] = useState<"idle" | "saved" | "error">("idle");
+  const teamPulseStoreId: CockpitStoreSlug = "kent";
+  const teamPulseDate = todayYYYYMMDD();
+  const teamPulseHasSelection = pulseRecognized !== null || pulseCallouts !== null || pulseEnergy !== null;
+  const handleSaveTeamPulse = useCallback(async () => {
+    if (!teamPulseHasSelection || pulseSaving) return;
+    try {
+      setPulseSaving(true);
+      setPulseToast("idle");
+      const res = await fetch("/api/manager-checkin", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          location_id: teamPulseStoreId,
+          date: teamPulseDate,
+          recognized_team: pulseRecognized,
+          callouts: pulseCallouts ? Number(pulseCalloutCount) || 0 : null,
+          energy_level: pulseEnergy ?? "medium",
+        }),
+      });
+      if (!res.ok) setPulseToast("error");
+      else setPulseToast("saved");
+    } catch {
+      setPulseToast("error");
+    } finally {
+      setPulseSaving(false);
+      setTimeout(() => setPulseToast("idle"), 3000);
+    }
+  }, [teamPulseHasSelection, pulseSaving, pulseRecognized, pulseCallouts, pulseCalloutCount, pulseEnergy]);
 
   const activeCount = useMemo(() => employees.filter((e) => e.status === "active").length, [employees]);
   const avgTenure = useMemo(() => {
@@ -119,6 +161,53 @@ export default function PeoplePage() {
 
   return (
     <div className="space-y-4 min-w-0 overflow-x-hidden pb-28">
+      {pulseToast !== "idle" && (
+        <div
+          className={cn(
+            "fixed bottom-20 left-4 right-4 z-50 rounded-xl px-4 py-2.5 text-center border",
+            pulseToast === "saved" ? "bg-emerald-600/20 border-emerald-700/50 text-emerald-300" : "bg-red-600/20 border-red-700/50 text-red-300"
+          )}
+        >
+          <p className="text-xs font-medium">{pulseToast === "saved" ? "Team Pulse saved" : "Could not save Team Pulse"}</p>
+        </div>
+      )}
+      <div className="space-y-3">
+        <h3 className="text-sm font-semibold text-zinc-400 uppercase tracking-wide">Team Pulse</h3>
+        <div className="rounded-xl bg-zinc-900 border border-zinc-800/50 shadow-sm p-4 space-y-4">
+          <div className="flex items-center gap-2">
+            <EducationInfoIcon metricKey="team_pulse" />
+            <p className="text-xs text-zinc-500">60 seconds. How&apos;s your crew?</p>
+          </div>
+          <div className="space-y-2">
+            <p className="text-xs text-zinc-300">Did you recognize a team member by name today for specific work?</p>
+            <div className="flex gap-2">
+              <button type="button" onClick={() => setPulseRecognized(true)} className={cn("flex-1 rounded-lg border px-3 py-2 text-xs font-medium min-h-[44px]", pulseRecognized === true ? "border-emerald-500 bg-emerald-500/10 text-emerald-300" : "border-slate-700 bg-slate-900 text-zinc-400")}>Yes</button>
+              <button type="button" onClick={() => setPulseRecognized(false)} className={cn("flex-1 rounded-lg border px-3 py-2 text-xs font-medium min-h-[44px]", pulseRecognized === false ? "border-slate-500 bg-slate-800 text-slate-200" : "border-slate-700 bg-slate-900 text-zinc-400")}>No</button>
+            </div>
+          </div>
+          <div className="space-y-2">
+            <p className="text-xs text-zinc-300">Any call-outs or no-shows today?</p>
+            <div className="flex gap-2 items-center">
+              <button type="button" onClick={() => setPulseCallouts(true)} className={cn("flex-1 rounded-lg border px-3 py-2 text-xs font-medium min-h-[44px]", pulseCallouts === true ? "border-amber-500 bg-amber-500/10 text-amber-300" : "border-slate-700 bg-slate-900 text-zinc-400")}>Yes</button>
+              <button type="button" onClick={() => setPulseCallouts(false)} className={cn("flex-1 rounded-lg border px-3 py-2 text-xs font-medium min-h-[44px]", pulseCallouts === false ? "border-slate-500 bg-slate-800 text-slate-200" : "border-slate-700 bg-slate-900 text-zinc-400")}>No</button>
+              {pulseCallouts === true && (
+                <input type="number" inputMode="numeric" min={0} max={10} value={pulseCalloutCount} onChange={(e) => setPulseCalloutCount(e.target.value)} className="w-16 rounded-lg border border-zinc-700 bg-zinc-800 text-xs text-white px-2 py-2 min-h-[44px]" placeholder="#" />
+              )}
+            </div>
+          </div>
+          <div className="space-y-2">
+            <p className="text-xs text-zinc-300">Team energy today:</p>
+            <div className="flex gap-2">
+              <button type="button" onClick={() => setPulseEnergy("low")} className={cn("flex-1 rounded-lg border px-3 py-2 text-xs font-medium flex items-center justify-center gap-1 min-h-[44px]", pulseEnergy === "low" ? "border-red-500 bg-red-500/10 text-red-300" : "border-slate-700 bg-slate-900 text-zinc-400")}><span aria-hidden>🔴</span><span>Low</span></button>
+              <button type="button" onClick={() => setPulseEnergy("medium")} className={cn("flex-1 rounded-lg border px-3 py-2 text-xs font-medium flex items-center justify-center gap-1 min-h-[44px]", pulseEnergy === "medium" ? "border-amber-500 bg-amber-500/10 text-amber-300" : "border-slate-700 bg-slate-900 text-zinc-400")}><span aria-hidden>🟡</span><span>Medium</span></button>
+              <button type="button" onClick={() => setPulseEnergy("high")} className={cn("flex-1 rounded-lg border px-3 py-2 text-xs font-medium flex items-center justify-center gap-1 min-h-[44px]", pulseEnergy === "high" ? "border-emerald-500 bg-emerald-500/10 text-emerald-300" : "border-slate-700 bg-slate-900 text-zinc-400")}><span aria-hidden>🟢</span><span>High</span></button>
+            </div>
+          </div>
+          <button type="button" onClick={handleSaveTeamPulse} disabled={!teamPulseHasSelection || pulseSaving} className="w-full mt-2 rounded-xl py-3 text-sm font-semibold text-white bg-[#E65100] hover:bg-[#f97316] disabled:bg-slate-700 disabled:text-zinc-400 disabled:cursor-not-allowed transition-colors min-h-[44px]">
+            {pulseSaving ? "Saving..." : "Save Team Pulse"}
+          </button>
+        </div>
+      </div>
       <div className="dashboard-toolbar p-3 sm:p-5 space-y-3">
         <div className="flex items-center justify-between gap-2 flex-wrap">
           <div className="flex items-center gap-2">

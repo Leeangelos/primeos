@@ -23,6 +23,7 @@ import {
   STORE_DETAILS,
   type VendorCost,
 } from "@/src/lib/vendor-data";
+import { cn } from "@/lib/utils";
 import { formatPct, formatDollars } from "@/src/lib/formatters";
 import { EducationInfoIcon } from "@/src/components/education/InfoIcon";
 import { DataDisclaimer } from "@/src/components/ui/DataDisclaimer";
@@ -93,9 +94,15 @@ export default function VendorTrackerPage() {
   const [quickSaving, setQuickSaving] = useState(false);
   const [quickToast, setQuickToast] = useState<"idle" | "saved" | "error">("idle");
   const [quickErrorDetail, setQuickErrorDetail] = useState<string | null>(null);
+  const [expandedInvoiceId, setExpandedInvoiceId] = useState<string | null>(null);
 
   const storeVendors = useMemo(() => getVendorsByStore(selectedStore), [selectedStore]);
   const allCosts = useMemo(() => [...VENDOR_COSTS, ...addedEntries], [addedEntries]);
+  const invoicesThisMonth = useMemo(() => {
+    return allCosts
+      .filter((c) => c.store_id === selectedStore && c.month === selectedMonth && c.year === selectedYear)
+      .sort((a, b) => (b.date > a.date ? 1 : -1));
+  }, [allCosts, selectedStore, selectedMonth, selectedYear]);
 
   function getCostForMonth(vendorId: string, month: number, year: number): number {
     const e = allCosts.find((c) => c.vendor_id === vendorId && c.month === month && c.year === year);
@@ -564,6 +571,56 @@ export default function VendorTrackerPage() {
           ))}
         </div>
         <div className="absolute right-0 top-0 bottom-0 w-8 bg-gradient-to-l from-slate-900 to-transparent pointer-events-none rounded-r-lg" aria-hidden />
+      </div>
+
+      {/* LOGGED INVOICES */}
+      <div className="mb-6">
+        <h3 className="text-sm font-semibold text-zinc-400 uppercase tracking-wide mb-2">Logged invoices</h3>
+        {invoicesThisMonth.length === 0 ? (
+          <p className="text-sm text-zinc-500">No invoices logged for this month.</p>
+        ) : (
+          <div className="space-y-2">
+            {invoicesThisMonth.map((inv) => {
+              const vendor = VENDORS.find((v) => v.id === inv.vendor_id);
+              const vendorName = vendor?.vendor_name ?? inv.vendor_id;
+              const isExpanded = expandedInvoiceId === inv.id;
+              return (
+                <div
+                  key={inv.id}
+                  className="bg-zinc-900 rounded-xl border border-zinc-800/50 border-l-[3px] border-l-[#E65100] shadow-sm p-4"
+                >
+                  <button
+                    type="button"
+                    onClick={() => setExpandedInvoiceId(isExpanded ? null : inv.id)}
+                    className="w-full text-left flex items-center justify-between gap-2 min-h-[44px]"
+                  >
+                    <div className="min-w-0 flex-1">
+                      <div className="text-white font-medium truncate">{vendorName}</div>
+                      <div className="text-zinc-400 text-sm">{inv.invoice_number || "—"}</div>
+                      <div className="text-zinc-500 text-sm">{inv.date}</div>
+                    </div>
+                    <div className="flex items-center gap-2 shrink-0">
+                      <span className="text-white font-bold tabular-nums">{formatDollars(inv.amount)}</span>
+                      <ChevronDown className={cn("w-4 h-4 text-zinc-500 transition-transform", isExpanded && "rotate-180")} aria-hidden />
+                    </div>
+                  </button>
+                  {isExpanded && (
+                    <div className="mt-3 pt-3 border-t border-zinc-800/50 space-y-2">
+                      {inv.notes ? (
+                        <div>
+                          <div className="text-xs text-zinc-500 uppercase tracking-wide mb-0.5">Notes</div>
+                          <p className="text-sm text-zinc-300">{inv.notes}</p>
+                        </div>
+                      ) : (
+                        <p className="text-xs text-zinc-500">No notes, line items, or approval data for this entry.</p>
+                      )}
+                    </div>
+                  )}
+                </div>
+              );
+            })}
+          </div>
+        )}
       </div>
 
       {/* SECTION 3: PRICE MOVERS VIEW */}
