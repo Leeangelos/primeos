@@ -581,19 +581,28 @@ function DailyPageContent() {
   useEffect(() => {
     let cancelled = false;
     const origin = typeof window !== "undefined" ? window.location.origin : "";
-    fetch(`${origin}/api/dashboard/daily-data?store_id=${encodeURIComponent(storeId)}&range=7`)
+    fetch(`${origin}/api/dashboard/daily-data?store_id=${encodeURIComponent(storeId)}&range=14`)
       .then((r) => r.json())
       .then((data) => {
         if (cancelled || !data.sales?.length) return;
-        const entries = (data.sales as { business_day: string; net_sales?: number }[])
+        const sales = (data.sales as { business_day: string; net_sales?: number }[]).sort((a, b) => a.business_day.localeCompare(b.business_day));
+        const labor = (data.labor ?? []) as { business_day: string; total_labor_cost?: number; total_overtime_cost?: number }[];
+        const purchases = (data.purchases ?? []) as { business_day: string; food_spend?: number }[];
+        const entries = sales
           .map((s) => {
             const day = s.business_day;
-            const laborRow = (data.labor ?? []).find((l: { business_day: string }) => l.business_day === day);
-            const purchaseRow = (data.purchases ?? []).find((p: { business_day: string }) => p.business_day === day);
-            const netSales = s.net_sales ?? 0;
+            const dayIdx = sales.findIndex((x) => x.business_day === day);
+            const windowStart = Math.max(0, dayIdx - 6);
+            const window = sales.slice(windowStart, dayIdx + 1);
+            const windowDays = window.map((w) => w.business_day);
+            const sumNetSales = window.reduce((a, w) => a + (w.net_sales ?? 0), 0);
+            const sumFoodSpend = purchases
+              .filter((p) => windowDays.includes(p.business_day))
+              .reduce((a, p) => a + (p.food_spend ?? 0), 0);
+            const food_cost_pct = sumNetSales > 0 ? (sumFoodSpend / sumNetSales) * 100 : 0;
+            const laborRow = labor.find((l) => l.business_day === day);
             const laborCost = (laborRow?.total_labor_cost ?? 0) + (laborRow?.total_overtime_cost ?? 0);
-            const foodSpend = purchaseRow?.food_spend ?? 0;
-            const food_cost_pct = netSales > 0 ? (foodSpend / netSales) * 100 : 0;
+            const netSales = s.net_sales ?? 0;
             const labor_pct = netSales > 0 ? (laborCost / netSales) * 100 : 0;
             return { date: day, sales: netSales, food_cost_pct, labor_pct, transactions: (s as { total_orders?: number }).total_orders ?? 0 };
           })

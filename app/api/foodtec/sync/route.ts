@@ -12,20 +12,18 @@ import {
 export async function GET(request: Request) {
   try {
     const { searchParams } = new URL(request.url);
-    let dayParam = searchParams.get("day");
-    let targetDate: Date;
+    const dayParam = searchParams.get("day");
 
+    const daysToSync: Date[] = [];
     if (dayParam) {
-      targetDate = new Date(dayParam + "T12:00:00");
+      daysToSync.push(new Date(dayParam + "T12:00:00"));
     } else {
-      targetDate = new Date();
-      targetDate.setDate(targetDate.getDate() - 1);
+      for (let d = 1; d <= 3; d++) {
+        const t = new Date();
+        t.setDate(t.getDate() - d);
+        daysToSync.push(t);
+      }
     }
-
-    const foodtecDay = formatFoodTecDate(targetDate);
-    const isoDay = targetDate.toISOString().split("T")[0];
-
-    console.log(`Syncing FoodTec data for ${isoDay} (${foodtecDay})`);
 
     const storeMap = await getStoreMap();
 
@@ -35,6 +33,15 @@ export async function GET(request: Request) {
       throw new Error("Supabase environment variables are not set");
     }
     const supabase = createClient(supabaseUrl, supabaseKey);
+
+    let totalOrders = 0, totalLabor = 0, totalProducts = 0;
+    const syncedDays: string[] = [];
+
+    for (const targetDate of daysToSync) {
+      const foodtecDay = formatFoodTecDate(targetDate);
+      const isoDay = targetDate.toISOString().split("T")[0];
+      console.log(`Syncing FoodTec data for ${isoDay} (${foodtecDay})`);
+      syncedDays.push(isoDay);
 
     // ========== SYNC ORDERS ==========
     const orders = await fetchFoodTecView("order", foodtecDay);
@@ -369,12 +376,17 @@ export async function GET(request: Request) {
       }
     }
 
+      totalOrders += orders.length;
+      totalLabor += labor.length;
+      totalProducts += products.length;
+    }
+
     return NextResponse.json({
       success: true,
-      day: isoDay,
-      orders: orders.length,
-      labor: labor.length,
-      products: products.length,
+      days: syncedDays,
+      orders: totalOrders,
+      labor: totalLabor,
+      products: totalProducts,
       stores: Object.keys(storeMap),
     });
   } catch (err: any) {

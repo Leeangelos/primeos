@@ -47,10 +47,11 @@ function formatDateLong(dateStr: string): string {
   return d.toLocaleDateString("en-US", { weekday: "long", month: "long", day: "numeric", year: "numeric" });
 }
 
-/** Split brief into paragraphs (by sentence groups). */
+/** Split brief into paragraphs (by double newline or by sentence groups). */
 function briefToParagraphs(text: string): string[] {
   const trimmed = text.trim();
   if (!trimmed) return [];
+  if (trimmed.includes("\n\n")) return trimmed.split(/\n\n+/).map((p) => p.trim()).filter(Boolean);
   const sentences = trimmed.split(/(?<=[.!])\s+/).filter(Boolean);
   if (sentences.length <= 2) return [trimmed];
   const p1 = sentences.slice(0, 5).join(" ");
@@ -144,15 +145,70 @@ export default function BriefPage() {
     setStoreData({});
 
     try {
-      const res = await fetch(`/api/morning-brief?date=${d}`);
+      const storeSlug = store === "all" ? "kent" : store;
+      const res = await fetch(`/api/dashboard/daily-data?store_id=${encodeURIComponent(storeSlug)}&day=${d}`);
       const data = await res.json();
 
-      if (data.ok && data.brief) {
-        setBrief(data.brief);
-        setStoreData(data.storeData || {});
-      } else {
+      if (data.error) {
         setBrief(null);
+        setLoading(false);
+        return;
       }
+
+      const hasLiveData = data.hasLiveData || data.hasSalesData || data.hasLaborData || data.hasPurchaseData;
+      const storeName = store === "all" ? "Stores" : (COCKPIT_TARGETS[storeSlug as keyof typeof COCKPIT_TARGETS]?.name ?? storeSlug);
+
+      if (!hasLiveData) {
+        setBrief("No data available for yesterday. Data syncs automatically every morning at 7 AM EST.");
+        setLoading(false);
+        return;
+      }
+
+      const netSales = data.netSales ?? 0;
+      const totalOrders = data.totalOrders ?? 0;
+      const avgTicket = data.avgTicket ?? 0;
+      const regularHours = data.regularHours ?? 0;
+      const overtimeHours = data.overtimeHours ?? 0;
+      const uniqueEmployees = data.uniqueEmployees ?? 0;
+      const laborPct = data.laborPct ?? null;
+      const splh = data.splh ?? null;
+      const foodCostPct = data.foodCostPct ?? null;
+      const avgBumpTime = data.avgBumpTime ?? 0;
+      const ordersEarly = data.ordersEarly ?? 0;
+      const ordersOnTime = data.ordersOnTime ?? 0;
+      const ordersLate = data.ordersLate ?? 0;
+      const doordashOrders = data.doordashOrders ?? 0;
+      const doordashSales = data.doordashSales ?? 0;
+      const doordashCommission = data.doordashCommission ?? 0;
+      const doordashNewCustomers = data.doordashNewCustomers ?? 0;
+
+      const laborGrade = laborPct != null ? (laborPct <= 24 ? "green" : laborPct <= 28 ? "amber" : "red") : null;
+      const foodGrade = foodCostPct != null ? (foodCostPct <= 30 ? "green" : foodCostPct <= 33 ? "amber" : "red") : null;
+      const laborWord = laborGrade === "green" ? "green" : laborGrade === "amber" ? "amber" : "red";
+      const foodWord = foodGrade === "green" ? "green" : foodGrade === "amber" ? "amber" : "red";
+
+      const paras: string[] = [];
+      paras.push(`Yesterday ${storeName} did $${netSales.toLocaleString("en-US", { maximumFractionDigits: 0 })} on ${totalOrders} orders. Average ticket was $${avgTicket.toFixed(2)}. ● POS`);
+      if (data.hasLaborData && (regularHours > 0 || overtimeHours > 0)) {
+        const totalH = regularHours + overtimeHours;
+        paras.push(`Your team logged ${totalH.toFixed(1)} hours across ${uniqueEmployees} employees. Labor came in at ${laborPct != null ? laborPct.toFixed(1) : "—"}% — ${laborWord}. SPLH: $${splh != null ? splh.toFixed(1) : "—"}. ● POS`);
+      }
+      if (foodCostPct != null) {
+        const fcLine = `Food cost (7-day rolling): ${foodCostPct.toFixed(1)}% — ${foodWord}.`;
+        const extra = foodCostPct > 30 ? " Consider reviewing recent invoices for price increases." : "";
+        paras.push(fcLine + extra + " ● Invoices");
+      }
+      if (avgBumpTime > 0) {
+        paras.push(`Average bump time: ${Math.round(avgBumpTime)} minutes. ${ordersEarly} orders completed early, ${ordersOnTime} on time, ${ordersLate} late. ● POS`);
+      }
+      if (doordashOrders > 0) {
+        let dd = `${doordashOrders} DoorDash orders yesterday — $${doordashSales.toLocaleString("en-US", { maximumFractionDigits: 0 })} revenue, $${doordashCommission.toLocaleString("en-US", { maximumFractionDigits: 0 })} in commissions.`;
+        if (doordashNewCustomers > 0) dd += ` ${doordashNewCustomers} new customers acquired.`;
+        paras.push(dd + " ● POS");
+      }
+
+      setBrief(paras.join("\n\n"));
+      setStoreData(storeName ? { [storeName]: { sales: netSales, primePct: foodCostPct != null && laborPct != null ? foodCostPct + laborPct : null, laborPct, foodPct: foodCostPct, slph: splh } } : {});
     } catch {
       setError("Network error — check your connection");
     }

@@ -36,16 +36,22 @@ export async function GET(request: Request) {
       "insurance",
       "workers comp",
       "unemployment",
+      "electric",
+      "gas company",
+      "utility",
+      "rent",
+      "lease",
+      "mortgage",
+      "loan",
     ];
 
     const isHillcrest = (name: string) => name.toLowerCase().includes("hillcrest");
 
     const categorizeVendor = (name: string): string => {
       const n = name.toLowerCase();
-      if (n.includes("paper") || n.includes("disposable") || n.includes("supply") || n.includes("supplies") || n.includes("packaging")) return "paper";
-      if (n.includes("beverage") || n.includes("coca") || n.includes("pepsi") || n.includes("drink")) return "beverage";
-      if (n.includes("restaurant depot") || n.includes("jetro") || n.includes("sysco") || n.includes("us foods") || n.includes("hillcrest") || n.includes("food")) return "food";
-      return "other";
+      if (n.includes("paper") || n.includes("disposable") || n.includes("supply") || n.includes("supplies") || n.includes("packaging") || n.includes("cleaning") || n.includes("chemical") || n.includes("janitorial")) return "paper";
+      if (n.includes("coca cola") || n.includes("pepsi") || n.includes("beverage") || n.includes("coke") || n.includes("dr pepper")) return "beverage";
+      return "food";
     };
 
     for (const unit of storeMap) {
