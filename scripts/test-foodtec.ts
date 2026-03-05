@@ -1,92 +1,78 @@
-import { readFileSync, existsSync } from "fs";
-import { resolve } from "path";
+import dotenv from 'dotenv';
+dotenv.config({ path: '.env.local' });
 
-// Load .env.local if present (local run); Vercel/CI use process.env
-const envLocal = resolve(process.cwd(), ".env.local");
-if (existsSync(envLocal)) {
-  const content = readFileSync(envLocal, "utf-8");
-  for (const line of content.split("\n")) {
-    const m = line.match(/^\s*([A-Za-z_][A-Za-z0-9_]*)\s*=\s*(.*)$/);
-    if (m && !process.env[m[1]]) {
-      const val = m[2].replace(/^["']|["']$/g, "").trim();
-      process.env[m[1]] = val;
+const TOKEN = process.env.FOODTEC_API_TOKEN;
+if (!TOKEN) { console.log("Missing FOODTEC_API_TOKEN"); process.exit(1); }
+
+const BASE = "https://ambitionnlegacy.foodtecsolutions.com/ExportView";
+const DAY = "03/04/26";
+const VIEWS = ["order", "labor", "product"];
+
+async function run() {
+  console.log("=== FOODTEC API DIAGNOSTIC SUMMARY ===\n");
+
+  for (const view of VIEWS) {
+    const url = `${BASE}?view=${view}&day=${DAY}`;
+    try {
+      const res = await fetch(url, { headers: { "X-DATA-EXPORTS-TOKEN": TOKEN! } });
+      if (!res.ok) {
+        console.log(`${view.toUpperCase()} VIEW: HTTP ${res.status} ERROR\n`);
+        continue;
+      }
+      const text = await res.text();
+      const lines = text.trim().split("\n");
+      const header = lines[0].split("\t");
+      const dataRows = lines.slice(1);
+      const storeCounts: Record<string, number> = {};
+      dataRows.forEach(row => {
+        const store = row.split("\t")[0] || "unknown";
+        storeCounts[store] = (storeCounts[store] || 0) + 1;
+      });
+      console.log(`${view.toUpperCase()} VIEW (${DAY}):`);
+      console.log(`  Status: ${res.status}`);
+      console.log(`  Total rows: ${dataRows.length}`);
+      console.log(`  Stores: ${Object.keys(storeCounts).join(", ")}`);
+      console.log(`  Per store: ${Object.entries(storeCounts).map(([s,c]) => `${s}: ${c}`).join(", ")}`);
+      if (view === "order") {
+        const netIdx = header.findIndex(h => h.toLowerCase() === "net");
+        if (netIdx >= 0) {
+          let total = 0;
+          dataRows.forEach(row => { total += parseFloat(row.split("\t")[netIdx]) || 0; });
+          console.log(`  Total net sales: $${total.toFixed(2)}`);
+        }
+      }
+      if (view === "labor") {
+        const hoursIdx = header.findIndex(h => h.toLowerCase() === "regularhours");
+        const nameIdx = header.findIndex(h => h.toLowerCase() === "name");
+        const uniqueNames = new Set<string>();
+        let totalHours = 0;
+        dataRows.forEach(row => {
+          const cols = row.split("\t");
+          if (nameIdx >= 0) uniqueNames.add(cols[nameIdx]);
+          if (hoursIdx >= 0) totalHours += parseFloat(cols[hoursIdx]) || 0;
+        });
+        console.log(`  Unique employees: ${uniqueNames.size}`);
+        console.log(`  Total regular hours: ${totalHours.toFixed(1)}`);
+      }
+      if (view === "product") {
+        const itemIdx = header.findIndex(h => h.toLowerCase() === "item");
+        const qtyIdx = header.findIndex(h => h.toLowerCase() === "quantity");
+        const itemQty: Record<string, number> = {};
+        dataRows.forEach(row => {
+          const cols = row.split("\t");
+          const item = itemIdx >= 0 ? cols[itemIdx] : "unknown";
+          const qty = qtyIdx >= 0 ? parseFloat(cols[qtyIdx]) || 0 : 0;
+          itemQty[item] = (itemQty[item] || 0) + qty;
+        });
+        const top5 = Object.entries(itemQty).sort((a, b) => b[1] - a[1]).slice(0, 5);
+        console.log(`  Top 5 items: ${top5.map(([i, q]) => `${i}: ${q}`).join(", ")}`);
+      }
+      console.log("");
+    } catch (err: any) {
+      console.log(`${view.toUpperCase()} VIEW: ERROR - ${err.message}\n`);
     }
   }
+  console.log("=== END DIAGNOSTIC ===");
 }
 
-const token =
-  process.env.FOODTEC_TOKEN_KENT ?? process.env.FOODTEC_API_TOKEN ?? "";
-
-const CHAINS = [
-  { name: "Kent", url: "https://leeangelos-kent.foodtecsolutions.com" },
-  { name: "Aurora", url: "https://leeangelos-aurora.foodtecsolutions.com" },
-  { name: "Lindsey's", url: "https://lindseyspizzeria.foodtecsolutions.com" },
-];
-
-const TEST_DAY = "03/03/26";
-
-async function fetchView(
-  baseUrl: string,
-  view: string,
-  day: string
-): Promise<{ ok: boolean; status: number; text: string }> {
-  const url = `${baseUrl}/ExportView?view=${view}&day=${day}`;
-  const res = await fetch(url, {
-    headers: { "X-DATA-EXPORTS-TOKEN": token },
-  });
-  const text = await res.text();
-  return { ok: res.ok, status: res.status, text };
-}
-
-function firstThreeLines(text: string): string {
-  const lines = text.trim().split(/\r?\n/).filter(Boolean);
-  return lines.slice(0, 3).join("\n");
-}
-
-function rowCount(text: string): number {
-  const lines = text.trim().split(/\r?\n/).filter(Boolean);
-  return Math.max(0, lines.length - 1); // minus header
-}
-
-async function main() {
-  console.log("=== FoodTec API diagnostic ===\n");
-  if (!token) {
-    console.log("Missing FOODTEC_TOKEN_KENT or FOODTEC_API_TOKEN in env.");
-    process.exit(1);
-  }
-
-  for (const chain of CHAINS) {
-    console.log(`\n--- ${chain.name} (${chain.url}) ---`);
-    const result = await fetchView(chain.url, "order", TEST_DAY);
-    if (result.ok) {
-      const rows = rowCount(result.text);
-      console.log(`Rows returned: ${rows}`);
-      console.log("First 3 lines:");
-      console.log(firstThreeLines(result.text));
-    } else {
-      console.log(`Error: HTTP ${result.status}`);
-      console.log(result.text.slice(0, 500));
-    }
-  }
-
-  console.log("\n--- Kent labor view ---");
-  const labor = await fetchView(
-    "https://leeangelos-kent.foodtecsolutions.com",
-    "labor",
-    TEST_DAY
-  );
-  if (labor.ok) {
-    console.log("First 3 lines:");
-    console.log(firstThreeLines(labor.text));
-  } else {
-    console.log(`Error: HTTP ${labor.status}`);
-    console.log(labor.text.slice(0, 500));
-  }
-
-  console.log("\nDone.");
-}
-
-main().catch((e) => {
-  console.error(e);
-  process.exit(1);
-});
+run();
