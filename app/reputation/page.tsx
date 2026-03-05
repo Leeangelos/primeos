@@ -340,7 +340,7 @@ export default function ReputationPage() {
       {/* THE METER — Hero */}
       <div className="bg-slate-800 rounded-2xl border border-slate-700 p-5 mb-4 text-center">
         <div className="flex items-center justify-center gap-2 mb-1">
-          <div className="text-6xl font-bold" style={{ color: sentimentScore >= 85 ? "#34d399" : sentimentScore >= 70 ? "#fbbf24" : "#f87171" }}>
+          <div className="text-4xl font-bold" style={{ color: sentimentScore >= 85 ? "#34d399" : sentimentScore >= 70 ? "#fbbf24" : "#f87171" }}>
             {sentimentScore}%
           </div>
           <EducationInfoIcon metricKey="sentiment_score" size="sm" />
@@ -382,7 +382,7 @@ export default function ReputationPage() {
         </div>
       </div>
 
-      <div className="w-full bg-zinc-900 border border-zinc-700 rounded-2xl px-5 py-4 flex items-center justify-between shadow-[0_0_12px_rgba(230,81,0,0.3)] ring-2 ring-[#E65100] mb-3">
+      <div className="w-full bg-[#E65100]/10 border border-[#E65100]/30 rounded-xl px-5 py-4 flex items-center justify-between shadow-sm mb-3">
         <div>
           <div className="text-lg font-bold text-white">{pinnedStoreDisplay}</div>
           {newUser ? (

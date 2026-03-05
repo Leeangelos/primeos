@@ -665,11 +665,11 @@ export default function SchedulePage() {
           </button>
         </div>
         <div className="flex items-center justify-center gap-2 w-full sm:w-auto">
-          <button type="button" onClick={goPrevWeek} className="min-h-[44px] min-w-[44px] flex items-center justify-center rounded-lg border border-zinc-700 bg-zinc-900 text-zinc-400 hover:text-white hover:border-zinc-600 transition-colors" aria-label="Previous week">←</button>
+          <button type="button" onClick={goPrevWeek} className="min-h-[44px] min-w-[44px] flex items-center justify-center rounded-full bg-zinc-800 border border-zinc-700/50 px-4 py-2 text-zinc-400 hover:text-white hover:border-zinc-600 transition-colors active:scale-[0.98]" aria-label="Previous week">←</button>
           <span className="text-sm font-medium text-white min-w-[200px] text-center">
             {formatWeekRangeLabel(weekDates)}
           </span>
-          <button type="button" onClick={goNextWeek} disabled={!canGoNext} className="min-h-[44px] min-w-[44px] flex items-center justify-center rounded-lg border border-zinc-700 bg-zinc-900 text-zinc-400 hover:text-white hover:border-zinc-600 disabled:opacity-50 disabled:pointer-events-none transition-colors" aria-label="Next week">→</button>
+          <button type="button" onClick={goNextWeek} disabled={!canGoNext} className="min-h-[44px] min-w-[44px] flex items-center justify-center rounded-full bg-zinc-800 border border-zinc-700/50 px-4 py-2 text-zinc-400 hover:text-white hover:border-zinc-600 disabled:opacity-50 disabled:pointer-events-none transition-colors active:scale-[0.98]" aria-label="Next week">→</button>
         </div>
       </div>
 
@@ -715,7 +715,7 @@ export default function SchedulePage() {
                   <button
                     type="button"
                     onClick={() => openAdd(date)}
-                    className="min-h-[44px] rounded-lg border border-brand/50 bg-brand/15 px-3 py-2 text-sm font-medium text-brand hover:bg-brand/25"
+                    className="min-h-[44px] rounded-xl bg-[#E65100] px-3 py-2 text-sm font-medium text-white hover:bg-[#f97316] active:scale-[0.98] transition-transform"
                   >
                     Add Shift
                   </button>
@@ -801,7 +801,7 @@ export default function SchedulePage() {
                 <button
                   type="button"
                   onClick={() => openAdd(date)}
-                  className="min-h-[44px] rounded-lg border border-brand/50 bg-brand/15 px-3 py-2 text-sm font-medium text-brand hover:bg-brand/25"
+                  className="min-h-[44px] rounded-xl bg-[#E65100] px-3 py-2 text-sm font-medium text-white hover:bg-[#f97316] active:scale-[0.98] transition-transform"
                 >
                   Add Shift
                 </button>

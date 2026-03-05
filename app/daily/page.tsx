@@ -572,7 +572,7 @@ function DailyPageContent() {
   }, [storeId]);
 
   const inputCls =
-    "w-full min-h-[44px] h-11 px-3 text-sm font-medium tabular-nums placeholder:text-muted focus:border-brand/60 focus:ring-1 focus:ring-brand/40 focus:outline-none rounded-xl border bg-slate-700 text-white dashboard-input";
+    "w-full min-h-[44px] h-11 px-3 text-sm font-medium tabular-nums placeholder:text-muted focus:border-[#E65100]/50 focus:ring-1 focus:ring-[#E65100]/40 focus:outline-none rounded-xl border border-zinc-600 bg-zinc-800 text-white";
 
   const { isOldDate, diffDays } = useMemo(() => {
     const today = new Date();
@@ -668,7 +668,7 @@ function DailyPageContent() {
 
   return (
     <>
-      <div className="space-y-5 min-w-0 overflow-x-hidden pb-28">
+      <div className="space-y-5 min-w-0 overflow-x-hidden pb-28 animate-fade-in">
       {pulseToast !== "idle" && (
         <div
           className={cn(
@@ -687,7 +687,7 @@ function DailyPageContent() {
       <div className={`dashboard-toolbar p-3 sm:p-5 space-y-3 ${getStoreColor(storeId).glow}`}>
         <div className="flex items-center justify-between gap-2 flex-wrap">
           <div className="flex items-center gap-2">
-            <h1 className="text-lg font-semibold sm:text-2xl">Daily KPI Entry</h1>
+            <h1 className="text-xl font-bold text-white">Daily KPI Entry</h1>
             <button type="button" onClick={() => setShowEducation("overview")} className="inline-flex items-center justify-center min-h-[44px] min-w-[44px] rounded-full bg-muted/20 text-muted hover:bg-brand/20 hover:text-brand transition-colors text-xs font-bold" aria-label="Learn more">i</button>
             <ExportButton
               pageName="Daily KPIs"
@@ -731,7 +731,7 @@ function DailyPageContent() {
             ))}
           </div>
         </div>
-        <div className={cn("rounded-lg border px-1 min-w-0", isOldDate ? "border-amber-500" : "border-border/50")}>
+        <div className={cn("rounded-full bg-zinc-800 px-4 py-2 border min-w-0", isOldDate ? "border-amber-500" : "border-zinc-700/50")}>
           <div className="flex items-center gap-2 min-w-0">
             <button
               type="button"
@@ -1079,7 +1079,7 @@ function DailyPageContent() {
               }
             }}
             disabled={saveStatus === "saving" || !canSave}
-            className="w-full min-h-[48px] h-12 rounded-xl font-semibold text-white bg-blue-600 hover:bg-blue-500 active:bg-blue-700 transition-colors disabled:opacity-50 disabled:pointer-events-none"
+            className="w-full min-h-[48px] h-12 rounded-xl font-semibold text-white bg-[#E65100] hover:bg-[#f97316] active:scale-[0.98] transition-transform disabled:opacity-50 disabled:pointer-events-none"
           >
             {saveStatus === "saving" ? "Saving…" : saveStatus === "saved" ? "✓ Saved" : "Calculate & Save"}
           </button>
@@ -1258,7 +1258,7 @@ function DailyPageContent() {
             <div className="flex items-center justify-between gap-2">
               <div>
                 <div className="flex items-center gap-2">
-                  <h3 className="text-sm font-medium text-slate-100">Team Pulse Today</h3>
+                  <h3 className="text-sm font-semibold text-zinc-400 uppercase tracking-wide">Team Pulse</h3>
                   <EducationInfoIcon metricKey="team_pulse" />
                 </div>
                 <p className="text-xs text-slate-500 mt-0.5">60 seconds. How&apos;s your crew?</p>

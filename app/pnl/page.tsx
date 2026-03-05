@@ -206,7 +206,7 @@ export default function PnlPage() {
   }
 
   return (
-    <div className="space-y-6 min-w-0 overflow-x-hidden pb-28">
+    <div className="space-y-6 min-w-0 overflow-x-hidden pb-28 animate-fade-in">
       {shareToast && (
         <div className="fixed bottom-20 left-4 right-4 z-50 bg-emerald-600/20 border border-emerald-700/30 rounded-xl px-4 py-2.5 shadow-lg text-center">
           <p className="text-xs text-emerald-400 font-medium">Copied to clipboard</p>
@@ -214,7 +214,7 @@ export default function PnlPage() {
       )}
       <div className={`dashboard-toolbar p-3 sm:p-5 space-y-3 ${getStoreColor(storeFilter === "all" ? "kent" : storeFilter).glow}`}>
         <div className="flex items-center justify-between gap-2 flex-wrap">
-          <h1 className="text-lg font-semibold sm:text-2xl">GP P&L — Gross Profit</h1>
+          <h1 className="text-xl font-bold text-white">GP P&L — Gross Profit</h1>
           <ExportButton
           pageName="GP P&L"
           getData={() => ({

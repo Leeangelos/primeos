@@ -273,10 +273,10 @@ export default function BriefPage() {
   }
 
   return (
-    <div className="space-y-5 min-w-0 overflow-x-hidden pb-28">
+    <div className="space-y-5 min-w-0 overflow-x-hidden pb-28 animate-fade-in">
       <div className="dashboard-toolbar p-3 sm:p-5 space-y-3">
         <div className="flex items-center gap-2">
-          <h1 className="text-lg font-semibold sm:text-2xl flex items-center gap-2">
+          <h1 className="text-xl font-bold text-white flex items-center gap-2">
             Morning Brief
             <EducationInfoIcon metricKey="morning_brief" size="lg" />
           </h1>
@@ -395,8 +395,8 @@ export default function BriefPage() {
           <div className="dashboard-surface rounded-xl border border-slate-700 bg-slate-800/50 p-4 sm:p-5 min-w-0">
             <div className="flex items-center justify-between mb-4">
               <div>
-                <h2 className="text-xs text-slate-500 uppercase tracking-wide">Morning Brief</h2>
-                <p className="text-sm text-slate-400 whitespace-nowrap">{briefDate}</p>
+                <h2 className="text-sm font-semibold text-zinc-400 uppercase tracking-wide">Morning Brief</h2>
+                <p className="text-sm text-zinc-500 whitespace-nowrap">{briefDate}</p>
               </div>
               <div className="flex items-center gap-2">
                 <button
@@ -436,14 +436,14 @@ export default function BriefPage() {
                 <span className="text-xs text-blue-400">Reading aloud...</span>
               </div>
             )}
-            <div className="text-sm leading-relaxed text-slate-200 break-words">
+            <div className="text-base leading-relaxed text-zinc-200 break-words">
               {briefToParagraphs(brief).map((para, i) => (
                 <p key={i} className="mb-4 last:mb-0">
                   {highlightBriefContent(para)}
                 </p>
               ))}
             </div>
-            <p className="text-xs text-slate-500 mt-4">Brief generated at 6:00 AM from yesterday&apos;s data.</p>
+            <p className="text-sm text-zinc-500 mt-4">Brief generated at 6:00 AM from yesterday&apos;s data.</p>
           </div>
 
           {Object.keys(storeData).length > 0 && (
