@@ -55,6 +55,37 @@ type KpiSnapshot = {
   isYesterday: boolean;
 };
 
+type LiveDailyData = {
+  day: string;
+  hasLiveData: boolean;
+  hasSalesData: boolean;
+  hasLaborData: boolean;
+  hasPurchaseData: boolean;
+  netSales: number;
+  foodCostPct: number | null;
+  laborPct: number | null;
+  cogsPct: number | null;
+  splh: number | null;
+  avgBumpTime: number;
+  avgBumpTimeDineIn: number;
+  avgBumpTimePickup: number;
+  avgBumpTimeDelivery: number;
+  ordersEarly: number;
+  ordersOnTime: number;
+  ordersLate: number;
+  totalOrders: number;
+  avgTicket: number;
+  doordashOrders: number;
+  doordashSales: number;
+  doordashCommission: number;
+  doordashNewCustomers: number;
+  doordashReturningCustomers: number;
+  regularHours: number;
+  uniqueEmployees: number;
+  foodSpend: number;
+  [key: string]: unknown;
+};
+
 const KENT_DAILY_TARGET = 5200;
 const WARNING_BAND_PCT = 3;
 
@@ -340,6 +371,9 @@ export default function HomePage() {
   const [kpi, setKpi] = useState<KpiSnapshot | null>(null);
   const [loading, setLoading] = useState(true);
   const [usedSeedData, setUsedSeedData] = useState(false);
+  const [liveDailyData, setLiveDailyData] = useState<LiveDailyData | null>(null);
+  const [rangeData, setRangeData] = useState<{ sales: { business_day: string; net_sales?: number }[]; labor: { business_day: string; total_labor_cost?: number; total_overtime_cost?: number; regular_hours?: number; overtime_hours?: number }[]; purchases: { business_day: string; total_spend?: number; food_spend?: number }[] } | null>(null);
+  const [loadingLive, setLoadingLive] = useState(true);
   const [onboardingData, setOnboardingData] = useState<OnboardingData | null>(null);
   const [showEducation, setShowEducation] = useState(false);
   const [educationKey, setEducationKey] = useState<string | null>(null);
@@ -376,7 +410,45 @@ export default function HomePage() {
     return () => { cancelled = true; };
   }, [session?.access_token]);
 
+  useEffect(() => {
+    if (onboardingData != null) {
+      setLoadingLive(false);
+      return;
+    }
+    const store = storeSlugForFetch(selectedStore);
+    let cancelled = false;
+    setLoadingLive(true);
+    Promise.all([
+      fetch(`/api/dashboard/daily-data?store_id=${encodeURIComponent(store)}&day=${yesterday}`).then((r) => r.json()),
+      fetch(`/api/dashboard/daily-data?store_id=${encodeURIComponent(store)}&range=7`).then((r) => r.json()),
+    ])
+      .then(([dayRes, rangeRes]) => {
+        if (cancelled) return;
+        if (dayRes.day != null && !dayRes.error) setLiveDailyData(dayRes as LiveDailyData);
+        else setLiveDailyData(null);
+        if (rangeRes.sales != null && !rangeRes.error) setRangeData({ sales: rangeRes.sales, labor: rangeRes.labor ?? [], purchases: rangeRes.purchases ?? [] });
+        else setRangeData(null);
+      })
+      .catch(() => {
+        if (!cancelled) {
+          setLiveDailyData(null);
+          setRangeData(null);
+        }
+      })
+      .finally(() => {
+        if (!cancelled) setLoadingLive(false);
+      });
+    return () => { cancelled = true; };
+  }, [selectedStore, yesterday, onboardingData]);
+
   const pillarSeed = useMemo(() => {
+    if (liveDailyData?.hasLiveData && liveDailyData.foodCostPct != null && liveDailyData.laborPct != null && liveDailyData.cogsPct != null) {
+      return {
+        foodCostPct: liveDailyData.foodCostPct,
+        laborPct: liveDailyData.laborPct,
+        primePct: liveDailyData.cogsPct,
+      };
+    }
     if (onboardingData != null && onboardingData.food_cost_pct != null && onboardingData.labor_cost_pct != null) {
       const foodCostPct = Number(onboardingData.food_cost_pct);
       const laborPct = Number(onboardingData.labor_cost_pct);
@@ -394,7 +466,7 @@ export default function HomePage() {
     const laborPct = row.labor_pct;
     const primePct = row.prime_pct;
     return { foodCostPct, laborPct, primePct };
-  }, [selectedStore, today, yesterday, onboardingData]);
+  }, [selectedStore, today, yesterday, onboardingData, liveDailyData]);
 
   const pillarGrades = useMemo(() => {
     if (!pillarSeed) {
@@ -411,6 +483,24 @@ export default function HomePage() {
     let cancelled = false;
     const store = storeSlugForFetch(selectedStore);
     async function load() {
+      if (liveDailyData?.hasLiveData) {
+        const ns = liveDailyData.netSales ?? 0;
+        const fc = liveDailyData.foodCostPct ?? 0;
+        const lb = liveDailyData.laborPct ?? 0;
+        const cogs = liveDailyData.cogsPct ?? fc + lb + 4;
+        if (!cancelled) {
+          setKpi({
+            sales: ns,
+            foodCostPct: fc,
+            laborPct: lb,
+            primePct: cogs,
+            isYesterday: true,
+          });
+          setUsedSeedData(false);
+          setLoading(false);
+        }
+        return;
+      }
       if (onboardingData?.food_cost_pct != null && onboardingData?.labor_cost_pct != null) {
         const food = Number(onboardingData.food_cost_pct);
         const labor = Number(onboardingData.labor_cost_pct);
@@ -513,7 +603,7 @@ export default function HomePage() {
     }
     load();
     return () => { cancelled = true; };
-  }, [today, yesterday, selectedStore, onboardingData]);
+  }, [today, yesterday, selectedStore, onboardingData, liveDailyData]);
 
   const dailyTargetSales = useMemo(() => {
     if (onboardingData?.weekly_sales != null && onboardingData.weekly_sales > 0) {
@@ -534,6 +624,34 @@ export default function HomePage() {
   }, [selectedStore, isOnboardingUser, onboardingData?.food_cost_pct, onboardingData?.labor_cost_pct]);
 
   const { last7Days, salesTrendPct, foodCostAvg, foodCostGrade } = useMemo(() => {
+    if (rangeData?.sales?.length) {
+      const salesByDay = new Map(rangeData.sales.map((s) => [s.business_day, s.net_sales ?? 0]));
+      const laborByDay = new Map(
+        (rangeData.labor ?? []).map((l) => [
+          l.business_day,
+          (l.total_labor_cost ?? 0) + (l.total_overtime_cost ?? 0),
+        ])
+      );
+      const purchasesByDay = new Map(
+        (rangeData.purchases ?? []).map((p) => [p.business_day, p.food_spend ?? 0])
+      );
+      const days = rangeData.sales.map((s) => s.business_day).sort();
+      const last7 = days.slice(-7).map((date) => {
+        const netSales = salesByDay.get(date) ?? 0;
+        const laborCost = laborByDay.get(date) ?? 0;
+        const foodSpend = purchasesByDay.get(date) ?? 0;
+        const foodCost = netSales > 0 ? (foodSpend / netSales) * 100 : 0;
+        const laborPct = netSales > 0 ? (laborCost / netSales) * 100 : 0;
+        return { date, sales: netSales, foodCost, laborPct };
+      });
+      const prev7 = days.slice(-14, -7);
+      const thisSum = last7.reduce((s, d) => s + d.sales, 0);
+      const prevSum = prev7.reduce((s, date) => s + (salesByDay.get(date) ?? 0), 0);
+      const salesTrendPct = prevSum > 0 ? Math.round(((thisSum - prevSum) / prevSum) * 1000) / 10 : 0;
+      const foodCostAvg = last7.length > 0 ? Math.round((last7.reduce((s, d) => s + d.foodCost, 0) / last7.length) * 10) / 10 : 0;
+      const foodCostGrade = gradeFoodCost(foodCostAvg, benchmarks.foodCostTargetPct);
+      return { last7Days: last7, salesTrendPct, foodCostAvg, foodCostGrade };
+    }
     if (isOnboardingUser && onboardingData?.weekly_sales != null) {
       const daily = Number(onboardingData.weekly_sales) / 7;
       const foodPct = onboardingData?.food_cost_pct != null ? Number(onboardingData.food_cost_pct) : 30;
@@ -560,7 +678,7 @@ export default function HomePage() {
     const foodCostAvg = last7.length > 0 ? Math.round((last7.reduce((s, d) => s + d.foodCost, 0) / last7.length) * 10) / 10 : 0;
     const foodCostGrade = gradeFoodCost(foodCostAvg, benchmarks.foodCostTargetPct);
     return { last7Days: last7, salesTrendPct, foodCostAvg, foodCostGrade };
-  }, [selectedStore, benchmarks.foodCostTargetPct, isOnboardingUser, onboardingData?.weekly_sales, onboardingData?.food_cost_pct]);
+  }, [selectedStore, benchmarks.foodCostTargetPct, isOnboardingUser, onboardingData?.weekly_sales, onboardingData?.food_cost_pct, rangeData]);
 
   const storeLabel = isOnboardingUser && onboardingData?.store_name
     ? onboardingData.store_name
@@ -654,7 +772,25 @@ export default function HomePage() {
       ),
     [winsStoreId]
   );
-  const displayedWins = showAllWins ? wins : wins.slice(0, 3);
+  const liveWins = useMemo(() => {
+    if (!liveDailyData?.hasLiveData) return [];
+    const list: { id: string; title: string; body: string; emoji: string; magnitude: "big" | "medium" | "small"; date: string }[] = [];
+    if (liveDailyData.hasPurchaseData && (liveDailyData.foodCostPct ?? 100) < 30) {
+      list.push({ id: "live-fc", title: "Food cost under 30%", body: `Yesterday's food cost was ${(liveDailyData.foodCostPct ?? 0).toFixed(1)}%.`, emoji: "🍕", magnitude: "medium", date: "Yesterday" });
+    }
+    if (liveDailyData.hasLaborData && (liveDailyData.laborPct ?? 100) < 28) {
+      list.push({ id: "live-labor", title: "Labor under 28%", body: `Labor came in at ${(liveDailyData.laborPct ?? 0).toFixed(1)}%.`, emoji: "👥", magnitude: "medium", date: "Yesterday" });
+    }
+    if (liveDailyData.splh != null && liveDailyData.splh > 45) {
+      list.push({ id: "live-splh", title: "SPLH above $45", body: `Sales per labor hour: $${(liveDailyData.splh ?? 0).toFixed(0)}.`, emoji: "📈", magnitude: "big", date: "Yesterday" });
+    }
+    if (liveDailyData.cogsPct != null && liveDailyData.cogsPct < 55) {
+      list.push({ id: "live-cogs", title: "COGS below 55%", body: `COGS at ${(liveDailyData.cogsPct ?? 0).toFixed(1)}%.`, emoji: "📊", magnitude: "big", date: "Yesterday" });
+    }
+    return list;
+  }, [liveDailyData]);
+  const winsToShow = liveWins.length > 0 ? liveWins : wins;
+  const displayedWins = showAllWins ? winsToShow : winsToShow.slice(0, 3);
 
   const trendArrow = salesTrendPct >= 0 ? "↑" : "↓";
 
@@ -795,7 +931,7 @@ export default function HomePage() {
         </div>
       )}
 
-      {loading ? (
+      {loading || loadingLive ? (
         <div className="grid grid-cols-2 gap-3 min-w-0">
           {[1, 2, 3, 4].map((i) => (
             <div key={i} className="bg-zinc-800/50 rounded-xl p-4 border border-zinc-800/50 shadow-sm animate-pulse min-w-0">
@@ -813,8 +949,12 @@ export default function HomePage() {
             return (
               <div className={`bg-slate-800 rounded-xl p-4 border-t-[3px] min-w-0 border border-zinc-800/50 shadow-sm transition-transform duration-200 sm:hover:scale-[1.01] ${salesGrade === "green" ? "border-t-emerald-400" : "border-t-red-400"}`}>
                 <div className="flex items-center justify-between mb-1">
-                  <span className="text-xs text-slate-400 uppercase tracking-wide">{isOnboardingUser ? "Estimated Daily Sales" : "Today's Sales"}</span>
-                  <EducationInfoIcon metricKey="todays_sales" />
+                  <span className="text-xs text-slate-400 uppercase tracking-wide">{isOnboardingUser ? "Estimated Daily Sales" : kpi.isYesterday ? "Yesterday's Sales" : "Today's Sales"}</span>
+                  <div className="flex items-center gap-1.5">
+                    {liveDailyData?.hasSalesData && <span className="text-xs text-emerald-400">● Live from POS</span>}
+                    {usedSeedData && <span className="text-xs text-zinc-500 italic">Demo data</span>}
+                    <EducationInfoIcon metricKey="todays_sales" />
+                  </div>
                 </div>
                 <div className="text-2xl font-bold tabular-nums" style={{ color: salesGrade === "green" ? COLORS.grade.green : COLORS.grade.red }}>
                   ${kpi.sales.toLocaleString("en-US", { maximumFractionDigits: 0 })}
@@ -826,16 +966,23 @@ export default function HomePage() {
             );
           })()}
           {(() => {
-            const grade = gradeFoodCost(kpi.foodCostPct, benchmarks.foodCostTargetPct);
+            const hasPurchase = liveDailyData?.hasPurchaseData ?? false;
+            const showVal = hasPurchase || usedSeedData;
+            const grade = showVal ? gradeFoodCost(kpi.foodCostPct, benchmarks.foodCostTargetPct) : "green";
             const borderColor = gradeToHex(grade);
             return (
               <div className={`bg-slate-800 rounded-xl p-4 border-t-[3px] min-w-0 border border-zinc-800/50 shadow-sm transition-transform duration-200 sm:hover:scale-[1.01] ${grade === "green" ? "border-t-emerald-400" : grade === "yellow" ? "border-t-amber-400" : "border-t-red-400"}`}>
                 <div className="flex items-center justify-between mb-1">
                   <span className="text-xs text-slate-400 uppercase tracking-wide">Food Cost</span>
-                  <EducationInfoIcon metricKey="food_cost_pct" />
+                  <div className="flex items-center gap-1.5">
+                    {hasPurchase && <span className="text-xs text-emerald-400">● Live from POS</span>}
+                    {!hasPurchase && !usedSeedData && <span className="text-xs text-zinc-500">Upload invoices</span>}
+                    {usedSeedData && <span className="text-xs text-zinc-500 italic">Demo data</span>}
+                    <EducationInfoIcon metricKey="food_cost_pct" />
+                  </div>
                 </div>
-                <div className="text-2xl font-bold tabular-nums" style={{ color: borderColor }}>
-                  {formatPct(kpi.foodCostPct)}
+                <div className="text-2xl font-bold tabular-nums" style={{ color: showVal ? borderColor : "inherit" }}>
+                  {showVal ? formatPct(kpi.foodCostPct) : "—"}
                 </div>
                 <div className="text-xs text-slate-500">Target: ≤{benchmarks.foodCostTargetPct}%{kpi.isYesterday ? " (Yesterday)" : ""}</div>
               </div>
@@ -848,7 +995,11 @@ export default function HomePage() {
               <div className={`bg-slate-800 rounded-xl p-4 border-t-[3px] min-w-0 border border-zinc-800/50 shadow-sm transition-transform duration-200 sm:hover:scale-[1.01] ${grade === "green" ? "border-t-emerald-400" : grade === "yellow" ? "border-t-amber-400" : "border-t-red-400"}`}>
                 <div className="flex items-center justify-between mb-1">
                   <span className="text-xs text-slate-400 uppercase tracking-wide">Labor %</span>
-                  <EducationInfoIcon metricKey="labor_pct_home" />
+                  <div className="flex items-center gap-1.5">
+                    {liveDailyData?.hasLaborData && <span className="text-xs text-emerald-400">● Live from POS</span>}
+                    {usedSeedData && <span className="text-xs text-zinc-500 italic">Demo data</span>}
+                    <EducationInfoIcon metricKey="labor_pct_home" />
+                  </div>
                 </div>
                 <div className="text-2xl font-bold tabular-nums" style={{ color: borderColor }}>
                   {formatPct(kpi.laborPct)}
@@ -860,11 +1011,16 @@ export default function HomePage() {
           {(() => {
             const grade = gradePrime(kpi.primePct, benchmarks.primeTargetPct);
             const borderColor = gradeToHex(grade);
+            const hasCogs = liveDailyData?.hasSalesData && liveDailyData?.hasLaborData && (liveDailyData?.hasPurchaseData ?? false);
             return (
               <div className={`bg-slate-800 rounded-xl p-4 border-t-[3px] min-w-0 border border-zinc-800/50 shadow-sm transition-transform duration-200 sm:hover:scale-[1.01] ${grade === "green" ? "border-t-emerald-400" : grade === "yellow" ? "border-t-amber-400" : "border-t-red-400"}`}>
                 <div className="flex items-center justify-between mb-1">
-                  <span className="text-xs text-slate-400 uppercase tracking-wide">PRIME %</span>
-                  <EducationInfoIcon metricKey="prime_pct" />
+                  <span className="text-xs text-slate-400 uppercase tracking-wide">COGS %</span>
+                  <div className="flex items-center gap-1.5">
+                    {hasCogs && <span className="text-xs text-emerald-400">● Live from POS</span>}
+                    {usedSeedData && <span className="text-xs text-zinc-500 italic">Demo data</span>}
+                    <EducationInfoIcon metricKey="prime_pct" />
+                  </div>
                 </div>
                 <div className="text-2xl font-bold tabular-nums" style={{ color: borderColor }}>
                   {formatPct(kpi.primePct)}
@@ -873,6 +1029,40 @@ export default function HomePage() {
               </div>
             );
           })()}
+          {!isOnboardingUser && liveDailyData?.hasSalesData && (liveDailyData.avgBumpTime > 0 || liveDailyData.ordersOnTime != null) && (
+            <div className="bg-slate-800 rounded-xl p-4 border border-zinc-800/50 shadow-sm min-w-0 col-span-2">
+              <div className="flex items-center justify-between mb-1">
+                <span className="text-xs text-slate-400 uppercase tracking-wide">Bump time (yesterday)</span>
+                {liveDailyData.hasSalesData && <span className="text-xs text-emerald-400">● Live from POS</span>}
+              </div>
+              <div className={`text-2xl font-bold tabular-nums ${liveDailyData.avgBumpTime < 15 ? "text-emerald-400" : liveDailyData.avgBumpTime <= 20 ? "text-amber-400" : "text-red-400"}`}>
+                {liveDailyData.avgBumpTime?.toFixed(0) ?? "—"} min avg
+              </div>
+              <div className="flex flex-wrap gap-3 mt-2 text-xs text-slate-400">
+                <span>Dine-in: {(liveDailyData.avgBumpTimeDineIn ?? 0).toFixed(0)} min</span>
+                <span>Pickup: {(liveDailyData.avgBumpTimePickup ?? 0).toFixed(0)} min</span>
+                <span>Delivery: {(liveDailyData.avgBumpTimeDelivery ?? 0).toFixed(0)} min</span>
+              </div>
+              <div className="text-xs text-slate-500 mt-1">
+                Promise: {(liveDailyData.ordersEarly ?? 0)} early, {(liveDailyData.ordersOnTime ?? 0)} on time, {(liveDailyData.ordersLate ?? 0)} late
+              </div>
+            </div>
+          )}
+          {!isOnboardingUser && liveDailyData && (liveDailyData.doordashOrders ?? 0) > 0 && (
+            <div className="bg-slate-800 rounded-xl p-4 border border-zinc-800/50 shadow-sm min-w-0 col-span-2">
+              <div className="flex items-center justify-between mb-1">
+                <span className="text-xs text-slate-400 uppercase tracking-wide">DoorDash summary</span>
+                <span className="text-xs text-emerald-400">● Live from POS</span>
+              </div>
+              <div className="grid grid-cols-2 gap-2 text-sm">
+                <div>Orders: {liveDailyData.doordashOrders}</div>
+                <div>Revenue: ${(liveDailyData.doordashSales ?? 0).toLocaleString("en-US", { maximumFractionDigits: 0 })}</div>
+                <div>Commission: ${(liveDailyData.doordashCommission ?? 0).toLocaleString("en-US", { maximumFractionDigits: 0 })}</div>
+                <div>Cost/order: ${(liveDailyData.doordashOrders > 0 ? (liveDailyData.doordashCommission ?? 0) / liveDailyData.doordashOrders : 0).toFixed(2)}</div>
+                <div className="col-span-2 text-xs text-slate-500">New: {liveDailyData.doordashNewCustomers ?? 0} · Returning: {liveDailyData.doordashReturningCustomers ?? 0}</div>
+              </div>
+            </div>
+          )}
           {isOnboardingUser && (onboardingData?.employee_count != null || onboardingData?.monthly_rent != null) && (
             <div className="grid grid-cols-2 gap-3 min-w-0 col-span-2">
               {onboardingData?.employee_count != null && (
@@ -1020,6 +1210,23 @@ export default function HomePage() {
               Enter daily numbers <ChevronRight className="w-4 h-4 shrink-0" aria-hidden />
             </Link>
           </>
+        ) : liveDailyData?.hasLiveData ? (
+          (() => {
+            const d = liveDailyData;
+            const storeName = getStoreLabel(selectedStore);
+            const salesLine = `Yesterday ${storeName} did $${(d.netSales ?? 0).toLocaleString("en-US", { maximumFractionDigits: 0 })} on ${d.totalOrders ?? 0} orders. Avg ticket: $${((d.avgTicket ?? 0)).toFixed(2)}. Avg bump time: ${(d.avgBumpTime ?? 0).toFixed(0)} min. ${d.doordashOrders ?? 0} DoorDash orders ($${(d.doordashSales ?? 0).toLocaleString("en-US", { maximumFractionDigits: 0 })} revenue, $${(d.doordashCommission ?? 0).toLocaleString("en-US", { maximumFractionDigits: 0 })} in commissions).`;
+            const laborLine = d.hasLaborData ? ` Your team logged ${(d.regularHours ?? 0).toFixed(1)} hours across ${d.uniqueEmployees ?? 0} employees. SPLH: $${(d.splh ?? 0).toFixed(0)}.` : "";
+            const purchaseLine = d.hasPurchaseData ? ` Food purchases: $${(d.foodSpend ?? 0).toLocaleString("en-US", { maximumFractionDigits: 0 })}. Food cost: ${(d.foodCostPct ?? 0).toFixed(1)}%.` : "";
+            const full = salesLine + laborLine + purchaseLine;
+            return (
+              <>
+                <p className="text-sm text-slate-300 leading-relaxed line-clamp-5">{full}</p>
+                <Link href="/brief" className="inline-flex items-center gap-1 text-sm text-blue-400 hover:text-blue-300 mt-3">
+                  Read full brief <ChevronRight className="w-4 h-4 shrink-0" aria-hidden />
+                </Link>
+              </>
+            );
+          })()
         ) : (() => {
           const briefForStore = selectedStore === "all" ? SEED_MORNING_BRIEF : (SEED_MORNING_BRIEF_BY_STORE[selectedStore] ?? SEED_MORNING_BRIEF);
           return briefForStore ? (
@@ -1113,12 +1320,12 @@ export default function HomePage() {
       </div>
 
       {/* Wins This Week — positive first, above alerts (hidden for onboarding — fabricated) */}
-      {!isOnboardingUser && wins.length > 0 && (
+      {!isOnboardingUser && winsToShow.length > 0 && (
         <div className="mb-4">
           <div className="flex items-center gap-2 mb-3">
             <span className="text-base">🎉</span>
             <h2 className="text-sm font-bold text-white">WINS THIS WEEK</h2>
-            <span className="text-[10px] text-slate-500">({wins.length})</span>
+            <span className="text-[10px] text-slate-500">({winsToShow.length})</span>
           </div>
           {displayedWins.map((win) => (
             <div
@@ -1148,13 +1355,13 @@ export default function HomePage() {
               </div>
             </div>
           ))}
-          {wins.length > 3 && (
+          {winsToShow.length > 3 && (
             <button
               type="button"
               onClick={() => setShowAllWins(!showAllWins)}
               className="w-full text-center py-2 text-xs text-slate-500"
             >
-              {showAllWins ? "Show less" : `Show ${wins.length - 3} more wins`}
+              {showAllWins ? "Show less" : `Show ${winsToShow.length - 3} more wins`}
             </button>
           )}
         </div>

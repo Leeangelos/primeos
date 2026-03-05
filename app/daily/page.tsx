@@ -159,6 +159,23 @@ function DailyPageContent() {
   const [acknowledged, setAcknowledged] = useState<string | null>(null); // timestamp
   const [ackLoading, setAckLoading] = useState(false);
   const [entry, setEntry] = useState<any>(null); // current day's data from API
+  const [liveDayData, setLiveDayData] = useState<{
+    hasSalesData: boolean;
+    hasLaborData: boolean;
+    hasPurchaseData: boolean;
+    netSales?: number;
+    totalLaborCost?: number;
+    foodSpend?: number;
+    regularHours?: number;
+    overtimeHours?: number;
+    totalOrders?: number;
+    avgBumpTime?: number;
+    avgTicket?: number;
+    guestCount?: number;
+    totalTips?: number;
+    paperSpend?: number;
+    splh?: number | null;
+  } | null>(null);
   const [warnings, setWarnings] = useState<WarningItem[]>([]);
   const [storeChangeWarning, setStoreChangeWarning] = useState<string | null>(null);
   const [onboardingData, setOnboardingData] = useState<{
@@ -333,14 +350,48 @@ function DailyPageContent() {
     const date = businessDate;
     let cancelled = false;
     setSaveStatus("idle");
-    const path = `/api/daily-kpi?store=${encodeURIComponent(slug)}&date=${encodeURIComponent(date)}`;
-    const url = typeof window !== "undefined" ? `${window.location.origin}${path}` : path;
-    fetch(url)
-      .then((res) => res.json())
-      .then((data) => {
-        if (cancelled || !data.ok) return;
-        const e = data.entry;
-        if (e) {
+    const origin = typeof window !== "undefined" ? window.location.origin : "";
+    Promise.all([
+      fetch(`${origin}/api/dashboard/daily-data?store_id=${encodeURIComponent(slug)}&day=${encodeURIComponent(date)}`).then((r) => r.json()),
+      fetch(`${origin}/api/daily-kpi?store=${encodeURIComponent(slug)}&date=${encodeURIComponent(date)}`).then((r) => r.json()),
+    ]).then(([dayRes, kpiData]) => {
+      if (cancelled) return;
+      const hasLive = dayRes.hasLiveData && !dayRes.error;
+      if (hasLive) {
+        setLiveDayData({
+          hasSalesData: !!dayRes.hasSalesData,
+          hasLaborData: !!dayRes.hasLaborData,
+          hasPurchaseData: !!dayRes.hasPurchaseData,
+          netSales: dayRes.netSales,
+          totalLaborCost: dayRes.totalLaborCost,
+          foodSpend: dayRes.foodSpend,
+          regularHours: dayRes.regularHours,
+          overtimeHours: dayRes.overtimeHours,
+          totalOrders: dayRes.totalOrders,
+          avgBumpTime: dayRes.avgBumpTime,
+          avgTicket: dayRes.avgTicket,
+          guestCount: dayRes.guestCount,
+          totalTips: dayRes.totalTips,
+          paperSpend: dayRes.paperSpend,
+          splh: dayRes.splh,
+        });
+        if (dayRes.hasSalesData) {
+          setNetSales(dayRes.netSales != null ? String(dayRes.netSales) : "");
+          setTickets(dayRes.totalOrders != null ? String(dayRes.totalOrders) : "");
+        }
+        if (dayRes.hasLaborData) {
+          const totalHrs = (dayRes.regularHours ?? 0) + (dayRes.overtimeHours ?? 0);
+          setLaborCost(dayRes.totalLaborCost != null ? String(dayRes.totalLaborCost) : "");
+          setLaborHours(totalHrs > 0 ? String(totalHrs) : "");
+        }
+        if (dayRes.hasPurchaseData) {
+          setFoodCost(dayRes.foodSpend != null ? String(dayRes.foodSpend) : "");
+          setDisposablesCost(dayRes.paperSpend != null ? String(dayRes.paperSpend) : "");
+        }
+      } else {
+        setLiveDayData(null);
+        const e = kpiData?.entry;
+        if (kpiData?.ok && e) {
           setNetSales(e.net_sales != null ? String(e.net_sales) : "");
           setLaborCost(e.labor_dollars != null ? String(e.labor_dollars) : "");
           setFoodCost(e.food_dollars != null ? String(e.food_dollars) : "");
@@ -365,15 +416,14 @@ function DailyPageContent() {
           setTickets("");
           setNotes("");
         }
-        setEntry(data.entry ?? null);
-        setRolling(data.rolling7 || null);
-        if (data.entry?.acknowledged_at) {
-          setAcknowledged(data.entry.acknowledged_at);
-        } else {
-          setAcknowledged(null);
-        }
-      })
-      .catch(() => {});
+      }
+      setEntry(kpiData?.entry ?? null);
+      setRolling(kpiData?.rolling7 || null);
+      if (kpiData?.entry?.acknowledged_at) setAcknowledged(kpiData.entry.acknowledged_at);
+      else setAcknowledged(null);
+    }).catch(() => {
+      if (!cancelled) setLiveDayData(null);
+    });
     return () => {
       cancelled = true;
     };
@@ -720,6 +770,12 @@ function DailyPageContent() {
             </div>
           )}
         </div>
+        {liveDayData && (
+          <p className="text-xs text-slate-400 mt-2">
+            {new Date(businessDate + "T12:00:00Z").toLocaleDateString("en-US", { month: "long", day: "numeric" })}: Sales {liveDayData.hasSalesData ? "✅" : "❌"} Labor {liveDayData.hasLaborData ? "✅" : "❌"} Purchases {liveDayData.hasPurchaseData ? "✅" : "❌"}
+            {!liveDayData.hasPurchaseData && " Enter food cost manually."}
+          </p>
+        )}
       </div>
 
       {/* Scoreboard: PRIME primary, then Labor / Food+Disposables / SLPH */}
@@ -858,6 +914,7 @@ function DailyPageContent() {
             <div className="space-y-1 min-w-0">
               <div className="flex items-center gap-2">
                 <label htmlFor="daily-net-sales" className="text-xs text-slate-400">Sales ($)</label>
+                {liveDayData?.hasSalesData ? <span className="text-xs text-emerald-400">● Live from POS</span> : <span className="text-xs text-zinc-500">Manual entry</span>}
                 <EducationInfoIcon metricKey="net_sales" />
               </div>
               <input
@@ -868,13 +925,15 @@ function DailyPageContent() {
                 placeholder="e.g., 5420.00"
                 value={netSales}
                 onChange={(e) => setNetSales(e.target.value)}
-                className={cn(inputCls, netSalesInvalid ? "border-red-500" : getInputBorder("sales"), "text-emerald-400")}
+                readOnly={!!liveDayData?.hasSalesData}
+                className={cn(inputCls, netSalesInvalid ? "border-red-500" : getInputBorder("sales"), "text-emerald-400", liveDayData?.hasSalesData && "opacity-90 cursor-default")}
               />
             </div>
 
             <div className="space-y-1 min-w-0">
               <div className="flex items-center gap-2">
                 <label htmlFor="daily-food" className="text-xs text-slate-400">Food ($)</label>
+                {liveDayData?.hasPurchaseData ? <span className="text-xs text-emerald-400">● Live from POS</span> : <span className="text-xs text-zinc-500">Manual entry</span>}
                 <EducationInfoIcon metricKey="food_cost" />
               </div>
               <input
@@ -885,13 +944,15 @@ function DailyPageContent() {
                 placeholder="e.g., 1670.00"
                 value={foodCost}
                 onChange={(e) => setFoodCost(e.target.value)}
-                className={cn(inputCls, getInputBorder("food"), "text-red-400")}
+                readOnly={!!liveDayData?.hasPurchaseData}
+                className={cn(inputCls, getInputBorder("food"), "text-red-400", liveDayData?.hasPurchaseData && "opacity-90 cursor-default")}
               />
             </div>
 
             <div className="space-y-1 min-w-0">
               <div className="flex items-center gap-2">
                 <label htmlFor="daily-labor" className="text-xs text-slate-400">Labor ($)</label>
+                {liveDayData?.hasLaborData ? <span className="text-xs text-emerald-400">● Live from POS</span> : <span className="text-xs text-zinc-500">Manual entry</span>}
                 <EducationInfoIcon metricKey="labor_pct" />
               </div>
               <input
@@ -902,7 +963,8 @@ function DailyPageContent() {
                 placeholder="e.g., 1252.00"
                 value={laborCost}
                 onChange={(e) => setLaborCost(e.target.value)}
-                className={cn(inputCls, getInputBorder("labor"), "text-red-400")}
+                readOnly={!!liveDayData?.hasLaborData}
+                className={cn(inputCls, getInputBorder("labor"), "text-red-400", liveDayData?.hasLaborData && "opacity-90 cursor-default")}
               />
             </div>
 
