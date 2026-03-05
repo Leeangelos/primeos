@@ -11,11 +11,20 @@ export async function GET(request: Request) {
     const supabase = createClient(supabaseUrl, supabaseKey);
 
     const { searchParams } = new URL(request.url);
-    const storeId = searchParams.get("store_id");
+    const storeIdParam = searchParams.get("store_id");
     const day = searchParams.get("day");
     const range = searchParams.get("range");
 
-    if (!storeId) return NextResponse.json({ error: "store_id required" }, { status: 400 });
+    console.log(`DAILY-DATA API: store_id=${storeIdParam}, day=${day ?? "n/a"}, range=${range ?? "n/a"}`);
+
+    if (!storeIdParam) return NextResponse.json({ error: "store_id required" }, { status: 400 });
+
+    let storeId = storeIdParam;
+    const isSlug = storeIdParam.length < 36 || !/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(storeIdParam);
+    if (isSlug) {
+      const { data: storeRow } = await supabase.from("stores").select("id").eq("slug", storeIdParam).maybeSingle();
+      if (storeRow?.id) storeId = storeRow.id;
+    }
 
     if (day && !range) {
       const [salesRes, laborRes, purchasesRes] = await Promise.all([
@@ -23,6 +32,8 @@ export async function GET(request: Request) {
         supabase.from("foodtec_daily_labor").select("*").eq("store_id", storeId).eq("business_day", day).maybeSingle(),
         supabase.from("me_daily_purchases").select("*").eq("store_id", storeId).eq("business_day", day).maybeSingle(),
       ]);
+
+      console.log(`Sales data: ${salesRes.data ? "FOUND" : "NULL"}, Labor data: ${laborRes.data ? "FOUND" : "NULL"}, Purchases data: ${purchasesRes.data ? "FOUND" : "NULL"}`);
 
       const sales = salesRes.data;
       const labor = laborRes.data;
@@ -118,6 +129,8 @@ export async function GET(request: Request) {
           .gte("business_day", startISO)
           .order("business_day", { ascending: true }),
       ]);
+
+      console.log(`Range: Sales rows=${(salesRes.data ?? []).length}, Labor rows=${(laborRes.data ?? []).length}, Purchases rows=${(purchasesRes.data ?? []).length}`);
 
       return NextResponse.json({
         range: daysBack,

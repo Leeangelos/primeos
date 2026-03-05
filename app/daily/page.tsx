@@ -348,6 +348,7 @@ function DailyPageContent() {
   useEffect(() => {
     const slug = storeId;
     const date = businessDate;
+    console.log(`FETCHING LIVE DATA: store_id=${slug}, day=${date}`);
     let cancelled = false;
     setSaveStatus("idle");
     const origin = typeof window !== "undefined" ? window.location.origin : "";

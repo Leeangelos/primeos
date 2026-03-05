@@ -416,6 +416,7 @@ export default function HomePage() {
       return;
     }
     const store = storeSlugForFetch(selectedStore);
+    console.log(`FETCHING LIVE DATA: store_id=${store}, day=${yesterday}`);
     let cancelled = false;
     setLoadingLive(true);
     Promise.all([
