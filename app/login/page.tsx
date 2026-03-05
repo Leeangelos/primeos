@@ -34,8 +34,8 @@ function LoginContent() {
         return;
       }
       if (data?.session) {
-        router.push("/");
-        router.refresh();
+        window.location.href = "/";
+        return;
       }
     } catch (err) {
       setError(err instanceof Error ? err.message : "Something went wrong");
@@ -85,6 +85,17 @@ function LoginContent() {
         }
         .login-border-shimmer {
           animation: border-shimmer 6s ease-in-out infinite;
+        }
+        @keyframes login-spin {
+          to { transform: rotate(360deg); }
+        }
+        .login-spinner {
+          width: 18px;
+          height: 18px;
+          border: 2px solid rgba(255,255,255,0.3);
+          border-top-color: white;
+          border-radius: 50%;
+          animation: login-spin 0.7s linear infinite;
         }
       `}} />
       <div
@@ -188,13 +199,20 @@ function LoginContent() {
                   <button
                     type="submit"
                     disabled={loading}
-                    className={`w-full min-h-[48px] py-3.5 rounded-xl text-sm font-semibold transition-all active:scale-[0.98] ${
+                    className={`w-full min-h-[48px] py-3.5 rounded-xl text-sm font-semibold transition-all active:scale-[0.98] flex items-center justify-center gap-2 ${
                       loading
-                        ? "bg-zinc-700 text-zinc-500 cursor-not-allowed"
+                        ? "bg-[#E65100]/80 text-white cursor-not-allowed"
                         : "bg-[#E65100] hover:bg-[#F4651A] text-white"
                     }`}
                   >
-                    {loading ? "Signing in…" : "Log In"}
+                    {loading ? (
+                      <>
+                        <span className="login-spinner shrink-0" aria-hidden />
+                        <span>Logging in...</span>
+                      </>
+                    ) : (
+                      "Log In"
+                    )}
                   </button>
                   <button type="button" onClick={() => setShowResetForm(true)} className="text-sm text-[#E65100] hover:text-[#F4651A] text-left block w-full mt-1">
                     Forgot password?
