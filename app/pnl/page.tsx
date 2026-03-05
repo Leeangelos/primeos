@@ -172,7 +172,24 @@ export default function PnlPage() {
     setShareGenerating(false);
   }
 
-  if (loading) return <div className="min-h-screen bg-zinc-950" />;
+  if (loading) {
+    return (
+      <div className="space-y-6 min-w-0 overflow-x-hidden pb-28">
+        <div className="bg-zinc-800/50 rounded-xl border border-zinc-800/50 shadow-sm p-4 animate-pulse">
+          <div className="h-6 w-32 bg-zinc-700 rounded mb-2" />
+          <div className="h-4 w-48 bg-zinc-700 rounded" />
+        </div>
+        <div className="bg-zinc-800/50 rounded-xl border border-zinc-800/50 shadow-sm p-6 animate-pulse">
+          <div className="h-4 w-24 bg-zinc-700 rounded mb-4" />
+          <div className="h-24 w-full bg-zinc-700 rounded" />
+        </div>
+        <div className="bg-zinc-800/50 rounded-xl border border-zinc-800/50 shadow-sm p-4 animate-pulse">
+          <div className="h-4 w-40 bg-zinc-700 rounded mb-3" />
+          <div className="h-32 w-full bg-zinc-700 rounded" />
+        </div>
+      </div>
+    );
+  }
   if (newUser) {
     return (
       <div className="space-y-6 min-w-0 overflow-x-hidden pb-28">

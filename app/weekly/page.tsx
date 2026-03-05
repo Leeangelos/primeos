@@ -464,8 +464,19 @@ function WeeklyPageContent() {
       </div>
 
       {loading && (
-        <div className="dashboard-surface rounded-lg border border-border bg-panel/50 p-8 text-center text-muted">
-          Loading…
+        <div className="space-y-6">
+          <div className="bg-zinc-800/50 rounded-xl border border-zinc-800/50 shadow-sm p-4 animate-pulse">
+            <div className="h-6 w-40 bg-zinc-700 rounded mb-2" />
+            <div className="h-4 w-56 bg-zinc-700 rounded" />
+          </div>
+          <div className="bg-zinc-800/50 rounded-xl border border-zinc-800/50 shadow-sm p-6 animate-pulse">
+            <div className="h-4 w-28 bg-zinc-700 rounded mb-4" />
+            <div className="h-12 w-32 bg-zinc-700 rounded" />
+          </div>
+          <div className="bg-zinc-800/50 rounded-xl border border-zinc-800/50 shadow-sm p-4 animate-pulse">
+            <div className="h-4 w-36 bg-zinc-700 rounded mb-3" />
+            <div className="h-64 w-full bg-zinc-700 rounded" />
+          </div>
         </div>
       )}
       {error && (

@@ -798,7 +798,7 @@ export default function HomePage() {
       {loading ? (
         <div className="grid grid-cols-2 gap-3 min-w-0">
           {[1, 2, 3, 4].map((i) => (
-            <div key={i} className="bg-zinc-800 rounded-xl p-4 border border-zinc-800/50 shadow-sm animate-pulse min-w-0">
+            <div key={i} className="bg-zinc-800/50 rounded-xl p-4 border border-zinc-800/50 shadow-sm animate-pulse min-w-0">
               <div className="h-3 w-16 bg-slate-600 rounded mb-2" />
               <div className="h-8 w-20 bg-slate-600 rounded" />
               <div className="h-3 w-24 bg-slate-600 rounded mt-2" />

@@ -116,7 +116,29 @@ export default function DailyEdgePage() {
       : FEED_ITEMS.filter((item) => item.type === activeFilter);
   }, [activeFilter, FEED_ITEMS]);
 
-  if (loading) return <div className="min-h-screen bg-zinc-950" />;
+  if (loading) {
+    return (
+      <div className="space-y-4 pb-28 min-w-0 overflow-x-hidden">
+        <div className="bg-zinc-800/50 rounded-xl border border-zinc-800/50 shadow-sm p-4 animate-pulse">
+          <div className="h-6 w-36 bg-zinc-700 rounded mb-2" />
+          <div className="h-4 w-52 bg-zinc-700 rounded" />
+        </div>
+        <div className="bg-zinc-800/50 rounded-xl border border-zinc-800/50 shadow-sm p-5 animate-pulse">
+          <div className="h-4 w-28 bg-zinc-700 rounded mb-3" />
+          <div className="h-5 w-full bg-zinc-700 rounded mb-2" />
+          <div className="h-20 w-full bg-zinc-700 rounded" />
+        </div>
+        <div className="space-y-3">
+          {[1, 2, 3].map((i) => (
+            <div key={i} className="bg-zinc-800/50 rounded-xl border border-zinc-800/50 shadow-sm p-4 animate-pulse">
+              <div className="h-4 w-2/3 bg-zinc-700 rounded mb-2" />
+              <div className="h-3 w-full bg-zinc-700 rounded" />
+            </div>
+          ))}
+        </div>
+      </div>
+    );
+  }
   if (newUser) {
     return (
       <div className="space-y-4 pb-28 min-w-0 overflow-x-hidden">

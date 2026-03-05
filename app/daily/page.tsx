@@ -592,7 +592,28 @@ function DailyPageContent() {
     [warnings]
   );
 
-  if (loading) return <div className="min-h-screen bg-zinc-950" />;
+  if (loading) {
+    return (
+      <div className="space-y-5 min-w-0 pb-28">
+        <div className="bg-zinc-800/50 rounded-xl border border-zinc-800/50 shadow-sm p-4 animate-pulse">
+          <div className="h-6 w-40 bg-zinc-700 rounded mb-2" />
+          <div className="h-4 w-56 bg-zinc-700 rounded" />
+        </div>
+        <div className="grid grid-cols-2 gap-3">
+          {[1, 2, 3, 4].map((i) => (
+            <div key={i} className="bg-zinc-800/50 rounded-xl p-4 border border-zinc-800/50 shadow-sm animate-pulse">
+              <div className="h-3 w-20 bg-zinc-700 rounded mb-2" />
+              <div className="h-8 w-24 bg-zinc-700 rounded" />
+            </div>
+          ))}
+        </div>
+        <div className="bg-zinc-800/50 rounded-xl border border-zinc-800/50 shadow-sm p-6 animate-pulse">
+          <div className="h-4 w-32 bg-zinc-700 rounded mb-4" />
+          <div className="h-32 w-full bg-zinc-700 rounded" />
+        </div>
+      </div>
+    );
+  }
   if (newUser) {
     const weekly = onboardingData?.weekly_sales != null ? Number(onboardingData.weekly_sales) : null;
     const estDaily = weekly != null && weekly > 0 ? Math.round(weekly / 7) : null;

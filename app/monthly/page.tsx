@@ -165,7 +165,28 @@ function MonthlyContent() {
     }
   };
 
-  if (loading) return <div className="min-h-screen bg-zinc-950" />;
+  if (loading) {
+    return (
+      <div className="space-y-6 min-w-0 overflow-x-hidden pb-28">
+        <div className="bg-zinc-800/50 rounded-xl border border-zinc-800/50 shadow-sm p-4 animate-pulse">
+          <div className="h-6 w-44 bg-zinc-700 rounded mb-2" />
+          <div className="h-4 w-64 bg-zinc-700 rounded" />
+        </div>
+        <div className="bg-zinc-800/50 rounded-xl border border-zinc-800/50 shadow-sm p-6 animate-pulse">
+          <div className="h-4 w-28 bg-zinc-700 rounded mb-4" />
+          <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+            {[1, 2, 3, 4, 5, 6].map((i) => (
+              <div key={i} className="h-20 bg-zinc-700 rounded-xl" />
+            ))}
+          </div>
+        </div>
+        <div className="bg-zinc-800/50 rounded-xl border border-zinc-800/50 shadow-sm p-4 animate-pulse">
+          <div className="h-4 w-36 bg-zinc-700 rounded mb-3" />
+          <div className="h-48 w-full bg-zinc-700 rounded" />
+        </div>
+      </div>
+    );
+  }
   if (newUser) {
     return (
       <div className="space-y-6 min-w-0 overflow-x-hidden pb-28">
