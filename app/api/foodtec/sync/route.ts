@@ -53,6 +53,26 @@ export async function GET(request: Request) {
       ordersByStore[store].push(order);
     });
 
+    const houseAccounts = await fetchFoodTecView("houseAccountReceipt", foodtecDay);
+    const payments = await fetchFoodTecView("payment", foodtecDay);
+    const houseByStore: Record<string, { owed: number; received: number }> = {};
+    houseAccounts.forEach((r) => {
+      const store = (r.store as string) || "unknown";
+      const voided = (r.voided ?? "").toLowerCase();
+      const orderVoided = (r.ordervoided ?? "").toLowerCase();
+      if (voided === "y" || orderVoided === "y") return;
+      if (!houseByStore[store]) houseByStore[store] = { owed: 0, received: 0 };
+      houseByStore[store].owed += pf(r.amount);
+    });
+    payments.forEach((p) => {
+      const paymentType = (p.paymenttype ?? "").toLowerCase();
+      const voided = (p.voided ?? "").toLowerCase();
+      if (voided === "y" || !paymentType.includes("house account")) return;
+      const store = (p.store as string) || "unknown";
+      if (!houseByStore[store]) houseByStore[store] = { owed: 0, received: 0 };
+      houseByStore[store].received += pf(p.amount);
+    });
+
     for (const [storeName, storeOrders] of Object.entries(ordersByStore)) {
       const storeId = storeMap[storeName];
       if (!storeId) {
@@ -223,6 +243,9 @@ export async function GET(request: Request) {
           orders_early: ordersEarly,
           orders_on_time: ordersOnTime,
           orders_late: ordersLate,
+          house_account_owed: houseByStore[storeName]?.owed ?? 0,
+          house_account_received: houseByStore[storeName]?.received ?? 0,
+          house_account_net: (houseByStore[storeName]?.owed ?? 0) - (houseByStore[storeName]?.received ?? 0),
           synced_at: new Date().toISOString(),
         },
         { onConflict: "store_id,business_day" }
