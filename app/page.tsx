@@ -872,7 +872,7 @@ export default function HomePage() {
 
       <WinNotifications storeId={winsStoreId} />
 
-      {!isOnboardingUser && showMissingBanner && (
+      {!isOnboardingUser && showMissingBanner && !liveDailyData?.hasSalesData && (
         <div className="bg-amber-600/10 rounded-xl border border-amber-700/30 p-3 mb-4 flex items-start justify-between">
           <div className="flex items-start gap-2">
             <AlertTriangle className="w-4 h-4 text-amber-400 mt-0.5 flex-shrink-0" />
