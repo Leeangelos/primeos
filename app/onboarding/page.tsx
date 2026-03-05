@@ -205,7 +205,7 @@ export default function OnboardingPage() {
                 key={i}
                 className={cn(
                   "w-2 h-2 rounded-full transition-colors",
-                  i + 1 === step ? "bg-[#E65100]" : "bg-zinc-700"
+                  i + 1 < step ? "bg-emerald-400 shadow-[0_0_6px_rgba(52,211,153,0.4)]" : i + 1 === step ? "bg-[#E65100]" : "bg-zinc-700"
                 )}
               />
             ))}
@@ -267,7 +267,7 @@ export default function OnboardingPage() {
                     value={weeklySales}
                     onChange={(e) => setWeeklySales(e.target.value)}
                     placeholder="$8,000"
-                    className="w-full h-10 py-1.5 bg-zinc-900 border border-zinc-700 rounded-lg px-3 text-white placeholder:text-zinc-500 text-sm"
+                    className="w-full h-10 py-1.5 bg-zinc-800 border border-zinc-600 rounded-xl px-3 text-white placeholder:text-zinc-500 text-sm"
                   />
                 </div>
                 <div>
@@ -278,7 +278,7 @@ export default function OnboardingPage() {
                       value={foodCostPct}
                       onChange={(e) => setFoodCostPct(e.target.value)}
                       placeholder="32"
-                      className="flex-1 h-10 py-1.5 bg-zinc-900 border border-zinc-700 rounded-lg px-3 text-white placeholder:text-zinc-500 text-sm"
+                      className="flex-1 h-10 py-1.5 bg-zinc-800 border border-zinc-600 rounded-xl px-3 text-white placeholder:text-zinc-500 text-sm"
                     />
                     <button
                       type="button"
@@ -297,7 +297,7 @@ export default function OnboardingPage() {
                       value={laborCostPct}
                       onChange={(e) => setLaborCostPct(e.target.value)}
                       placeholder="30"
-                      className="flex-1 h-10 py-1.5 bg-zinc-900 border border-zinc-700 rounded-lg px-3 text-white placeholder:text-zinc-500 text-sm"
+                      className="flex-1 h-10 py-1.5 bg-zinc-800 border border-zinc-600 rounded-xl px-3 text-white placeholder:text-zinc-500 text-sm"
                     />
                     <button
                       type="button"
@@ -315,7 +315,7 @@ export default function OnboardingPage() {
                     value={employeeCount}
                     onChange={(e) => setEmployeeCount(e.target.value)}
                     placeholder="12"
-                    className="w-full h-10 py-1.5 bg-zinc-900 border border-zinc-700 rounded-lg px-3 text-white placeholder:text-zinc-500 text-sm"
+                    className="w-full h-10 py-1.5 bg-zinc-800 border border-zinc-600 rounded-xl px-3 text-white placeholder:text-zinc-500 text-sm"
                   />
                 </div>
                 <div>
@@ -325,7 +325,7 @@ export default function OnboardingPage() {
                     value={monthlyRent}
                     onChange={(e) => setMonthlyRent(e.target.value)}
                     placeholder="$3,500"
-                    className="w-full h-10 py-1.5 bg-zinc-900 border border-zinc-700 rounded-lg px-3 text-white placeholder:text-zinc-500 text-sm"
+                    className="w-full h-10 py-1.5 bg-zinc-800 border border-zinc-600 rounded-xl px-3 text-white placeholder:text-zinc-500 text-sm"
                   />
                 </div>
               </div>
@@ -344,7 +344,7 @@ export default function OnboardingPage() {
 
         {step === 3 && (
           <>
-            <div className="flex-1 flex flex-col justify-center min-h-0 overflow-auto">
+            <div className="flex-1 flex flex-col justify-center min-h-0 overflow-auto animate-fade-in">
               <h2 className="text-lg font-bold mb-0.5">Let&apos;s find you online.</h2>
               <p className="text-zinc-400 text-xs mb-2">This helps PrimeOS pull your real Google reviews, competitor data, and local insights.</p>
               <div className="space-y-1.5">
@@ -355,7 +355,7 @@ export default function OnboardingPage() {
                     value={googleBusinessName}
                     onChange={(e) => setGoogleBusinessName(e.target.value)}
                     placeholder="e.g., Joe's Pizza"
-                    className="w-full h-10 py-1.5 bg-zinc-900 border border-zinc-700 rounded-lg px-3 text-white placeholder:text-zinc-500 text-sm"
+                    className="w-full h-10 py-1.5 bg-zinc-800 border border-zinc-600 rounded-xl px-3 text-white placeholder:text-zinc-500 text-sm"
                   />
                   <p className="text-xs text-zinc-500 mt-0.5">Exactly as it appears on Google Maps</p>
                 </div>
@@ -366,7 +366,7 @@ export default function OnboardingPage() {
                     value={streetAddress}
                     onChange={(e) => setStreetAddress(e.target.value)}
                     placeholder="e.g., 123 Main St"
-                    className="w-full h-10 py-1.5 bg-zinc-900 border border-zinc-700 rounded-lg px-3 text-white placeholder:text-zinc-500 text-sm"
+                    className="w-full h-10 py-1.5 bg-zinc-800 border border-zinc-600 rounded-xl px-3 text-white placeholder:text-zinc-500 text-sm"
                   />
                 </div>
                 <div className="grid grid-cols-2 gap-2">
@@ -377,7 +377,7 @@ export default function OnboardingPage() {
                       value={city}
                       onChange={(e) => setCity(e.target.value)}
                       placeholder="e.g., Kent"
-                      className="w-full h-10 py-1.5 bg-zinc-900 border border-zinc-700 rounded-lg px-3 text-white placeholder:text-zinc-500 text-sm"
+                      className="w-full h-10 py-1.5 bg-zinc-800 border border-zinc-600 rounded-xl px-3 text-white placeholder:text-zinc-500 text-sm"
                     />
                   </div>
                   <div>
@@ -385,7 +385,7 @@ export default function OnboardingPage() {
                     <select
                       value={state}
                       onChange={(e) => setState(e.target.value)}
-                      className="w-full h-10 py-1.5 bg-zinc-900 border border-zinc-700 rounded-lg px-3 text-white text-sm"
+                      className="w-full h-10 py-1.5 bg-zinc-800 border border-zinc-600 rounded-xl px-3 text-white text-sm"
                     >
                       <option value="">Select</option>
                       {US_STATES.map((s) => (
@@ -402,7 +402,7 @@ export default function OnboardingPage() {
                       value={zipCode}
                       onChange={(e) => setZipCode(e.target.value)}
                       placeholder="e.g., 44240"
-                      className="w-full h-10 py-1.5 bg-zinc-900 border border-zinc-700 rounded-lg px-3 text-white placeholder:text-zinc-500 text-sm"
+                      className="w-full h-10 py-1.5 bg-zinc-800 border border-zinc-600 rounded-xl px-3 text-white placeholder:text-zinc-500 text-sm"
                     />
                   </div>
                   <div>
@@ -412,7 +412,7 @@ export default function OnboardingPage() {
                       value={county}
                       onChange={(e) => setCounty(e.target.value)}
                       placeholder="e.g., Portage"
-                      className="w-full h-10 py-1.5 bg-zinc-900 border border-zinc-700 rounded-lg px-3 text-white placeholder:text-zinc-500 text-sm"
+                      className="w-full h-10 py-1.5 bg-zinc-800 border border-zinc-600 rounded-xl px-3 text-white placeholder:text-zinc-500 text-sm"
                     />
                   </div>
                 </div>
@@ -424,7 +424,7 @@ export default function OnboardingPage() {
                     value={websiteUrl}
                     onChange={(e) => setWebsiteUrl(e.target.value)}
                     placeholder="e.g., www.joespizza.com"
-                    className="w-full h-10 py-1.5 bg-zinc-900 border border-zinc-700 rounded-lg px-3 text-white placeholder:text-zinc-500 text-sm"
+                    className="w-full h-10 py-1.5 bg-zinc-800 border border-zinc-600 rounded-xl px-3 text-white placeholder:text-zinc-500 text-sm"
                   />
                   <p className="text-xs text-zinc-500 mt-0.5">We&apos;ll use this to help build your menu and profile</p>
                 </div>
@@ -435,7 +435,7 @@ export default function OnboardingPage() {
                 type="button"
                 onClick={() => setStep(4)}
                 disabled={!googleBusinessName.trim() || !streetAddress.trim() || !city.trim() || !state || !zipCode.trim()}
-                className="w-full py-2.5 rounded-xl bg-[#E65100] text-white font-semibold text-sm mt-2 disabled:opacity-50 disabled:cursor-not-allowed"
+                className="w-full py-2.5 rounded-xl bg-[#E65100] text-white font-semibold text-sm mt-2 disabled:opacity-50 disabled:cursor-not-allowed active:scale-[0.98] transition-transform"
               >
                 Next →
               </button>
@@ -445,7 +445,7 @@ export default function OnboardingPage() {
 
         {step === 4 && (
           <>
-            <div className="flex-1 flex flex-col justify-center min-h-0">
+            <div className="flex-1 flex flex-col justify-center min-h-0 animate-fade-in">
               <h2 className="text-lg font-bold mb-1">What matters most to you right now?</h2>
               <div className="space-y-2">
                 {GOAL_OPTIONS.map((g) => (
@@ -454,8 +454,8 @@ export default function OnboardingPage() {
                     type="button"
                     onClick={() => toggleGoal(g.id)}
                     className={cn(
-                      "w-full flex items-center gap-2 p-2.5 rounded-xl border-2 text-left transition-colors text-xs",
-                      goals.includes(g.id) ? "border-[#E65100] bg-[#E65100]/10" : "border-zinc-700 bg-zinc-900"
+                      "w-full flex items-center gap-2 p-2.5 rounded-xl border-2 text-left transition-colors transition-all duration-150 text-xs",
+                      goals.includes(g.id) ? "border-[#E65100] bg-[#E65100]/10" : "border-zinc-700 bg-zinc-900 hover:border-[#E65100]"
                     )}
                   >
                     <span className="text-lg">{g.emoji}</span>
@@ -468,7 +468,7 @@ export default function OnboardingPage() {
               <button
                 type="button"
                 onClick={() => setStep(5)}
-                className="w-full py-2.5 rounded-xl bg-[#E65100] text-white font-semibold text-sm mt-2"
+                className="w-full py-2.5 rounded-xl bg-[#E65100] text-white font-semibold text-sm mt-2 active:scale-[0.98] transition-transform"
               >
                 Next →
               </button>
@@ -478,7 +478,7 @@ export default function OnboardingPage() {
 
         {step === 5 && (
           <>
-            <div className="flex-1 flex flex-col justify-center min-h-0">
+            <div className="flex-1 flex flex-col justify-center min-h-0 animate-fade-in">
               <h2 className="text-lg font-bold mb-0.5">Your dashboard is ready.</h2>
               <p className="text-zinc-400 text-xs mb-2">We built your PrimeOS around the numbers you just gave us.</p>
               <div className="grid grid-cols-3 gap-2">
