@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState, useRef } from "react";
+import { useMemo, useState, useRef, useEffect } from "react";
 import { Share2 } from "lucide-react";
 import {
   COCKPIT_STORE_SLUGS,
@@ -13,7 +13,6 @@ import { isNewUser, getNewUserStoreName } from "@/src/lib/user-scope";
 import { EducationInfoIcon } from "@/src/components/education/InfoIcon";
 import { ExportButton } from "@/src/components/ui/ExportButton";
 import { formatPct as formatPctShared, formatDollars as formatDollarsBase } from "@/src/lib/formatters";
-import { SEED_DAILY_KPIS } from "@/src/lib/seed-data";
 
 function formatPct(n: number | null): string {
   if (n == null || Number.isNaN(n)) return "—";
@@ -99,14 +98,38 @@ export default function PnlPage() {
   const storeForSeed = storeFilter === "all" ? "kent" : storeFilter;
   const storeName = storeFilter === "all" ? "All Locations" : COCKPIT_TARGETS[storeFilter].name;
 
+  const [rangeData, setRangeData] = useState<{ sales: { business_day: string; net_sales?: number }[]; labor: { business_day: string; total_labor_cost?: number; total_overtime_cost?: number }[]; purchases: { business_day: string; food_spend?: number; paper_spend?: number }[] } | null>(null);
+  useEffect(() => {
+    let cancelled = false;
+    const store = storeFilter === "all" ? "kent" : storeFilter;
+    fetch(`/api/dashboard/daily-data?store_id=${encodeURIComponent(store)}&range=60`)
+      .then((r) => r.json())
+      .then((d) => {
+        if (cancelled || !d.sales) return;
+        setRangeData({ sales: d.sales ?? [], labor: d.labor ?? [], purchases: d.purchases ?? [] });
+      })
+      .catch(() => setRangeData(null));
+    return () => { cancelled = true; };
+  }, [storeForSeed]);
+
   const pnl = useMemo(() => {
-    const rows = SEED_DAILY_KPIS.filter(
-      (r) => r.store_id === storeForSeed && r.date >= startDate && r.date <= endDate
-    );
-    const totalSales = rows.reduce((s, r) => s + r.sales, 0);
-    const totalFood = rows.reduce((s, r) => s + r.food_dollars, 0);
-    const totalLabor = rows.reduce((s, r) => s + r.labor_dollars, 0);
-    const totalDisposables = rows.reduce((s, r) => s + Math.round(r.sales * 0.035 * 100) / 100, 0);
+    if (!rangeData?.sales?.length) {
+      return { totalSales: 0, totalFood: 0, totalLabor: 0, totalDisposables: 0, totalCOGS: 0, grossProfit: 0, totalFixed: 0, netProfit: 0, foodPct: 0, dispPct: 0, cogsPct: 0, laborPct: 0, gpPct: 0, fixedPct: 0, netProfitPct: 0 };
+    }
+    const inRange = (date: string) => date >= startDate && date <= endDate;
+    const salesInRange = rangeData.sales.filter((s) => inRange(s.business_day));
+    const salesByDay = new Map(rangeData.sales.map((s) => [s.business_day, s.net_sales ?? 0]));
+    const laborByDay = new Map(rangeData.labor.map((l) => [l.business_day, (l.total_labor_cost ?? 0) + (l.total_overtime_cost ?? 0)]));
+    const purchasesByDay = new Map(rangeData.purchases.map((p) => [p.business_day, { food: p.food_spend ?? 0, paper: p.paper_spend ?? 0 }]));
+    let totalSales = 0, totalFood = 0, totalLabor = 0, totalDisposables = 0;
+    for (const s of salesInRange) {
+      const day = s.business_day;
+      totalSales += s.net_sales ?? 0;
+      totalLabor += laborByDay.get(day) ?? 0;
+      const pur = purchasesByDay.get(day);
+      totalFood += pur?.food ?? 0;
+      totalDisposables += pur?.paper ?? 0;
+    }
     const totalCOGS = totalFood + totalLabor + totalDisposables;
     const grossProfit = totalSales - totalCOGS;
     const totalFixed = 0;
@@ -135,7 +158,7 @@ export default function PnlPage() {
       fixedPct,
       netProfitPct,
     };
-  }, [storeForSeed, startDate, endDate]);
+  }, [rangeData, startDate, endDate]);
 
   async function handleShare() {
     setShareGenerating(true);
@@ -245,6 +268,12 @@ export default function PnlPage() {
           </button>
         </div>
         <p className="text-xs text-muted">Current snapshot — how you&apos;re doing right now. Month-to-date.</p>
+        {rangeData !== null && pnl.totalSales === 0 && (
+          <div className="rounded-xl border border-slate-700 bg-slate-800/50 p-4 text-center text-zinc-500">
+            <p className="text-sm">No data for this period.</p>
+            <p className="text-xs mt-1">Connect your POS — data syncs daily. <a href="mailto:hello@getprimeos.com" className="text-[#E65100] underline">hello@getprimeos.com</a></p>
+          </div>
+        )}
         <div className="flex flex-wrap gap-2 items-center">
           <select
             value={storeFilter}

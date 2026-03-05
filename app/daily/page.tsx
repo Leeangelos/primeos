@@ -25,7 +25,6 @@ import { EducationInfoIcon } from "@/src/components/education/InfoIcon";
 import { ExportButton } from "@/src/components/ui/ExportButton";
 import { SmartQuestion } from "@/src/components/ui/SmartQuestion";
 import { formatPct as formatPctShared, formatDollars } from "@/src/lib/formatters";
-import { SEED_DAILY_KPIS } from "@/src/lib/seed-data";
 
 type WarningItem = { field: string; message: string; severity: "error" | "warning" | "info" };
 
@@ -578,10 +577,35 @@ function DailyPageContent() {
     },
   ];
 
-  const recentEntries = useMemo(() => {
-    const forStore = SEED_DAILY_KPIS.filter((r) => r.store_id === storeId);
-    return forStore.slice(-7).reverse();
+  const [recentEntriesData, setRecentEntriesData] = useState<{ date: string; sales: number; food_cost_pct: number; labor_pct: number; transactions?: number }[]>([]);
+  useEffect(() => {
+    let cancelled = false;
+    const origin = typeof window !== "undefined" ? window.location.origin : "";
+    fetch(`${origin}/api/dashboard/daily-data?store_id=${encodeURIComponent(storeId)}&range=7`)
+      .then((r) => r.json())
+      .then((data) => {
+        if (cancelled || !data.sales?.length) return;
+        const entries = (data.sales as { business_day: string; net_sales?: number }[])
+          .map((s) => {
+            const day = s.business_day;
+            const laborRow = (data.labor ?? []).find((l: { business_day: string }) => l.business_day === day);
+            const purchaseRow = (data.purchases ?? []).find((p: { business_day: string }) => p.business_day === day);
+            const netSales = s.net_sales ?? 0;
+            const laborCost = (laborRow?.total_labor_cost ?? 0) + (laborRow?.total_overtime_cost ?? 0);
+            const foodSpend = purchaseRow?.food_spend ?? 0;
+            const food_cost_pct = netSales > 0 ? (foodSpend / netSales) * 100 : 0;
+            const labor_pct = netSales > 0 ? (laborCost / netSales) * 100 : 0;
+            return { date: day, sales: netSales, food_cost_pct, labor_pct, transactions: (s as { total_orders?: number }).total_orders ?? 0 };
+          })
+          .filter((e) => e.sales > 0)
+          .sort((a, b) => b.date.localeCompare(a.date))
+          .slice(0, 7);
+        setRecentEntriesData(entries);
+      })
+      .catch(() => {});
+    return () => { cancelled = true; };
   }, [storeId]);
+  const recentEntries = recentEntriesData;
 
   const inputCls =
     "w-full min-h-[44px] h-11 px-3 text-sm font-medium tabular-nums placeholder:text-muted focus:border-[#E65100]/50 focus:ring-1 focus:ring-[#E65100]/40 focus:outline-none rounded-xl border border-zinc-600 bg-zinc-800 text-white";
@@ -1232,9 +1256,9 @@ function DailyPageContent() {
             )}
           </div>
 
-          {recentEntries.length > 0 && (
-            <div className="pt-6 border-t border-slate-700/80 min-w-0">
+          <div className="pt-6 border-t border-slate-700/80 min-w-0">
               <h3 className="text-sm font-semibold text-slate-400 uppercase tracking-wide mb-3">Recent Entries</h3>
+              {recentEntries.length > 0 ? (
               <div className="rounded-xl border border-slate-700 overflow-hidden bg-slate-800/50">
                 {recentEntries.map((row) => (
                   <Link
@@ -1261,8 +1285,10 @@ function DailyPageContent() {
                   </Link>
                 ))}
               </div>
+              ) : (
+                <p className="text-zinc-500 text-sm py-4 text-center">No recent data for this store. Connect your POS — data syncs daily. <a href="mailto:hello@getprimeos.com" className="text-[#E65100] underline">hello@getprimeos.com</a></p>
+              )}
             </div>
-          )}
         </div>
       </div>
       </div>

@@ -12,8 +12,7 @@ import { isNewUser } from "@/src/lib/user-scope";
 import { EducationInfoIcon } from "@/src/components/education/InfoIcon";
 import { formatPct } from "@/src/lib/formatters";
 import { EDUCATION_CONTENT } from "@/src/lib/education-content";
-import { SEED_DAILY_KPIS, SEED_MORNING_BRIEF, SEED_MORNING_BRIEF_BY_STORE, SEED_STORES, STORE_BENCHMARKS } from "@/src/lib/seed-data";
-import { SEED_WINS } from "@/src/lib/win-engine";
+import { SEED_STORES, STORE_BENCHMARKS } from "@/src/lib/seed-data";
 import { calculateOperatorScore } from "@/src/lib/score-engine";
 import { WinNotifications } from "@/src/components/ui/WinNotifications";
 import { SmartQuestion } from "@/src/components/ui/SmartQuestion";
@@ -252,6 +251,7 @@ function PillarPanel({
 
   if (pillarId === "product") {
     const value = kpi && kpi.foodCostPct != null ? formatPct(kpi.foodCostPct) : "—";
+    const subtext = kpi?.foodCostPct == null ? "Upload invoices to see your grade" : "A: ≤30% | B: 30-33% | C: 33-35% | D: 35-38% | F: &gt;38%";
     return (
       <div className="bg-zinc-900/50 border-t border-zinc-700 overflow-hidden transition-all duration-300 ease-in-out">
         <div className="p-4 space-y-4">
@@ -259,7 +259,7 @@ function PillarPanel({
             <div>
               <p className="text-2xl font-bold tabular-nums text-white">{value}</p>
               <p className={`text-lg font-semibold ${gradeColor}`}>{grade}</p>
-              <p className="text-xs text-zinc-500 mt-1">A: ≤30% | B: 30-33% | C: 33-35% | D: 35-38% | F: &gt;38%</p>
+              <p className="text-xs text-zinc-500 mt-1">{subtext}</p>
             </div>
             <EducationInfoIcon metricKey="pillar_product" size="sm" />
           </div>
@@ -458,16 +458,7 @@ export default function HomePage() {
       const primePct = foodCostPct + laborPct + dispEst;
       return { foodCostPct, laborPct, primePct };
     }
-    const store = storeSlugForFetch(selectedStore);
-    const forStore = SEED_DAILY_KPIS.filter((r) => r.store_id === store);
-    const todayRow = forStore.find((r) => r.date === today);
-    const yesterdayRow = forStore.find((r) => r.date === yesterday);
-    const row = todayRow ?? yesterdayRow ?? forStore[forStore.length - 1] ?? null;
-    if (!row) return null;
-    const foodCostPct = row.food_cost_pct;
-    const laborPct = row.labor_pct;
-    const primePct = row.prime_pct;
-    return { foodCostPct, laborPct, primePct };
+    return null;
   }, [selectedStore, today, yesterday, onboardingData, liveDailyData]);
 
   const pillarGrades = useMemo(() => {
@@ -568,7 +559,7 @@ export default function HomePage() {
           return;
         }
       } catch {
-        // fall through to seed
+        // no data
       }
       if (!cancelled) {
         if (onboardingData?.food_cost_pct != null && onboardingData?.labor_cost_pct != null) {
@@ -584,22 +575,7 @@ export default function HomePage() {
           });
           setUsedSeedData(false);
         } else {
-          setUsedSeedData(true);
-          const seedForStore = SEED_DAILY_KPIS.filter((r) => r.store_id === store);
-          const todayRow = seedForStore.find((r) => r.date === today);
-          const yesterdayRow = seedForStore.find((r) => r.date === yesterday);
-          const row = todayRow ?? yesterdayRow ?? seedForStore[0];
-          if (row) {
-            setKpi({
-              sales: row.sales,
-              foodCostPct: row.food_cost_pct,
-              laborPct: row.labor_pct,
-              primePct: row.prime_pct,
-              isYesterday: !todayRow,
-            });
-          } else {
-            setKpi(null);
-          }
+          setKpi(null);
         }
         setLoading(false);
       }
@@ -671,16 +647,12 @@ export default function HomePage() {
         foodCostGrade: gradeFoodCost(foodPct, benchmarks.foodCostTargetPct),
       };
     }
-    const store = storeSlugForFetch(selectedStore);
-    const forStore = SEED_DAILY_KPIS.filter((r) => r.store_id === store);
-    const last7 = forStore.slice(-7).map((r) => ({ date: r.date, sales: r.sales, foodCost: r.food_cost_pct }));
-    const prev7 = forStore.slice(-14, -7);
-    const thisSum = last7.reduce((s, d) => s + d.sales, 0);
-    const prevSum = prev7.reduce((s, r) => s + r.sales, 0);
-    const salesTrendPct = prevSum > 0 ? Math.round(((thisSum - prevSum) / prevSum) * 1000) / 10 : 0;
-    const foodCostAvg = last7.length > 0 ? Math.round((last7.reduce((s, d) => s + d.foodCost, 0) / last7.length) * 10) / 10 : 0;
-    const foodCostGrade = gradeFoodCost(foodCostAvg, benchmarks.foodCostTargetPct);
-    return { last7Days: last7, salesTrendPct, foodCostAvg, foodCostGrade };
+    return {
+      last7Days: [],
+      salesTrendPct: 0,
+      foodCostAvg: 0,
+      foodCostGrade: "green" as Grade,
+    };
   }, [selectedStore, benchmarks.foodCostTargetPct, isOnboardingUser, onboardingData?.weekly_sales, onboardingData?.food_cost_pct, rangeData]);
 
   const storeLabel = isOnboardingUser && onboardingData?.store_name
@@ -770,13 +742,6 @@ export default function HomePage() {
   }, [kpi, dailyTargetSales, storeLabel, benchmarks]);
 
   const winsStoreId = isOnboardingUser ? "all" : selectedStore;
-  const wins = useMemo(
-    () =>
-      SEED_WINS.filter(
-        (w) => !w.storeId || w.storeId === "all" || w.storeId === winsStoreId
-      ),
-    [winsStoreId]
-  );
   const liveWins = useMemo(() => {
     if (!liveDailyData?.hasLiveData) return [];
     const list: { id: string; title: string; body: string; emoji: string; magnitude: "big" | "medium" | "small"; date: string }[] = [];
@@ -794,8 +759,7 @@ export default function HomePage() {
     }
     return list;
   }, [liveDailyData]);
-  const winsToShow = liveWins.length > 0 ? liveWins : wins;
-  const displayedWins = showAllWins ? winsToShow : winsToShow.slice(0, 3);
+  const displayedWins = showAllWins ? liveWins : liveWins.slice(0, 3);
 
   const trendArrow = salesTrendPct >= 0 ? "↑" : "↓";
 
@@ -956,8 +920,7 @@ export default function HomePage() {
                 <div className="flex items-center justify-between mb-1">
                   <span className="text-xs text-slate-400 uppercase tracking-wide">{isOnboardingUser ? "Estimated Daily Sales" : kpi.isYesterday ? "Yesterday's Sales" : "Today's Sales"}</span>
                   <div className="flex items-center gap-1.5">
-                    {liveDailyData?.hasSalesData && <span className="text-xs text-emerald-400">● Live from POS</span>}
-                    {usedSeedData && <span className="text-xs text-zinc-500 italic">Demo data</span>}
+                    {liveDailyData?.hasSalesData && <span className="text-xs text-emerald-400">● POS</span>}
                     <EducationInfoIcon metricKey="todays_sales" />
                   </div>
                 </div>
@@ -972,7 +935,6 @@ export default function HomePage() {
           })()}
           {(() => {
             const hasPurchase = liveDailyData?.hasPurchaseData ?? false;
-            const showVal = hasPurchase || usedSeedData;
             const hasFc = kpi.foodCostPct != null;
             const grade = hasFc ? gradeFoodCost(kpi.foodCostPct!, benchmarks.foodCostTargetPct) : "green";
             const borderColor = gradeToHex(grade);
@@ -981,9 +943,8 @@ export default function HomePage() {
                 <div className="flex items-center justify-between mb-1">
                   <span className="text-xs text-slate-400 uppercase tracking-wide">Food Cost (7-day avg)</span>
                   <div className="flex items-center gap-1.5">
-                    {hasPurchase && <span className="text-xs text-emerald-400">● Live from POS</span>}
-                    {!hasPurchase && !usedSeedData && <span className="text-xs text-zinc-500">Upload invoices</span>}
-                    {usedSeedData && <span className="text-xs text-zinc-500 italic">Demo data</span>}
+                    {hasPurchase && <span className="text-xs text-emerald-400">● Invoices</span>}
+                    {!hasPurchase && <span className="text-xs text-zinc-500">Upload invoices</span>}
                     <EducationInfoIcon metricKey="food_cost_pct" />
                   </div>
                 </div>
@@ -1002,8 +963,7 @@ export default function HomePage() {
                 <div className="flex items-center justify-between mb-1">
                   <span className="text-xs text-slate-400 uppercase tracking-wide">Labor %</span>
                   <div className="flex items-center gap-1.5">
-                    {liveDailyData?.hasLaborData && <span className="text-xs text-emerald-400">● Live from POS</span>}
-                    {usedSeedData && <span className="text-xs text-zinc-500 italic">Demo data</span>}
+                    {liveDailyData?.hasLaborData && <span className="text-xs text-emerald-400">● POS</span>}
                     <EducationInfoIcon metricKey="labor_pct_home" />
                   </div>
                 </div>
@@ -1023,8 +983,8 @@ export default function HomePage() {
                 <div className="flex items-center justify-between mb-1">
                   <span className="text-xs text-slate-400 uppercase tracking-wide">COGS %</span>
                   <div className="flex items-center gap-1.5">
-                    {hasCogs && <span className="text-xs text-emerald-400">● Live from POS</span>}
-                    {usedSeedData && <span className="text-xs text-zinc-500 italic">Demo data</span>}
+                    {hasCogs && <span className="text-xs text-emerald-400">● POS + Invoices</span>}
+                    {!hasCogs && liveDailyData?.hasLaborData && <span className="text-xs text-zinc-500">Partial — food cost needed</span>}
                     <EducationInfoIcon metricKey="prime_pct" />
                   </div>
                 </div>
@@ -1039,7 +999,7 @@ export default function HomePage() {
             <div className="bg-slate-800 rounded-xl p-4 border border-zinc-800/50 shadow-sm min-w-0 col-span-2">
               <div className="flex items-center justify-between mb-1">
                 <span className="text-xs text-slate-400 uppercase tracking-wide">Bump time (yesterday)</span>
-                {liveDailyData.hasSalesData && <span className="text-xs text-emerald-400">● Live from POS</span>}
+                {liveDailyData.hasSalesData && <span className="text-xs text-emerald-400">● POS</span>}
               </div>
               <div className={`text-2xl font-bold tabular-nums ${liveDailyData.avgBumpTime < 15 ? "text-emerald-400" : liveDailyData.avgBumpTime <= 20 ? "text-amber-400" : "text-red-400"}`}>
                 {liveDailyData.avgBumpTime?.toFixed(0) ?? "—"} min avg
@@ -1146,11 +1106,11 @@ export default function HomePage() {
             </div>
             <p className="text-xs text-slate-500 mt-2">Ready for live data? Reach out at <a href="mailto:hello@getprimeos.com" className="text-[#E65100] underline font-semibold">hello@getprimeos.com</a> and we'll get your system connected.</p>
           </div>
-        ) : (
+        ) : last7Days.length >= 3 ? (
         <div className="grid grid-cols-2 gap-4 min-w-0">
           <div className="min-w-0">
             <div className="flex items-center gap-1.5 text-xs text-slate-500 mb-1">
-              Sales
+              Sales <span className="text-emerald-400 text-xs">● POS</span>
               <EducationInfoIcon metricKey="daily_sales" size="sm" />
             </div>
             <div className="w-full h-[60px] min-h-[60px]">
@@ -1172,7 +1132,7 @@ export default function HomePage() {
           </div>
           <div className="min-w-0">
             <div className="flex items-center gap-1.5 text-xs text-slate-500 mb-1">
-              Food Cost
+              Food Cost <span className="text-emerald-400 text-xs">● Invoices</span>
               <EducationInfoIcon metricKey="food_cost" size="sm" />
             </div>
             <div className="w-full h-[60px] min-h-[60px]">
@@ -1193,6 +1153,11 @@ export default function HomePage() {
               Avg: {foodCostAvg}% ({foodCostGrade})
             </div>
           </div>
+        </div>
+        ) : (
+        <div className="rounded-xl border border-slate-700 bg-slate-800/50 p-6 text-center">
+          <p className="text-zinc-500 text-sm">Need more data for trends.</p>
+          <p className="text-zinc-500 text-xs mt-1">Connect your POS — data syncs daily. <a href="mailto:hello@getprimeos.com" className="text-[#E65100] underline">hello@getprimeos.com</a></p>
         </div>
         )}
       </div>
@@ -1233,26 +1198,15 @@ export default function HomePage() {
               </>
             );
           })()
-        ) : (() => {
-          const briefForStore = selectedStore === "all" ? SEED_MORNING_BRIEF : (SEED_MORNING_BRIEF_BY_STORE[selectedStore] ?? SEED_MORNING_BRIEF);
-          return briefForStore ? (
-            <>
-              <p className="text-sm text-slate-300 leading-relaxed line-clamp-3">
-                {firstSentences(briefForStore, 3)}
-              </p>
-              <Link href="/brief" className="inline-flex items-center gap-1 text-sm text-blue-400 hover:text-blue-300 mt-3">
-                Read full brief <ChevronRight className="w-4 h-4 shrink-0" aria-hidden />
-              </Link>
-            </>
-          ) : null;
-        })() ?? (
+        ) : (
           <>
             <p className="text-sm text-slate-300 leading-relaxed">
-              Your morning brief generates after daily KPIs are entered. Enter today's numbers to unlock.
+              No brief for this store yet. Connect your POS or enter daily numbers to unlock.
             </p>
             <Link href="/daily" className="inline-flex items-center gap-1 text-sm text-blue-400 hover:text-blue-300 mt-3">
               Enter daily numbers <ChevronRight className="w-4 h-4 shrink-0" aria-hidden />
             </Link>
+            <p className="text-xs text-zinc-500 mt-2">Data syncs daily. Questions? <a href="mailto:hello@getprimeos.com" className="text-[#E65100] underline">hello@getprimeos.com</a></p>
           </>
         )}
       </div>
@@ -1326,12 +1280,12 @@ export default function HomePage() {
       </div>
 
       {/* Wins This Week — positive first, above alerts (hidden for onboarding — fabricated) */}
-      {!isOnboardingUser && winsToShow.length > 0 && (
+      {!isOnboardingUser && displayedWins.length > 0 && (
         <div className="mb-4">
           <div className="flex items-center gap-2 mb-3">
             <span className="text-base">🎉</span>
             <h2 className="text-sm font-bold text-white">WINS THIS WEEK</h2>
-            <span className="text-[10px] text-slate-500">({winsToShow.length})</span>
+            <span className="text-[10px] text-slate-500">({displayedWins.length})</span>
           </div>
           {displayedWins.map((win) => (
             <div
@@ -1361,13 +1315,13 @@ export default function HomePage() {
               </div>
             </div>
           ))}
-          {winsToShow.length > 3 && (
+          {displayedWins.length > 3 && (
             <button
               type="button"
               onClick={() => setShowAllWins(!showAllWins)}
               className="w-full text-center py-2 text-xs text-slate-500"
             >
-              {showAllWins ? "Show less" : `Show ${winsToShow.length - 3} more wins`}
+              {showAllWins ? "Show less" : `Show ${displayedWins.length - 3} more wins`}
             </button>
           )}
         </div>

@@ -11,7 +11,6 @@ import { formatPct } from "@/src/lib/formatters";
 import { useAuth } from "@/src/lib/auth-context";
 import { isNewUser, getNewUserStoreName } from "@/src/lib/user-scope";
 import { useRedAlert } from "@/src/lib/useRedAlert";
-import { SEED_MORNING_BRIEF_BY_STORE } from "@/src/lib/seed-data";
 import { EducationInfoIcon } from "@/src/components/education/InfoIcon";
 
 type BriefStore = "all" | CockpitStoreSlug;
@@ -99,11 +98,6 @@ type StoreMetrics = {
   slph: number | null;
 };
 
-function getSeedBriefForStore(store: BriefStore): string | null {
-  const key = store === "all" ? "kent" : store;
-  return SEED_MORNING_BRIEF_BY_STORE[key] ?? null;
-}
-
 export default function BriefPage() {
   const { session, loading: authLoading } = useAuth();
   const newUser = isNewUser(session);
@@ -157,18 +151,10 @@ export default function BriefPage() {
         setBrief(data.brief);
         setStoreData(data.storeData || {});
       } else {
-        const seed = getSeedBriefForStore(store);
-        if (seed) {
-          setBrief(seed);
-          setStoreData({});
-        } else {
-          setBrief(null);
-        }
+        setBrief(null);
       }
     } catch {
-      const seed = getSeedBriefForStore(store);
-      if (seed) setBrief(seed);
-      else setError("Network error — check your connection");
+      setError("Network error — check your connection");
     }
 
     setLoading(false);

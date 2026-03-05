@@ -25,7 +25,6 @@ import { EducationInfoIcon } from "@/src/components/education/InfoIcon";
 import { ExportButton } from "@/src/components/ui/ExportButton";
 import { formatPct, formatDollars } from "@/src/lib/formatters";
 import { Share2 } from "lucide-react";
-import { SEED_WEEKLY_COCKPIT } from "@/src/lib/seed-data";
 
 /** Store slug for daily drill-down; daily page uses cockpit slugs (kent, aurora, lindseys). */
 function toDailyStoreSlug(store: "all" | CockpitStoreSlug): CockpitStoreSlug {
@@ -175,17 +174,10 @@ function WeeklyPageContent() {
   })();
 
   const storeForSeed = store === "all" ? "kent" : store;
-  const { thisWeekSeed, lastWeekSeed, comparisonKpis } = useMemo(() => {
-    const weeks = SEED_WEEKLY_COCKPIT.filter((r) => r.store_id === storeForSeed)
-      .slice()
-      .sort((a, b) => b.week_start.localeCompare(a.week_start));
-    const thisW = weeks.find((w) => w.week_start === weekStart) ?? weeks[0] ?? null;
-    const lastW = weeks.find((w) => w.week_start === prevMonday) ?? weeks[1] ?? null;
-    if (!thisW || !lastW) {
-      return { thisWeekSeed: null, lastWeekSeed: null, comparisonKpis: [] };
-    }
+  const comparisonKpis = useMemo((): { label: string; key: string; thisWeek: string; lastWeek: string; changePct: number; changeArrow: string; gradeColor: string; changeColor: string }[] => {
+    if (!data?.hero || !data?.secondary) return [];
     const targets = COCKPIT_TARGETS[store === "all" ? "kent" : store];
-    const fmtPct = (n: number) => formatPct(n);
+    const fmtPct = (n: number | null) => (n != null ? formatPct(n) : "—");
     const fmtDollars = (n: number) => `$${n.toLocaleString("en-US", { maximumFractionDigits: 0 })}`;
     const changePct = (curr: number, prev: number) => (prev === 0 ? 0 : Math.round(((curr - prev) / prev) * 1000) / 10);
     const gradeClass = (value: number, target: number, lowerIsBetter: boolean): string => {
@@ -195,92 +187,19 @@ function WeeklyPageContent() {
       if (hex === COLORS.grade.red) return "text-red-400";
       return "text-slate-300";
     };
-    const avgTicketThis = thisW.transactions > 0 ? thisW.sales / thisW.transactions : 0;
-    const avgTicketLast = lastW.transactions > 0 ? lastW.sales / lastW.transactions : 0;
-    const kpis: { label: string; key: string; thisWeek: string; lastWeek: string; changePct: number; changeArrow: string; gradeColor: string; changeColor: string }[] = [
-      {
-        label: "Total Sales",
-        key: "daily_sales",
-        thisWeek: fmtDollars(thisW.sales),
-        lastWeek: fmtDollars(lastW.sales),
-        changePct: changePct(thisW.sales, lastW.sales),
-        changeArrow: getChangeArrow(thisW.sales, lastW.sales),
-        gradeColor: "text-emerald-400",
-        changeColor: getChangeColor(thisW.sales, lastW.sales, false),
-      },
-      {
-        label: "Avg Daily Sales",
-        key: "daily_sales",
-        thisWeek: fmtDollars(thisW.sales / 7),
-        lastWeek: fmtDollars(lastW.sales / 7),
-        changePct: changePct(thisW.sales, lastW.sales),
-        changeArrow: getChangeArrow(thisW.sales, lastW.sales),
-        gradeColor: "text-emerald-400",
-        changeColor: getChangeColor(thisW.sales, lastW.sales, false),
-      },
-      {
-        label: "Food Cost %",
-        key: "food_cost",
-        thisWeek: fmtPct(thisW.food_disp_pct),
-        lastWeek: fmtPct(lastW.food_disp_pct),
-        changePct: changePct(thisW.food_disp_pct, lastW.food_disp_pct),
-        changeArrow: getChangeArrow(thisW.food_disp_pct, lastW.food_disp_pct),
-        gradeColor: gradeClass(thisW.food_disp_pct, 31, true),
-        changeColor: getChangeColor(thisW.food_disp_pct, lastW.food_disp_pct, true),
-      },
-      {
-        label: "Labor %",
-        key: "labor_pct",
-        thisWeek: fmtPct(thisW.labor_pct),
-        lastWeek: fmtPct(lastW.labor_pct),
-        changePct: changePct(thisW.labor_pct, lastW.labor_pct),
-        changeArrow: getChangeArrow(thisW.labor_pct, lastW.labor_pct),
-        gradeColor: gradeClass(thisW.labor_pct, targets.laborMax, true),
-        changeColor: getChangeColor(thisW.labor_pct, lastW.labor_pct, true),
-      },
-      {
-        label: "PRIME %",
-        key: "prime_cost",
-        thisWeek: fmtPct(thisW.prime_pct),
-        lastWeek: fmtPct(lastW.prime_pct),
-        changePct: changePct(thisW.prime_pct, lastW.prime_pct),
-        changeArrow: getChangeArrow(thisW.prime_pct, lastW.prime_pct),
-        gradeColor: gradeClass(thisW.prime_pct, targets.primeMax, true),
-        changeColor: getChangeColor(thisW.prime_pct, lastW.prime_pct, true),
-      },
-      {
-        label: "SLPH",
-        key: "slph",
-        thisWeek: thisW.slph.toFixed(0),
-        lastWeek: lastW.slph.toFixed(0),
-        changePct: changePct(thisW.slph, lastW.slph),
-        changeArrow: getChangeArrow(thisW.slph, lastW.slph),
-        gradeColor: gradeClass(thisW.slph, targets.slphMin, false),
-        changeColor: getChangeColor(thisW.slph, lastW.slph, false),
-      },
-      {
-        label: "Avg Ticket",
-        key: "ticket_avg",
-        thisWeek: avgTicketThis > 0 ? `$${avgTicketThis.toFixed(2)}` : "—",
-        lastWeek: avgTicketLast > 0 ? `$${avgTicketLast.toFixed(2)}` : "—",
-        changePct: avgTicketLast > 0 ? changePct(avgTicketThis, avgTicketLast) : 0,
-        changeArrow: avgTicketLast > 0 ? getChangeArrow(avgTicketThis, avgTicketLast) : "→",
-        gradeColor: "text-slate-300",
-        changeColor: avgTicketLast > 0 ? getChangeColor(avgTicketThis, avgTicketLast, false) : "text-slate-400",
-      },
-      {
-        label: "Transaction Count",
-        key: "daily_sales",
-        thisWeek: thisW.transactions.toLocaleString(),
-        lastWeek: lastW.transactions.toLocaleString(),
-        changePct: changePct(thisW.transactions, lastW.transactions),
-        changeArrow: getChangeArrow(thisW.transactions, lastW.transactions),
-        gradeColor: "text-slate-300",
-        changeColor: getChangeColor(thisW.transactions, lastW.transactions, false),
-      },
+    const h = data.hero;
+    const s = data.secondary;
+    const laborPct = s.labor_pct ?? 0;
+    const foodDisp = s.food_disp_pct ?? 0;
+    const primePct = h.weekly_prime_pct ?? 0;
+    const slph = s.slph ?? 0;
+    return [
+      { label: "Food Cost %", key: "food_cost", thisWeek: fmtPct(foodDisp), lastWeek: "—", changePct: 0, changeArrow: "→", gradeColor: gradeClass(foodDisp, 31, true), changeColor: "text-slate-400" },
+      { label: "Labor %", key: "labor_pct", thisWeek: fmtPct(laborPct), lastWeek: "—", changePct: 0, changeArrow: "→", gradeColor: gradeClass(laborPct, targets.laborMax, true), changeColor: "text-slate-400" },
+      { label: "PRIME %", key: "prime_cost", thisWeek: fmtPct(primePct), lastWeek: "—", changePct: 0, changeArrow: "→", gradeColor: gradeClass(primePct, targets.primeMax, true), changeColor: "text-slate-400" },
     ];
-    return { thisWeekSeed: thisW, lastWeekSeed: lastW, comparisonKpis: kpis };
-  }, [weekStart, prevMonday, store, storeForSeed]);
+  }, [data, store]);
+  const thisWeekSeed = data?.hero && data?.secondary ? { sales: 0, food_disp_pct: data.secondary.food_disp_pct, labor_pct: data.secondary.labor_pct, prime_pct: data.hero.weekly_prime_pct, slph: data.secondary.slph, transactions: 0 } : null;
 
   const weeklyGrades = useMemo((): string[] => {
     const foodKpi = comparisonKpis.find((k) => k.label === "Food Cost %");
@@ -297,8 +216,8 @@ function WeeklyPageContent() {
 
   async function handleShare() {
     const weekLabel = `Week of ${new Date(weekStart + "T12:00:00Z").toLocaleDateString("en-US", { month: "short", day: "numeric" })} – ${new Date(getWeekEnd(weekStart) + "T12:00:00Z").toLocaleDateString("en-US", { month: "short", day: "numeric" })}`;
-    const textBody = thisWeekSeed
-      ? `Sales: ${formatDollars(thisWeekSeed.sales)}\nFood Cost: ${thisWeekSeed.food_disp_pct != null ? formatPct(thisWeekSeed.food_disp_pct) : "—"}\nLabor: ${thisWeekSeed.labor_pct != null ? formatPct(thisWeekSeed.labor_pct) : "—"}\nPRIME: ${thisWeekSeed.prime_pct != null ? formatPct(thisWeekSeed.prime_pct) : "—"}\nSLPH: ${thisWeekSeed.slph != null ? thisWeekSeed.slph.toFixed(0) : "—"}\nTransactions: ${thisWeekSeed.transactions ?? "—"}`
+    const textBody = data?.hero && data?.secondary
+      ? `PRIME: ${data.hero.weekly_prime_pct != null ? formatPct(data.hero.weekly_prime_pct) : "—"}\nLabor: ${data.secondary.labor_pct != null ? formatPct(data.secondary.labor_pct) : "—"}\nFood+Disp: ${data.secondary.food_disp_pct != null ? formatPct(data.secondary.food_disp_pct) : "—"}\nSLPH: ${data.secondary.slph != null ? data.secondary.slph.toFixed(0) : "—"}`
       : "No data for this week.";
     const shareText = `PrimeOS — Weekly Snapshot\n${storeName}\n${weekLabel}\n\n${textBody}\n\nPowered by PrimeOS — getprimeos.com`;
 
@@ -361,17 +280,17 @@ function WeeklyPageContent() {
             pageName="Weekly Snapshot"
             getData={() => ({
               headers: ["Week Start", "Week End", "Store", "Sales", "Food+Disp %", "Labor %", "PRIME %", "SLPH", "Transactions"],
-              rows: thisWeekSeed
+              rows: data?.hero && data?.secondary
                 ? [[
                     weekStart,
                     getWeekEnd(weekStart),
                     store === "all" ? "All stores" : COCKPIT_TARGETS[store].name,
-                    String(thisWeekSeed.sales),
-                    thisWeekSeed.food_disp_pct != null ? thisWeekSeed.food_disp_pct.toFixed(1) : "",
-                    thisWeekSeed.labor_pct != null ? thisWeekSeed.labor_pct.toFixed(1) : "",
-                    thisWeekSeed.prime_pct != null ? thisWeekSeed.prime_pct.toFixed(1) : "",
-                    thisWeekSeed.slph != null ? String(thisWeekSeed.slph) : "",
-                    String(thisWeekSeed.transactions ?? ""),
+                    "",
+                    data.secondary.food_disp_pct != null ? data.secondary.food_disp_pct.toFixed(1) : "",
+                    data.secondary.labor_pct != null ? data.secondary.labor_pct.toFixed(1) : "",
+                    data.hero.weekly_prime_pct != null ? data.hero.weekly_prime_pct.toFixed(1) : "",
+                    data.secondary.slph != null ? String(data.secondary.slph) : "",
+                    "",
                   ]]
                 : [],
             })}
@@ -877,7 +796,14 @@ function WeeklyPageContent() {
 
       {!loading && !error && data?.ok && !data.hero && (
         <div className="dashboard-surface rounded-lg border border-border bg-panel/50 p-6 text-center text-muted">
-          No data for this week. Enter daily KPIs to see rollups.
+          No data for this week. Connect your POS or enter daily KPIs — data syncs daily. <a href="mailto:hello@getprimeos.com" className="text-[#E65100] underline">hello@getprimeos.com</a>
+        </div>
+      )}
+
+      {!loading && !error && !data && (
+        <div className="dashboard-surface rounded-lg border border-border bg-panel/50 p-6 text-center text-zinc-500">
+          <p className="text-sm">No data for this week.</p>
+          <p className="text-xs mt-1">Connect your POS — data syncs daily. <a href="mailto:hello@getprimeos.com" className="text-[#E65100] underline">hello@getprimeos.com</a></p>
         </div>
       )}
 
