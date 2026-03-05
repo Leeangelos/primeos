@@ -172,7 +172,7 @@ export default function PeoplePage() {
         </div>
       )}
       <div className="space-y-3">
-        <h3 className="text-sm font-semibold text-zinc-400 uppercase tracking-wide">Team Pulse</h3>
+        <h3 className="text-sm font-semibold text-zinc-400 uppercase tracking-wide">TEAM PULSE</h3>
         <div className="rounded-xl bg-zinc-900 border border-zinc-800/50 shadow-sm p-4 space-y-4">
           <div className="flex items-center gap-2">
             <EducationInfoIcon metricKey="team_pulse" />
