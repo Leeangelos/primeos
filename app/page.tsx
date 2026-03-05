@@ -49,7 +49,7 @@ function yesterdayYYYYMMDD(): string {
 
 type KpiSnapshot = {
   sales: number;
-  foodCostPct: number;
+  foodCostPct: number | null;
   laborPct: number;
   primePct: number;
   isYesterday: boolean;
@@ -100,7 +100,8 @@ function gradeCost(value: number, target: number): Grade {
 
 type LetterGrade = "A" | "B" | "C" | "D" | "F";
 
-function gradePillarProduct(foodCostPct: number): LetterGrade {
+function gradePillarProduct(foodCostPct: number | null): LetterGrade {
+  if (foodCostPct == null) return "C";
   if (foodCostPct <= 30) return "A";
   if (foodCostPct <= 33) return "B";
   if (foodCostPct <= 35) return "C";
@@ -250,7 +251,7 @@ function PillarPanel({
   if (!isOpen) return null;
 
   if (pillarId === "product") {
-    const value = kpi ? formatPct(kpi.foodCostPct) : "—";
+    const value = kpi && kpi.foodCostPct != null ? formatPct(kpi.foodCostPct) : "—";
     return (
       <div className="bg-zinc-900/50 border-t border-zinc-700 overflow-hidden transition-all duration-300 ease-in-out">
         <div className="p-4 space-y-4">
@@ -311,7 +312,7 @@ function PillarPanel({
 
   // process — PRIME (COGS %)
   const primePct = kpi ? kpi.primePct : 0;
-  const foodPct = kpi ? kpi.foodCostPct : 0;
+  const foodPct = kpi && kpi.foodCostPct != null ? kpi.foodCostPct : 0;
   const laborPct = kpi ? kpi.laborPct : 0;
   const dispPct = Math.max(0, primePct - foodPct - laborPct);
   const foodWorse = foodPct > laborPct;
@@ -443,9 +444,9 @@ export default function HomePage() {
   }, [selectedStore, yesterday, onboardingData]);
 
   const pillarSeed = useMemo(() => {
-    if (liveDailyData?.hasLiveData && liveDailyData.foodCostPct != null && liveDailyData.laborPct != null && liveDailyData.cogsPct != null) {
+    if (liveDailyData?.hasLiveData && liveDailyData.laborPct != null && liveDailyData.cogsPct != null) {
       return {
-        foodCostPct: liveDailyData.foodCostPct,
+        foodCostPct: liveDailyData.foodCostPct ?? null,
         laborPct: liveDailyData.laborPct,
         primePct: liveDailyData.cogsPct,
       };
@@ -486,9 +487,10 @@ export default function HomePage() {
     async function load() {
       if (liveDailyData?.hasLiveData) {
         const ns = liveDailyData.netSales ?? 0;
-        const fc = liveDailyData.foodCostPct ?? 0;
+        const fc = liveDailyData.foodCostPct ?? null;
         const lb = liveDailyData.laborPct ?? 0;
-        const cogs = liveDailyData.cogsPct ?? fc + lb + 4;
+        const disp = Number(liveDailyData.disposablesPct ?? 0);
+        const cogs = liveDailyData.cogsPct ?? (fc != null ? fc + lb + disp : lb + disp);
         if (!cancelled) {
           setKpi({
             sales: ns,
@@ -690,7 +692,7 @@ export default function HomePage() {
   const heroGrades = useMemo((): string[] => {
     if (!kpi) return [];
     return [
-      gradeFoodCost(kpi.foodCostPct, benchmarks.foodCostTargetPct),
+      kpi.foodCostPct != null ? gradeFoodCost(kpi.foodCostPct, benchmarks.foodCostTargetPct) : "green",
       gradeLabor(kpi.laborPct, benchmarks.laborTargetPct),
       gradePrime(kpi.primePct, benchmarks.primeTargetPct),
     ];
@@ -701,21 +703,23 @@ export default function HomePage() {
     const list: AlertItem[] = [];
     if (!kpi) return list;
 
-    const foodGrade = gradeFoodCost(kpi.foodCostPct, benchmarks.foodCostTargetPct);
-    if (foodGrade === "red") {
-      list.push({
-        severity: "red",
-        key: "food_cost",
-        label: `Food Cost (${storeLabel})`,
-        message: `Food cost is above the benchmark. You're at ${formatPct(kpi.foodCostPct)}. Target: ≤${benchmarks.foodCostTargetPct}%. Tap for playbook.`,
-      });
-    } else if (foodGrade === "yellow") {
-      list.push({
-        severity: "yellow",
-        key: "food_cost",
-        label: `Food Cost (${storeLabel})`,
-        message: `Food cost is creeping up. You're at ${formatPct(kpi.foodCostPct)}. Target: ≤${benchmarks.foodCostTargetPct}%. Tap for playbook.`,
-      });
+    if (kpi.foodCostPct != null) {
+      const foodGrade = gradeFoodCost(kpi.foodCostPct, benchmarks.foodCostTargetPct);
+      if (foodGrade === "red") {
+        list.push({
+          severity: "red",
+          key: "food_cost",
+          label: `Food Cost (${storeLabel})`,
+          message: `Food cost is above the benchmark. You're at ${formatPct(kpi.foodCostPct)}. Target: ≤${benchmarks.foodCostTargetPct}%. Tap for playbook.`,
+        });
+      } else if (foodGrade === "yellow") {
+        list.push({
+          severity: "yellow",
+          key: "food_cost",
+          label: `Food Cost (${storeLabel})`,
+          message: `Food cost is creeping up. You're at ${formatPct(kpi.foodCostPct)}. Target: ≤${benchmarks.foodCostTargetPct}%. Tap for playbook.`,
+        });
+      }
     }
 
     const laborGrade = gradeLabor(kpi.laborPct, benchmarks.laborTargetPct);
@@ -969,12 +973,13 @@ export default function HomePage() {
           {(() => {
             const hasPurchase = liveDailyData?.hasPurchaseData ?? false;
             const showVal = hasPurchase || usedSeedData;
-            const grade = showVal ? gradeFoodCost(kpi.foodCostPct, benchmarks.foodCostTargetPct) : "green";
+            const hasFc = kpi.foodCostPct != null;
+            const grade = hasFc ? gradeFoodCost(kpi.foodCostPct!, benchmarks.foodCostTargetPct) : "green";
             const borderColor = gradeToHex(grade);
             return (
               <div className={`bg-slate-800 rounded-xl p-4 border-t-[3px] min-w-0 border border-zinc-800/50 shadow-sm transition-transform duration-200 sm:hover:scale-[1.01] ${grade === "green" ? "border-t-emerald-400" : grade === "yellow" ? "border-t-amber-400" : "border-t-red-400"}`}>
                 <div className="flex items-center justify-between mb-1">
-                  <span className="text-xs text-slate-400 uppercase tracking-wide">Food Cost</span>
+                  <span className="text-xs text-slate-400 uppercase tracking-wide">Food Cost (7-day avg)</span>
                   <div className="flex items-center gap-1.5">
                     {hasPurchase && <span className="text-xs text-emerald-400">● Live from POS</span>}
                     {!hasPurchase && !usedSeedData && <span className="text-xs text-zinc-500">Upload invoices</span>}
@@ -982,8 +987,8 @@ export default function HomePage() {
                     <EducationInfoIcon metricKey="food_cost_pct" />
                   </div>
                 </div>
-                <div className="text-2xl font-bold tabular-nums" style={{ color: showVal ? borderColor : "inherit" }}>
-                  {showVal ? formatPct(kpi.foodCostPct) : "—"}
+                <div className="text-2xl font-bold tabular-nums" style={{ color: hasFc ? borderColor : "inherit" }}>
+                  {hasFc ? formatPct(kpi.foodCostPct!) : "—"}
                 </div>
                 <div className="text-xs text-slate-500">Target: ≤{benchmarks.foodCostTargetPct}%{kpi.isYesterday ? " (Yesterday)" : ""}</div>
               </div>
