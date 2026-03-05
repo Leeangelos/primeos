@@ -1013,21 +1013,6 @@ export default function HomePage() {
               </div>
             </div>
           )}
-          {!isOnboardingUser && liveDailyData && (liveDailyData.doordashOrders ?? 0) > 0 && (
-            <div className="bg-slate-800 rounded-xl p-4 border border-zinc-800/50 shadow-sm min-w-0 col-span-2">
-              <div className="flex items-center justify-between mb-1">
-                <span className="text-xs text-slate-400 uppercase tracking-wide">DoorDash summary</span>
-                <span className="text-xs text-emerald-400">● Live from POS</span>
-              </div>
-              <div className="grid grid-cols-2 gap-2 text-sm">
-                <div>Orders: {liveDailyData.doordashOrders}</div>
-                <div>Revenue: ${(liveDailyData.doordashSales ?? 0).toLocaleString("en-US", { maximumFractionDigits: 0 })}</div>
-                <div>Commission: ${(liveDailyData.doordashCommission ?? 0).toLocaleString("en-US", { maximumFractionDigits: 0 })}</div>
-                <div>Cost/order: ${(liveDailyData.doordashOrders > 0 ? (liveDailyData.doordashCommission ?? 0) / liveDailyData.doordashOrders : 0).toFixed(2)}</div>
-                <div className="col-span-2 text-xs text-slate-500">New: {liveDailyData.doordashNewCustomers ?? 0} · Returning: {liveDailyData.doordashReturningCustomers ?? 0}</div>
-              </div>
-            </div>
-          )}
           {isOnboardingUser && (onboardingData?.employee_count != null || onboardingData?.monthly_rent != null) && (
             <div className="grid grid-cols-2 gap-3 min-w-0 col-span-2">
               {onboardingData?.employee_count != null && (
