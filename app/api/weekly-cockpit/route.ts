@@ -26,6 +26,7 @@ function isValidSlug(s: string): s is CockpitStoreSlug {
 /**
  * GET /api/weekly-cockpit?store=kent|aurora|lindseys|all&week_start=YYYY-MM-DD
  * week_start = Monday of the week. Defaults to current week if omitted.
+ * Resolves store slug(s) to UUID via stores table (same pattern as dashboard/daily-data).
  */
 export async function GET(request: NextRequest) {
   const { searchParams } = new URL(request.url);
@@ -66,6 +67,7 @@ export async function GET(request: NextRequest) {
     }
 
     const storeIds = slugs.map((s) => storeIdBySlug.get(s)).filter((id): id is string => id != null);
+
     if (storeIds.length === 0) {
       return NextResponse.json({
         ok: true,
