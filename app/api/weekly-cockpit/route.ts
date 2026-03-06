@@ -56,15 +56,16 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ ok: false, error: storesErr.message }, { status: 500 });
     }
 
-    const storeIdBySlug = new Map<string, number>();
-    const slugById = new Map<number, string>();
+    const storeIdBySlug = new Map<string, string>();
+    const slugById = new Map<string, string>();
     for (const r of storesRows ?? []) {
       const slug = r.slug as string;
-      storeIdBySlug.set(slug, r.id);
-      slugById.set(r.id, slug);
+      const id = String(r.id);
+      storeIdBySlug.set(slug, id);
+      slugById.set(id, slug);
     }
 
-    const storeIds = Array.from(storeIdBySlug.values());
+    const storeIds = slugs.map((s) => storeIdBySlug.get(s)).filter((id): id is string => id != null);
     if (storeIds.length === 0) {
       return NextResponse.json({
         ok: true,
@@ -80,38 +81,124 @@ export async function GET(request: NextRequest) {
       });
     }
 
-    const { data: allRangeRows, error: kpiErr } = await supabase
-      .from("daily_kpis")
-      .select("*")
-      .in("store_id", storeIds)
-      .gte("business_date", prev_start)
-      .lte("business_date", week_end)
-      .order("business_date", { ascending: true });
+    const [salesRes, laborRes, purchasesRes] = await Promise.all([
+      supabase
+        .from("foodtec_daily_sales")
+        .select("store_id, business_day, net_sales, total_orders, guest_count, avg_bump_time")
+        .in("store_id", storeIds)
+        .gte("business_day", prev_start)
+        .lte("business_day", week_end)
+        .order("business_day", { ascending: true }),
+      supabase
+        .from("foodtec_daily_labor")
+        .select("store_id, business_day, total_labor_cost, total_overtime_cost, regular_hours, overtime_hours")
+        .in("store_id", storeIds)
+        .gte("business_day", prev_start)
+        .lte("business_day", week_end)
+        .order("business_day", { ascending: true }),
+      supabase
+        .from("me_daily_purchases")
+        .select("store_id, business_day, food_spend, paper_spend")
+        .in("store_id", storeIds)
+        .gte("business_day", prev_start)
+        .lte("business_day", week_end)
+        .order("business_day", { ascending: true }),
+    ]);
 
-    if (kpiErr) {
-      return NextResponse.json({ ok: false, error: kpiErr.message }, { status: 500 });
+    const salesRows = salesRes.data ?? [];
+    const laborRows = laborRes.data ?? [];
+    const purchasesRows = purchasesRes.data ?? [];
+
+    type MergedKey = string;
+    type RowWithStore = DailyKpiRow & { _store_id: string };
+    const num = (v: unknown) => (typeof v === "number" && Number.isFinite(v) ? v : 0);
+    const merged: Record<MergedKey, RowWithStore> = {};
+    for (const r of salesRows) {
+      const storeId = String(r.store_id);
+      const key: MergedKey = `${storeId}:${r.business_day}`;
+      merged[key] = {
+        business_date: r.business_day,
+        store_id: 0,
+        net_sales: num(r.net_sales),
+        labor_dollars: 0,
+        labor_hours: 0,
+        food_dollars: 0,
+        disposables_dollars: 0,
+        customers: num(r.guest_count) || num(r.total_orders),
+        scheduled_hours: 0,
+        bump_time_minutes: num(r.avg_bump_time),
+        _store_id: storeId,
+      };
+    }
+    for (const r of laborRows) {
+      const storeId = String(r.store_id);
+      const key: MergedKey = `${storeId}:${r.business_day}`;
+      const laborCost = num(r.total_labor_cost) + num(r.total_overtime_cost);
+      const hours = num(r.regular_hours) + num(r.overtime_hours);
+      if (merged[key]) {
+        merged[key].labor_dollars = laborCost;
+        merged[key].labor_hours = hours;
+        merged[key].scheduled_hours = hours;
+      } else {
+        merged[key] = {
+          business_date: r.business_day,
+          store_id: 0,
+          net_sales: 0,
+          labor_dollars: laborCost,
+          labor_hours: hours,
+          food_dollars: 0,
+          disposables_dollars: 0,
+          scheduled_hours: hours,
+          bump_time_minutes: 0,
+          customers: 0,
+          _store_id: storeId,
+        };
+      }
+    }
+    for (const r of purchasesRows) {
+      const storeId = String(r.store_id);
+      const key: MergedKey = `${storeId}:${r.business_day}`;
+      if (merged[key]) {
+        merged[key].food_dollars = num(r.food_spend);
+        merged[key].disposables_dollars = num(r.paper_spend);
+      } else {
+        merged[key] = {
+          business_date: r.business_day,
+          store_id: 0,
+          net_sales: 0,
+          labor_dollars: 0,
+          labor_hours: 0,
+          food_dollars: num(r.food_spend),
+          disposables_dollars: num(r.paper_spend),
+          scheduled_hours: 0,
+          bump_time_minutes: 0,
+          customers: 0,
+          _store_id: storeId,
+        };
+      }
     }
 
-    const weekRows = (allRangeRows ?? []).filter(
+    const allRangeRows: DailyKpiRow[] = Object.values(merged);
+    const weekRows = allRangeRows.filter(
       (r) => r.business_date >= week_start && r.business_date <= week_end
     );
-    const prevRows = (allRangeRows ?? []).filter(
+    const prevRows = allRangeRows.filter(
       (r) => r.business_date >= prev_start && r.business_date <= prev_end
     );
 
-    const byStore = new Map<number, DailyKpiRow[]>();
+    const byStore = new Map<string, DailyKpiRow[]>();
     for (const r of weekRows) {
-      const row = r as DailyKpiRow;
-      const id = row.store_id;
-      if (!byStore.has(id)) byStore.set(id, []);
-      byStore.get(id)!.push(row);
+      const storeKey = (r as RowWithStore)._store_id ?? "";
+      if (!storeKey) continue;
+      if (!byStore.has(storeKey)) byStore.set(storeKey, []);
+      byStore.get(storeKey)!.push(r);
     }
-    const prevByStore = new Map<number, DailyKpiRow[]>();
+    const prevByStore = new Map<string, DailyKpiRow[]>();
     for (const r of prevRows) {
-      const row = r as DailyKpiRow;
-      const id = row.store_id;
-      if (!prevByStore.has(id)) prevByStore.set(id, []);
-      prevByStore.get(id)!.push(row);
+      const storeKey = (r as RowWithStore)._store_id ?? "";
+      if (!storeKey) continue;
+      if (!prevByStore.has(storeKey)) prevByStore.set(storeKey, []);
+      prevByStore.get(storeKey)!.push(r);
     }
 
     const weekDates = getWeekDates(week_start);
