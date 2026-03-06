@@ -37,6 +37,12 @@ export async function GET(request: NextRequest) {
   const week_end = getWeekEnd(week_start);
   const prev_start = prevWeekStart(week_start);
   const prev_end = getWeekEnd(prev_start);
+  const rollingEnd = new Date(week_end + "T12:00:00Z");
+  rollingEnd.setUTCDate(rollingEnd.getUTCDate() - 29);
+  const rolling_start = rollingEnd.toISOString().slice(0, 10);
+  const prevRollingEnd = new Date(prev_end + "T12:00:00Z");
+  prevRollingEnd.setUTCDate(prevRollingEnd.getUTCDate() - 29);
+  const prev_rolling_start = prevRollingEnd.toISOString().slice(0, 10);
 
   const slugs: CockpitStoreSlug[] =
     storeParam === "all"
@@ -83,26 +89,27 @@ export async function GET(request: NextRequest) {
       });
     }
 
+    const fetchStart = prev_rolling_start;
     const [salesRes, laborRes, purchasesRes] = await Promise.all([
       supabase
         .from("foodtec_daily_sales")
         .select("store_id, business_day, net_sales, total_orders, guest_count, avg_bump_time")
         .in("store_id", storeIds)
-        .gte("business_day", prev_start)
+        .gte("business_day", fetchStart)
         .lte("business_day", week_end)
         .order("business_day", { ascending: true }),
       supabase
         .from("foodtec_daily_labor")
         .select("store_id, business_day, total_labor_cost, total_overtime_cost, regular_hours, overtime_hours")
         .in("store_id", storeIds)
-        .gte("business_day", prev_start)
+        .gte("business_day", fetchStart)
         .lte("business_day", week_end)
         .order("business_day", { ascending: true }),
       supabase
         .from("me_daily_purchases")
         .select("store_id, business_day, food_spend, paper_spend")
         .in("store_id", storeIds)
-        .gte("business_day", prev_start)
+        .gte("business_day", fetchStart)
         .lte("business_day", week_end)
         .order("business_day", { ascending: true }),
     ]);
@@ -187,6 +194,61 @@ export async function GET(request: NextRequest) {
     const prevRows = allRangeRows.filter(
       (r) => r.business_date >= prev_start && r.business_date <= prev_end
     );
+    const rolling30Rows = allRangeRows.filter(
+      (r) => r.business_date >= rolling_start && r.business_date <= week_end
+    );
+    const prevRolling30Rows = allRangeRows.filter(
+      (r) => r.business_date >= prev_rolling_start && r.business_date <= prev_end
+    );
+
+    function sumRolling(rows: DailyKpiRow[]) {
+      return rows.reduce(
+        (acc, r) => ({
+          net_sales: acc.net_sales + r.net_sales,
+          labor: acc.labor + r.labor_dollars,
+          food: acc.food + r.food_dollars,
+          disposables: acc.disposables + r.disposables_dollars,
+        }),
+        { net_sales: 0, labor: 0, food: 0, disposables: 0 }
+      );
+    }
+    const rolling30Sums = sumRolling(rolling30Rows);
+    const prevRolling30Sums = sumRolling(prevRolling30Rows);
+    const rolling30NetSales = rolling30Sums.net_sales;
+    const rolling30CogsPct =
+      rolling30NetSales > 0
+        ? ((rolling30Sums.labor + rolling30Sums.food + rolling30Sums.disposables) / rolling30NetSales) * 100
+        : null;
+    const rolling30FoodDispPct =
+      rolling30NetSales > 0
+        ? ((rolling30Sums.food + rolling30Sums.disposables) / rolling30NetSales) * 100
+        : null;
+    const prevRolling30NetSales = prevRolling30Sums.net_sales;
+    const prevRolling30CogsPct =
+      prevRolling30NetSales > 0
+        ? ((prevRolling30Sums.labor + prevRolling30Sums.food + prevRolling30Sums.disposables) / prevRolling30NetSales) * 100
+        : null;
+    const prevRolling30FoodDispPct =
+      prevRolling30NetSales > 0
+        ? ((prevRolling30Sums.food + prevRolling30Sums.disposables) / prevRolling30NetSales) * 100
+        : null;
+
+    const rolling30ByStore = new Map<
+      string,
+      { cogsPct: number | null; foodDispPct: number | null; prevCogsPct: number | null; prevFoodDispPct: number | null }
+    >();
+    for (const storeId of storeIds) {
+      const storeRolling = rolling30Rows.filter((r) => (r as RowWithStore)._store_id === storeId);
+      const storePrevRolling = prevRolling30Rows.filter((r) => (r as RowWithStore)._store_id === storeId);
+      const s = sumRolling(storeRolling);
+      const p = sumRolling(storePrevRolling);
+      rolling30ByStore.set(storeId, {
+        cogsPct: s.net_sales > 0 ? ((s.labor + s.food + s.disposables) / s.net_sales) * 100 : null,
+        foodDispPct: s.net_sales > 0 ? ((s.food + s.disposables) / s.net_sales) * 100 : null,
+        prevCogsPct: p.net_sales > 0 ? ((p.labor + p.food + p.disposables) / p.net_sales) * 100 : null,
+        prevFoodDispPct: p.net_sales > 0 ? ((p.food + p.disposables) / p.net_sales) * 100 : null,
+      });
+    }
 
     const byStore = new Map<string, DailyKpiRow[]>();
     for (const r of weekRows) {
@@ -328,18 +390,15 @@ export async function GET(request: NextRequest) {
           ? totalPrev.total_net_sales / totalPrev.total_labor_hours
           : null;
       hero = {
-        weekly_prime_pct: totalAgg.weekly_prime_pct,
+        weekly_prime_pct: rolling30CogsPct,
         target_label: "Weighted all stores",
         prime_max: 55,
         status:
-          totalAgg.weekly_prime_pct != null && totalAgg.weekly_prime_pct <= 55
-            ? "on_track"
-            : "over",
-        variance_pct:
-          totalAgg.weekly_prime_pct != null ? totalAgg.weekly_prime_pct - 55 : null,
+          rolling30CogsPct != null && rolling30CogsPct <= 55 ? "on_track" : "over",
+        variance_pct: rolling30CogsPct != null ? rolling30CogsPct - 55 : null,
         wow_delta_pct:
-          totalAgg.weekly_prime_pct != null && prevPrimePct != null
-            ? totalAgg.weekly_prime_pct - prevPrimePct
+          rolling30CogsPct != null && prevRolling30CogsPct != null
+            ? rolling30CogsPct - prevRolling30CogsPct
             : null,
       };
       secondary = {
@@ -350,17 +409,17 @@ export async function GET(request: NextRequest) {
           totalAgg.weekly_labor_pct != null && prevLaborPct != null
             ? totalAgg.weekly_labor_pct - prevLaborPct
             : null,
-        food_disp_pct: totalAgg.weekly_food_disposables_pct,
-        food_disp_target: "≤35%",
+        food_disp_pct: rolling30FoodDispPct,
+        food_disp_target: "≤35% (30-day rolling)",
         food_disp_status:
-          totalAgg.weekly_food_disposables_pct != null
-            ? totalAgg.weekly_food_disposables_pct <= 35
+          rolling30FoodDispPct != null
+            ? rolling30FoodDispPct <= 35
               ? "on_track"
               : "over"
             : "—",
         food_disp_wow:
-          totalAgg.weekly_food_disposables_pct != null && prevFoodDispPct != null
-            ? totalAgg.weekly_food_disposables_pct - prevFoodDispPct
+          rolling30FoodDispPct != null && prevRolling30FoodDispPct != null
+            ? rolling30FoodDispPct - prevRolling30FoodDispPct
             : null,
         slph: totalAgg.weekly_slph,
         slph_target: "≥80",
@@ -396,18 +455,19 @@ export async function GET(request: NextRequest) {
     } else if (singleStore) {
       const w = singleStore.weekly;
       const t = getCockpitTargets(singleStore.slug as CockpitStoreSlug);
+      const storeId = storeIdBySlug.get(singleStore.slug);
+      const rolling = storeId != null ? rolling30ByStore.get(storeId) : null;
+      const rCogs = rolling?.cogsPct ?? null;
+      const rFoodDisp = rolling?.foodDispPct ?? null;
+      const prevRCogs = rolling?.prevCogsPct ?? null;
+      const prevRFoodDisp = rolling?.prevFoodDispPct ?? null;
       hero = {
-        weekly_prime_pct: w.weekly_prime_pct,
+        weekly_prime_pct: rCogs,
         target_label: `≤${t.primeMax}%`,
         prime_max: t.primeMax,
-        status:
-          w.weekly_prime_pct != null && w.weekly_prime_pct <= t.primeMax ? "on_track" : "over",
-        variance_pct:
-          w.weekly_prime_pct != null ? w.weekly_prime_pct - t.primeMax : null,
-        wow_delta_pct:
-          w.weekly_prime_pct != null && singleStore.prev_weekly.weekly_prime_pct != null
-            ? w.weekly_prime_pct - singleStore.prev_weekly.weekly_prime_pct
-            : null,
+        status: rCogs != null && rCogs <= t.primeMax ? "on_track" : "over",
+        variance_pct: rCogs != null ? rCogs - t.primeMax : null,
+        wow_delta_pct: rCogs != null && prevRCogs != null ? rCogs - prevRCogs : null,
       };
       secondary = {
         labor_pct: w.weekly_labor_pct,
@@ -429,20 +489,16 @@ export async function GET(request: NextRequest) {
           singleStore.prev_weekly.weekly_labor_pct != null
             ? w.weekly_labor_pct - singleStore.prev_weekly.weekly_labor_pct
             : null,
-        food_disp_pct: w.weekly_food_disposables_pct,
-        food_disp_target: `≤${t.foodDisposablesMax}%`,
+        food_disp_pct: rFoodDisp,
+        food_disp_target: `≤${t.foodDisposablesMax}% (30-day rolling)`,
         food_disp_status:
-          w.weekly_food_disposables_pct != null
-            ? w.weekly_food_disposables_pct <= t.foodDisposablesMax
+          rFoodDisp != null
+            ? rFoodDisp <= t.foodDisposablesMax
               ? "on_track"
               : "over"
             : "—",
         food_disp_wow:
-          w.weekly_food_disposables_pct != null &&
-          singleStore.prev_weekly.weekly_food_disposables_pct != null
-            ? w.weekly_food_disposables_pct -
-              singleStore.prev_weekly.weekly_food_disposables_pct
-            : null,
+          rFoodDisp != null && prevRFoodDisp != null ? rFoodDisp - prevRFoodDisp : null,
         slph: w.weekly_slph,
         slph_target: `≥${t.slphMin}`,
         slph_status:
@@ -474,10 +530,12 @@ export async function GET(request: NextRequest) {
           .map((s) => {
             const w = s.weekly;
             const t = getCockpitTargets(s.slug as CockpitStoreSlug);
+            const sid = storeIdBySlug.get(s.slug);
+            const r = sid != null ? rolling30ByStore.get(sid) : null;
+            const cogsPct = r?.cogsPct ?? w.weekly_prime_pct;
+            const foodDispPct = r?.foodDispPct ?? w.weekly_food_disposables_pct;
             const primeStatus =
-              w.weekly_prime_pct != null && w.weekly_prime_pct <= t.primeMax
-                ? "on_track"
-                : "over";
+              cogsPct != null && cogsPct <= t.primeMax ? "on_track" : "over";
             const scheduledVariance =
               w.total_scheduled_hours !== 0 || w.total_labor_hours !== 0
                 ? w.total_scheduled_hours - w.total_labor_hours
@@ -485,9 +543,9 @@ export async function GET(request: NextRequest) {
             return {
               slug: s.slug,
               name: s.name,
-              weekly_prime_pct: w.weekly_prime_pct,
+              weekly_prime_pct: cogsPct,
               weekly_labor_pct: w.weekly_labor_pct,
-              weekly_food_disposables_pct: w.weekly_food_disposables_pct,
+              weekly_food_disposables_pct: foodDispPct,
               weekly_slph: w.weekly_slph,
               status: primeStatus,
               weekly_aov: w.weekly_aov,

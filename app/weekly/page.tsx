@@ -196,7 +196,7 @@ function WeeklyPageContent() {
     return [
       { label: "Food Cost %", key: "food_cost", thisWeek: fmtPct(foodDisp), lastWeek: "—", changePct: 0, changeArrow: "→", gradeColor: gradeClass(foodDisp, 31, true), changeColor: "text-slate-400" },
       { label: "Labor %", key: "labor_pct", thisWeek: fmtPct(laborPct), lastWeek: "—", changePct: 0, changeArrow: "→", gradeColor: gradeClass(laborPct, targets.laborMax, true), changeColor: "text-slate-400" },
-      { label: "PRIME %", key: "prime_cost", thisWeek: fmtPct(primePct), lastWeek: "—", changePct: 0, changeArrow: "→", gradeColor: gradeClass(primePct, targets.primeMax, true), changeColor: "text-slate-400" },
+      { label: "COGS %", key: "prime_cost", thisWeek: fmtPct(primePct), lastWeek: "—", changePct: 0, changeArrow: "→", gradeColor: gradeClass(primePct, targets.primeMax, true), changeColor: "text-slate-400" },
     ];
   }, [data, store]);
   const thisWeekSeed = data?.hero && data?.secondary ? { sales: 0, food_disp_pct: data.secondary.food_disp_pct, labor_pct: data.secondary.labor_pct, prime_pct: data.hero.weekly_prime_pct, slph: data.secondary.slph, transactions: 0 } : null;
@@ -204,7 +204,7 @@ function WeeklyPageContent() {
   const weeklyGrades = useMemo((): string[] => {
     const foodKpi = comparisonKpis.find((k) => k.label === "Food Cost %");
     const laborKpi = comparisonKpis.find((k) => k.label === "Labor %");
-    const primeKpi = comparisonKpis.find((k) => k.label === "PRIME %");
+    const primeKpi = comparisonKpis.find((k) => k.label === "COGS %");
     const toGrade = (kpi: { gradeColor: string } | undefined) =>
       !kpi ? "green" : kpi.gradeColor.includes("red") ? "red" : kpi.gradeColor.includes("amber") ? "yellow" : "green";
     return [toGrade(foodKpi), toGrade(laborKpi), toGrade(primeKpi)];
@@ -217,7 +217,7 @@ function WeeklyPageContent() {
   async function handleShare() {
     const weekLabel = `Week of ${new Date(weekStart + "T12:00:00Z").toLocaleDateString("en-US", { month: "short", day: "numeric" })} – ${new Date(getWeekEnd(weekStart) + "T12:00:00Z").toLocaleDateString("en-US", { month: "short", day: "numeric" })}`;
     const textBody = data?.hero && data?.secondary
-      ? `PRIME: ${data.hero.weekly_prime_pct != null ? formatPct(data.hero.weekly_prime_pct) : "—"}\nLabor: ${data.secondary.labor_pct != null ? formatPct(data.secondary.labor_pct) : "—"}\nFood+Disp: ${data.secondary.food_disp_pct != null ? formatPct(data.secondary.food_disp_pct) : "—"}\nSLPH: ${data.secondary.slph != null ? data.secondary.slph.toFixed(0) : "—"}`
+      ? `COGS %: ${data.hero.weekly_prime_pct != null ? formatPct(data.hero.weekly_prime_pct) : "—"}\nLabor: ${data.secondary.labor_pct != null ? formatPct(data.secondary.labor_pct) : "—"}\nFood+Disp: ${data.secondary.food_disp_pct != null ? formatPct(data.secondary.food_disp_pct) : "—"}\nSLPH: ${data.secondary.slph != null ? data.secondary.slph.toFixed(0) : "—"}`
       : "No data for this week.";
     const shareText = `PrimeOS — Weekly Snapshot\n${storeName}\n${weekLabel}\n\n${textBody}\n\nPowered by PrimeOS — getprimeos.com`;
 
@@ -253,7 +253,7 @@ function WeeklyPageContent() {
           <p className="text-xs text-muted">{newUserStoreName}</p>
         </div>
         <div className="bg-zinc-900/50 rounded-xl border border-zinc-800/50 shadow-sm p-6 space-y-3">
-          <p className="text-sm text-zinc-300">Your Weekly Snapshot shows week-over-week sales, PRIME %, food cost, labor, and SLPH. Once we connect your system, you&apos;ll see full trend charts and grades here.</p>
+          <p className="text-sm text-zinc-300">Your Weekly Snapshot shows week-over-week sales, COGS %, food cost, labor, and SLPH. Once we connect your system, you&apos;ll see full trend charts and grades here.</p>
           <p className="text-sm text-zinc-300">Ready for live data? Reach out to us and we&apos;ll get your system connected.</p>
           <a href="mailto:hello@getprimeos.com" className="text-[#E65100] underline font-semibold inline-block">hello@getprimeos.com</a>
         </div>
@@ -279,7 +279,7 @@ function WeeklyPageContent() {
             <ExportButton
             pageName="Weekly Snapshot"
             getData={() => ({
-              headers: ["Week Start", "Week End", "Store", "Sales", "Food+Disp %", "Labor %", "PRIME %", "SLPH", "Transactions"],
+              headers: ["Week Start", "Week End", "Store", "Sales", "Food+Disp %", "Labor %", "COGS %", "SLPH", "Transactions"],
               rows: data?.hero && data?.secondary
                 ? [[
                     weekStart,
@@ -413,7 +413,7 @@ function WeeklyPageContent() {
           {data.hero && (
             <section className="dashboard-surface rounded-lg border border-border bg-panel p-3 sm:p-6">
               <h2 className="text-xs font-semibold uppercase tracking-wider text-muted flex items-center">
-                Weekly PRIME %
+                Weekly COGS %
                 <button
                   type="button"
                   onClick={() => setShowEducation("prime")}
@@ -462,7 +462,7 @@ function WeeklyPageContent() {
           {data.daily && data.daily.length > 0 && data.hero && (
             <section className="dashboard-surface rounded-lg border border-border bg-panel p-4">
               <h2 className="text-xs font-semibold uppercase tracking-wider text-muted mb-4">
-                Daily PRIME % (Mon–Sun)
+                Daily COGS % (Mon–Sun)
               </h2>
               <div className="h-64 w-full">
                 <ResponsiveContainer width="100%" height="100%">
@@ -498,7 +498,7 @@ function WeeklyPageContent() {
                       }}
                       labelStyle={{ color: "#9ca3af", fontSize: "11px", marginBottom: "4px" }}
                       itemStyle={{ color: "#fff", padding: "2px 0" }}
-                      formatter={(v: number | undefined) => [v != null ? formatPct(v) : "—", "PRIME %"]}
+                      formatter={(v: number | undefined) => [v != null ? formatPct(v) : "—", "COGS %"]}
                       labelFormatter={(_, payload) =>
                         payload?.[0]?.payload?.date ?? ""
                       }
@@ -512,7 +512,7 @@ function WeeklyPageContent() {
                     <Line
                       type="monotone"
                       dataKey="prime_pct"
-                      name="PRIME %"
+                      name="COGS %"
                       stroke="rgb(248,250,252)"
                       strokeWidth={2}
                       dot={{ r: 4 }}
@@ -667,7 +667,7 @@ function WeeklyPageContent() {
                 return `Worst: ${shortDay(i.date)} ${variance}`.trim();
               }
               const count = i.count ?? 0;
-              if (i.type === "prime_over") return `PRIME over target ${count} of ${DAYS_IN_WEEK} days`;
+              if (i.type === "prime_over") return `COGS % over target ${count} of ${DAYS_IN_WEEK} days`;
               if (i.type === "labor_outside") return `Labor outside target ${count} of ${DAYS_IN_WEEK} days`;
               if (i.type === "slph_below") return `SLPH below benchmark ${count} of ${DAYS_IN_WEEK} days`;
               return i.message;
@@ -702,7 +702,7 @@ function WeeklyPageContent() {
           {data.comparison && data.comparison.length > 0 && (
             <section className="dashboard-surface rounded-lg border border-border bg-panel p-4">
               <h2 className="text-xs font-semibold uppercase tracking-wider text-muted mb-3">
-                Per-store breakdown (worst PRIME first)
+                Per-store breakdown (worst COGS % first)
               </h2>
               {/* Desktop: table */}
               <div className="hidden sm:block overflow-x-auto">
@@ -710,7 +710,7 @@ function WeeklyPageContent() {
                   <thead>
                     <tr className="border-b border-border text-left text-muted">
                       <th className="pb-2 pr-4">Store</th>
-                      <th className="pb-2 pr-4">PRIME %</th>
+                      <th className="pb-2 pr-4">COGS %</th>
                       <th className="pb-2 pr-4">Labor %</th>
                       <th className="pb-2 pr-4">Food+Disp %</th>
                       <th className="pb-2 pr-4">SLPH</th>
@@ -769,7 +769,7 @@ function WeeklyPageContent() {
                       </div>
                       <div className="grid grid-cols-2 gap-2 text-sm">
                         <div>
-                          <div className="text-[10px] uppercase text-muted">PRIME %</div>
+                          <div className="text-[10px] uppercase text-muted">COGS %</div>
                           <div className="text-lg font-bold tabular-nums">{row.weekly_prime_pct != null ? formatPct(row.weekly_prime_pct) : "—"}</div>
                         </div>
                         <div>
@@ -820,30 +820,30 @@ function WeeklyPageContent() {
             {showEducation === "overview" && (
               <div>
                 <h3 className="text-base font-semibold text-brand mb-1">🎓 Weekly Snapshot</h3>
-                <p className="text-xs text-muted mb-4">Why weekly matters more than daily. How to read it. What PRIME grading means.</p>
+                <p className="text-xs text-muted mb-4">Why weekly matters more than daily. How to read it. What COGS % grading means.</p>
                 <div className="space-y-3 text-sm">
                   <div>
                     <h4 className="font-medium text-white mb-1">Weekly Trends Matter More Than Daily Spikes</h4>
-                <p className="text-muted text-xs leading-relaxed">One bad Tuesday doesn't mean the model is broken. One great Friday doesn't mean you're winning. The weekly snapshot rolls up the whole week so you see the real trend. If PRIME is red for the week, you're leaving $500–$2K on the table. Consider addressing it before the month closes.</p>
+                <p className="text-muted text-xs leading-relaxed">One bad Tuesday doesn't mean the model is broken. One great Friday doesn't mean you're winning. The weekly snapshot rolls up the whole week so you see the real trend. If COGS % is red for the week, you're leaving $500–$2K on the table. Consider addressing it before the month closes.</p>
                   </div>
                   <div>
                     <h4 className="font-medium text-white mb-1">How to Read the Snapshot</h4>
-                <p className="text-muted text-xs leading-relaxed">Top number is Weekly PRIME %. Below that you see labor %, food+disposables %, and SLPH by store. Green = within typical range. Red = above benchmark. Tap any metric's (i) for the full playbook. Use the store filter to see one location or all. Tap a day to open daily entry and review the numbers that drove the week red.</p>
+                <p className="text-muted text-xs leading-relaxed">Top number is Weekly COGS % (30-day rolling). Below that you see labor %, food+disposables % (30-day rolling), and SLPH by store. Green = within typical range. Red = above benchmark. Tap any metric's (i) for the full playbook. Use the store filter to see one location or all. Tap a day to open daily entry and review the numbers that drove the week red.</p>
                   </div>
                   <div>
-                    <h4 className="font-medium text-white mb-1">What PRIME Grading Means</h4>
-                    <p className="text-muted text-xs leading-relaxed">PRIME is graded against the industry benchmark (e.g. 55% for LeeAngelo's). At or below benchmark is typical. Above benchmark, each point on a $50K week is about $500 in Gross Profit. The cockpit shows the week's grade for context.</p>
+                    <h4 className="font-medium text-white mb-1">What COGS % Grading Means</h4>
+                    <p className="text-muted text-xs leading-relaxed">COGS % is graded against the industry benchmark (e.g. 55% for LeeAngelo's). At or below benchmark is typical. Above benchmark, each point on a $50K week is about $500 in Gross Profit. The cockpit shows the 30-day rolling grade for context.</p>
                   </div>
                 </div>
               </div>
             )}
             {showEducation === "prime" && (
               <div>
-                <h3 className="text-base font-semibold text-brand mb-1">🎓 PRIME %</h3>
+                <h3 className="text-base font-semibold text-brand mb-1">🎓 COGS %</h3>
                 <p className="text-xs text-muted mb-4">The number that matters most.</p>
                 <div className="space-y-3 text-sm">
-                  <div><h4 className="font-medium text-white mb-1">How It's Calculated</h4><p className="text-muted text-xs leading-relaxed">PRIME % = (Labor + Food + Disposables) ÷ Net Sales × 100. These are your controllable costs — the number you can actually move.</p></div>
-                  <div><h4 className="font-medium text-white mb-1">Why It Matters</h4><p className="text-muted text-xs leading-relaxed">If PRIME is 60% and fixed costs are 30%, Net Profit = 10%. Drop PRIME to 55% and Net Profit doubles to 15%. On $5K/day, every point = $50/day = $1,500/month.</p></div>
+                  <div><h4 className="font-medium text-white mb-1">How It's Calculated</h4><p className="text-muted text-xs leading-relaxed">COGS % = (Labor + Food + Disposables) ÷ Net Sales × 100 over a 30-day rolling window. These are your controllable costs — the number you can actually move.</p></div>
+                  <div><h4 className="font-medium text-white mb-1">Why It Matters</h4><p className="text-muted text-xs leading-relaxed">If COGS % is 60% and fixed costs are 30%, Net Profit = 10%. Drop COGS % to 55% and Net Profit doubles to 15%. On $5K/day, every point = $50/day = $1,500/month.</p></div>
                 </div>
               </div>
             )}

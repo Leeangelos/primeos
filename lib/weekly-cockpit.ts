@@ -225,7 +225,7 @@ export function getCockpitIssues(slug: CockpitStoreSlug, dailyRows: DailyCompute
   if (primeOverDates.length > 0) {
     issues.push({
       type: "prime_over",
-      message: `${primeOverDates.length} day(s) PRIME above benchmark: ${primeOverDates.join(", ")}`,
+      message: `${primeOverDates.length} day(s) COGS % above benchmark: ${primeOverDates.join(", ")}`,
       count: primeOverDates.length,
       date: primeOverDates[0],
     });
