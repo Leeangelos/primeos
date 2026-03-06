@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect, useCallback } from "react";
 import { createPortal } from "react-dom";
 import { cn } from "@/lib/utils";
 const CATEGORIES = [
@@ -26,7 +26,7 @@ function categoryLabel(cat: string): string {
   return CATEGORY_LABELS[cat] || cat;
 }
 
-type Contact = { id: string; name: string; category: string; phone?: string; email?: string; notes?: string };
+type Contact = { id: string; name: string; category: string; phone?: string; email?: string; account_number?: string; notes?: string };
 
 function matchesFilter(c: Contact, filter: Category): boolean {
   if (filter === "all") return true;
@@ -48,7 +48,33 @@ export default function RolodexPage() {
   const [fEmail, setFEmail] = useState("");
   const [fNotes, setFNotes] = useState("");
 
-  const allContacts: Contact[] = [];
+  const [allContacts, setAllContacts] = useState<Contact[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  const fetchContacts = useCallback(async () => {
+    setLoading(true);
+    setError(null);
+    try {
+      const res = await fetch("/api/trusted-contacts");
+      const json = await res.json();
+      if (!json.ok) {
+        setError(json.error ?? "Failed to load contacts");
+        setAllContacts([]);
+        return;
+      }
+      setAllContacts((json.contacts ?? []) as Contact[]);
+    } catch {
+      setError("Network error");
+      setAllContacts([]);
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    fetchContacts();
+  }, [fetchContacts]);
 
   const filteredContacts = useMemo(() => {
     let list = allContacts.filter((c) => matchesFilter(c, filter));
@@ -86,12 +112,47 @@ export default function RolodexPage() {
     setShowForm(true);
   }
 
-  function handleSave() {
+  async function handleSave() {
     if (!fName.trim()) return;
     setSaving(true);
-    // Demo: no API; just close form and refresh would re-show seed. For real app you'd POST/PUT.
-    setSaving(false);
-    resetForm();
+    setError(null);
+    try {
+      const body = {
+        name: fName.trim(),
+        category: fCategory,
+        phone: fPhone.trim() || undefined,
+        email: fEmail.trim() || undefined,
+        notes: fNotes.trim() || undefined,
+      };
+      if (editing) {
+        const res = await fetch("/api/trusted-contacts", {
+          method: "PUT",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ id: editing.id, ...body }),
+        });
+        const json = await res.json();
+        if (!json.ok) {
+          setError(json.error ?? "Update failed");
+          return;
+        }
+        setAllContacts((prev) => prev.map((c) => (c.id === editing.id ? (json.contact as Contact) : c)));
+      } else {
+        const res = await fetch("/api/trusted-contacts", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(body),
+        });
+        const json = await res.json();
+        if (!json.ok) {
+          setError(json.error ?? "Add failed");
+          return;
+        }
+        setAllContacts((prev) => [...prev, json.contact as Contact].sort((a, b) => a.name.localeCompare(b.name)));
+      }
+      resetForm();
+    } finally {
+      setSaving(false);
+    }
   }
 
   const inputCls =
@@ -145,9 +206,20 @@ export default function RolodexPage() {
         </div>
       </div>
 
+      {error && (
+        <div className="mx-3 sm:mx-5 rounded-xl border border-red-500/50 bg-red-500/10 px-4 py-3 text-sm text-red-400">
+          {error}
+        </div>
+      )}
+
       {/* Contact cards */}
       <div className="space-y-3 px-3 sm:px-5">
-        {filteredContacts.map((c) => (
+        {loading ? (
+          <div className="rounded-xl border border-slate-700 bg-slate-800/50 p-6 text-center text-slate-400 text-sm">
+            Loading contacts…
+          </div>
+        ) : (
+        filteredContacts.map((c) => (
           <div
             key={c.id}
             className="rounded-xl border border-slate-700 bg-slate-800/50 p-4 min-w-0"
@@ -185,7 +257,8 @@ export default function RolodexPage() {
               </button>
             </div>
           </div>
-        ))}
+        ))
+        )}
       </div>
 
       {/* Add Contact — fixed bottom-right FAB */}

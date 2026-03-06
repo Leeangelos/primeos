@@ -174,6 +174,8 @@ function DailyPageContent() {
     totalTips?: number;
     paperSpend?: number;
     splh?: number | null;
+    /** 7-day rolling (food+disposables)/sales % from API; used as fallback when no sales today */
+    rollingFoodDisposablesPct?: number | null;
   } | null>(null);
   const [warnings, setWarnings] = useState<WarningItem[]>([]);
   const [storeChangeWarning, setStoreChangeWarning] = useState<string | null>(null);
@@ -374,6 +376,7 @@ function DailyPageContent() {
           totalTips: dayRes.totalTips,
           paperSpend: dayRes.paperSpend,
           splh: dayRes.splh,
+          rollingFoodDisposablesPct: dayRes.foodDisposablesPctRolling ?? null,
         });
         if (dayRes.hasSalesData) {
           setNetSales(dayRes.netSales != null ? String(dayRes.netSales) : "");
@@ -550,6 +553,8 @@ function DailyPageContent() {
     value: string;
     target: string;
     status: CockpitStatusLabel | null;
+    /** When true, value is 7-day rolling fallback; show grayed and "7-day avg" */
+    valueIsRollingFallback?: boolean;
   }[] = [
     {
       label: "PRIME %",
@@ -574,9 +579,15 @@ function DailyPageContent() {
     },
     {
       label: "Food+Disposables %",
-      value: formatPct(computed.foodDispPct),
+      value:
+        computed.foodDispPct != null
+          ? formatPct(computed.foodDispPct)
+          : liveDayData?.rollingFoodDisposablesPct != null
+            ? formatPct(liveDayData.rollingFoodDisposablesPct)
+            : "—",
       target: `≤${targets.foodDisposablesMax}%`,
-      status: foodDispStatus,
+      status: computed.foodDispPct != null ? foodDispStatus : null,
+      valueIsRollingFallback: computed.foodDispPct == null && (liveDayData?.rollingFoodDisposablesPct ?? null) != null,
     },
     {
       label: "GROSS PROFIT %",
@@ -870,22 +881,24 @@ function DailyPageContent() {
         })()}
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
           {[scoreboardItems[1], scoreboardItems[3], scoreboardItems[2], scoreboardItems[4]].map(
-            ({ label, value, target, status }) => {
+            ({ label, value, target, status, valueIsRollingFallback }) => {
               const valueColor =
-                status == null
-                  ? "text-white"
-                  : status === "on_track"
-                    ? "text-emerald-300"
-                    : status === "over"
-                      ? "text-red-300"
-                      : "text-amber-300";
+                valueIsRollingFallback
+                  ? "text-muted"
+                  : status == null
+                    ? "text-white"
+                    : status === "on_track"
+                      ? "text-emerald-300"
+                      : status === "over"
+                        ? "text-red-300"
+                        : "text-amber-300";
               return (
                 <div
                   key={label}
                   className={cn(
                     KPI_SECONDARY_BASE,
                     "border",
-                    status == null ? STATUS_NEUTRAL : STATUS_STYLES[status]
+                    status == null && !valueIsRollingFallback ? STATUS_NEUTRAL : valueIsRollingFallback ? STATUS_NEUTRAL : STATUS_STYLES[status!]
                   )}
                 >
                   <div className="text-[10px] font-medium uppercase tracking-widest text-muted/70 flex items-center justify-center gap-1.5">
@@ -908,10 +921,13 @@ function DailyPageContent() {
                     {value}
                   </div>
                   <div className="mt-1 text-[11px] text-muted/70">Benchmark: {target}</div>
-                  {rolling && label === "Labor %" && rolling.laborPct != null && (
+                  {valueIsRollingFallback && (
+                    <div className="text-xs text-muted/60 mt-1">7-day avg</div>
+                  )}
+                  {rolling && label === "Labor %" && rolling.laborPct != null && !valueIsRollingFallback && (
                     <div className="text-xs text-muted/60 mt-1">7-day avg: {rolling.laborPct}%</div>
                   )}
-                  {rolling && label === "Food+Disposables %" && rolling.foodDispPct != null && (
+                  {rolling && label === "Food+Disposables %" && rolling.foodDispPct != null && !valueIsRollingFallback && (
                     <div className="text-xs text-muted/60 mt-1">7-day avg: {rolling.foodDispPct}%</div>
                   )}
                   {rolling && label === "SLPH" && rolling.slph != null && (

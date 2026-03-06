@@ -80,6 +80,8 @@ export async function GET(request: Request) {
         const foodCostPctFinal = totalNetSalesRange > 0 && totalFoodSpendRange >= 0 ? (totalFoodSpendRange / totalNetSalesRange) * 100 : null;
         const laborPct = netSales > 0 ? (laborCost / netSales) * 100 : null;
         const disposablesPctRolling = totalNetSalesRange > 0 && totalPaperSpendRange >= 0 ? (totalPaperSpendRange / totalNetSalesRange) * 100 : null;
+        const foodDisposablesPctRolling =
+          totalNetSalesRange > 0 ? ((totalFoodSpendRange + totalPaperSpendRange) / totalNetSalesRange) * 100 : null;
         const cogsPct = laborPct != null ? (foodCostPctFinal ?? 0) + laborPct + (disposablesPctRolling ?? 0) : null;
         const grossProfitPct = cogsPct != null ? 100 - cogsPct : null;
         const splh = totalHours > 0 ? netSales / totalHours : null;
@@ -138,6 +140,7 @@ export async function GET(request: Request) {
           foodCostPeriod: "7-day rolling average",
           laborPct,
           disposablesPct: disposablesPctRolling,
+          foodDisposablesPctRolling,
           cogsPct,
           grossProfitPct,
         });
@@ -167,6 +170,10 @@ export async function GET(request: Request) {
       const totalPaperSpendRange = (purchasesRangeRes.data ?? []).reduce((s, r) => s + (Number(r.paper_spend) || 0), 0);
       const foodCostPctFinal = totalNetSalesRange > 0 && totalFoodSpendRange >= 0 ? (totalFoodSpendRange / totalNetSalesRange) * 100 : null;
       const disposablesPctRolling = totalNetSalesRange > 0 && totalPaperSpendRange >= 0 ? (totalPaperSpendRange / totalNetSalesRange) * 100 : null;
+      const foodDisposablesPctRolling =
+        totalNetSalesRange > 0
+          ? ((totalFoodSpendRange + totalPaperSpendRange) / totalNetSalesRange) * 100
+          : null;
 
       const foodCostRaw = netSales > 0 ? (foodSpend / netSales) * 100 : null;
 
@@ -226,6 +233,7 @@ export async function GET(request: Request) {
         foodCostPeriod: "7-day rolling average",
         laborPct,
         disposablesPct: disposablesPctRolling,
+        foodDisposablesPctRolling,
         cogsPct,
         grossProfitPct,
       });
