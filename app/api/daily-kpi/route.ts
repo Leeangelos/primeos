@@ -1,6 +1,9 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getClientForRoute } from "@/lib/supabase";
 
+/** Ensure this route is always executed on the server (no static optimization). */
+export const dynamic = "force-dynamic";
+
 function safeNum(value: unknown): number {
   const n = Number(value);
   return Number.isFinite(n) ? n : 0;
