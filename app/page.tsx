@@ -815,8 +815,8 @@ export default function HomePage() {
       if (range30Agg.foodCostPct != null && range30Agg.foodCostPct < 30) {
         list.push({ id: "live-fc", title: "Food cost under 30%", body: `30-day avg food cost: ${range30Agg.foodCostPct.toFixed(1)}%.`, emoji: "🍕", magnitude: "medium", date: "30-day avg" });
       }
-      if (range30Agg.laborPct != null && range30Agg.laborPct < 28) {
-        list.push({ id: "live-labor", title: "Labor under 28%", body: `30-day avg labor: ${range30Agg.laborPct.toFixed(1)}%.`, emoji: "👥", magnitude: "medium", date: "30-day avg" });
+      if (range30Agg.laborPct != null && range30Agg.laborPct < 25) {
+        list.push({ id: "live-labor", title: "Labor under 25%", body: `30-day avg labor: ${range30Agg.laborPct.toFixed(1)}% (target ≤25%).`, emoji: "👥", magnitude: "medium", date: "30-day avg" });
       }
       if (liveDailyData?.splh != null && liveDailyData.splh >= 60) {
         const splh = liveDailyData.splh;
