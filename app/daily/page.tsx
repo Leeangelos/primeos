@@ -472,20 +472,29 @@ function DailyPageContent() {
   };
 
   const computed = useMemo(() => {
-    // COGS % = (Labor + Food + Disposables) / Net Sales * 100; all three costs included
-    const primeDollars = (lc ?? 0) + (fc ?? 0) + (dc ?? 0);
-    const primePct = ns != null && ns > 0 ? (primeDollars / ns) * 100 : null;
     const laborPct = ns != null && ns > 0 && lc != null ? (lc / ns) * 100 : null;
     const foodDispPct =
       ns != null && ns > 0 && (fc != null || dc != null)
         ? ((fc ?? 0) + (dc ?? 0)) / ns * 100
         : null;
+    // 7-day rolling food+disposables % so COGS % never spikes on delivery days
+    const rollingFoodDispPct = rolling?.foodDispPct ?? liveDayData?.rollingFoodDisposablesPct ?? null;
+    // COGS % = Labor % (today) + Food+Disposables % (7-day rolling). Labor and net sales are today's actuals.
+    const primePct =
+      ns != null && ns > 0 && lc != null
+        ? rollingFoodDispPct != null
+          ? laborPct! + rollingFoodDispPct
+          : ((lc ?? 0) + (fc ?? 0) + (dc ?? 0)) / ns * 100
+        : null;
+    const primeDollars = ns != null && ns > 0 && primePct != null ? (primePct / 100) * ns : (lc ?? 0) + (fc ?? 0) + (dc ?? 0);
     const slph =
       ns != null && lh != null && lh > 0 ? ns / lh : null;
     const gpPct =
-      ns != null && ns > 0
-        ? ((ns - (lc ?? 0) - (fc ?? 0) - (dc ?? 0)) / ns) * 100
-        : null;
+      ns != null && ns > 0 && primePct != null
+        ? 100 - primePct
+        : ns != null && ns > 0
+          ? ((ns - (lc ?? 0) - (fc ?? 0) - (dc ?? 0)) / ns) * 100
+          : null;
     const wastePct = ns != null && ns > 0 && w != null ? (w / ns) * 100 : null;
     const voidPct = ns != null && ns > 0 && va != null ? (va / ns) * 100 : null;
     const avgTicket = ns != null && tix != null && tix > 0 ? ns / tix : null;
@@ -504,7 +513,7 @@ function DailyPageContent() {
       aov,
       scheduledVsActual,
     };
-  }, [ns, lc, fc, dc, va, w, lh, sh, tix]);
+  }, [ns, lc, fc, dc, va, w, lh, sh, tix, rolling, liveDayData]);
   const gpStatus: CockpitStatusLabel | null =
     computed.gpPct == null
       ? null
