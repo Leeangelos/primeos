@@ -74,7 +74,7 @@ function formatSlph(laborHoursNum: number | null, slph: number | null): string {
   return formatNum(slph);
 }
 
-/** Primary KPI (PRIME): dominant, full-width */
+/** Primary KPI (COGS %): dominant, full-width */
 const KPI_PRIMARY_BASE = "dashboard-scoreboard p-3 sm:p-6 transition-colors duration-200";
 /** Secondary KPIs (Labor, Food+Disposables, SLPH): subordinate, consistent */
 const KPI_SECONDARY_BASE = "dashboard-scoreboard p-3 sm:p-4 transition-colors duration-200";
@@ -472,6 +472,7 @@ function DailyPageContent() {
   };
 
   const computed = useMemo(() => {
+    // COGS % = (Labor + Food + Disposables) / Net Sales * 100; all three costs included
     const primeDollars = (lc ?? 0) + (fc ?? 0) + (dc ?? 0);
     const primePct = ns != null && ns > 0 ? (primeDollars / ns) * 100 : null;
     const laborPct = ns != null && ns > 0 && lc != null ? (lc / ns) * 100 : null;
@@ -557,7 +558,7 @@ function DailyPageContent() {
     valueIsRollingFallback?: boolean;
   }[] = [
     {
-      label: "PRIME %",
+      label: "COGS %",
       value: formatPct(computed.primePct),
       target: `≤${targets.primeMax}%`,
       status: primeStatus,
@@ -586,7 +587,12 @@ function DailyPageContent() {
             ? formatPct(liveDayData.rollingFoodDisposablesPct)
             : "—",
       target: `≤${targets.foodDisposablesMax}%`,
-      status: computed.foodDispPct != null ? foodDispStatus : null,
+      status:
+        computed.foodDispPct != null
+          ? foodDispStatus
+          : liveDayData?.rollingFoodDisposablesPct != null
+            ? getFoodDisposablesStatus(storeId, liveDayData.rollingFoodDisposablesPct)
+            : null,
       valueIsRollingFallback: computed.foodDispPct == null && (liveDayData?.rollingFoodDisposablesPct ?? null) != null,
     },
     {
@@ -832,7 +838,7 @@ function DailyPageContent() {
         )}
       </div>
 
-      {/* Scoreboard: PRIME primary, then Labor / Food+Disposables / SLPH */}
+      {/* Scoreboard: COGS % primary, then Labor / Food+Disposables / SLPH */}
       <div className="py-4 sm:py-6 space-y-3 sm:space-y-4">
         {(() => {
           const prime = scoreboardItems[0];
@@ -898,7 +904,7 @@ function DailyPageContent() {
                   className={cn(
                     KPI_SECONDARY_BASE,
                     "border",
-                    status == null && !valueIsRollingFallback ? STATUS_NEUTRAL : valueIsRollingFallback ? STATUS_NEUTRAL : STATUS_STYLES[status!]
+                    status != null ? STATUS_STYLES[status] : STATUS_NEUTRAL
                   )}
                 >
                   <div className="text-[10px] font-medium uppercase tracking-widest text-muted/70 flex items-center justify-center gap-1.5">
@@ -1175,7 +1181,7 @@ function DailyPageContent() {
                   targetNum: targets.laborMax,
                 },
                 {
-                  label: "PRIME %",
+                  label: "COGS %",
                   value: formatPct(computed.primePct),
                   target: `≤${targets.primeMax}%`,
                   gradeKey: "prime_cost",
@@ -1349,16 +1355,16 @@ function DailyPageContent() {
 
             {showEducation === "overview" && (
               <div>
-                <h3 className="text-base font-semibold text-brand mb-1">🎓 Daily KPIs & PRIME %</h3>
+                <h3 className="text-base font-semibold text-brand mb-1">🎓 Daily KPIs & COGS %</h3>
                 <p className="text-xs text-muted mb-4">What you enter, what it means, and what to consider when numbers go red.</p>
                 <div className="space-y-3 text-sm">
                   <div>
                     <h4 className="font-medium text-white mb-1">What Daily KPIs Are</h4>
-                    <p className="text-muted text-xs leading-relaxed">You enter one day's numbers: net sales, labor dollars, food, disposables, voids, waste, labor hours. PrimeOS turns that into PRIME % (labor + food + disposables as % of sales), labor %, food+disposables %, and SLPH (sales per labor hour). One bad day here is a signal. A week of red is a $2K+ problem.</p>
+                    <p className="text-muted text-xs leading-relaxed">You enter one day's numbers: net sales, labor dollars, food, disposables, voids, waste, labor hours. PrimeOS turns that into COGS % (labor + food + disposables as % of sales), labor %, food+disposables %, and SLPH (sales per labor hour). One bad day here is a signal. A week of red is a $2K+ problem.</p>
                   </div>
                   <div>
-                    <h4 className="font-medium text-white mb-1">How PRIME % Works</h4>
-                    <p className="text-muted text-xs leading-relaxed">PRIME % is the single number that tells you if you made money after the big three costs. Target is usually 55% or below for LeeAngelo's, 60% for Lindsey's. Over that and you're leaving money on the table. Tap the (i) on each metric for the full playbook.</p>
+                    <h4 className="font-medium text-white mb-1">How COGS % Works</h4>
+                    <p className="text-muted text-xs leading-relaxed">COGS % is the single number that tells you if you made money after the big three costs. Target is usually 55% or below for LeeAngelo's, 60% for Lindsey's. Over that and you're leaving money on the table. Tap the (i) on each metric for the full playbook.</p>
                   </div>
                   <div>
                     <h4 className="font-medium text-white mb-1">Red Playbooks in Short</h4>
@@ -1369,19 +1375,19 @@ function DailyPageContent() {
             )}
             {showEducation === "prime" && (
               <div>
-                <h3 className="text-base font-semibold text-brand mb-1">🎓 PRIME %</h3>
+                <h3 className="text-base font-semibold text-brand mb-1">🎓 COGS %</h3>
                 <p className="text-xs text-muted mb-4">The number that matters most.</p>
                 <div className="space-y-3 text-sm">
                   <div>
                     <h4 className="font-medium text-white mb-1">How It's Calculated</h4>
-                    <p className="text-muted text-xs leading-relaxed">PRIME % = (Labor + Food + Disposables) ÷ Net Sales × 100. These are your controllable costs — the number you can actually move.</p>
+                    <p className="text-muted text-xs leading-relaxed">COGS % = (Labor + Food + Disposables) ÷ Net Sales × 100. These are your controllable costs — the number you can actually move.</p>
                   </div>
                   <div>
                     <h4 className="font-medium text-white mb-1">Why It Matters</h4>
-                    <p className="text-muted text-xs leading-relaxed">If PRIME is 60% and fixed costs are 30%, Net Profit = 10%. Drop PRIME to 55% and Net Profit doubles to 15%. On $5K/day, every point = $50/day = $1,500/month.</p>
+                    <p className="text-muted text-xs leading-relaxed">If COGS % is 60% and fixed costs are 30%, Net Profit = 10%. Drop COGS % to 55% and Net Profit doubles to 15%. On $5K/day, every point = $50/day = $1,500/month.</p>
                   </div>
                   <div className="rounded-lg border border-red-500/30 bg-red-500/5 p-3">
-                    <h4 className="font-medium text-red-400 text-xs mb-2">📕 When PRIME Goes RED</h4>
+                    <h4 className="font-medium text-red-400 text-xs mb-2">📕 When COGS % Goes RED</h4>
                     <ol className="space-y-1.5 text-muted text-xs list-decimal list-inside leading-relaxed">
                       <li>Consider checking last 3 vendor deliveries for price increases.</li>
                       <li>Consider weighing 10 cheese portions on 16" pies vs recipe spec.</li>
@@ -1509,7 +1515,7 @@ function DailyPageContent() {
                 <div className="space-y-3 text-sm">
                   <div>
                     <h4 className="font-medium text-white mb-1">How It's Calculated</h4>
-                    <p className="text-muted text-xs leading-relaxed">GP % = 100% − PRIME %. If PRIME is 55%, GP is 45%. This is the money left to cover rent, insurance, utilities, and Net Profit.</p>
+                    <p className="text-muted text-xs leading-relaxed">GP % = 100% − COGS %. If COGS % is 55%, GP is 45%. This is the money left to cover rent, insurance, utilities, and Net Profit.</p>
                   </div>
                   <div>
                     <h4 className="font-medium text-white mb-1">Why It Matters</h4>
@@ -1518,9 +1524,9 @@ function DailyPageContent() {
                   <div className="rounded-lg border border-red-500/30 bg-red-500/5 p-3">
                     <h4 className="font-medium text-red-400 text-xs mb-2">📕 When GP Goes RED (&lt; 40%)</h4>
                     <ol className="space-y-1.5 text-muted text-xs list-decimal list-inside leading-relaxed">
-                      <li>GP is the inverse of PRIME — addressing PRIME is usually the fastest way to lift GP.</li>
-                      <li>Consider checking which component is dragging PRIME up: labor, food, or disposables.</li>
-                      <li>Consider running the PRIME playbook for whichever component is over target.</li>
+                      <li>GP is the inverse of COGS % — addressing COGS % is usually the fastest way to lift GP.</li>
+                      <li>Consider checking which component is dragging COGS % up: labor, food, or disposables.</li>
+                      <li>Consider running the COGS % playbook for whichever component is over target.</li>
                       <li>Consider reviewing pricing — when was your last menu price increase?</li>
                       <li>Consider calculating: every 1% GP improvement on $100K/month = $1,000/month more to Net Profit.</li>
                     </ol>
