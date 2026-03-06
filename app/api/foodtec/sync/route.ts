@@ -195,6 +195,23 @@ export async function GET(request: Request) {
       const avgTicket = totalOrders > 0 ? netSales / totalOrders : 0;
       const doordashCommission = doordashSales * 0.25;
 
+      // Large orders ($300+) for Catering & Large Orders page
+      const LARGE_ORDER_THRESHOLD = 300;
+      const largeOrderRows = storeOrders
+        .filter((o) => pf(o.net) >= LARGE_ORDER_THRESHOLD)
+        .map((o, idx) => ({
+          store_id: storeId,
+          business_day: isoDay,
+          order_id: (o.orderid || "").trim() || `day-${isoDay}-${idx}`,
+          net_amount: pf(o.net),
+          flag_scheduling: false,
+        }));
+      if (largeOrderRows.length > 0) {
+        await supabase.from("foodtec_large_orders").upsert(largeOrderRows, {
+          onConflict: "store_id,business_day,order_id",
+        });
+      }
+
       // Bump time averages
       const avg = (arr: number[]) =>
         arr.length > 0 ? arr.reduce((a, b) => a + b, 0) / arr.length : 0;

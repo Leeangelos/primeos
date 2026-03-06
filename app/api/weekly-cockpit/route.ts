@@ -267,6 +267,30 @@ export async function GET(request: NextRequest) {
 
     const weekDates = getWeekDates(week_start);
 
+    /** 7-day rolling COGS % at each date: (sum labor+food+disp over [date-6, date]) / (sum net_sales) * 100 */
+    function dailyRolling7Cogs(
+      rows: DailyKpiRow[],
+      dates: string[]
+    ): { date: string; prime_pct: number | null }[] {
+      return dates.map((date) => {
+        const end = new Date(date + "T12:00:00Z");
+        const start = new Date(end);
+        start.setUTCDate(start.getUTCDate() - 6);
+        const startStr = start.toISOString().slice(0, 10);
+        const windowRows = rows.filter(
+          (r) => r.business_date >= startStr && r.business_date <= date
+        );
+        const sumNs = windowRows.reduce((s, r) => s + r.net_sales, 0);
+        const sumPrime = windowRows.reduce(
+          (s, r) =>
+            s + r.labor_dollars + r.food_dollars + r.disposables_dollars,
+          0
+        );
+        const prime_pct = sumNs > 0 ? (sumPrime / sumNs) * 100 : null;
+        return { date, prime_pct };
+      });
+    }
+
     type StoreResult = {
       slug: string;
       name: string;
@@ -293,10 +317,10 @@ export async function GET(request: NextRequest) {
         rowToComputed(row, targets.primeMax)
       );
       const prevAgg = aggregateWeek(prevRowsStore);
-      const dailyForChart = weekDates.map((date) => {
-        const day = computed.find((d) => d.business_date === date);
-        return { date, prime_pct: day?.prime_pct ?? null };
-      });
+      const storeRangeRows = allRangeRows.filter(
+        (r) => (r as RowWithStore)._store_id === storeId
+      );
+      const dailyForChart = dailyRolling7Cogs(storeRangeRows, weekDates);
       const issues = getCockpitIssues(slug, computed);
       storeResults.push({
         slug,
@@ -442,13 +466,7 @@ export async function GET(request: NextRequest) {
             : null,
         weekly_bump_time_minutes: totalAgg.weekly_bump_time_minutes,
       };
-      daily = weekDates.map((date) => {
-        const day = allComputed.filter((d) => d.business_date === date);
-        const totalNs = day.reduce((s, d) => s + d.net_sales, 0);
-        const totalPrime = day.reduce((s, d) => s + d.prime_dollars, 0);
-        const prime_pct = totalNs > 0 ? (totalPrime / totalNs) * 100 : null;
-        return { date, prime_pct };
-      });
+      daily = dailyRolling7Cogs(allRangeRows, weekDates);
       issues = storeResults.flatMap((s) =>
         s.issues.map((i) => ({ ...i, store: s.name }))
       );

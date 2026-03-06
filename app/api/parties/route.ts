@@ -1,98 +1,75 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getClientForRoute } from "@/lib/supabase";
+import { COCKPIT_TARGETS, COCKPIT_STORE_SLUGS, type CockpitStoreSlug } from "@/lib/cockpit-config";
 
-export async function GET(req: NextRequest) {
-  const supabase = await getClientForRoute();
-  const store = req.nextUrl.searchParams.get("store");
-  const status = req.nextUrl.searchParams.get("status") || "all";
-
-  let query = supabase
-    .from("party_orders")
-    .select("*")
-    .order("party_date", { ascending: true });
-
-  if (status && status !== "all") query = query.eq("status", status);
-
-  if (store && store !== "all") {
-    const { data: storeData } = await supabase.from("stores").select("id").eq("slug", store).single();
-    if (storeData) query = query.eq("store_id", storeData.id);
-  }
-
-  const { data, error } = await query;
-  if (error) return NextResponse.json({ ok: false, error: error.message });
-  return NextResponse.json({ ok: true, parties: data ?? [] });
+function isValidSlug(s: string): s is CockpitStoreSlug {
+  return COCKPIT_STORE_SLUGS.includes(s as CockpitStoreSlug);
 }
 
-export async function POST(req: NextRequest) {
-  const supabase = await getClientForRoute();
-  const body = await req.json();
+/**
+ * GET /api/parties?store=all|kent|aurora|lindseys
+ * Returns large orders ($300+) from foodtec_large_orders for the Catering & Large Orders page.
+ */
+export async function GET(request: NextRequest) {
+  const storeParam = request.nextUrl.searchParams.get("store") ?? "all";
+  const slugs: CockpitStoreSlug[] =
+    storeParam === "all"
+      ? [...COCKPIT_STORE_SLUGS]
+      : isValidSlug(storeParam)
+        ? [storeParam]
+        : [...COCKPIT_STORE_SLUGS];
 
-  const items = body.items || [];
-  const subtotal = items.reduce((s: number, i: any) => s + (Number(i.price) * Number(i.qty) || 0), 0);
-  const tax = +(subtotal * 0.075).toFixed(2);
-  const total = +(subtotal + tax).toFixed(2);
+  try {
+    const supabase = await getClientForRoute();
 
-  const { data, error } = await supabase
-    .from("party_orders")
-    .insert({
-      store_id: body.store_id || null,
-      customer_name: body.customer_name,
-      customer_phone: body.customer_phone || null,
-      customer_email: body.customer_email || null,
-      party_date: body.party_date,
-      party_time: body.party_time || null,
-      guest_count: body.guest_count || 10,
-      items,
-      subtotal,
-      tax,
-      total,
-      deposit: body.deposit || 0,
-      status: body.status || "pending",
-      notes: body.notes || null,
-      prep_notes: body.prep_notes || null,
-      staff_assigned: body.staff_assigned || null,
-    })
-    .select()
-    .single();
+    const { data: storesRows, error: storesErr } = await supabase
+      .from("stores")
+      .select("id, slug")
+      .in("slug", slugs);
 
-  if (error) return NextResponse.json({ ok: false, error: error.message });
-  return NextResponse.json({ ok: true, party: data });
-}
+    if (storesErr) {
+      return NextResponse.json({ ok: false, error: storesErr.message }, { status: 500 });
+    }
 
-export async function PUT(req: NextRequest) {
-  const supabase = await getClientForRoute();
-  const body = await req.json();
-  const { id, ...fields } = body;
-  if (!id) return NextResponse.json({ ok: false, error: "Missing id" });
+    const storeIds = (storesRows ?? []).map((r) => String(r.id));
+    if (storeIds.length === 0) {
+      return NextResponse.json({ ok: true, orders: [] });
+    }
 
-  if (fields.items) {
-    const items = fields.items;
-    fields.subtotal = items.reduce((s: number, i: any) => s + (Number(i.price) * Number(i.qty) || 0), 0);
-    fields.tax = +(fields.subtotal * 0.075).toFixed(2);
-    fields.total = +(fields.subtotal + fields.tax).toFixed(2);
+    const { data: rows, error } = await supabase
+      .from("foodtec_large_orders")
+      .select("id, store_id, business_day, order_id, net_amount, flag_scheduling")
+      .in("store_id", storeIds)
+      .order("business_day", { ascending: false })
+      .limit(200);
+
+    if (error) {
+      return NextResponse.json({ ok: false, error: error.message }, { status: 500 });
+    }
+
+    const idToSlug = new Map<string, string>();
+    for (const r of storesRows ?? []) {
+      idToSlug.set(String(r.id), r.slug as string);
+    }
+
+    const orders = (rows ?? []).map((r) => {
+      const slug = idToSlug.get(String(r.store_id)) as CockpitStoreSlug | undefined;
+      const storeName = slug ? COCKPIT_TARGETS[slug]?.name ?? slug : String(r.store_id);
+      return {
+        id: r.id,
+        store_id: r.store_id,
+        store_slug: slug ?? null,
+        store_name: storeName,
+        business_day: r.business_day,
+        order_id: r.order_id,
+        net_amount: Number(r.net_amount),
+        flag_scheduling: Boolean(r.flag_scheduling),
+      };
+    });
+
+    return NextResponse.json({ ok: true, orders });
+  } catch (err) {
+    const message = err instanceof Error ? err.message : "Unknown error";
+    return NextResponse.json({ ok: false, error: message }, { status: 502 });
   }
-
-  if (fields.status === "approved" && !fields.approved_at) {
-    fields.approved_at = new Date().toISOString();
-  }
-
-  const { data, error } = await supabase
-    .from("party_orders")
-    .update(fields)
-    .eq("id", id)
-    .select()
-    .single();
-
-  if (error) return NextResponse.json({ ok: false, error: error.message });
-  return NextResponse.json({ ok: true, party: data });
-}
-
-export async function DELETE(req: NextRequest) {
-  const supabase = await getClientForRoute();
-  const id = req.nextUrl.searchParams.get("id");
-  if (!id) return NextResponse.json({ ok: false, error: "Missing id" });
-
-  const { error } = await supabase.from("party_orders").delete().eq("id", id);
-  if (error) return NextResponse.json({ ok: false, error: error.message });
-  return NextResponse.json({ ok: true });
 }

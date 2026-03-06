@@ -192,11 +192,13 @@ function WeeklyPageContent() {
     const laborPct = s.labor_pct ?? 0;
     const foodDisp = s.food_disp_pct ?? 0;
     const primePct = h.weekly_prime_pct ?? 0;
-    const slph = s.slph ?? 0;
+    const prevLabor = s.labor_wow != null ? laborPct - s.labor_wow : null;
+    const prevFoodDisp = s.food_disp_wow != null ? foodDisp - s.food_disp_wow : null;
+    const prevPrime = h.wow_delta_pct != null ? primePct - h.wow_delta_pct : null;
     return [
-      { label: "Food Cost %", key: "food_cost", thisWeek: fmtPct(foodDisp), lastWeek: "—", changePct: 0, changeArrow: "→", gradeColor: gradeClass(foodDisp, 31, true), changeColor: "text-slate-400" },
-      { label: "Labor %", key: "labor_pct", thisWeek: fmtPct(laborPct), lastWeek: "—", changePct: 0, changeArrow: "→", gradeColor: gradeClass(laborPct, targets.laborMax, true), changeColor: "text-slate-400" },
-      { label: "COGS %", key: "prime_cost", thisWeek: fmtPct(primePct), lastWeek: "—", changePct: 0, changeArrow: "→", gradeColor: gradeClass(primePct, targets.primeMax, true), changeColor: "text-slate-400" },
+      { label: "Food Cost %", key: "food_cost", thisWeek: fmtPct(foodDisp), lastWeek: prevFoodDisp != null ? fmtPct(prevFoodDisp) : "—", changePct: prevFoodDisp != null && prevFoodDisp !== 0 ? changePct(foodDisp, prevFoodDisp) : 0, changeArrow: prevFoodDisp != null ? getChangeArrow(foodDisp, prevFoodDisp) : "→", gradeColor: gradeClass(foodDisp, 31, true), changeColor: prevFoodDisp != null ? getChangeColor(foodDisp, prevFoodDisp, true) : "text-slate-400" },
+      { label: "Labor %", key: "labor_pct", thisWeek: fmtPct(laborPct), lastWeek: prevLabor != null ? fmtPct(prevLabor) : "—", changePct: prevLabor != null && prevLabor !== 0 ? changePct(laborPct, prevLabor) : 0, changeArrow: prevLabor != null ? getChangeArrow(laborPct, prevLabor) : "→", gradeColor: gradeClass(laborPct, targets.laborMax, true), changeColor: prevLabor != null ? getChangeColor(laborPct, prevLabor, true) : "text-slate-400" },
+      { label: "COGS %", key: "prime_cost", thisWeek: fmtPct(primePct), lastWeek: prevPrime != null ? fmtPct(prevPrime) : "—", changePct: prevPrime != null && prevPrime !== 0 ? changePct(primePct, prevPrime) : 0, changeArrow: prevPrime != null ? getChangeArrow(primePct, prevPrime) : "→", gradeColor: gradeClass(primePct, targets.primeMax, true), changeColor: prevPrime != null ? getChangeColor(primePct, prevPrime, true) : "text-slate-400" },
     ];
   }, [data, store]);
   const thisWeekSeed = data?.hero && data?.secondary ? { sales: 0, food_disp_pct: data.secondary.food_disp_pct, labor_pct: data.secondary.labor_pct, prime_pct: data.hero.weekly_prime_pct, slph: data.secondary.slph, transactions: 0 } : null;
@@ -462,7 +464,7 @@ function WeeklyPageContent() {
           {data.daily && data.daily.length > 0 && data.hero && (
             <section className="dashboard-surface rounded-lg border border-border bg-panel p-4">
               <h2 className="text-xs font-semibold uppercase tracking-wider text-muted mb-4">
-                Daily COGS % (Mon–Sun)
+                Daily COGS % (7-day rolling)
               </h2>
               <div className="h-64 w-full">
                 <ResponsiveContainer width="100%" height="100%">

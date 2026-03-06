@@ -1,54 +1,57 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { createPortal } from "react-dom";
 import { EducationInfoIcon } from "@/src/components/education/InfoIcon";
 import { cn } from "@/lib/utils";
+import { COCKPIT_STORE_SLUGS, COCKPIT_TARGETS, type CockpitStoreSlug } from "@/lib/cockpit-config";
 
-type PartyOrder = { id: string; customer_name: string; party_date: string; party_time: string | null; guest_count?: number; items: { name: string; qty: number; price: number }[]; subtotal?: number; tax?: number; total: number; deposit_paid: number; status?: string };
-
-const todayDateString = () => {
-  const d = new Date();
-  return d.getFullYear() + "-" + String(d.getMonth() + 1).padStart(2, "0") + "-" + String(d.getDate()).padStart(2, "0");
+type LargeOrder = {
+  id: string;
+  store_id: string;
+  store_slug: string | null;
+  store_name: string;
+  business_day: string;
+  order_id: string;
+  net_amount: number;
+  flag_scheduling: boolean;
 };
 
-function formatItemSummary(items: { name: string; qty: number; price: number }[]): string {
-  return items.map((i) => `${i.qty}× ${i.name}`).join(", ");
-}
-
-function depositStatus(order: PartyOrder): string {
-  if (order.deposit_paid <= 0) return "Deposit pending";
-  if (order.deposit_paid >= order.total) return "Deposit paid (full)";
-  return `Deposit paid $${order.deposit_paid.toFixed(0)} · $${(order.total - order.deposit_paid).toFixed(0)} due`;
-}
+const STORE_OPTIONS: { value: "all" | CockpitStoreSlug; label: string }[] = [
+  { value: "all", label: "All stores" },
+  ...COCKPIT_STORE_SLUGS.map((s) => ({ value: s, label: COCKPIT_TARGETS[s].name })),
+];
 
 export default function PartiesPage() {
-  const [selected, setSelected] = useState<PartyOrder | null>(null);
+  const [store, setStore] = useState<"all" | CockpitStoreSlug>("all");
+  const [orders, setOrders] = useState<LargeOrder[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [selected, setSelected] = useState<LargeOrder | null>(null);
 
-  const today = todayDateString();
-  const upcoming: PartyOrder[] = [];
-  const completed: PartyOrder[] = [];
+  const fetchOrders = useCallback(async () => {
+    setLoading(true);
+    setError(null);
+    try {
+      const res = await fetch(`/api/parties?store=${encodeURIComponent(store)}`);
+      const json = await res.json();
+      if (!json.ok) {
+        setError(json.error ?? "Failed to load orders");
+        setOrders([]);
+        return;
+      }
+      setOrders((json.orders ?? []) as LargeOrder[]);
+    } catch {
+      setError("Network error");
+      setOrders([]);
+    } finally {
+      setLoading(false);
+    }
+  }, [store]);
 
-  const Card = ({ order }: { order: PartyOrder }) => (
-    <button
-      type="button"
-      onClick={() => setSelected(order)}
-      className="w-full text-left rounded-lg border border-border/50 bg-black/20 p-4 min-h-[44px] hover:border-brand/30 transition-colors"
-    >
-      <div className="flex items-start justify-between gap-2 mb-2">
-        <span className="font-medium text-white text-sm">{order.customer_name}</span>
-        <span className="text-sm font-bold tabular-nums text-brand shrink-0">${order.total.toFixed(0)}</span>
-      </div>
-      <div className="text-[10px] text-muted mb-1">
-        {new Date(order.party_date + "T12:00:00Z").toLocaleDateString("en-US", { weekday: "short", month: "short", day: "numeric" })}
-        {order.party_time ? ` · ${order.party_time}` : ""}
-      </div>
-      <div className="text-[10px] text-muted mb-1 line-clamp-2">{formatItemSummary(order.items)}</div>
-      <div className={cn("text-[10px]", order.deposit_paid >= order.total ? "text-emerald-400" : order.deposit_paid > 0 ? "text-amber-400" : "text-muted")}>
-        {depositStatus(order)}
-      </div>
-    </button>
-  );
+  useEffect(() => {
+    fetchOrders();
+  }, [fetchOrders]);
 
   return (
     <div className="space-y-5 pb-28">
@@ -57,75 +60,126 @@ export default function PartiesPage() {
           <h1 className="text-lg font-semibold sm:text-2xl">Catering & Large Orders</h1>
           <EducationInfoIcon metricKey="party_orders" size="lg" />
         </div>
-        <p className="text-xs text-muted">Catering and event orders. Gross Margins and upsell strategy.</p>
+        <p className="text-xs text-muted">Orders $300+ from FoodTec (potential catering or large orders).</p>
+        <select
+          value={store}
+          onChange={(e) => setStore(e.target.value as "all" | CockpitStoreSlug)}
+          className="rounded-lg border border-border/50 bg-black/30 px-3 py-2 text-sm text-white focus:border-brand/60 focus:ring-1 focus:ring-brand/40 focus:outline-none"
+          aria-label="Select store"
+        >
+          {STORE_OPTIONS.map((o) => (
+            <option key={o.value} value={o.value}>{o.label}</option>
+          ))}
+        </select>
       </div>
 
-      {/* Upcoming */}
-      <section className="space-y-3">
-        <h2 className="text-sm font-semibold text-white px-1">Upcoming</h2>
-        {upcoming.length === 0 ? (
-          <p className="text-sm text-muted py-4 text-center">Catering orders will appear here.</p>
-        ) : (
-          <div className="space-y-2">
-            {upcoming.map((p) => (
-              <Card key={p.id} order={p} />
-            ))}
-          </div>
-        )}
-      </section>
-
-      {/* Completed */}
-      <section className="space-y-3">
-        <h2 className="text-sm font-semibold text-muted px-1">Completed</h2>
-        {completed.length === 0 ? (
-          <p className="text-sm text-muted py-4 text-center">No completed catering orders.</p>
-        ) : (
-          <div className="space-y-2">
-            {completed.map((p) => (
-              <Card key={p.id} order={p} />
-            ))}
-          </div>
-        )}
-      </section>
-
-      {/* Detail Modal */}
-      {selected && typeof document !== "undefined" && createPortal(
-        <div className="fixed inset-0 z-[9999] flex items-center justify-center p-4" style={{ position: "fixed", top: 0, left: 0, right: 0, bottom: 0 }} onClick={() => setSelected(null)}>
-          <div className="absolute inset-0 bg-black/80 backdrop-blur-sm" />
-          <div className="relative w-full max-w-md mx-auto rounded-2xl border border-border bg-[#0d0f13] p-5 shadow-2xl overflow-y-auto" style={{ maxHeight: "90vh" }} onClick={(e) => e.stopPropagation()}>
-            <button type="button" onClick={() => setSelected(null)} className="absolute top-3 right-3 text-muted hover:text-white text-lg leading-none min-h-[44px] min-w-[44px] flex items-center justify-center" aria-label="Close">✕</button>
-
-            <div className="flex items-center gap-2 mb-1">
-              <h3 className="text-base font-semibold text-white">{selected.customer_name}</h3>
-              <span className="text-[10px] uppercase font-bold px-2 py-0.5 rounded border bg-muted/10 text-muted border-border/30">{selected.status ?? "—"}</span>
-            </div>
-            <div className="text-xs text-muted mb-4">
-              {new Date(selected.party_date + "T12:00:00Z").toLocaleDateString("en-US", { weekday: "long", month: "long", day: "numeric", year: "numeric" })}
-              {selected.party_time ? ` at ${selected.party_time}` : ""} — {selected.guest_count != null ? selected.guest_count : "—"} guests
-            </div>
-
-            <div className="rounded-lg border border-border/50 p-3 mb-3">
-              <div className="text-[9px] uppercase text-muted mb-2">Order Items</div>
-              {selected.items.map((item, idx) => (
-                <div key={idx} className="flex items-center justify-between py-1 text-sm">
-                  <span className="text-white">{item.qty}× {item.name}</span>
-                  <span className="text-muted tabular-nums">${(item.qty * item.price).toFixed(2)}</span>
-                </div>
-              ))}
-              <div className="border-t border-border/30 mt-2 pt-2 space-y-1">
-                <div className="flex justify-between text-xs text-muted"><span>Subtotal</span><span>${selected.subtotal?.toFixed(2)}</span></div>
-                <div className="flex justify-between text-xs text-muted"><span>Tax</span><span>${selected.tax?.toFixed(2)}</span></div>
-                <div className="flex justify-between text-sm font-bold text-brand"><span>Total</span><span>${selected.total?.toFixed(2)}</span></div>
-                {selected.deposit_paid > 0 && <div className="flex justify-between text-xs text-emerald-400"><span>Deposit Paid</span><span>${selected.deposit_paid?.toFixed(2)}</span></div>}
-                {selected.deposit_paid > 0 && selected.deposit_paid < selected.total && <div className="flex justify-between text-xs text-amber-400"><span>Balance Due</span><span>${(selected.total - selected.deposit_paid).toFixed(2)}</span></div>}
-              </div>
-            </div>
-
-            <button type="button" onClick={() => setSelected(null)} className="w-full rounded-lg border border-border/50 bg-black/30 px-4 py-2.5 text-sm text-muted hover:text-white">Close</button>
-          </div>
-        </div>,
-        document.body
+      {error && (
+        <div className="mx-3 sm:mx-5 rounded-xl border border-red-500/50 bg-red-500/10 px-4 py-3 text-sm text-red-400">
+          {error}
+        </div>
       )}
+
+      <section className="space-y-3 px-3 sm:px-5">
+        <h2 className="text-sm font-semibold text-white px-1">Large orders ($300+)</h2>
+        {loading ? (
+          <p className="text-sm text-muted py-4 text-center">Loading…</p>
+        ) : orders.length === 0 ? (
+          <p className="text-sm text-muted py-4 text-center">
+            No large orders in the last synced days. Orders $300+ from FoodTec will appear here after sync.
+          </p>
+        ) : (
+          <div className="space-y-2">
+            {orders.map((order) => (
+              <button
+                key={order.id}
+                type="button"
+                onClick={() => setSelected(order)}
+                className="w-full text-left rounded-xl border border-border/50 bg-black/20 p-4 min-h-[44px] hover:border-brand/30 transition-colors"
+              >
+                <div className="flex items-start justify-between gap-2 mb-1">
+                  <span className="font-medium text-white text-sm">{order.store_name}</span>
+                  <span className="text-sm font-bold tabular-nums text-brand shrink-0">
+                    ${order.net_amount.toFixed(0)}
+                  </span>
+                </div>
+                <div className="text-[10px] text-muted mb-1">
+                  {new Date(order.business_day + "T12:00:00Z").toLocaleDateString("en-US", {
+                    weekday: "short",
+                    month: "short",
+                    day: "numeric",
+                    year: "numeric",
+                  })}
+                </div>
+                <div className="flex items-center gap-2 flex-wrap">
+                  {order.flag_scheduling && (
+                    <span className="text-[10px] uppercase font-semibold px-2 py-0.5 rounded bg-amber-500/20 text-amber-400 border border-amber-500/30">
+                      Flag for scheduling
+                    </span>
+                  )}
+                </div>
+              </button>
+            ))}
+          </div>
+        )}
+      </section>
+
+      {selected && typeof document !== "undefined" &&
+        createPortal(
+          <div
+            className="fixed inset-0 z-[9999] flex items-center justify-center p-4"
+            style={{ position: "fixed", top: 0, left: 0, right: 0, bottom: 0 }}
+            onClick={() => setSelected(null)}
+          >
+            <div className="absolute inset-0 bg-black/80 backdrop-blur-sm" />
+            <div
+              className="relative w-full max-w-md mx-auto rounded-2xl border border-border bg-[#0d0f13] p-5 shadow-2xl overflow-y-auto"
+              style={{ maxHeight: "90vh" }}
+              onClick={(e) => e.stopPropagation()}
+            >
+              <button
+                type="button"
+                onClick={() => setSelected(null)}
+                className="absolute top-3 right-3 text-muted hover:text-white text-lg leading-none min-h-[44px] min-w-[44px] flex items-center justify-center"
+                aria-label="Close"
+              >
+                ✕
+              </button>
+              <h3 className="text-base font-semibold text-white mb-1">Large order</h3>
+              <div className="text-xs text-muted mb-3">
+                {selected.store_name} · {new Date(selected.business_day + "T12:00:00Z").toLocaleDateString("en-US", {
+                  weekday: "long",
+                  month: "long",
+                  day: "numeric",
+                  year: "numeric",
+                })}
+              </div>
+              <div className="rounded-lg border border-border/50 p-3 mb-3">
+                <div className="flex justify-between text-sm">
+                  <span className="text-muted">Order value</span>
+                  <span className="font-bold text-brand">${selected.net_amount.toFixed(2)}</span>
+                </div>
+                {selected.flag_scheduling && (
+                  <div className="mt-2 pt-2 border-t border-border/30">
+                    <span className="text-[10px] uppercase font-semibold text-amber-400">
+                      Flagged for scheduling
+                    </span>
+                  </div>
+                )}
+              </div>
+              <button
+                type="button"
+                onClick={() => setSelected(null)}
+                className={cn(
+                  "w-full rounded-lg border px-4 py-2.5 text-sm",
+                  "border-border/50 bg-black/30 text-muted hover:text-white"
+                )}
+              >
+                Close
+              </button>
+            </div>
+          </div>,
+          document.body
+        )}
     </div>
   );
 }
