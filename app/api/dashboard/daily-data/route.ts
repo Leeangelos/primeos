@@ -246,6 +246,7 @@ export async function GET(request: Request) {
           pickup_sales: sumByDay(salesRows, d, "pickup_sales"),
           delivery_sales: sumByDay(salesRows, d, "delivery_sales"),
           web_sales: sumByDay(salesRows, d, "web_sales"),
+          doordash_sales: sumByDay(salesRows, d, "doordash_sales"),
           cash_sales: sumByDay(salesRows, d, "cash_sales"),
           card_sales: sumByDay(salesRows, d, "card_sales"),
           house_account_owed: sumByDay(salesRows, d, "house_account_owed"),

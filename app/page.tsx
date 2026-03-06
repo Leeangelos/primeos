@@ -378,7 +378,7 @@ export default function HomePage() {
   const [usedSeedData, setUsedSeedData] = useState(false);
   const [liveDailyData, setLiveDailyData] = useState<LiveDailyData | null>(null);
   const [rangeData, setRangeData] = useState<{
-    sales: { business_day: string; net_sales?: number; dine_in_sales?: number; pickup_sales?: number; delivery_sales?: number; web_sales?: number; cash_sales?: number; card_sales?: number; house_account_owed?: number; house_account_received?: number }[];
+    sales: { business_day: string; net_sales?: number; dine_in_sales?: number; pickup_sales?: number; delivery_sales?: number; web_sales?: number; doordash_sales?: number; cash_sales?: number; card_sales?: number; house_account_owed?: number; house_account_received?: number }[];
     labor: { business_day: string; total_labor_cost?: number; total_overtime_cost?: number; regular_hours?: number; overtime_hours?: number }[];
     purchases: { business_day: string; total_spend?: number; food_spend?: number }[];
   } | null>(null);
@@ -461,8 +461,9 @@ export default function HomePage() {
     const totalLaborCost = labor.reduce((s, r) => s + (r.total_labor_cost ?? 0) + (r.total_overtime_cost ?? 0), 0);
     const totalDineIn = sales.reduce((s, r) => s + (r.dine_in_sales ?? 0), 0);
     const totalPickup = sales.reduce((s, r) => s + (r.pickup_sales ?? 0), 0);
-    const totalDelivery = sales.reduce((s, r) => s + (r.delivery_sales ?? 0), 0);
+    const totalDelivery = sales.reduce((s, r) => s + (r.delivery_sales ?? 0) + (r.doordash_sales ?? 0), 0);
     const totalWeb = sales.reduce((s, r) => s + (r.web_sales ?? 0), 0);
+    const totalDoordash = sales.reduce((s, r) => s + (r.doordash_sales ?? 0), 0);
     const totalCash = sales.reduce((s, r) => s + (r.cash_sales ?? 0), 0);
     const totalCard = sales.reduce((s, r) => s + (r.card_sales ?? 0), 0);
     const totalHouseOwed = sales.reduce((s, r) => s + (r.house_account_owed ?? 0), 0);
@@ -480,6 +481,7 @@ export default function HomePage() {
       totalPickup,
       totalDelivery,
       totalWeb,
+      totalDoordash,
       totalCash,
       totalCard,
       totalHouseOwed,
@@ -1073,6 +1075,26 @@ export default function HomePage() {
               </div>
             );
           })()}
+          {!isOnboardingUser && (
+            (() => {
+              const splh = liveDailyData?.splh ?? null;
+              const hasSplh = splh != null && splh > 0;
+              return (
+                <div className="bg-slate-800 rounded-xl p-4 border-t-[3px] min-w-0 border border-zinc-800/50 shadow-sm transition-transform duration-200 sm:hover:scale-[1.01] border-t-slate-600">
+                  <div className="flex items-center justify-between mb-1">
+                    <span className="text-xs text-slate-400 uppercase tracking-wide">SPLH (YESTERDAY)</span>
+                    <div className="flex items-center gap-1.5">
+                      {liveDailyData?.hasSalesData && liveDailyData?.hasLaborData && <span className="text-xs text-emerald-400">● POS</span>}
+                    </div>
+                  </div>
+                  <div className="text-2xl font-bold tabular-nums text-white">
+                    {hasSplh ? `$${Math.round(splh).toLocaleString("en-US", { maximumFractionDigits: 0 })}` : "—"}
+                  </div>
+                  <div className="text-xs text-zinc-500">{hasSplh ? "Target: $80+" : "No data"}</div>
+                </div>
+              );
+            })()
+          )}
           {isOnboardingUser && (onboardingData?.employee_count != null || onboardingData?.monthly_rent != null) && (
             <div className="grid grid-cols-2 gap-3 min-w-0 col-span-2">
               {onboardingData?.employee_count != null && (
@@ -1142,13 +1164,14 @@ export default function HomePage() {
               const pickup = range30Agg.totalPickup ?? 0;
               const delivery = range30Agg.totalDelivery ?? 0;
               const web = range30Agg.totalWeb ?? 0;
+              const doordash = range30Agg.totalDoordash ?? 0;
               const pct = (v: number) => (total > 0 ? (v / total) * 100 : 0);
               const segments = [
                 { label: "Dine-In", value: dineIn, pct: pct(dineIn), color: "bg-emerald-500" },
                 { label: "Pickup/To-Go", value: pickup, pct: pct(pickup), color: "bg-blue-500" },
                 { label: "Delivery", value: delivery, pct: pct(delivery), color: "bg-orange-500" },
               ];
-              const onlinePct = total > 0 ? (web / total) * 100 : 0;
+              const onlinePct = total > 0 ? ((web + doordash) / total) * 100 : 0;
               return (
                 <>
                   <div className="h-2 rounded-full overflow-hidden flex min-w-0 bg-zinc-800">
@@ -1177,25 +1200,27 @@ export default function HomePage() {
               const total = range30Agg.totalNetSales;
               const cash = range30Agg.totalCash ?? 0;
               const card = range30Agg.totalCard ?? 0;
-              const cashPct = total > 0 ? (cash / total) * 100 : 0;
-              const cardPct = total > 0 ? (card / total) * 100 : 0;
+              const cashPctRaw = total > 0 ? (cash / total) * 100 : 0;
+              const cardPctRaw = total > 0 ? (card / total) * 100 : 0;
+              const cashPct = Math.round(cashPctRaw);
+              const cardPct = Math.round(cardPctRaw);
               const otherPct = 100 - cashPct - cardPct;
               const otherAmount = Math.max(0, total - cash - card);
               return (
                 <div className="grid grid-cols-3 gap-3">
-                  <div className="rounded-lg border border-zinc-700/50 p-3 bg-zinc-800/50">
+                  <div className="rounded-lg border border-zinc-700/50 p-3 bg-zinc-800/50" role="presentation">
                     <p className="text-xs text-zinc-500 uppercase">Cash</p>
-                    <p className="text-lg font-bold tabular-nums text-white">{cashPct.toFixed(0)}%</p>
+                    <p className="text-lg font-bold tabular-nums text-white">{cashPct}%</p>
                     <p className="text-xs text-zinc-500">${cash.toLocaleString("en-US", { maximumFractionDigits: 0 })}</p>
                   </div>
-                  <div className="rounded-lg border border-zinc-700/50 p-3 bg-zinc-800/50">
+                  <div className="rounded-lg border border-zinc-700/50 p-3 bg-zinc-800/50" role="presentation">
                     <p className="text-xs text-zinc-500 uppercase">Card</p>
-                    <p className="text-lg font-bold tabular-nums text-white">{cardPct.toFixed(0)}%</p>
+                    <p className="text-lg font-bold tabular-nums text-white">{cardPct}%</p>
                     <p className="text-xs text-zinc-500">${card.toLocaleString("en-US", { maximumFractionDigits: 0 })}</p>
                   </div>
-                  <div className="rounded-lg border border-zinc-700/50 p-3 bg-zinc-800/50">
+                  <div className="rounded-lg border border-zinc-700/50 p-3 bg-zinc-800/50" role="presentation">
                     <p className="text-xs text-zinc-500 uppercase">Other</p>
-                    <p className="text-lg font-bold tabular-nums text-white">{otherPct.toFixed(0)}%</p>
+                    <p className="text-lg font-bold tabular-nums text-white">{otherPct}%</p>
                     <p className="text-xs text-zinc-500">${otherAmount.toLocaleString("en-US", { maximumFractionDigits: 0 })}</p>
                   </div>
                 </div>
