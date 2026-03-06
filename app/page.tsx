@@ -512,15 +512,25 @@ export default function HomePage() {
   }, [selectedStore, today, yesterday, onboardingData, range30Agg]);
 
   const pillarGrades = useMemo(() => {
-    if (!pillarSeed) {
-      return { product: "C" as LetterGrade, people: "C" as LetterGrade, performance: "C" as LetterGrade };
+    if (range30Agg && range30Agg.totalNetSales > 0) {
+      const foodCostPct = range30Agg.foodCostPct ?? null;
+      const laborPct = range30Agg.laborPct ?? 0;
+      const cogsPct = range30Agg.cogsPct ?? (foodCostPct != null ? foodCostPct + laborPct + 4 : 0);
+      return {
+        product: gradePillarProduct(foodCostPct),
+        people: gradePillarPeople(laborPct),
+        performance: gradePillarPerformance(cogsPct),
+      };
     }
-    return {
-      product: gradePillarProduct(pillarSeed.foodCostPct),
-      people: gradePillarPeople(pillarSeed.laborPct),
-      performance: gradePillarPerformance(pillarSeed.primePct),
-    };
-  }, [pillarSeed]);
+    if (pillarSeed) {
+      return {
+        product: gradePillarProduct(pillarSeed.foodCostPct),
+        people: gradePillarPeople(pillarSeed.laborPct),
+        performance: gradePillarPerformance(pillarSeed.primePct),
+      };
+    }
+    return { product: "C" as LetterGrade, people: "C" as LetterGrade, performance: "C" as LetterGrade };
+  }, [range30Agg, pillarSeed, selectedStore]);
 
   useEffect(() => {
     let cancelled = false;
