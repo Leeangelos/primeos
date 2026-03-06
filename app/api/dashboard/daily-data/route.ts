@@ -19,11 +19,21 @@ export async function GET(request: Request) {
 
     if (!storeIdParam) return NextResponse.json({ error: "store_id required" }, { status: 400 });
 
+    const isAllStores = storeIdParam.toLowerCase() === "all";
+    let storeIds: string[] = [];
+    if (isAllStores) {
+      const { data: stores } = await supabase.from("stores").select("id");
+      storeIds = (stores ?? []).map((r) => r.id);
+      if (storeIds.length === 0) return NextResponse.json({ error: "No stores found" }, { status: 404 });
+    }
+
     let storeId = storeIdParam;
-    const isSlug = storeIdParam.length < 36 || !/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(storeIdParam);
-    if (isSlug) {
-      const { data: storeRow } = await supabase.from("stores").select("id").eq("slug", storeIdParam).maybeSingle();
-      if (storeRow?.id) storeId = storeRow.id;
+    if (!isAllStores) {
+      const isSlug = storeIdParam.length < 36 || !/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(storeIdParam);
+      if (isSlug) {
+        const { data: storeRow } = await supabase.from("stores").select("id").eq("slug", storeIdParam).maybeSingle();
+        if (storeRow?.id) storeId = storeRow.id;
+      }
     }
 
     if (day && !range) {
@@ -31,6 +41,95 @@ export async function GET(request: Request) {
       const rollStart = new Date(dayStart);
       rollStart.setUTCDate(rollStart.getUTCDate() - 6);
       const startISO = rollStart.toISOString().split("T")[0];
+
+      if (isAllStores) {
+        const [salesRowsRes, laborRowsRes, purchasesRowsRes, sales7Res, purchases7Res] = await Promise.all([
+          supabase.from("foodtec_daily_sales").select("*").in("store_id", storeIds).eq("business_day", day),
+          supabase.from("foodtec_daily_labor").select("*").in("store_id", storeIds).eq("business_day", day),
+          supabase.from("me_daily_purchases").select("*").in("store_id", storeIds).eq("business_day", day),
+          supabase.from("foodtec_daily_sales").select("net_sales").in("store_id", storeIds).gte("business_day", startISO).lte("business_day", day),
+          supabase.from("me_daily_purchases").select("food_spend, paper_spend").in("store_id", storeIds).gte("business_day", startISO).lte("business_day", day),
+        ]);
+        const salesRows = salesRowsRes.data ?? [];
+        const laborRows = laborRowsRes.data ?? [];
+        const purchasesRows = purchasesRowsRes.data ?? [];
+
+        const sum = (arr: Record<string, unknown>[], key: string) => arr.reduce((s, r) => s + (Number(r[key]) || 0), 0);
+        const netSales = sum(salesRows, "net_sales");
+        const totalOrders = sum(salesRows, "total_orders");
+        const foodSpend = sum(purchasesRows, "food_spend");
+        const paperSpend = sum(purchasesRows, "paper_spend");
+        const laborCost = sum(laborRows, "total_labor_cost") + sum(laborRows, "total_overtime_cost");
+        const totalHours = sum(laborRows, "regular_hours") + sum(laborRows, "overtime_hours");
+
+        const sumNetSales7 = (sales7Res.data ?? []).reduce((s, r) => s + (Number(r.net_sales) || 0), 0);
+        const sumFoodSpend7 = (purchases7Res.data ?? []).reduce((s, r) => s + (Number(r.food_spend) || 0), 0);
+        const sumPaperSpend7 = (purchases7Res.data ?? []).reduce((s, r) => s + (Number(r.paper_spend) || 0), 0);
+        const foodCostPctFinal = sumFoodSpend7 === 0 ? null : sumNetSales7 > 0 ? (sumFoodSpend7 / sumNetSales7) * 100 : null;
+        const laborPct = netSales > 0 ? (laborCost / netSales) * 100 : null;
+        const disposablesPctRolling = sumNetSales7 > 0 ? (sumPaperSpend7 / sumNetSales7) * 100 : null;
+        const cogsPct = laborPct != null ? (foodCostPctFinal ?? 0) + laborPct + (disposablesPctRolling ?? 0) : null;
+        const grossProfitPct = cogsPct != null ? 100 - cogsPct : null;
+        const splh = totalHours > 0 ? netSales / totalHours : null;
+        const avgTicket = totalOrders > 0 ? netSales / totalOrders : 0;
+
+        const bumpTimes = salesRows.map((r) => Number(r.avg_bump_time)).filter((v) => v != null && v > 0);
+        const bumpDineIn = salesRows.map((r) => Number(r.avg_bump_time_dinein)).filter((v) => v != null && v > 0);
+        const bumpPickup = salesRows.map((r) => Number(r.avg_bump_time_pickup)).filter((v) => v != null && v > 0);
+        const bumpDelivery = salesRows.map((r) => Number(r.avg_bump_time_delivery)).filter((v) => v != null && v > 0);
+        const avgBump = (arr: number[]) => (arr.length > 0 ? arr.reduce((a, b) => a + b, 0) / arr.length : 0);
+
+        return NextResponse.json({
+          day,
+          hasLiveData: salesRows.length > 0 || laborRows.length > 0 || purchasesRows.length > 0,
+          hasSalesData: salesRows.length > 0,
+          hasLaborData: laborRows.length > 0,
+          hasPurchaseData: purchasesRows.length > 0,
+          netSales,
+          grossSales: sum(salesRows, "gross_sales"),
+          totalOrders,
+          avgTicket,
+          guestCount: sum(salesRows, "guest_count"),
+          totalTips: sum(salesRows, "total_tips"),
+          totalDiscounts: sum(salesRows, "total_discounts"),
+          dineInOrders: sum(salesRows, "dine_in_orders"),
+          dineInSales: sum(salesRows, "dine_in_sales"),
+          pickupOrders: sum(salesRows, "pickup_orders"),
+          pickupSales: sum(salesRows, "pickup_sales"),
+          deliveryOrders: sum(salesRows, "delivery_orders"),
+          deliverySales: sum(salesRows, "delivery_sales"),
+          doordashOrders: sum(salesRows, "doordash_orders"),
+          doordashSales: sum(salesRows, "doordash_sales"),
+          doordashCommission: sum(salesRows, "doordash_commission"),
+          doordashNewCustomers: sum(salesRows, "doordash_new_customers"),
+          doordashReturningCustomers: sum(salesRows, "doordash_returning_customers"),
+          avgBumpTime: avgBump(bumpTimes),
+          avgBumpTimeDineIn: avgBump(bumpDineIn),
+          avgBumpTimePickup: avgBump(bumpPickup),
+          avgBumpTimeDelivery: avgBump(bumpDelivery),
+          ordersEarly: sum(salesRows, "orders_early"),
+          ordersOnTime: sum(salesRows, "orders_on_time"),
+          ordersLate: sum(salesRows, "orders_late"),
+          regularHours: sum(laborRows, "regular_hours"),
+          overtimeHours: sum(laborRows, "overtime_hours"),
+          totalLaborCost: laborCost,
+          uniqueEmployees: laborRows.reduce((s, r) => s + (Number(r.unique_employees) || 0), 0),
+          avgHourlyRate: laborRows.length > 0 ? laborCost / totalHours : 0,
+          splh,
+          foodSpend,
+          paperSpend,
+          beverageSpend: sum(purchasesRows, "beverage_spend"),
+          hillcrestSpend: sum(purchasesRows, "hillcrest_spend"),
+          totalPurchases: sum(purchasesRows, "total_spend"),
+          foodCostPct: foodCostPctFinal,
+          foodCostRaw: netSales > 0 ? (foodSpend / netSales) * 100 : null,
+          foodCostPeriod: "7-day rolling average",
+          laborPct,
+          disposablesPct: disposablesPctRolling,
+          cogsPct,
+          grossProfitPct,
+        });
+      }
 
       const [salesRes, laborRes, purchasesRes, sales7Res, purchases7Res] = await Promise.all([
         supabase.from("foodtec_daily_sales").select("*").eq("store_id", storeId).eq("business_day", day).maybeSingle(),
@@ -125,6 +224,49 @@ export async function GET(request: Request) {
       const startDate = new Date();
       startDate.setDate(startDate.getDate() - daysBack);
       const startISO = startDate.toISOString().split("T")[0];
+
+      if (isAllStores) {
+        const [salesRes, laborRes, purchasesRes] = await Promise.all([
+          supabase.from("foodtec_daily_sales").select("*").in("store_id", storeIds).gte("business_day", startISO).order("business_day", { ascending: true }),
+          supabase.from("foodtec_daily_labor").select("*").in("store_id", storeIds).gte("business_day", startISO).order("business_day", { ascending: true }),
+          supabase.from("me_daily_purchases").select("*").in("store_id", storeIds).gte("business_day", startISO).order("business_day", { ascending: true }),
+        ]);
+        const salesRows = salesRes.data ?? [];
+        const laborRows = laborRes.data ?? [];
+        const purchasesRows = purchasesRes.data ?? [];
+
+        const days = [...new Set(salesRows.map((r) => r.business_day).concat(laborRows.map((r) => r.business_day)).concat(purchasesRows.map((r) => r.business_day)))].filter(Boolean).sort() as string[];
+        const sumByDay = (rows: Record<string, unknown>[], day: string, key: string) =>
+          rows.filter((r) => r.business_day === day).reduce((s, r) => s + (Number(r[key]) || 0), 0);
+        const sales = days.map((d) => ({
+          business_day: d,
+          net_sales: sumByDay(salesRows, d, "net_sales"),
+          total_orders: sumByDay(salesRows, d, "total_orders"),
+          dine_in_sales: sumByDay(salesRows, d, "dine_in_sales"),
+          pickup_sales: sumByDay(salesRows, d, "pickup_sales"),
+          delivery_sales: sumByDay(salesRows, d, "delivery_sales"),
+          web_sales: sumByDay(salesRows, d, "web_sales"),
+          cash_sales: sumByDay(salesRows, d, "cash_sales"),
+          card_sales: sumByDay(salesRows, d, "card_sales"),
+          house_account_owed: sumByDay(salesRows, d, "house_account_owed"),
+          house_account_received: sumByDay(salesRows, d, "house_account_received"),
+        }));
+        const labor = days.map((d) => ({
+          business_day: d,
+          total_labor_cost: sumByDay(laborRows, d, "total_labor_cost"),
+          total_overtime_cost: sumByDay(laborRows, d, "total_overtime_cost"),
+          regular_hours: sumByDay(laborRows, d, "regular_hours"),
+          overtime_hours: sumByDay(laborRows, d, "overtime_hours"),
+        }));
+        const purchases = days.map((d) => ({
+          business_day: d,
+          total_spend: sumByDay(purchasesRows, d, "total_spend"),
+          food_spend: sumByDay(purchasesRows, d, "food_spend"),
+          paper_spend: sumByDay(purchasesRows, d, "paper_spend"),
+        }));
+
+        return NextResponse.json({ range: daysBack, sales, labor, purchases });
+      }
 
       const [salesRes, laborRes, purchasesRes] = await Promise.all([
         supabase

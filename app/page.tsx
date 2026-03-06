@@ -169,9 +169,9 @@ function getStoreLabel(slug: StoreSlug): string {
   return COCKPIT_TARGETS[slug as "kent" | "aurora" | "lindseys"]?.name ?? slug;
 }
 
-/** For API/seed: use single store slug; "all" → kent for demo combined view. */
+/** For API: pass store slug; "all" requests aggregated data for all stores. */
 function storeSlugForFetch(slug: StoreSlug): string {
-  return slug === "all" ? "kent" : slug;
+  return slug === "all" ? "all" : slug;
 }
 
 type PillarId = "product" | "people" | "process";
@@ -723,71 +723,71 @@ export default function HomePage() {
     const list: AlertItem[] = [];
     if (!kpi) return list;
 
+    const targetFc = benchmarks.foodCostTargetPct;
+    const targetLabor = benchmarks.laborTargetPct;
+    const targetPrime = benchmarks.primeTargetPct;
+
     if (kpi.foodCostPct != null) {
-      const foodGrade = gradeFoodCost(kpi.foodCostPct, benchmarks.foodCostTargetPct);
-      if (foodGrade === "red") {
+      if (kpi.foodCostPct > targetFc) {
         list.push({
           severity: "red",
           key: "food_cost",
           label: `Food Cost (${storeLabel})`,
-          message: `Food cost is above the benchmark. You're at ${formatPct(kpi.foodCostPct)}. Target: ≤${benchmarks.foodCostTargetPct}%. Tap for playbook.`,
+          message: `Food cost is above the benchmark. You're at ${formatPct(kpi.foodCostPct)}. Target: ≤${targetFc}%. Tap for playbook.`,
         });
-      } else if (foodGrade === "yellow") {
+      } else if (kpi.foodCostPct >= targetFc - 10 && kpi.foodCostPct <= targetFc) {
         list.push({
           severity: "yellow",
           key: "food_cost",
           label: `Food Cost (${storeLabel})`,
-          message: `Food cost is creeping up. You're at ${formatPct(kpi.foodCostPct)}. Target: ≤${benchmarks.foodCostTargetPct}%. Tap for playbook.`,
+          message: `Food cost is getting close to the benchmark. You're at ${formatPct(kpi.foodCostPct)}. Target: ≤${targetFc}%. Tap for playbook.`,
         });
       }
     }
 
-    const laborGrade = gradeLabor(kpi.laborPct, benchmarks.laborTargetPct);
-    if (laborGrade === "red") {
+    if (kpi.laborPct > targetLabor) {
       list.push({
         severity: "red",
         key: "labor_pct",
         label: `Labor % (${storeLabel})`,
-        message: `Labor cost is above the benchmark. You're at ${formatPct(kpi.laborPct)}. Target: ≤${benchmarks.laborTargetPct}%. Tap for playbook.`,
+        message: `Labor cost is above the benchmark. You're at ${formatPct(kpi.laborPct)}. Target: ≤${targetLabor}%. Tap for playbook.`,
       });
-    } else if (laborGrade === "yellow") {
+    } else if (kpi.laborPct >= targetLabor - 10 && kpi.laborPct <= targetLabor) {
       list.push({
         severity: "yellow",
         key: "labor_pct",
         label: `Labor % (${storeLabel})`,
-        message: `Labor is getting close to the benchmark. You're at ${formatPct(kpi.laborPct)}. Target: ≤${benchmarks.laborTargetPct}%. Tap for playbook.`,
+        message: `Labor is getting close to the benchmark. You're at ${formatPct(kpi.laborPct)}. Target: ≤${targetLabor}%. Tap for playbook.`,
       });
     }
 
-    const primeGrade = gradePrime(kpi.primePct, benchmarks.primeTargetPct);
-    if (primeGrade === "red") {
+    if (kpi.primePct > targetPrime) {
       list.push({
         severity: "red",
         key: "prime_cost",
-        label: `PRIME % (${storeLabel})`,
-        message: `PRIME is above the benchmark. You're at ${formatPct(kpi.primePct)}. Target: ≤${benchmarks.primeTargetPct}%. Tap for playbook.`,
+        label: `COGS % (${storeLabel})`,
+        message: `COGS % is above the benchmark. You're at ${formatPct(kpi.primePct)}. Target: ≤${targetPrime}%. Tap for playbook.`,
       });
-    } else if (primeGrade === "yellow") {
+    } else if (kpi.primePct >= targetPrime - 10 && kpi.primePct <= targetPrime) {
       list.push({
         severity: "yellow",
         key: "prime_cost",
-        label: `PRIME % (${storeLabel})`,
-        message: `PRIME is getting close to the benchmark. You're at ${formatPct(kpi.primePct)}. Target: ≤${benchmarks.primeTargetPct}%. Tap for playbook.`,
+        label: `COGS % (${storeLabel})`,
+        message: `COGS % is getting close to the benchmark. You're at ${formatPct(kpi.primePct)}. Target: ≤${targetPrime}%. Tap for playbook.`,
       });
     }
 
-    const salesGrade = gradeSales(kpi.sales, dailyTargetSales);
-    if (salesGrade === "red") {
+    if (range30Agg && range30Agg.avgDailySales > 0 && kpi.sales < 0.8 * range30Agg.avgDailySales) {
       list.push({
         severity: "red",
         key: "daily_sales",
         label: `Today's Sales (${storeLabel})`,
-        message: `Sales are below the typical range today. You're at $${kpi.sales.toLocaleString()}. Benchmark: $${(dailyTargetSales / 1000).toFixed(1)}K/day. Tap for playbook.`,
+        message: `Sales are below your typical range. You're at $${kpi.sales.toLocaleString()}. Your 30-day avg: $${Math.round(range30Agg.avgDailySales).toLocaleString()}/day. Tap for playbook.`,
       });
     }
 
     return list;
-  }, [kpi, dailyTargetSales, storeLabel, benchmarks]);
+  }, [kpi, storeLabel, benchmarks, range30Agg]);
 
   const winsStoreId = isOnboardingUser ? "all" : selectedStore;
   const liveWins = useMemo(() => {
@@ -799,8 +799,15 @@ export default function HomePage() {
       if (range30Agg.laborPct != null && range30Agg.laborPct < 28) {
         list.push({ id: "live-labor", title: "Labor under 28%", body: `30-day avg labor: ${range30Agg.laborPct.toFixed(1)}%.`, emoji: "👥", magnitude: "medium", date: "30-day avg" });
       }
-      if (liveDailyData?.splh != null && liveDailyData.splh > 45) {
-        list.push({ id: "live-splh", title: "SPLH above $45", body: `Sales per labor hour: $${(liveDailyData.splh ?? 0).toFixed(0)}.`, emoji: "📈", magnitude: "big", date: "Yesterday" });
+      if (liveDailyData?.splh != null && liveDailyData.splh >= 60) {
+        const splh = liveDailyData.splh;
+        if (splh >= 100) {
+          list.push({ id: "live-splh", title: "SPLH above $100", body: `Sales per labor hour: $${splh.toFixed(0)}.`, emoji: "📈", magnitude: "big", date: "Yesterday" });
+        } else if (splh >= 80) {
+          list.push({ id: "live-splh", title: "SPLH above $80", body: `Sales per labor hour: $${splh.toFixed(0)}.`, emoji: "📈", magnitude: "medium", date: "Yesterday" });
+        } else {
+          list.push({ id: "live-splh", title: "SPLH above $60", body: `Sales per labor hour: $${splh.toFixed(0)}.`, emoji: "📈", magnitude: "medium", date: "Yesterday" });
+        }
       }
       if (range30Agg.cogsPct != null && range30Agg.cogsPct < 55) {
         list.push({ id: "live-cogs", title: "COGS below 55%", body: `30-day avg COGS: ${range30Agg.cogsPct.toFixed(1)}%.`, emoji: "📊", magnitude: "big", date: "30-day avg" });
@@ -810,7 +817,8 @@ export default function HomePage() {
   }, [range30Agg, liveDailyData?.splh]);
   const displayedWins = showAllWins ? liveWins : liveWins.slice(0, 3);
 
-  const trendArrow = salesTrendPct >= 0 ? "↑" : "↓";
+  const trendIsFlat = Math.round(salesTrendPct) === 0;
+  const trendText = trendIsFlat ? "→ Flat vs prior 30 days" : `${salesTrendPct > 0 ? "↑" : "↓"} ${salesTrendPct}% vs prior 30 days`;
 
   const selectedStoreName = storeLabel;
   const stores = STORE_OPTIONS.map((opt) => ({ id: opt.slug, name: opt.name }));
@@ -1134,15 +1142,13 @@ export default function HomePage() {
               const pickup = range30Agg.totalPickup ?? 0;
               const delivery = range30Agg.totalDelivery ?? 0;
               const web = range30Agg.totalWeb ?? 0;
-              const other = Math.max(0, total - dineIn - pickup - delivery - web);
               const pct = (v: number) => (total > 0 ? (v / total) * 100 : 0);
               const segments = [
                 { label: "Dine-In", value: dineIn, pct: pct(dineIn), color: "bg-emerald-500" },
                 { label: "Pickup/To-Go", value: pickup, pct: pct(pickup), color: "bg-blue-500" },
                 { label: "Delivery", value: delivery, pct: pct(delivery), color: "bg-orange-500" },
-                { label: "Web/Online", value: web, pct: pct(web), color: "bg-purple-500" },
-              ].filter((s) => s.pct > 0);
-              if (other > 0) segments.push({ label: "Other", value: other, pct: pct(other), color: "bg-zinc-500" });
+              ];
+              const onlinePct = total > 0 ? (web / total) * 100 : 0;
               return (
                 <>
                   <div className="h-2 rounded-full overflow-hidden flex min-w-0 bg-zinc-800">
@@ -1155,6 +1161,9 @@ export default function HomePage() {
                       <span key={s.label}>{s.label}: {s.pct.toFixed(0)}% (${s.value.toLocaleString("en-US", { maximumFractionDigits: 0 })})</span>
                     ))}
                   </div>
+                  {onlinePct > 0 && (
+                    <p className="text-xs text-zinc-500 mt-2">{onlinePct.toFixed(0)}% ordered online</p>
+                  )}
                 </>
               );
             })()}
@@ -1170,8 +1179,10 @@ export default function HomePage() {
               const card = range30Agg.totalCard ?? 0;
               const cashPct = total > 0 ? (cash / total) * 100 : 0;
               const cardPct = total > 0 ? (card / total) * 100 : 0;
+              const otherPct = 100 - cashPct - cardPct;
+              const otherAmount = Math.max(0, total - cash - card);
               return (
-                <div className="grid grid-cols-2 gap-3">
+                <div className="grid grid-cols-3 gap-3">
                   <div className="rounded-lg border border-zinc-700/50 p-3 bg-zinc-800/50">
                     <p className="text-xs text-zinc-500 uppercase">Cash</p>
                     <p className="text-lg font-bold tabular-nums text-white">{cashPct.toFixed(0)}%</p>
@@ -1181,6 +1192,11 @@ export default function HomePage() {
                     <p className="text-xs text-zinc-500 uppercase">Card</p>
                     <p className="text-lg font-bold tabular-nums text-white">{cardPct.toFixed(0)}%</p>
                     <p className="text-xs text-zinc-500">${card.toLocaleString("en-US", { maximumFractionDigits: 0 })}</p>
+                  </div>
+                  <div className="rounded-lg border border-zinc-700/50 p-3 bg-zinc-800/50">
+                    <p className="text-xs text-zinc-500 uppercase">Other</p>
+                    <p className="text-lg font-bold tabular-nums text-white">{otherPct.toFixed(0)}%</p>
+                    <p className="text-xs text-zinc-500">${otherAmount.toLocaleString("en-US", { maximumFractionDigits: 0 })}</p>
                   </div>
                 </div>
               );
@@ -1256,7 +1272,7 @@ export default function HomePage() {
               </ResponsiveContainer>
             </div>
             <div className="text-xs text-slate-400 mt-1">
-              {trendArrow} {salesTrendPct}% vs prior 30 days
+              {trendText}
             </div>
           </div>
           <div className="min-w-0">
