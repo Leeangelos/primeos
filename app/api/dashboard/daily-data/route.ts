@@ -1,6 +1,18 @@
 import { NextResponse } from "next/server";
 import { createClient } from "@supabase/supabase-js";
 
+// --- FOOD COST % CALCULATION LOCATIONS (for range response) ---
+// RANGE "all" stores (exact lines):
+//   const totalNetSales = salesRows.reduce((s, r) => s + (Number(r.net_sales) || 0), 0);
+//   const totalFoodSpend = purchasesRows.reduce((s, r) => s + (Number(r.food_spend) || 0), 0);
+//   const totalPaperSpend = purchasesRows.reduce((s, r) => s + (Number(r.paper_spend) || 0), 0);
+//   const totalLaborCost = laborRows.reduce(...);
+//   const foodCostPct = totalNetSales > 0 ? (totalFoodSpend / totalNetSales) * 100 : null;
+//   const paperCostPct = totalNetSales > 0 ? (totalPaperSpend / totalNetSales) * 100 : null;
+//   const cogsPct = totalNetSales > 0 ? ((totalFoodSpend + totalPaperSpend + totalLaborCost) / totalNetSales) * 100 : null;
+// RANGE single store: same pattern (totalNetSales from salesRows, totalFoodSpend/totalPaperSpend from purchasesRows, totalLaborCost from laborRows; foodCostPct, paperCostPct, cogsPct).
+// Day response: foodCostPct at "all" and single-store via totalFoodSpendRange/totalNetSalesRange from separate sales + purchases range queries.
+
 export async function GET(request: Request) {
   try {
     const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
@@ -266,7 +278,28 @@ export async function GET(request: Request) {
           paper_spend: sumByDay(purchasesRows, d, "paper_spend"),
         }));
 
-        return NextResponse.json({ range: daysBack, sales, labor, purchases });
+        const totalNetSales = salesRows.reduce((s, r) => s + (Number(r.net_sales) || 0), 0);
+        const totalFoodSpend = purchasesRows.reduce((s, r) => s + (Number(r.food_spend) || 0), 0);
+        const totalPaperSpend = purchasesRows.reduce((s, r) => s + (Number(r.paper_spend) || 0), 0);
+        const totalLaborCost = laborRows.reduce((s, r) => s + (Number(r.total_labor_cost) || 0) + (Number(r.total_overtime_cost) || 0), 0);
+        const foodCostPct = totalNetSales > 0 ? (totalFoodSpend / totalNetSales) * 100 : null;
+        const paperCostPct = totalNetSales > 0 ? (totalPaperSpend / totalNetSales) * 100 : null;
+        const cogsPct = totalNetSales > 0 ? ((totalFoodSpend + totalPaperSpend + totalLaborCost) / totalNetSales) * 100 : null;
+        console.log(`FOOD COST CHECK: totalFoodSpend=${totalFoodSpend} totalNetSales=${totalNetSales} foodCostPct=${foodCostPct}`);
+
+        return NextResponse.json({
+          range: daysBack,
+          sales,
+          labor,
+          purchases,
+          totalNetSales,
+          totalFoodSpend,
+          totalPaperSpend,
+          totalLaborCost,
+          foodCostPct,
+          paperCostPct,
+          cogsPct,
+        });
       }
 
       const [salesRes, laborRes, purchasesRes] = await Promise.all([
@@ -290,13 +323,32 @@ export async function GET(request: Request) {
           .order("business_day", { ascending: true }),
       ]);
 
-      console.log(`Range: Sales rows=${(salesRes.data ?? []).length}, Labor rows=${(laborRes.data ?? []).length}, Purchases rows=${(purchasesRes.data ?? []).length}`);
+      const salesRows = salesRes.data ?? [];
+      const laborRows = laborRes.data ?? [];
+      const purchasesRows = purchasesRes.data ?? [];
+      const totalNetSales = salesRows.reduce((s, r) => s + (Number(r.net_sales) || 0), 0);
+      const totalFoodSpend = purchasesRows.reduce((s, r) => s + (Number(r.food_spend) || 0), 0);
+      const totalPaperSpend = purchasesRows.reduce((s, r) => s + (Number(r.paper_spend) || 0), 0);
+      const totalLaborCost = laborRows.reduce((s, r) => s + (Number(r.total_labor_cost) || 0) + (Number(r.total_overtime_cost) || 0), 0);
+      const foodCostPct = totalNetSales > 0 ? (totalFoodSpend / totalNetSales) * 100 : null;
+      const paperCostPct = totalNetSales > 0 ? (totalPaperSpend / totalNetSales) * 100 : null;
+      const cogsPct = totalNetSales > 0 ? ((totalFoodSpend + totalPaperSpend + totalLaborCost) / totalNetSales) * 100 : null;
+      console.log(`FOOD COST CHECK: totalFoodSpend=${totalFoodSpend} totalNetSales=${totalNetSales} foodCostPct=${foodCostPct}`);
+
+      console.log(`Range: Sales rows=${salesRows.length}, Labor rows=${laborRows.length}, Purchases rows=${purchasesRows.length}`);
 
       return NextResponse.json({
         range: daysBack,
-        sales: salesRes.data ?? [],
-        labor: laborRes.data ?? [],
-        purchases: purchasesRes.data ?? [],
+        sales: salesRows,
+        labor: laborRows,
+        purchases: purchasesRows,
+        totalNetSales,
+        totalFoodSpend,
+        totalPaperSpend,
+        totalLaborCost,
+        foodCostPct,
+        paperCostPct,
+        cogsPct,
       });
     }
 
