@@ -66,13 +66,13 @@ function NavSection({
   title,
   items,
   pathname,
-  setMoreOpen,
+  onNavigate,
   isLight,
 }: {
   title: string;
   items: NavItem[];
   pathname: string;
-  setMoreOpen: (open: boolean) => void;
+  onNavigate: (href: string) => void;
   isLight?: boolean;
 }) {
   return (
@@ -90,12 +90,12 @@ function NavSection({
           const isActive = pathname === item.href || pathname.startsWith(item.href + "/");
 
           return (
-            <Link
+            <button
               key={item.href}
-              href={item.href}
-              onClick={() => setMoreOpen(false)}
+              type="button"
+              onClick={() => onNavigate(item.href)}
               className={cn(
-                "flex items-center gap-3 px-4 py-3 rounded-lg active:opacity-90 transition-colors duration-150",
+                "flex items-center gap-3 w-full px-4 py-3 rounded-lg active:opacity-90 transition-colors duration-150 text-left min-h-[44px]",
                 isLight ? (isActive ? "bg-orange-50" : "active:bg-zinc-100") : (isActive ? "bg-orange-950/20" : "active:bg-slate-700/50")
               )}
             >
@@ -110,7 +110,7 @@ function NavSection({
                 <div className={cn("text-xs", isLight ? "text-zinc-600" : "text-slate-500")}>{item.desc}</div>
               </div>
               {isActive && <div className="w-1.5 h-1.5 rounded-full bg-orange-500" />}
-            </Link>
+            </button>
           );
         })}
       </div>
@@ -123,7 +123,6 @@ const NAV_BAR_HEIGHT = "4rem"; /* h-16 */
 export function BottomNav() {
   const pathname = usePathname();
   const router = useRouter();
-  if (pathname === "/onboarding" || pathname === "/login") return null;
   const { theme } = useTheme();
   const { session } = useAuth();
   const isLight = theme === "light";
@@ -139,6 +138,14 @@ export function BottomNav() {
     setDrawerSearch("");
     setHelpOpen(false);
   }, []);
+
+  const handleDrawerNavigate = useCallback(
+    (href: string) => {
+      closeMore();
+      router.push(href);
+    },
+    [closeMore, router]
+  );
 
   const handleLogout = async () => {
     const supabase = createClient();
@@ -175,6 +182,8 @@ export function BottomNav() {
   const isDailyActive = pathname === "/daily" || pathname.startsWith("/daily/");
   const isBriefActive = pathname === "/brief" || pathname.startsWith("/brief/");
   const isGuideActive = pathname === "/training" || pathname.startsWith("/training/");
+
+  if (pathname === "/onboarding" || pathname === "/login") return null;
 
   return (
     <>
@@ -309,7 +318,7 @@ export function BottomNav() {
                   return items.filter((i) => i.label.toLowerCase().includes(q));
                 })()}
                 pathname={pathname}
-                setMoreOpen={closeMore}
+                onNavigate={handleDrawerNavigate}
               />
 
               <NavSection
@@ -331,7 +340,7 @@ export function BottomNav() {
                   return items.filter((i) => i.label.toLowerCase().includes(q));
                 })()}
                 pathname={pathname}
-                setMoreOpen={closeMore}
+                onNavigate={handleDrawerNavigate}
               />
 
               <NavSection
@@ -350,7 +359,7 @@ export function BottomNav() {
                   return items.filter((i) => i.label.toLowerCase().includes(q));
                 })()}
                 pathname={pathname}
-                setMoreOpen={closeMore}
+                onNavigate={handleDrawerNavigate}
               />
 
               <NavSection
@@ -370,7 +379,7 @@ export function BottomNav() {
                   return items.filter((i) => i.label.toLowerCase().includes(q));
                 })()}
                 pathname={pathname}
-                setMoreOpen={closeMore}
+                onNavigate={handleDrawerNavigate}
               />
 
               <NavSection
@@ -388,7 +397,7 @@ export function BottomNav() {
                   return items.filter((i) => i.label.toLowerCase().includes(q));
                 })()}
                 pathname={pathname}
-                setMoreOpen={closeMore}
+                onNavigate={handleDrawerNavigate}
               />
 
           {session?.user?.email === "leeangelos.corp@gmail.com" && (
