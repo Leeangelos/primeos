@@ -43,7 +43,7 @@ export async function GET(request: Request) {
       const startISO = rollStart.toISOString().split("T")[0];
 
       if (isAllStores) {
-        const [salesRowsRes, laborRowsRes, purchasesRowsRes, sales7Res, purchases7Res] = await Promise.all([
+        const [salesRowsRes, laborRowsRes, purchasesRowsRes, salesRangeRes, purchasesRangeRes] = await Promise.all([
           supabase.from("foodtec_daily_sales").select("*").in("store_id", storeIds).eq("business_day", day),
           supabase.from("foodtec_daily_labor").select("*").in("store_id", storeIds).eq("business_day", day),
           supabase.from("me_daily_purchases").select("*").in("store_id", storeIds).eq("business_day", day),
@@ -62,12 +62,12 @@ export async function GET(request: Request) {
         const laborCost = sum(laborRows, "total_labor_cost") + sum(laborRows, "total_overtime_cost");
         const totalHours = sum(laborRows, "regular_hours") + sum(laborRows, "overtime_hours");
 
-        const sumNetSales7 = (sales7Res.data ?? []).reduce((s, r) => s + (Number(r.net_sales) || 0), 0);
-        const sumFoodSpend7 = (purchases7Res.data ?? []).reduce((s, r) => s + (Number(r.food_spend) || 0), 0);
-        const sumPaperSpend7 = (purchases7Res.data ?? []).reduce((s, r) => s + (Number(r.paper_spend) || 0), 0);
-        const foodCostPctFinal = sumFoodSpend7 === 0 ? null : sumNetSales7 > 0 ? (sumFoodSpend7 / sumNetSales7) * 100 : null;
+        const totalNetSalesRange = (salesRangeRes.data ?? []).reduce((s, r) => s + (Number(r.net_sales) || 0), 0);
+        const totalFoodSpendRange = (purchasesRangeRes.data ?? []).reduce((s, r) => s + (Number(r.food_spend) || 0), 0);
+        const totalPaperSpendRange = (purchasesRangeRes.data ?? []).reduce((s, r) => s + (Number(r.paper_spend) || 0), 0);
+        const foodCostPctFinal = totalNetSalesRange > 0 && totalFoodSpendRange >= 0 ? (totalFoodSpendRange / totalNetSalesRange) * 100 : null;
         const laborPct = netSales > 0 ? (laborCost / netSales) * 100 : null;
-        const disposablesPctRolling = sumNetSales7 > 0 ? (sumPaperSpend7 / sumNetSales7) * 100 : null;
+        const disposablesPctRolling = totalNetSalesRange > 0 && totalPaperSpendRange >= 0 ? (totalPaperSpendRange / totalNetSalesRange) * 100 : null;
         const cogsPct = laborPct != null ? (foodCostPctFinal ?? 0) + laborPct + (disposablesPctRolling ?? 0) : null;
         const grossProfitPct = cogsPct != null ? 100 - cogsPct : null;
         const splh = totalHours > 0 ? netSales / totalHours : null;
@@ -131,7 +131,7 @@ export async function GET(request: Request) {
         });
       }
 
-      const [salesRes, laborRes, purchasesRes, sales7Res, purchases7Res] = await Promise.all([
+      const [salesRes, laborRes, purchasesRes, salesRangeRes, purchasesRangeRes] = await Promise.all([
         supabase.from("foodtec_daily_sales").select("*").eq("store_id", storeId).eq("business_day", day).maybeSingle(),
         supabase.from("foodtec_daily_labor").select("*").eq("store_id", storeId).eq("business_day", day).maybeSingle(),
         supabase.from("me_daily_purchases").select("*").eq("store_id", storeId).eq("business_day", day).maybeSingle(),
@@ -150,15 +150,15 @@ export async function GET(request: Request) {
       const laborCost = (labor?.total_labor_cost ?? 0) + (labor?.total_overtime_cost ?? 0);
       const paperSpend = purchases?.paper_spend ?? 0;
 
-      const sumNetSales7 = (sales7Res.data ?? []).reduce((s, r) => s + (Number(r.net_sales) || 0), 0);
-      const sumFoodSpend7 = (purchases7Res.data ?? []).reduce((s, r) => s + (Number(r.food_spend) || 0), 0);
-      const sumPaperSpend7 = (purchases7Res.data ?? []).reduce((s, r) => s + (Number(r.paper_spend) || 0), 0);
+      const totalNetSalesRange = (salesRangeRes.data ?? []).reduce((s, r) => s + (Number(r.net_sales) || 0), 0);
+      const totalFoodSpendRange = (purchasesRangeRes.data ?? []).reduce((s, r) => s + (Number(r.food_spend) || 0), 0);
+      const totalPaperSpendRange = (purchasesRangeRes.data ?? []).reduce((s, r) => s + (Number(r.paper_spend) || 0), 0);
+      const foodCostPctFinal = totalNetSalesRange > 0 && totalFoodSpendRange >= 0 ? (totalFoodSpendRange / totalNetSalesRange) * 100 : null;
+      const disposablesPctRolling = totalNetSalesRange > 0 && totalPaperSpendRange >= 0 ? (totalPaperSpendRange / totalNetSalesRange) * 100 : null;
 
       const foodCostRaw = netSales > 0 ? (foodSpend / netSales) * 100 : null;
-      const foodCostPctFinal = sumFoodSpend7 === 0 ? null : sumNetSales7 > 0 ? (sumFoodSpend7 / sumNetSales7) * 100 : null;
 
       const laborPct = netSales > 0 ? (laborCost / netSales) * 100 : null;
-      const disposablesPctRolling = sumNetSales7 > 0 ? (sumPaperSpend7 / sumNetSales7) * 100 : null;
       const cogsPct =
         laborPct != null
           ? (foodCostPctFinal ?? 0) + laborPct + (disposablesPctRolling ?? 0)
