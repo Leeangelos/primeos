@@ -518,7 +518,9 @@ function DailyPageContent() {
   const primeStatus = getPrimeStatus(storeId, computed.primePct);
   const laborStatus = getLaborStatus(storeId, computed.laborPct);
   const slphStatus = getSlphStatus(storeId, computed.slph);
-  const foodDispStatus = getFoodDisposablesStatus(storeId, computed.foodDispPct);
+  /** Food+Disposables % is always 7-day rolling on this page — never single-day. */
+  const displayFoodDispPct = rolling?.foodDispPct ?? liveDayData?.rollingFoodDisposablesPct ?? null;
+  const foodDispStatus = getFoodDisposablesStatus(storeId, displayFoodDispPct);
 
   const netSalesInvalid = ns != null && ns < 0;
   const requiredFieldsValid =
@@ -580,20 +582,10 @@ function DailyPageContent() {
     },
     {
       label: "Food+Disposables %",
-      value:
-        computed.foodDispPct != null
-          ? formatPct(computed.foodDispPct)
-          : liveDayData?.rollingFoodDisposablesPct != null
-            ? formatPct(liveDayData.rollingFoodDisposablesPct)
-            : "—",
+      value: displayFoodDispPct != null ? formatPct(displayFoodDispPct) : "—",
       target: `≤${targets.foodDisposablesMax}%`,
-      status:
-        computed.foodDispPct != null
-          ? foodDispStatus
-          : liveDayData?.rollingFoodDisposablesPct != null
-            ? getFoodDisposablesStatus(storeId, liveDayData.rollingFoodDisposablesPct)
-            : null,
-      valueIsRollingFallback: computed.foodDispPct == null && (liveDayData?.rollingFoodDisposablesPct ?? null) != null,
+      status: foodDispStatus,
+      valueIsRollingFallback: false,
     },
     {
       label: "GROSS PROFIT %",
@@ -613,7 +605,7 @@ function DailyPageContent() {
         if (cancelled || !data.sales?.length) return;
         const sales = (data.sales as { business_day: string; net_sales?: number }[]).sort((a, b) => a.business_day.localeCompare(b.business_day));
         const labor = (data.labor ?? []) as { business_day: string; total_labor_cost?: number; total_overtime_cost?: number }[];
-        const purchases = (data.purchases ?? []) as { business_day: string; food_spend?: number }[];
+        const purchases = (data.purchases ?? []) as { business_day: string; food_spend?: number; paper_spend?: number }[];
         const entries = sales
           .map((s) => {
             const day = s.business_day;
@@ -622,10 +614,10 @@ function DailyPageContent() {
             const window = sales.slice(windowStart, dayIdx + 1);
             const windowDays = window.map((w) => w.business_day);
             const sumNetSales = window.reduce((a, w) => a + (w.net_sales ?? 0), 0);
-            const sumFoodSpend = purchases
+            const sumFoodPlusDisp = purchases
               .filter((p) => windowDays.includes(p.business_day))
-              .reduce((a, p) => a + (p.food_spend ?? 0), 0);
-            const food_cost_pct = sumNetSales > 0 ? (sumFoodSpend / sumNetSales) * 100 : 0;
+              .reduce((a, p) => a + (p.food_spend ?? 0) + (p.paper_spend ?? 0), 0);
+            const food_cost_pct = sumNetSales > 0 ? (sumFoodPlusDisp / sumNetSales) * 100 : 0;
             const laborRow = labor.find((l) => l.business_day === day);
             const laborCost = (laborRow?.total_labor_cost ?? 0) + (laborRow?.total_overtime_cost ?? 0);
             const netSales = s.net_sales ?? 0;
@@ -933,8 +925,8 @@ function DailyPageContent() {
                   {rolling && label === "Labor %" && rolling.laborPct != null && !valueIsRollingFallback && (
                     <div className="text-xs text-muted/60 mt-1">7-day avg: {rolling.laborPct}%</div>
                   )}
-                  {rolling && label === "Food+Disposables %" && rolling.foodDispPct != null && !valueIsRollingFallback && (
-                    <div className="text-xs text-muted/60 mt-1">7-day avg: {rolling.foodDispPct}%</div>
+                  {label === "Food+Disposables %" && displayFoodDispPct != null && (
+                    <div className="text-xs text-muted/60 mt-1">7-day rolling</div>
                   )}
                   {rolling && label === "SLPH" && rolling.slph != null && (
                     <div className="text-xs text-muted/60 mt-1">7-day avg: {rolling.slph}</div>
