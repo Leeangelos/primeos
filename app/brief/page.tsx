@@ -182,8 +182,10 @@ export default function BriefPage() {
       const doordashCommission = data.doordashCommission ?? 0;
       const doordashNewCustomers = data.doordashNewCustomers ?? 0;
 
-      const laborGrade = laborPct != null ? (laborPct <= 24 ? "green" : laborPct <= 28 ? "amber" : "red") : null;
-      const foodGrade = foodCostPct != null ? (foodCostPct <= 30 ? "green" : foodCostPct <= 33 ? "amber" : "red") : null;
+      /** Aligned with Three Pillars: A <20%, B 20-25%, C 25-30%, D 30-35%, F >35%. Green=A/B, amber=C, red=D/F */
+      const laborGrade = laborPct != null ? (laborPct < 20 ? "green" : laborPct <= 30 ? "amber" : "red") : null;
+      /** Aligned with Three Pillars: A <28%, B 28-32%, C 32-36%, D 36-40%, F >40%. Green=A/B, amber=C, red=D/F */
+      const foodGrade = foodCostPct != null ? (foodCostPct < 28 ? "green" : foodCostPct <= 36 ? "amber" : "red") : null;
       const laborWord = laborGrade === "green" ? "green" : laborGrade === "amber" ? "amber" : "red";
       const foodWord = foodGrade === "green" ? "green" : foodGrade === "amber" ? "amber" : "red";
 
@@ -195,7 +197,7 @@ export default function BriefPage() {
       }
       if (foodCostPct != null) {
         const fcLine = `Food cost (7-day rolling): ${foodCostPct.toFixed(1)}% — ${foodWord}.`;
-        const extra = foodCostPct > 30 ? " Consider reviewing recent invoices for price increases." : "";
+        const extra = foodCostPct > 28 ? " Consider reviewing recent invoices for price increases." : "";
         paras.push(fcLine + extra + " ● Invoices");
       }
       if (avgBumpTime > 0) {

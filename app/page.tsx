@@ -99,26 +99,28 @@ function gradeCost(value: number, target: number): Grade {
 
 type LetterGrade = "A" | "B" | "C" | "D" | "F";
 
+/** Food Cost %: A <28%, B 28-32%, C 32-36%, D 36-40%, F >40%. Uses 30-day rolling from foodtec_daily_sales + me_daily_purchases. */
 function gradePillarProduct(foodCostPct: number | null): LetterGrade {
   if (foodCostPct == null) return "C";
-  if (foodCostPct <= 30) return "A";
-  if (foodCostPct <= 33) return "B";
-  if (foodCostPct <= 35) return "C";
-  if (foodCostPct <= 38) return "D";
+  if (foodCostPct < 28) return "A";
+  if (foodCostPct <= 32) return "B";
+  if (foodCostPct <= 36) return "C";
+  if (foodCostPct <= 40) return "D";
   return "F";
 }
 
+/** Labor %: A <20%, B 20-25%, C 25-30%, D 30-35%, F >35%. Uses 30-day rolling from foodtec_daily_sales + foodtec_daily_labor. */
 function gradePillarPeople(laborPct: number): LetterGrade {
-  if (laborPct <= 25) return "A";
-  if (laborPct <= 28) return "B";
+  if (laborPct < 20) return "A";
+  if (laborPct <= 25) return "B";
   if (laborPct <= 30) return "C";
-  if (laborPct <= 33) return "D";
+  if (laborPct <= 35) return "D";
   return "F";
 }
 
-/** Process pillar: COGS % (Food + Labor + Disposables). Lower is better. A ≤50%, B 50-55%, C 55-60%, D 60-65%, F >65%. */
+/** COGS % (Food + Labor + Disposables): A <50%, B 50-55%, C 55-60%, D 60-65%, F >65%. Uses 30-day rolling. */
 function gradePillarPerformance(primePct: number): LetterGrade {
-  if (primePct <= 50) return "A";
+  if (primePct < 50) return "A";
   if (primePct <= 55) return "B";
   if (primePct <= 60) return "C";
   if (primePct <= 65) return "D";
@@ -255,7 +257,7 @@ function PillarPanel({
 
   if (pillarId === "product") {
     const value = kpi && kpi.foodCostPct != null ? formatPct(kpi.foodCostPct) : "—";
-    const subtext = kpi?.foodCostPct == null ? "Upload invoices to see your grade" : "A: ≤30% | B: 30-33% | C: 33-35% | D: 35-38% | F: &gt;38%";
+    const subtext = kpi?.foodCostPct == null ? "Upload invoices to see your grade" : "A: &lt;28% | B: 28-32% | C: 32-36% | D: 36-40% | F: &gt;40%";
     return (
       <div className="bg-zinc-900/50 border-t border-zinc-700 overflow-hidden transition-all duration-300 ease-in-out">
         <div className="p-4 space-y-4">
@@ -293,7 +295,7 @@ function PillarPanel({
             <div>
               <p className="text-2xl font-bold tabular-nums text-white">{value}</p>
               <p className={`text-lg font-semibold ${gradeColor}`}>{grade}</p>
-              <p className="text-xs text-zinc-500 mt-1">A: ≤25% | B: 25-28% | C: 28-30% | D: 30-33% | F: &gt;33%</p>
+              <p className="text-xs text-zinc-500 mt-1">A: &lt;20% | B: 20-25% | C: 25-30% | D: 30-35% | F: &gt;35%</p>
             </div>
             <EducationInfoIcon metricKey="pillar_people" size="sm" />
           </div>
@@ -327,7 +329,7 @@ function PillarPanel({
           <div>
             <p className="text-2xl font-bold tabular-nums text-white">{kpi ? formatPct(kpi.primePct) : "—"}</p>
             <p className={`text-lg font-semibold ${gradeColor}`}>{grade}</p>
-            <p className="text-xs text-zinc-500 mt-1">A: ≤50% | B: 50-55% | C: 55-60% | D: 60-65% | F: &gt;65%</p>
+            <p className="text-xs text-zinc-500 mt-1">A: &lt;50% | B: 50-55% | C: 55-60% | D: 60-65% | F: &gt;65%</p>
           </div>
           <EducationInfoIcon metricKey="pillar_process" size="sm" />
         </div>
@@ -380,7 +382,7 @@ export default function HomePage() {
   const [rangeData, setRangeData] = useState<{
     sales: { business_day: string; net_sales?: number; dine_in_sales?: number; pickup_sales?: number; delivery_sales?: number; web_sales?: number; doordash_sales?: number; cash_sales?: number; card_sales?: number; house_account_owed?: number; house_account_received?: number }[];
     labor: { business_day: string; total_labor_cost?: number; total_overtime_cost?: number; regular_hours?: number; overtime_hours?: number }[];
-    purchases: { business_day: string; total_spend?: number; food_spend?: number }[];
+    purchases: { business_day: string; total_spend?: number; food_spend?: number; paper_spend?: number }[];
   } | null>(null);
   const [loadingLive, setLoadingLive] = useState(true);
   const [onboardingData, setOnboardingData] = useState<OnboardingData | null>(null);
@@ -458,6 +460,7 @@ export default function HomePage() {
     const purchases = rangeData.purchases ?? [];
     const totalNetSales = sales.reduce((s, r) => s + (r.net_sales ?? 0), 0);
     const totalFoodSpend = purchases.reduce((s, r) => s + (r.food_spend ?? 0), 0);
+    const totalPaperSpend = purchases.reduce((s, r) => s + (r.paper_spend ?? 0), 0);
     const totalLaborCost = labor.reduce((s, r) => s + (r.total_labor_cost ?? 0) + (r.total_overtime_cost ?? 0), 0);
     const totalDineIn = sales.reduce((s, r) => s + (r.dine_in_sales ?? 0), 0);
     const totalPickup = sales.reduce((s, r) => s + Math.max(0, (r.pickup_sales ?? 0) - (r.doordash_sales ?? 0)), 0);
@@ -471,8 +474,7 @@ export default function HomePage() {
     const dayCount = sales.length;
     const foodCostPct = totalNetSales > 0 ? (totalFoodSpend / totalNetSales) * 100 : null;
     const laborPct = totalNetSales > 0 ? (totalLaborCost / totalNetSales) * 100 : null;
-    const paperEst = totalNetSales > 0 ? 4 : 0;
-    const cogsPct = foodCostPct != null && laborPct != null ? foodCostPct + laborPct + paperEst : null;
+    const cogsPct = totalNetSales > 0 ? ((totalFoodSpend + totalPaperSpend + totalLaborCost) / totalNetSales) * 100 : null;
     return {
       totalNetSales,
       avgDailySales: dayCount > 0 ? totalNetSales / dayCount : 0,
