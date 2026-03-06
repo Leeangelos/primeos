@@ -13,6 +13,12 @@ const CATEGORIES = [
 
 type Category = (typeof CATEGORIES)[number]["key"];
 
+const STORES = [
+  { value: "kent", label: "Kent" },
+  { value: "aurora", label: "Aurora" },
+  { value: "lindseys", label: "Lindsey's" },
+] as const;
+
 // Map seed category to filter category (service_contract → repairs for display)
 const CATEGORY_LABELS: Record<string, string> = {
   vendor: "Vendor",
@@ -35,6 +41,7 @@ function matchesFilter(c: Contact, filter: Category): boolean {
 }
 
 export default function RolodexPage() {
+  const [store, setStore] = useState<string>("kent");
   const [search, setSearch] = useState("");
   const [filter, setFilter] = useState<Category>("all");
   const [showForm, setShowForm] = useState(false);
@@ -56,7 +63,7 @@ export default function RolodexPage() {
     setLoading(true);
     setError(null);
     try {
-      const res = await fetch("/api/trusted-contacts");
+      const res = await fetch(`/api/trusted-contacts?store=${encodeURIComponent(store)}`);
       const json = await res.json();
       if (!json.ok) {
         setError(json.error ?? "Failed to load contacts");
@@ -70,7 +77,7 @@ export default function RolodexPage() {
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [store]);
 
   useEffect(() => {
     fetchContacts();
@@ -140,7 +147,7 @@ export default function RolodexPage() {
         const res = await fetch("/api/trusted-contacts", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(body),
+          body: JSON.stringify({ ...body, store_id: store }),
         });
         const json = await res.json();
         if (!json.ok) {
@@ -161,8 +168,20 @@ export default function RolodexPage() {
   return (
     <div className="space-y-4 min-w-0 overflow-x-hidden pb-28">
       <div className="dashboard-toolbar p-3 sm:p-5 space-y-3">
-        <div className="flex items-center gap-2">
+        <div className="flex flex-wrap items-center gap-2">
           <h1 className="text-lg font-semibold sm:text-2xl">Trusted Rolodex</h1>
+          <select
+            value={store}
+            onChange={(e) => setStore(e.target.value)}
+            className={cn(
+              "rounded-lg border border-border/50 bg-black/30 px-3 py-2 text-sm text-white focus:border-brand/60 focus:ring-1 focus:ring-brand/40 focus:outline-none"
+            )}
+            aria-label="Select store"
+          >
+            {STORES.map((s) => (
+              <option key={s.value} value={s.value}>{s.label}</option>
+            ))}
+          </select>
           <button
             type="button"
             onClick={() => setShowEducation(true)}

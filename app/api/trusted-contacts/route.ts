@@ -3,6 +3,7 @@ import { getClientForRoute } from "@/lib/supabase";
 
 export async function GET(req: NextRequest) {
   const category = req.nextUrl.searchParams.get("category");
+  const store = req.nextUrl.searchParams.get("store");
   const supabase = await getClientForRoute();
 
   let query = supabase
@@ -11,6 +12,7 @@ export async function GET(req: NextRequest) {
     .order("category", { ascending: true })
     .order("name", { ascending: true });
 
+  if (store) query = query.eq("store_id", store);
   if (category && category !== "all") query = query.eq("category", category);
 
   const { data, error } = await query;
@@ -24,16 +26,19 @@ export async function GET(req: NextRequest) {
 
 export async function POST(req: NextRequest) {
   const body = await req.json();
-  const { category, name, phone, email, account_number, notes } = body;
+  const { store_id, category, name, phone, email, account_number, notes } = body;
 
   if (!name || !category) {
     return NextResponse.json({ ok: false, error: "Name and category are required" });
+  }
+  if (!store_id) {
+    return NextResponse.json({ ok: false, error: "store_id is required" });
   }
 
   const supabase = await getClientForRoute();
   const { data, error } = await supabase
     .from("trusted_contacts")
-    .insert({ category, name, phone: phone || null, email: email || null, account_number: account_number || null, notes: notes || null })
+    .insert({ store_id, category, name, phone: phone || null, email: email || null, account_number: account_number || null, notes: notes || null })
     .select()
     .single();
 
