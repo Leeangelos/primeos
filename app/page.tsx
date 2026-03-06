@@ -460,7 +460,7 @@ export default function HomePage() {
     const totalFoodSpend = purchases.reduce((s, r) => s + (r.food_spend ?? 0), 0);
     const totalLaborCost = labor.reduce((s, r) => s + (r.total_labor_cost ?? 0) + (r.total_overtime_cost ?? 0), 0);
     const totalDineIn = sales.reduce((s, r) => s + (r.dine_in_sales ?? 0), 0);
-    const totalPickup = sales.reduce((s, r) => s + (r.pickup_sales ?? 0), 0);
+    const totalPickup = sales.reduce((s, r) => s + Math.max(0, (r.pickup_sales ?? 0) - (r.doordash_sales ?? 0)), 0);
     const totalDelivery = sales.reduce((s, r) => s + (r.delivery_sales ?? 0) + (r.doordash_sales ?? 0), 0);
     const totalWeb = sales.reduce((s, r) => s + (r.web_sales ?? 0), 0);
     const totalDoordash = sales.reduce((s, r) => s + (r.doordash_sales ?? 0), 0);
@@ -665,19 +665,26 @@ export default function HomePage() {
         (rangeData.purchases ?? []).map((p) => [p.business_day, p.food_spend ?? 0])
       );
       const days = rangeData.sales.map((s) => s.business_day).sort();
-      const last30 = days.slice(-30).map((date) => {
+      const last30Dates = days.slice(-30);
+      const last30 = last30Dates.map((date, i) => {
         const netSales = salesByDay.get(date) ?? 0;
         const laborCost = laborByDay.get(date) ?? 0;
-        const foodSpend = purchasesByDay.get(date) ?? 0;
-        const foodCost = netSales > 0 ? (foodSpend / netSales) * 100 : 0;
         const laborPct = netSales > 0 ? (laborCost / netSales) * 100 : 0;
+        const idxInDays = days.indexOf(date);
+        const startIdx = Math.max(0, idxInDays - 6);
+        const windowDays = days.slice(startIdx, idxInDays + 1);
+        const windowFood = windowDays.reduce((s, d) => s + (purchasesByDay.get(d) ?? 0), 0);
+        const windowSales = windowDays.reduce((s, d) => s + (salesByDay.get(d) ?? 0), 0);
+        const foodCost = windowSales > 0 ? (windowFood / windowSales) * 100 : 0;
         return { date, sales: netSales, foodCost, laborPct };
       });
       const prev30 = days.slice(-60, -30);
       const thisSum = last30.reduce((s, d) => s + d.sales, 0);
       const prevSum = prev30.reduce((s, date) => s + (salesByDay.get(date) ?? 0), 0);
       const salesTrendPct = prevSum > 0 ? Math.round(((thisSum - prevSum) / prevSum) * 1000) / 10 : 0;
-      const foodCostAvg = last30.length > 0 ? Math.round((last30.reduce((s, d) => s + d.foodCost, 0) / last30.length) * 10) / 10 : 0;
+      const totalFood30 = last30Dates.reduce((s, d) => s + (purchasesByDay.get(d) ?? 0), 0);
+      const totalSales30 = last30Dates.reduce((s, d) => s + (salesByDay.get(d) ?? 0), 0);
+      const foodCostAvg = totalSales30 > 0 ? Math.round((totalFood30 / totalSales30) * 1000) / 10 : 0;
       const foodCostGrade = gradeFoodCost(foodCostAvg, benchmarks.foodCostTargetPct);
       return { last30Days: last30, salesTrendPct, foodCostAvg, foodCostGrade };
     }
@@ -1079,15 +1086,20 @@ export default function HomePage() {
             (() => {
               const splh = liveDailyData?.splh ?? null;
               const hasSplh = splh != null && splh > 0;
+              const splhRed = hasSplh && splh < 60;
+              const splhAmber = hasSplh && splh >= 60 && splh < 80;
+              const splhGreen = hasSplh && splh >= 80;
+              const borderClass = splhRed ? "border-t-red-400" : splhAmber ? "border-t-amber-400" : splhGreen ? "border-t-emerald-400" : "border-t-slate-600";
+              const textClass = splhRed ? "text-red-400" : splhAmber ? "text-amber-400" : splhGreen ? "text-emerald-400" : "text-white";
               return (
-                <div className="bg-slate-800 rounded-xl p-4 border-t-[3px] min-w-0 border border-zinc-800/50 shadow-sm transition-transform duration-200 sm:hover:scale-[1.01] border-t-slate-600">
+                <div className={`bg-slate-800 rounded-xl p-4 border-t-[3px] min-w-0 border border-zinc-800/50 shadow-sm transition-transform duration-200 sm:hover:scale-[1.01] ${borderClass}`}>
                   <div className="flex items-center justify-between mb-1">
                     <span className="text-xs text-slate-400 uppercase tracking-wide">SPLH (YESTERDAY)</span>
                     <div className="flex items-center gap-1.5">
                       {liveDailyData?.hasSalesData && liveDailyData?.hasLaborData && <span className="text-xs text-emerald-400">● POS</span>}
                     </div>
                   </div>
-                  <div className="text-2xl font-bold tabular-nums text-white">
+                  <div className={`text-2xl font-bold tabular-nums ${textClass}`}>
                     {hasSplh ? `$${Math.round(splh).toLocaleString("en-US", { maximumFractionDigits: 0 })}` : "—"}
                   </div>
                   <div className="text-xs text-zinc-500">{hasSplh ? "Target: $80+" : "No data"}</div>
