@@ -101,7 +101,7 @@ export default function PnlPage() {
   const [rangeData, setRangeData] = useState<{ sales: { business_day: string; net_sales?: number }[]; labor: { business_day: string; total_labor_cost?: number; total_overtime_cost?: number }[]; purchases: { business_day: string; food_spend?: number; paper_spend?: number }[] } | null>(null);
   useEffect(() => {
     let cancelled = false;
-    const store = storeFilter === "all" ? "kent" : storeFilter;
+    const store = storeFilter === "all" ? "all" : storeFilter;
     fetch(`/api/dashboard/daily-data?store_id=${encodeURIComponent(store)}&range=60`)
       .then((r) => r.json())
       .then((d) => {
@@ -110,7 +110,7 @@ export default function PnlPage() {
       })
       .catch(() => setRangeData(null));
     return () => { cancelled = true; };
-  }, [storeForSeed]);
+  }, [storeFilter]);
 
   const pnl = useMemo(() => {
     if (!rangeData?.sales?.length) {
