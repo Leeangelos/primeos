@@ -378,15 +378,24 @@ function DailyPageContent() {
         if (dayRes.hasSalesData) {
           setNetSales(dayRes.netSales != null ? String(dayRes.netSales) : "");
           setTickets(dayRes.totalOrders != null ? String(dayRes.totalOrders) : "");
+        } else {
+          setNetSales("");
+          setTickets("");
         }
         if (dayRes.hasLaborData) {
           const totalHrs = (dayRes.regularHours ?? 0) + (dayRes.overtimeHours ?? 0);
           setLaborCost(dayRes.totalLaborCost != null ? String(dayRes.totalLaborCost) : "");
           setLaborHours(totalHrs > 0 ? String(totalHrs) : "");
+        } else {
+          setLaborCost("");
+          setLaborHours("");
         }
         if (dayRes.hasPurchaseData) {
           setFoodCost(dayRes.foodSpend != null ? String(dayRes.foodSpend) : "");
           setDisposablesCost(dayRes.paperSpend != null ? String(dayRes.paperSpend) : "");
+        } else {
+          setFoodCost("");
+          setDisposablesCost("");
         }
       } else {
         setLiveDayData(null);
