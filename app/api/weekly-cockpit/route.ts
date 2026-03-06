@@ -267,12 +267,15 @@ export async function GET(request: NextRequest) {
 
     const weekDates = getWeekDates(week_start);
 
-    /** 7-day rolling COGS % at each date: (sum labor+food+disp over [date-6, date]) / (sum net_sales) * 100 */
+    const todayStr = new Date().toISOString().slice(0, 10);
+
+    /** 7-day rolling COGS % at each date: (sum labor+food+disp over [date-6, date]) / (sum net_sales) * 100. Future dates return null so the chart does not show a bell curve. */
     function dailyRolling7Cogs(
       rows: DailyKpiRow[],
       dates: string[]
     ): { date: string; prime_pct: number | null }[] {
       return dates.map((date) => {
+        if (date > todayStr) return { date, prime_pct: null };
         const end = new Date(date + "T12:00:00Z");
         const start = new Date(end);
         start.setUTCDate(start.getUTCDate() - 6);
