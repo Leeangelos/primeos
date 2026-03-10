@@ -2,12 +2,10 @@ export const dynamic = "force-dynamic";
 
 import { NextResponse } from "next/server";
 
-const API_INSPECTIONS =
-  "https://inspections.myhealthdepartment.com/portage-ohio/api/v1/inspections?limit=10";
-const API_FACILITIES =
-  "https://inspections.myhealthdepartment.com/portage-ohio/api/v1/facilities?limit=10";
-const API_FACILITIES_SEARCH =
-  "https://inspections.myhealthdepartment.com/portage-ohio/api/v1/facilities/search?name=pizza&limit=10";
+const FACILITIES_SEARCH_URL =
+  "https://inspections.myhealthdepartment.com/portage-ohio/facilities/search?name=pizza&limit=10";
+
+const MAX_BODY_CHARS = 10000;
 
 export async function GET() {
   const apiKey = process.env.SCRAPINGBEE_API_KEY;
@@ -18,32 +16,20 @@ export async function GET() {
     );
   }
 
-  async function fetchViaScrapingBee(targetUrl: string) {
-    const params = new URLSearchParams({
-      api_key: apiKey!,
-      url: targetUrl,
-      render_js: "true",
-      wait: "3000",
-    });
-    const scrapingBeeUrl = `https://app.scrapingbee.com/api/v1/?${params.toString()}`;
-    const res = await fetch(scrapingBeeUrl, { cache: "no-store" });
-    const body = await res.text();
-    return {
-      status: res.status,
-      responseLength: body.length,
-      preview: body.slice(0, 1000),
-    };
-  }
-
-  const [inspections, facilities, facilitiesSearch] = await Promise.all([
-    fetchViaScrapingBee(API_INSPECTIONS),
-    fetchViaScrapingBee(API_FACILITIES),
-    fetchViaScrapingBee(API_FACILITIES_SEARCH),
-  ]);
+  const params = new URLSearchParams({
+    api_key: apiKey,
+    url: FACILITIES_SEARCH_URL,
+    render_js: "true",
+    wait: "5000",
+  });
+  const scrapingBeeUrl = `https://app.scrapingbee.com/api/v1/?${params.toString()}`;
+  const res = await fetch(scrapingBeeUrl, { cache: "no-store" });
+  const body = await res.text();
+  const bodyPreview = body.slice(0, MAX_BODY_CHARS);
 
   return NextResponse.json({
-    inspections,
-    facilities,
-    facilitiesSearch,
+    status: res.status,
+    responseLength: body.length,
+    body: bodyPreview,
   });
 }
