@@ -388,6 +388,96 @@ export async function GET(request: Request) {
       }
     }
 
+    // Full rebuild of me_daily_purchases from corrected me_invoices
+    const { data: allInvoices, error: allInvoicesError } = await supabase
+      .from("me_invoices")
+      .select("store_id, invoice_date, total, category, vendor_name, is_hillcrest")
+      .not("invoice_date", "is", null);
+
+    if (allInvoicesError) {
+      console.error("Error loading all invoices for me_daily_purchases rebuild:", allInvoicesError);
+    } else if (allInvoices && allInvoices.length > 0) {
+      const rebuiltDailyMap: Record<
+        string,
+        {
+          storeId: string;
+          businessDay: string;
+          totalSpend: number;
+          foodSpend: number;
+          paperSpend: number;
+          beverageSpend: number;
+          otherSpend: number;
+          hillcrestSpend: number;
+          nonHillcrestSpend: number;
+          invoiceCount: number;
+          vendors: Set<string>;
+        }
+      > = {};
+
+      for (const inv of allInvoices) {
+        const storeId = inv.store_id as string;
+        const businessDay = (inv.invoice_date as string).slice(0, 10);
+        const total = Number(inv.total) || 0;
+        const category = (inv.category as string) || "other";
+        const vendorName = (inv.vendor_name as string) || "Unknown";
+        const isHillcrestInvoice = Boolean(inv.is_hillcrest);
+
+        if (!storeId || !businessDay || total <= 0) continue;
+
+        const key = `${storeId}|${businessDay}`;
+        if (!rebuiltDailyMap[key]) {
+          rebuiltDailyMap[key] = {
+            storeId,
+            businessDay,
+            totalSpend: 0,
+            foodSpend: 0,
+            paperSpend: 0,
+            beverageSpend: 0,
+            otherSpend: 0,
+            hillcrestSpend: 0,
+            nonHillcrestSpend: 0,
+            invoiceCount: 0,
+            vendors: new Set<string>(),
+          };
+        }
+
+        const day = rebuiltDailyMap[key];
+        day.totalSpend += total;
+        day.invoiceCount += 1;
+        day.vendors.add(vendorName);
+
+        if (category === "food") day.foodSpend += total;
+        else if (category === "paper") day.paperSpend += total;
+        else if (category === "beverage") day.beverageSpend += total;
+        else day.otherSpend += total;
+
+        if (isHillcrestInvoice) day.hillcrestSpend += total;
+        else day.nonHillcrestSpend += total;
+      }
+
+      for (const key of Object.keys(rebuiltDailyMap)) {
+        const day = rebuiltDailyMap[key];
+        await supabase.from("me_daily_purchases").upsert(
+          {
+            store_id: day.storeId,
+            business_day: day.businessDay,
+            me_store_name: null,
+            total_invoices: day.invoiceCount,
+            total_spend: day.totalSpend,
+            food_spend: day.foodSpend,
+            paper_spend: day.paperSpend,
+            beverage_spend: day.beverageSpend,
+            other_spend: day.otherSpend,
+            hillcrest_spend: day.hillcrestSpend,
+            non_hillcrest_spend: day.nonHillcrestSpend,
+            vendor_count: day.vendors.size,
+            synced_at: new Date().toISOString(),
+          },
+          { onConflict: "store_id,business_day" }
+        );
+      }
+    }
+
     return NextResponse.json({
       success: true,
       startDate: startISO,
