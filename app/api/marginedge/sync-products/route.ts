@@ -4,31 +4,6 @@ import { getMEStoreMap } from "@/src/lib/marginedge";
 
 const BASE = "https://api.marginedge.com/public";
 
-async function fetchWithTimeout(endpoint: string, timeoutMs = 10000): Promise<any | null> {
-  const apiKey = process.env.MARGINEDGE_API_KEY;
-  if (!apiKey) throw new Error("Missing MARGINEDGE_API_KEY");
-
-  const controller = new AbortController();
-  const id = setTimeout(() => controller.abort(), timeoutMs);
-
-  try {
-    const res = await fetch(`${BASE}${endpoint}`, {
-      headers: { "X-Api-Key": apiKey, Accept: "application/json" },
-      signal: controller.signal,
-    });
-    if (!res.ok) {
-      console.error("MarginEdge /products HTTP error", res.status, endpoint);
-      return null;
-    }
-    return await res.json();
-  } catch (err) {
-    console.error("MarginEdge /products fetch failed", endpoint, err);
-    return null;
-  } finally {
-    clearTimeout(id);
-  }
-}
-
 const mapProductCategory = (meCategories: any[]): string => {
   if (!meCategories || meCategories.length === 0) return "other";
   const catName = meCategories[0]?.categoryName?.toLowerCase() || "";
@@ -48,7 +23,8 @@ const mapProductCategory = (meCategories: any[]): string => {
 };
 
 export async function GET() {
-  try {
+  const work = (async () => {
+    try {
     const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
     const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
     if (!supabaseUrl || !supabaseKey) {
@@ -63,62 +39,60 @@ export async function GET() {
       console.log(`\n--- Products sync for ${unit.storeName} (ME ID: ${unit.meUnitId}) ---`);
       let url: string | null = `/products?restaurantUnitId=${unit.meUnitId}`;
       let productCount = 0;
-      let page = 0;
 
-      while (url && page < 20) {
-        page += 1;
-        const data = await fetchWithTimeout(url, 10000);
-        if (!data) {
-          console.log("No data returned for", url);
-          break;
-        }
+      if (!url) continue;
 
-        console.log("Raw /products response keys:", Object.keys(data || {}));
+      const apiKey = process.env.MARGINEDGE_API_KEY;
+      if (!apiKey) throw new Error("Missing MARGINEDGE_API_KEY");
 
-        const products = data.products || data.items || [];
-        console.log(
-          `Page ${page}: found ${Array.isArray(products) ? products.length : 0} products for unit ${unit.storeName}`,
-          Array.isArray(products) && products.length > 0 ? products[0] : null
-        );
+      const res = await fetch(`${BASE}${url}`, {
+        headers: { "X-Api-Key": apiKey, Accept: "application/json" },
+      });
+      if (!res.ok) {
+        console.error("MarginEdge /products HTTP error", res.status, url);
+        continue;
+      }
+      const data = await res.json();
 
-        if (Array.isArray(products)) {
-          for (const p of products) {
-            const rawId = p.productId ?? p.id ?? p.itemId ?? null;
-            const meProductId = rawId != null ? String(rawId) : "";
-            const productName = p.productName || p.name || "Unknown";
-            const latestPrice = Number(p.latestPrice || p.unitPrice || 0);
-            const unitName = p.reportByUnit || p.unit || "each";
-            const category = mapProductCategory(p.categories || []);
+      console.log("Raw /products response keys:", Object.keys(data || {}));
 
-            const { error: upsertError } = await supabase.from("me_products").upsert(
-              {
-                store_id: unit.storeId,
-                me_product_id: meProductId || null,
-                product_name: productName,
-                latest_price: latestPrice,
-                unit: unitName,
-                category,
-                synced_at: new Date().toISOString(),
-              },
-              { onConflict: "store_id,product_name" }
-            );
+      const products = data.products || data.items || [];
+      console.log(
+        `Page 1: found ${Array.isArray(products) ? products.length : 0} products for unit ${unit.storeName}`,
+        Array.isArray(products) && products.length > 0 ? products[0] : null
+      );
 
-            if (upsertError) {
-              console.error("me_products upsert error", {
-                storeId: unit.storeId,
-                meProductId,
-                message: upsertError.message,
-              });
-            } else {
-              productCount += 1;
-            }
+      if (Array.isArray(products)) {
+        for (const p of products) {
+          const rawId = p.companyConceptProductId ?? p.productId ?? p.id ?? p.itemId ?? null;
+          const meProductId = rawId != null ? String(rawId) : "";
+          const productName = p.productName || p.name || "Unknown";
+          const latestPrice = Number(p.latestPrice || p.unitPrice || 0);
+          const unitName = p.reportByUnit || p.unit || "each";
+          const category = mapProductCategory(p.categories || []);
+
+          const { error: upsertError } = await supabase.from("me_products").upsert(
+            {
+              store_id: unit.storeId,
+              me_product_id: meProductId || null,
+              product_name: productName,
+              latest_price: latestPrice,
+              unit: unitName,
+              category,
+              synced_at: new Date().toISOString(),
+            },
+            { onConflict: "store_id,product_name" }
+          );
+
+          if (upsertError) {
+            console.error("me_products upsert error", {
+              storeId: unit.storeId,
+              meProductId,
+              message: upsertError.message,
+            });
+          } else {
+            productCount += 1;
           }
-        }
-
-        if (data.nextPage && page < 20) {
-          url = `/products?restaurantUnitId=${unit.meUnitId}&page=${data.nextPage}`;
-        } else {
-          url = null;
         }
       }
 
@@ -126,14 +100,23 @@ export async function GET() {
       summary.push({ storeName: unit.storeName, productsSynced: productCount });
     }
 
-    return NextResponse.json({
-      success: true,
-      summary,
-    });
-  } catch (err: unknown) {
-    const message = err instanceof Error ? err.message : String(err);
-    console.error("MarginEdge products sync error:", err);
-    return NextResponse.json({ error: message }, { status: 500 });
-  }
+      return NextResponse.json({
+        success: true,
+        summary,
+      });
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : String(err);
+      console.error("MarginEdge products sync error:", err);
+      return NextResponse.json({ error: message }, { status: 500 });
+    }
+  })();
+
+  const timeout = new Promise<Response>((_resolve, reject) => {
+    setTimeout(() => {
+      reject(new Error("MarginEdge products sync timed out"));
+    }, 5000);
+  });
+
+  return Promise.race([work, timeout]);
 }
 
