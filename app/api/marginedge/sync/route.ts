@@ -219,7 +219,8 @@ export async function GET(request: Request) {
 
         if (Array.isArray(products)) {
           for (const p of products) {
-            const meProductId = String(p.productId || p.id || "");
+            const rawId = p.productId ?? p.id ?? p.itemId ?? null;
+            const meProductId = rawId != null ? String(rawId) : "";
             const productName = p.productName || p.name || "Unknown";
             const latestPrice = Number(p.latestPrice || p.unitPrice || 0);
             const unitName = p.reportByUnit || p.unit || "each";
@@ -228,14 +229,14 @@ export async function GET(request: Request) {
             const { error: upsertError } = await supabase.from("me_products").upsert(
               {
                 store_id: unit.storeId,
-                me_product_id: meProductId,
+                me_product_id: meProductId || null,
                 product_name: productName,
                 latest_price: latestPrice,
                 unit: unitName,
                 category,
                 synced_at: new Date().toISOString(),
               },
-              { onConflict: "store_id,me_product_id" }
+              { onConflict: "store_id,product_name" }
             );
 
             if (upsertError) {
