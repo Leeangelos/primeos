@@ -86,6 +86,8 @@ export async function GET(request: Request) {
       // Utilities
       if (
         n.includes("electric") ||
+        n.includes("aep") ||
+        n.includes("aep ohio") ||
         n.includes("gas") ||
         n.includes("water") ||
         n.includes("spectrum") ||
@@ -154,6 +156,8 @@ export async function GET(request: Request) {
       // Maintenance / repairs
       if (
         n.includes("drain") ||
+        n.includes("sewer") ||
+        n.includes("roto") ||
         n.includes("plumbing") ||
         n.includes("hvac") ||
         n.includes("repair") ||
@@ -191,8 +195,7 @@ export async function GET(request: Request) {
         n.includes("market") ||
         n.includes("farm") ||
         n.includes("bakery") ||
-        n.includes("brewery") ||
-        n.includes("amazon")
+        n.includes("brewery")
       ) {
         return "food";
       }
@@ -372,7 +375,19 @@ export async function GET(request: Request) {
       .from("me_invoices")
       .select("store_id, me_order_id, vendor_name")
       .or(
-        "vendor_name.ilike.%university plaza%,vendor_name.ilike.%adp%,vendor_name.ilike.%cintas%,vendor_name.ilike.%buckeye brownies%,vendor_name.ilike.%brownies%"
+        [
+          "vendor_name.ilike.%university plaza%",
+          "vendor_name.ilike.%adp%",
+          "vendor_name.ilike.%cintas%",
+          "vendor_name.ilike.%buckeye brownies%",
+          "vendor_name.ilike.%brownies%",
+          "vendor_name.ilike.%amazon%",
+          "vendor_name.ilike.%drain%",
+          "vendor_name.ilike.%sewer%",
+          "vendor_name.ilike.%aep%",
+          "vendor_name.ilike.%roto%",
+          "vendor_name.ilike.%kimble%",
+        ].join(",")
       );
 
     if (vendorInvoicesError) {
