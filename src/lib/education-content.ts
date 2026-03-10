@@ -639,7 +639,7 @@ export const EDUCATION_CONTENT: Record<string, EducationEntry> = {
   inspection_radar: {
     title: "Are We Winning?",
     whatItMeans:
-      "We pull live Google ratings for every pizza restaurant near each of your stores. Your Market Position Score is calculated from your rating rank, review count, and rating vs market average. Inspection history loads as reports come in — reports are filed twice a year by your local health district.",
+      "Are We Winning? tracks your market position against every pizza and food competitor within 5 miles of each store. Your Market Position Score is calculated from your rating rank among competitors, your rating vs market average, and your review count. Higher rank + more reviews + higher rating = higher score. Tiers: Gold (80-100) Market Leader, Silver (60-79) Above Average, Bronze (40-59) Holding Your Own, Red (0-39) At Risk. Inspection history loads as reports come in — your health district inspects twice a year.",
     whenRedPlaybook: [
       "Consider running through the Pre-Inspection Checklist with your team before every shift when the threat level is elevated or higher",
       "Consider that the most common critical violations in pizza restaurants are temperature control, handwashing access, and date labeling — all preventable with daily habits",
