@@ -49,9 +49,154 @@ export async function GET(request: Request) {
 
     const categorizeVendor = (name: string): string => {
       const n = name.toLowerCase();
-      if (n.includes("paper") || n.includes("disposable") || n.includes("supply") || n.includes("supplies") || n.includes("packaging") || n.includes("cleaning") || n.includes("chemical") || n.includes("janitorial")) return "paper";
-      if (n.includes("coca cola") || n.includes("pepsi") || n.includes("beverage") || n.includes("coke") || n.includes("dr pepper")) return "beverage";
-      return "food";
+
+      // Beverages
+      if (n.includes("coca cola") || n.includes("coke") || n.includes("pepsi") || n.includes("dr pepper") || n.includes("beverage")) {
+        return "beverage";
+      }
+
+      // Paper / disposables / cleaning supplies
+      if (
+        n.includes("paper") ||
+        n.includes("disposable") ||
+        n.includes("supply") ||
+        n.includes("supplies") ||
+        n.includes("packaging") ||
+        n.includes("cleaning") ||
+        n.includes("chemical") ||
+        n.includes("janitorial") ||
+        n.includes("cintas") ||
+        n.includes("sysco supply")
+      ) {
+        return "paper";
+      }
+
+      // Rent / property
+      if (
+        n.includes("university plaza") ||
+        n.includes("plaza") ||
+        n.includes("property") ||
+        n.includes("realty") ||
+        n.includes("real estate") ||
+        (n.includes("llc") && (n.includes("plaza") || n.includes("property") || n.includes("realty") || n.includes("real estate")))
+      ) {
+        return "rent";
+      }
+
+      // Utilities
+      if (
+        n.includes("electric") ||
+        n.includes("gas") ||
+        n.includes("water") ||
+        n.includes("spectrum") ||
+        n.includes("att") ||
+        n.includes("at&t") ||
+        n.includes("verizon") ||
+        n.includes("internet") ||
+        n.includes("phone") ||
+        n.includes("waste") ||
+        n.includes("wm") ||
+        n.includes("republic") ||
+        n.includes("trash") ||
+        n.includes("utility") ||
+        n.includes("utilities")
+      ) {
+        return "utilities";
+      }
+
+      // Payroll / HR
+      if (
+        n.includes("adp") ||
+        n.includes("paychex") ||
+        n.includes("payroll") ||
+        n.includes("7shifts") ||
+        n.includes("scheduling") ||
+        n.includes("gusto")
+      ) {
+        return "payroll_hr";
+      }
+
+      // Software / POS
+      if (
+        n.includes("marginedge") ||
+        n.includes("foodtec") ||
+        n.includes("toast") ||
+        n.includes("square") ||
+        n.includes("clover") ||
+        n.includes("pizza cloud") ||
+        n.includes("pos")
+      ) {
+        return "software";
+      }
+
+      // Accounting / legal
+      if (
+        n.includes("accounting") ||
+        n.includes("cpa") ||
+        n.includes("legal") ||
+        n.includes("attorney") ||
+        n.includes("law")
+      ) {
+        return "accounting_legal";
+      }
+
+      // Insurance
+      if (
+        n.includes("state farm") ||
+        n.includes("progressive") ||
+        n.includes("allstate") ||
+        n.includes("insurance") ||
+        n.includes("liability")
+      ) {
+        return "insurance";
+      }
+
+      // Maintenance / repairs
+      if (
+        n.includes("drain") ||
+        n.includes("plumbing") ||
+        n.includes("hvac") ||
+        n.includes("repair") ||
+        n.includes("hardware") ||
+        n.includes("ace hardware") ||
+        n.includes("service inc")
+      ) {
+        return "maintenance";
+      }
+
+      // Marketing / advertising
+      if (
+        n.includes("marketing") ||
+        n.includes("advertising") ||
+        n.includes("google") ||
+        n.includes("facebook") ||
+        n.includes("meta") ||
+        n.includes("social")
+      ) {
+        return "marketing";
+      }
+
+      // Known food distributors / vendors that clearly imply food
+      if (
+        n.includes("hillcrest") ||
+        n.includes("gordon food") ||
+        n.includes("restaurant depot") ||
+        n.includes("sysco") ||
+        n.includes("us foods") ||
+        n.includes("u.s. foods") ||
+        n.includes("performance food") ||
+        n.includes("grocery") ||
+        n.includes("market") ||
+        n.includes("farm") ||
+        n.includes("bakery") ||
+        n.includes("brewery") ||
+        n.includes("amazon")
+      ) {
+        return "food";
+      }
+
+      // Default: non-food other
+      return "other";
     };
 
     const mapProductCategory = (meCategories: any[]): string => {
@@ -198,6 +343,26 @@ export async function GET(request: Request) {
 
       totalInvoices += orders.length;
       totalStores++;
+    }
+
+    // Re-run categorization on existing invoices in the synced window
+    const { data: existingInvoices, error: existingInvoicesError } = await supabase
+      .from("me_invoices")
+      .select("store_id, me_order_id, vendor_name, invoice_date")
+      .gte("invoice_date", startISO)
+      .lte("invoice_date", endISO);
+
+    if (existingInvoicesError) {
+      console.error("Error loading existing invoices for recategorization:", existingInvoicesError);
+    } else if (existingInvoices && existingInvoices.length > 0) {
+      for (const inv of existingInvoices) {
+        const newCategory = categorizeVendor(inv.vendor_name || "");
+        await supabase
+          .from("me_invoices")
+          .update({ category: newCategory })
+          .eq("store_id", inv.store_id)
+          .eq("me_order_id", inv.me_order_id);
+      }
     }
 
     return NextResponse.json({
