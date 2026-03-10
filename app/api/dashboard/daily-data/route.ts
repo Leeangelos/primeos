@@ -310,7 +310,7 @@ export async function GET(request: Request) {
         });
       }
 
-      const [salesRes, laborRes, purchasesRes] = await Promise.all([
+      const [salesRes, laborRes, purchasesRes, productsRes] = await Promise.all([
         supabase
           .from("foodtec_daily_sales")
           .select("*")
@@ -329,11 +329,18 @@ export async function GET(request: Request) {
           .eq("store_id", storeId)
           .gte("business_day", startISO)
           .order("business_day", { ascending: true }),
+        supabase
+          .from("me_products")
+          .select("latest_price, category")
+          .eq("store_id", storeId)
+          .neq("category", "paper")
+          .neq("category", "beverages"),
       ]);
 
       const salesRows = salesRes.data ?? [];
       const laborRows = laborRes.data ?? [];
       const purchasesRows = purchasesRes.data ?? [];
+      const productsRows = productsRes.data ?? [];
       const totalNetSales = salesRows.reduce((s, r) => s + (Number(r.net_sales) || 0), 0);
       const totalFoodSpend = purchasesRows.reduce((s, r) => s + (Number(r.food_spend) || 0), 0);
       const totalPaperSpend = purchasesRows.reduce((s, r) => s + (Number(r.paper_spend) || 0), 0);
@@ -341,6 +348,11 @@ export async function GET(request: Request) {
       const foodCostPct = totalNetSales > 0 ? (totalFoodSpend / totalNetSales) * 100 : null;
       const paperCostPct = totalNetSales > 0 ? (totalPaperSpend / totalNetSales) * 100 : null;
       const cogsPct = totalNetSales > 0 ? ((totalFoodSpend + totalPaperSpend + totalLaborCost) / totalNetSales) * 100 : null;
+      const theoreticalFoodCostPct =
+        productsRows.length > 0
+          ? productsRows.reduce((s, r) => s + (Number((r as any).latest_price) || 0), 0) /
+            productsRows.length
+          : null;
       console.log(`FOOD COST CHECK: totalFoodSpend=${totalFoodSpend} totalNetSales=${totalNetSales} foodCostPct=${foodCostPct}`);
 
       console.log(`Range: Sales rows=${salesRows.length}, Labor rows=${laborRows.length}, Purchases rows=${purchasesRows.length}`);
@@ -357,6 +369,7 @@ export async function GET(request: Request) {
         foodCostPct,
         paperCostPct,
         cogsPct,
+        theoretical_food_cost_pct: theoreticalFoodCostPct,
       });
     }
 

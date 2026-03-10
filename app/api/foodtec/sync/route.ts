@@ -34,7 +34,7 @@ export async function GET(request: Request) {
     }
     const supabase = createClient(supabaseUrl, supabaseKey);
 
-    let totalOrders = 0, totalLabor = 0, totalProducts = 0;
+    let totalOrders = 0, totalLabor = 0, totalProducts = 0, totalToppings = 0;
     const syncedDays: string[] = [];
 
     for (const targetDate of daysToSync) {
@@ -416,6 +416,84 @@ export async function GET(request: Request) {
       }
     }
 
+    // ========== SYNC TOPPINGS (last 30 days per store) ==========
+    const THIRTY_DAYS_AGO = new Date(targetDate);
+    THIRTY_DAYS_AGO.setDate(THIRTY_DAYS_AGO.getDate() - 29);
+    const startRangeDay = formatFoodTecDate(THIRTY_DAYS_AGO);
+    const endRangeDay = foodtecDay;
+
+    const toppings = await fetchFoodTecView("topping", `${startRangeDay}|${endRangeDay}`);
+
+    const toppingsByStoreDay: Record<
+      string,
+      {
+        [isoDay: string]: {
+          item_name: string;
+          topping_name: string;
+          quantity_used: number;
+          unit: string;
+        }[];
+      }
+    > = {};
+
+    toppings.forEach((t) => {
+      const storeName = (t.store as string) || "unknown";
+      const storeId = storeMap[storeName];
+      if (!storeId) return;
+
+      const day = formatFoodTecDate(new Date(t.businessday || t.date || targetDate));
+      const iso = new Date(`${day.slice(0, 4)}-${day.slice(4, 6)}-${day.slice(6, 8)}T12:00:00`).toISOString().split("T")[0];
+
+      if (!toppingsByStoreDay[storeId]) toppingsByStoreDay[storeId] = {};
+      if (!toppingsByStoreDay[storeId][iso]) toppingsByStoreDay[storeId][iso] = [];
+
+      toppingsByStoreDay[storeId][iso].push({
+        item_name: (t.itemname as string) || "Unknown",
+        topping_name: (t.toppingname as string) || "Unknown",
+        quantity_used: pf(t.quantity),
+        unit: (t.unit as string) || "each",
+      });
+    });
+
+    for (const [storeId, byDay] of Object.entries(toppingsByStoreDay)) {
+      for (const [iso, rows] of Object.entries(byDay)) {
+        const aggMap: Record<
+          string,
+          { item_name: string; topping_name: string; quantity_used: number; unit: string }
+        > = {};
+
+        rows.forEach((r) => {
+          const key = `${r.item_name}||${r.topping_name}||${r.unit}`;
+          if (!aggMap[key]) {
+            aggMap[key] = {
+              item_name: r.item_name,
+              topping_name: r.topping_name,
+              quantity_used: 0,
+              unit: r.unit,
+            };
+          }
+          aggMap[key].quantity_used += r.quantity_used;
+        });
+
+        const upsertRows = Object.values(aggMap).map((r) => ({
+          store_id: storeId,
+          business_day: iso,
+          item_name: r.item_name,
+          topping_name: r.topping_name,
+          quantity_used: r.quantity_used,
+          unit: r.unit,
+          synced_at: new Date().toISOString(),
+        }));
+
+        if (upsertRows.length > 0) {
+          await supabase.from("foodtec_toppings").upsert(upsertRows, {
+            onConflict: "store_id,business_day,item_name,topping_name",
+          });
+          totalToppings += upsertRows.length;
+        }
+      }
+    }
+
       totalOrders += orders.length;
       totalLabor += labor.length;
       totalProducts += products.length;
@@ -427,6 +505,7 @@ export async function GET(request: Request) {
       orders: totalOrders,
       labor: totalLabor,
       products: totalProducts,
+      toppings: totalToppings,
       stores: Object.keys(storeMap),
     });
   } catch (err: any) {

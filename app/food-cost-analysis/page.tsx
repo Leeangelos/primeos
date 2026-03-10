@@ -17,7 +17,7 @@ export default function FoodCostAnalysisPage() {
   const newUserStoreName = getNewUserStoreName(session);
   const [selectedStore, setSelectedStore] = useState("kent");
   const [showFormula, setShowFormula] = useState(false);
-  const [rangeData, setRangeData] = useState<{ sales: { net_sales?: number }[]; purchases: { food_spend?: number }[] } | null>(null);
+  const [rangeData, setRangeData] = useState<{ sales: { net_sales?: number }[]; purchases: { food_spend?: number }[]; theoretical_food_cost_pct?: number | null } | null>(null);
 
   useEffect(() => {
     let cancelled = false;
@@ -25,7 +25,11 @@ export default function FoodCostAnalysisPage() {
       .then((r) => r.json())
       .then((d) => {
         if (cancelled || !d.sales) return;
-        setRangeData({ sales: d.sales ?? [], purchases: d.purchases ?? [] });
+        setRangeData({
+          sales: d.sales ?? [],
+          purchases: d.purchases ?? [],
+          theoretical_food_cost_pct: d.theoretical_food_cost_pct ?? null,
+        });
       })
       .catch(() => setRangeData(null));
     return () => { cancelled = true; };
@@ -40,8 +44,8 @@ export default function FoodCostAnalysisPage() {
     return { totalSales, totalFood, actualPct, hasPurchaseData };
   }, [rangeData]);
 
-  const theoretical = 0;
-  const theoreticalPct = 0;
+  const theoreticalPct = rangeData?.theoretical_food_cost_pct ?? null;
+  const hasTheoretical = theoreticalPct != null && theoreticalPct > 0;
   const variance = totalFood;
   const variancePct = 0;
   const storeData: { month: string }[] = [];
@@ -104,8 +108,12 @@ export default function FoodCostAnalysisPage() {
               <span className="text-xs text-slate-500">Theoretical</span>
               <EducationInfoIcon metricKey="theoretical_food_cost" size="sm" />
             </div>
-            <div className="text-lg text-emerald-400 font-bold">{formatDollars(theoretical)}</div>
-            <div className="text-[10px] text-slate-600">{formatPct(theoreticalPct)} of revenue</div>
+            <div className="text-lg text-emerald-400 font-bold">
+              {hasTheoretical ? `${formatPct(theoreticalPct!)} food cost` : "Calculating..."}
+            </div>
+            <div className="text-[10px] text-slate-600">
+              {hasTheoretical ? "Baseline from MarginEdge products" : ""}
+            </div>
           </div>
           <div>
             <div className="flex items-center gap-1">
@@ -143,7 +151,10 @@ export default function FoodCostAnalysisPage() {
             <p>Actual = total food spend from MarginEdge (last 30 days) = {formatDollars(totalFood)}</p>
             <p>Revenue = net sales from POS = {formatDollars(totalSales)}</p>
             <p>Actual food cost % = {formatPct(actualPct)}</p>
-            <p>Theoretical requires recipe cards. Set up recipes to compare.</p>
+            <p>
+              Theoretical baseline % comes from MarginEdge products (average latest price across food items).
+              Use recipes for item-level theoretical vs actual.
+            </p>
           </div>
         )}
       </div>
