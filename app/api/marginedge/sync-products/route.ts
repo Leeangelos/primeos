@@ -1,3 +1,6 @@
+export const maxDuration = 60;
+export const dynamic = "force-dynamic";
+
 import { NextResponse } from "next/server";
 import { createClient } from "@supabase/supabase-js";
 import { getMEStoreMap } from "@/src/lib/marginedge";
@@ -23,8 +26,7 @@ const mapProductCategory = (meCategories: any[]): string => {
 };
 
 export async function GET() {
-  const work = (async () => {
-    try {
+  try {
     const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
     const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
     if (!supabaseUrl || !supabaseKey) {
@@ -37,10 +39,8 @@ export async function GET() {
 
     for (const unit of storeMap) {
       console.log(`\n--- Products sync for ${unit.storeName} (ME ID: ${unit.meUnitId}) ---`);
-      let url: string | null = `/products?restaurantUnitId=${unit.meUnitId}`;
+      const url = `/products?restaurantUnitId=${unit.meUnitId}`;
       let productCount = 0;
-
-      if (!url) continue;
 
       const apiKey = process.env.MARGINEDGE_API_KEY;
       if (!apiKey) throw new Error("Missing MARGINEDGE_API_KEY");
@@ -100,23 +100,14 @@ export async function GET() {
       summary.push({ storeName: unit.storeName, productsSynced: productCount });
     }
 
-      return NextResponse.json({
-        success: true,
-        summary,
-      });
-    } catch (err: unknown) {
-      const message = err instanceof Error ? err.message : String(err);
-      console.error("MarginEdge products sync error:", err);
-      return NextResponse.json({ error: message }, { status: 500 });
-    }
-  })();
-
-  const timeout = new Promise<Response>((_resolve, reject) => {
-    setTimeout(() => {
-      reject(new Error("MarginEdge products sync timed out"));
-    }, 5000);
-  });
-
-  return Promise.race([work, timeout]);
+    return NextResponse.json({
+      success: true,
+      summary,
+    });
+  } catch (err: unknown) {
+    const message = err instanceof Error ? err.message : String(err);
+    console.error("MarginEdge products sync error:", err);
+    return NextResponse.json({ error: message }, { status: 500 });
+  }
 }
 
