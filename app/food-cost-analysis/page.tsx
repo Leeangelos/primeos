@@ -31,12 +31,13 @@ export default function FoodCostAnalysisPage() {
     return () => { cancelled = true; };
   }, [selectedStore]);
 
-  const { totalSales, totalFood, actualPct } = useMemo(() => {
-    if (!rangeData?.sales?.length) return { totalSales: 0, totalFood: 0, actualPct: 0 };
+  const { totalSales, totalFood, actualPct, hasPurchaseData } = useMemo(() => {
+    if (!rangeData?.sales?.length) return { totalSales: 0, totalFood: 0, actualPct: 0, hasPurchaseData: false };
     const totalSales = rangeData.sales.reduce((s, r) => s + (r.net_sales ?? 0), 0);
     const totalFood = rangeData.purchases.reduce((s, r) => s + (r.food_spend ?? 0), 0);
-    const actualPct = totalSales > 0 ? (totalFood / totalSales) * 100 : 0;
-    return { totalSales, totalFood, actualPct };
+    const hasPurchaseData = (rangeData.purchases?.length ?? 0) > 0;
+    const actualPct = hasPurchaseData && totalSales > 0 ? (totalFood / totalSales) * 100 : 0;
+    return { totalSales, totalFood, actualPct, hasPurchaseData };
   }, [rangeData]);
 
   const theoretical = 0;
@@ -112,7 +113,15 @@ export default function FoodCostAnalysisPage() {
               <EducationInfoIcon metricKey="actual_food_cost" size="sm" />
             </div>
             <div className="text-lg text-red-400 font-bold">{formatDollars(totalFood)}</div>
-            <div className="text-[10px] text-slate-600">{formatPct(actualPct)} of revenue <span className="text-emerald-400 text-xs">● Invoices</span></div>
+            <div className="text-[10px] text-slate-600">
+              {hasPurchaseData ? (
+                <>
+                  {formatPct(actualPct)} of revenue <span className="text-emerald-400 text-xs">● Invoices</span>
+                </>
+              ) : (
+                <span className="text-amber-400">Awaiting invoices</span>
+              )}
+            </div>
           </div>
           <div>
             <div className="text-xs text-slate-500">Revenue (30d)</div>
@@ -150,7 +159,15 @@ export default function FoodCostAnalysisPage() {
         <div className="bg-slate-800 rounded-xl border border-slate-700 p-4 mb-4">
           <h3 className="text-sm font-semibold text-white mb-2">Last 30 days — Actual food cost</h3>
           <p className="text-xs text-slate-500">Blended from MarginEdge invoices and POS sales. Theoretical comparison requires recipe cards.</p>
-          <p className="text-2xl font-bold text-white mt-2">{formatPct(actualPct)} <span className="text-emerald-400 text-xs">● Invoices + POS</span></p>
+          <p className="text-2xl font-bold text-white mt-2">
+            {hasPurchaseData ? (
+              <>
+                {formatPct(actualPct)} <span className="text-emerald-400 text-xs">● Invoices + POS</span>
+              </>
+            ) : (
+              <span className="text-amber-400 text-base">Awaiting invoices</span>
+            )}
+          </p>
         </div>
       )}
 
