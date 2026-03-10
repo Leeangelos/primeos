@@ -186,7 +186,7 @@ export default function FoodCostAnalysisPage() {
               <>
                 <div className="flex items-baseline justify-between mb-2">
                   <div>
-                    <p className="text-xs text-slate-400">Angelo&apos;s actual</p>
+                    <p className="text-xs text-slate-400">Your actual</p>
                     <p className="text-lg font-semibold text-white">{formatPct(actualPct)}</p>
                   </div>
                   <div className="text-right">
