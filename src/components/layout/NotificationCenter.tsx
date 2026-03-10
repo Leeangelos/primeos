@@ -26,11 +26,15 @@ export function NotificationCenter() {
   }, []);
 
   useEffect(() => {
-    const regular = generateNotifications();
-    const sorted = [...regular].sort(
-      (a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
-    );
-    setNotifications(sorted);
+    let cancelled = false;
+    generateNotifications().then((list) => {
+      if (cancelled) return;
+      const sorted = [...list].sort(
+        (a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
+      );
+      setNotifications(sorted);
+    });
+    return () => { cancelled = true; };
   }, []);
 
   const unreadCount = notifications.filter((n) => !n.is_read).length;
@@ -118,7 +122,7 @@ export function NotificationCenter() {
               {notifications.length === 0 ? (
                 <div className="flex flex-col items-center justify-center h-48 text-slate-500">
                   <Bell className="w-8 h-8 mb-2 opacity-30" />
-                <p className="text-sm">No wins to report yet — keep running your numbers</p>
+                  <p className="text-sm">All clear — no alerts right now</p>
                 </div>
               ) : (
                 <div className="divide-y divide-slate-800">

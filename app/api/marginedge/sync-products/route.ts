@@ -71,12 +71,21 @@ export async function GET() {
           const unitName = p.reportByUnit || p.unit || "each";
           const category = mapProductCategory(p.categories || []);
 
+          const { data: existing } = await supabase
+            .from("me_products")
+            .select("latest_price")
+            .eq("store_id", unit.storeId)
+            .eq("product_name", productName)
+            .maybeSingle();
+          const previousLatestPrice = existing?.latest_price != null ? Number(existing.latest_price) : null;
+
           const { error: upsertError } = await supabase.from("me_products").upsert(
             {
               store_id: unit.storeId,
               me_product_id: meProductId || null,
               product_name: productName,
               latest_price: latestPrice,
+              previous_latest_price: previousLatestPrice,
               unit: unitName,
               category,
               synced_at: new Date().toISOString(),
