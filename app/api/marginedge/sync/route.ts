@@ -48,6 +48,15 @@ export async function GET(request: Request) {
     const isHillcrest = (name: string) => name.toLowerCase().includes("hillcrest");
 
     const categorizeVendor = (name: string): string => {
+      if (!name) return "other";
+
+      // Exact matches that must always win
+      if (name === "Aurora Spirits") return "beverage";
+      if (name === "Multi-Flow Dispensers of Ohio, Inc.") return "beverage";
+      if (name === "Kimble") return "utilities";
+      if (name === "Portage Sports LLC") return "marketing";
+      if (name === "Optimus Aurora LLC") return "rent";
+
       const n = name.toLowerCase();
 
       // Beverages
@@ -387,6 +396,11 @@ export async function GET(request: Request) {
       .select("store_id, me_order_id, vendor_name")
       .or(
         [
+          "vendor_name.eq.Aurora Spirits",
+          "vendor_name.eq.Multi-Flow Dispensers of Ohio, Inc.",
+          "vendor_name.eq.Kimble",
+          "vendor_name.eq.Portage Sports LLC",
+          "vendor_name.eq.Optimus Aurora LLC",
           "vendor_name.ilike.%university plaza%",
           "vendor_name.ilike.%adp%",
           "vendor_name.ilike.%cintas%",
