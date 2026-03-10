@@ -1,309 +1,117 @@
 "use client";
 
-import { useState, useEffect, useMemo } from "react";
-import { Shield, ShieldAlert, ShieldCheck, ChevronDown, Circle, FileText, ExternalLink } from "lucide-react";
-import { COCKPIT_STORE_SLUGS, COCKPIT_TARGETS } from "@/lib/cockpit-config";
+export const dynamic = "force-dynamic";
+
+import { useState, useEffect, useCallback } from "react";
+import { Star, ExternalLink, ChevronDown, RefreshCw, MapPin } from "lucide-react";
 import { useAuth } from "@/src/lib/auth-context";
 import { isNewUser, getNewUserStoreName } from "@/src/lib/user-scope";
 import { EducationInfoIcon } from "@/src/components/education/InfoIcon";
 
-// Operator's own inspection history
-interface OwnInspection {
-  id: string;
-  store: string;
-  storeId: string;
-  date: string;
-  type: string;
-  criticalViolations: number;
-  nonCriticalViolations: number;
-  details: string[];
-  correctedOnSite: number;
-  inspector: string;
-  county: string;
-}
-
-const OWN_INSPECTIONS: OwnInspection[] = [];
-
-// Nearby inspection activity (what the radar tracks)
-interface NearbyInspection {
-  id: string;
-  establishment: string;
-  address: string;
-  distance: number;
-  date: string;
-  criticalViolations: number;
-  nonCriticalViolations: number;
-  type: string;
-  county: string;
-  nearStore: string;
-}
-
-const NEARBY_INSPECTIONS_KENT: NearbyInspection[] = [];
-const NEARBY_INSPECTIONS_AURORA: NearbyInspection[] = [];
-const NEARBY_INSPECTIONS_LINDSEYS: NearbyInspection[] = [];
-
-interface ThreatAssessment {
-  level: "low" | "elevated" | "high" | "imminent";
-  label: string;
-  inspectionsThisWeek: number;
-  fourWeekAverage: number;
-  nearestDistance: number;
-  nearestDate: string;
-  nearestEstablishment: string;
-}
-
-function calculateThreat(nearbyInspections: NearbyInspection[]): ThreatAssessment {
-  const now = new Date();
-  const oneWeekAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
-  const thisWeek = nearbyInspections.filter((i) => new Date(i.date) >= oneWeekAgo && i.distance <= 3);
-  const within48hrs = nearbyInspections.filter((i) => {
-    const d = new Date(i.date);
-    return now.getTime() - d.getTime() <= 48 * 60 * 60 * 1000 && i.distance <= 0.5;
-  });
-  const withinHalfMile48 = within48hrs.length;
-  const inspectionsThisWeek = thisWeek.length;
-
-  const fourWeekAverage = 4;
-  const sortedByDist = [...nearbyInspections].sort((a, b) => a.distance - b.distance);
-  const nearest = sortedByDist[0];
-  const nearestInLastWeek = thisWeek.length > 0 ? [...thisWeek].sort((a, b) => a.distance - b.distance)[0] : null;
-
-  let level: "low" | "elevated" | "high" | "imminent" = "low";
-  let label = "Normal activity in your area.";
-
-  if (withinHalfMile48 >= 2) {
-    level = "imminent";
-    label = `${withinHalfMile48} inspections within half a mile in the last 48 hours.`;
-  } else if (inspectionsThisWeek >= 8 || (inspectionsThisWeek >= 6 && nearestInLastWeek && nearestInLastWeek.distance <= 0.5)) {
-    level = "high";
-    label = `${inspectionsThisWeek} inspections within 3 miles this week. Inspector is actively in your area.`;
-  } else if (inspectionsThisWeek >= Math.ceil(fourWeekAverage * 1.5)) {
-    level = "elevated";
-    label = `${inspectionsThisWeek} inspections within 3 miles this week. Above your area's normal activity.`;
-  } else {
-    level = "low";
-    label = `${inspectionsThisWeek} inspections within 3 miles this week. Normal activity.`;
-  }
-
-  return {
-    level,
-    label,
-    inspectionsThisWeek,
-    fourWeekAverage,
-    nearestDistance: nearest?.distance ?? 99,
-    nearestDate: nearest?.date ?? "",
-    nearestEstablishment: nearest?.establishment ?? "",
-  };
-}
-
-interface ChecklistCategory {
-  id: string;
-  title: string;
-  icon: string;
-  items: { id: string; text: string; critical: boolean }[];
-}
-
-const CHECKLIST: ChecklistCategory[] = [
-  {
-    id: "temp",
-    title: "Temperature Control",
-    icon: "🌡️",
-    items: [
-      { id: "t1", text: "Walk-in cooler at or below 41°F", critical: true },
-      { id: "t2", text: "Walk-in freezer at or below 0°F", critical: true },
-      { id: "t3", text: "Hot holding items above 135°F", critical: true },
-      { id: "t4", text: "Prep cooler and pizza makeline at or below 41°F", critical: true },
-      { id: "t5", text: "Thermometers calibrated and present in all units", critical: false },
-      { id: "t6", text: "Temperature logs up to date for the last 7 days", critical: false },
-    ],
-  },
-  {
-    id: "storage",
-    title: "Food Storage",
-    icon: "📦",
-    items: [
-      { id: "s1", text: "Raw proteins stored below ready-to-eat foods", critical: true },
-      { id: "s2", text: "All prep items and opened items labeled with date", critical: true },
-      { id: "s3", text: "Nothing stored directly on the floor (6-inch minimum)", critical: false },
-      { id: "s4", text: "No expired items in walk-in, reach-in, or dry storage", critical: true },
-      { id: "s5", text: "Chemicals stored separately from food items", critical: true },
-      { id: "s6", text: "All containers covered or properly wrapped", critical: false },
-    ],
-  },
-  {
-    id: "handwash",
-    title: "Handwashing",
-    icon: "🧼",
-    items: [
-      { id: "h1", text: "All handwashing sinks accessible and unobstructed", critical: true },
-      { id: "h2", text: "Soap and paper towels stocked at every station", critical: true },
-      { id: "h3", text: "Handwashing signage posted", critical: false },
-      { id: "h4", text: "No items stored in or on handwashing sinks", critical: true },
-    ],
-  },
-  {
-    id: "sanitation",
-    title: "Cleaning & Sanitation",
-    icon: "✨",
-    items: [
-      { id: "c1", text: "Sanitizer buckets at proper concentration (chlorine 50-100ppm or quat 200-400ppm)", critical: true },
-      { id: "c2", text: "Test strips available and not expired", critical: false },
-      { id: "c3", text: "Food-contact surfaces clean (cutting boards, slicers, prep tables)", critical: true },
-      { id: "c4", text: "Three-compartment sink set up properly (wash, rinse, sanitize)", critical: true },
-      { id: "c5", text: "Cleaning schedule documented and current", critical: false },
-    ],
-  },
-  {
-    id: "pest",
-    title: "Pest Control",
-    icon: "🪤",
-    items: [
-      { id: "p1", text: "No evidence of pest activity (droppings, nesting, live insects)", critical: true },
-      { id: "p2", text: "Pest control documentation current", critical: false },
-      { id: "p3", text: "Back door and entry points sealed — no gaps", critical: false },
-      { id: "p4", text: "Dumpster area clean and lids closed", critical: false },
-    ],
-  },
-  {
-    id: "employee",
-    title: "Employee Health & Hygiene",
-    icon: "👤",
-    items: [
-      { id: "e1", text: "Illness reporting policy posted and employees informed", critical: true },
-      { id: "e2", text: "No sick employees working the line", critical: true },
-      { id: "e3", text: "Hair restraints worn by all food handlers", critical: false },
-      { id: "e4", text: "No bare hand contact with ready-to-eat food (gloves or utensils)", critical: true },
-    ],
-  },
-  {
-    id: "docs",
-    title: "Documentation",
-    icon: "📋",
-    items: [
-      { id: "d1", text: "Food service license posted and current", critical: true },
-      { id: "d2", text: "Person In Charge (PIC) certified employee on every shift", critical: true },
-      { id: "d3", text: "Food handler certifications current for all employees", critical: false },
-      { id: "d4", text: "Temperature logs accessible for inspector review", critical: false },
-    ],
-  },
+const STORES = [
+  { id: "7cd4cb61-7e90-44f5-8739-5f19074262b8", name: "Kent" },
+  { id: "906e5dfb-6199-4460-936d-fc1e783e4574", name: "Aurora" },
+  { id: "3fb37b49-cfe7-4a9f-9940-a472b5def680", name: "Lindsey's" },
 ];
 
-const COMMON_PIZZA_VIOLATIONS = [
-  "Temperature control — cold holding above 41°F (makeline, walk-in)",
-  "Handwashing sink access — obstructed by equipment or supplies",
-  "Date labeling — opened or prepped items not marked",
-  "Sanitizer concentration — too weak or test strips expired",
-  "Food-contact surfaces — cutting boards, slicer, or prep table not clean",
-];
+type Profile = {
+  id: string;
+  name: string;
+  address: string | null;
+  google_rating: number | null;
+  google_review_count: number | null;
+  price_level: string | null;
+  google_maps_url: string | null;
+  last_synced_at: string | null;
+};
 
-const STORE_OPTIONS = [
-  { value: "all", label: "All Locations" },
-  ...COCKPIT_STORE_SLUGS.map((slug) => ({ value: slug, label: COCKPIT_TARGETS[slug]?.name ?? slug })),
-];
+type Inspection = {
+  id: string;
+  inspection_date: string;
+  inspection_type: string;
+  result: string | null;
+  critical_violations: unknown[];
+  noncritical_violations: unknown[];
+};
+
+type Competitor = {
+  id: string;
+  name: string;
+  distance_miles: number | null;
+  google_rating: number | null;
+  google_review_count: number | null;
+  price_level: string | null;
+  google_maps_url: string | null;
+};
 
 function formatDate(dateStr: string): string {
-  const d = new Date(dateStr);
-  const now = new Date();
-  const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
-  const yesterday = new Date(today.getTime() - 24 * 60 * 60 * 1000);
-  const dateOnly = new Date(d.getFullYear(), d.getMonth(), d.getDate());
-  const diffDays = Math.floor((today.getTime() - dateOnly.getTime()) / (24 * 60 * 60 * 1000));
-  if (diffDays === 0) return "Today";
-  if (diffDays === 1) return "Yesterday";
-  if (diffDays >= 2 && diffDays <= 6) return `${diffDays} days ago`;
-  return d.toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" });
+  return new Date(dateStr + "T00:00:00Z").toLocaleDateString("en-US", {
+    month: "short",
+    day: "numeric",
+    year: "numeric",
+  });
 }
 
-const CHECKLIST_STORAGE_KEY = "primeos_inspection_checklist";
-const CHECKLIST_COMPLETED_KEY = "primeos_checklist_completed";
+function resultBadgeClass(result: string | null): string {
+  if (!result) return "bg-slate-600/30 text-slate-300";
+  const r = result.toLowerCase();
+  if (r.includes("pass") && !r.includes("condition")) return "bg-emerald-600/30 text-emerald-300";
+  if (r.includes("condition")) return "bg-amber-600/30 text-amber-300";
+  if (r.includes("fail")) return "bg-red-600/30 text-red-300";
+  return "bg-slate-600/30 text-slate-300";
+}
+
+function priceLevelDollars(level: string | null): string {
+  if (!level) return "—";
+  const v = level.replace(/[^0-9]/g, "");
+  const n = parseInt(v, 10) || 0;
+  return "$".repeat(Math.min(n, 4)) || "—";
+}
 
 export default function InspectionRadarPage() {
   const { session, loading } = useAuth();
   const newUser = isNewUser(session);
   const newUserStoreName = getNewUserStoreName(session);
-  const [selectedStore, setSelectedStore] = useState<"kent" | "aurora" | "lindseys" | "all">("kent");
-  const [activeTab, setActiveTab] = useState<"radar" | "history" | "checklist">("radar");
-  const [expandedInspection, setExpandedInspection] = useState<string | null>(null);
-  const [expandedCategory, setExpandedCategory] = useState<string | null>(null);
-  const [checkedItems, setCheckedItems] = useState<Record<string, boolean>>({});
-  const [checklistLastCompleted, setChecklistLastCompleted] = useState<string | null>(null);
+  const [selectedStoreId, setSelectedStoreId] = useState(STORES[0].id);
+  const [profile, setProfile] = useState<Profile | null>(null);
+  const [inspections, setInspections] = useState<Inspection[]>([]);
+  const [competitors, setCompetitors] = useState<Competitor[]>([]);
+  const [loadingData, setLoadingData] = useState(true);
+  const [syncLoading, setSyncLoading] = useState(false);
+  const [expandedId, setExpandedId] = useState<string | null>(null);
 
-  useEffect(() => {
+  const fetchRadar = useCallback(async (storeId: string) => {
+    setLoadingData(true);
     try {
-      const saved = localStorage.getItem(CHECKLIST_STORAGE_KEY);
-      if (saved) {
-        const parsed = JSON.parse(saved) as Record<string, boolean>;
-        if (parsed && typeof parsed === "object") setCheckedItems(parsed);
+      const res = await fetch(`/api/inspection-radar?storeId=${encodeURIComponent(storeId)}`);
+      if (!res.ok) {
+        setProfile(null);
+        setInspections([]);
+        setCompetitors([]);
+        return;
       }
-      const completed = localStorage.getItem(CHECKLIST_COMPLETED_KEY);
-      if (completed) setChecklistLastCompleted(completed);
-    } catch {
-      // ignore
+      const data = await res.json();
+      setProfile(data.profile);
+      setInspections(data.inspections ?? []);
+      setCompetitors(data.competitors ?? []);
+    } finally {
+      setLoadingData(false);
     }
   }, []);
 
-  const nearbyInspections = useMemo(() => {
-    if (selectedStore === "all") {
-      return [...NEARBY_INSPECTIONS_KENT, ...NEARBY_INSPECTIONS_AURORA, ...NEARBY_INSPECTIONS_LINDSEYS].sort(
-        (a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()
-      );
-    }
-    if (selectedStore === "kent") return [...NEARBY_INSPECTIONS_KENT].sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
-    if (selectedStore === "aurora") return [...NEARBY_INSPECTIONS_AURORA].sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
-    return [...NEARBY_INSPECTIONS_LINDSEYS].sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
-  }, [selectedStore]);
+  useEffect(() => {
+    fetchRadar(selectedStoreId);
+  }, [selectedStoreId, fetchRadar]);
 
-  const threat = useMemo(() => calculateThreat(nearbyInspections), [nearbyInspections]);
-
-  const ownFiltered = useMemo(() => {
-    if (selectedStore === "all") return [...OWN_INSPECTIONS].sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
-    return OWN_INSPECTIONS.filter((i) => i.storeId === selectedStore).sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
-  }, [selectedStore]);
-
-  const lastInspection = useMemo(() => ownFiltered[0] ?? null, [ownFiltered]);
-
-  const totalCount = useMemo(() => CHECKLIST.reduce((acc, cat) => acc + cat.items.length, 0), []);
-  const completedCount = useMemo(() => {
-    let n = 0;
-    CHECKLIST.forEach((cat) => cat.items.forEach((item) => { if (checkedItems[item.id]) n++; }));
-    return n;
-  }, [checkedItems]);
-
-  const toggleCheck = (itemId: string) => {
-    const next = { ...checkedItems, [itemId]: !checkedItems[itemId] };
-    setCheckedItems(next);
+  const handleSync = async () => {
+    setSyncLoading(true);
     try {
-      localStorage.setItem(CHECKLIST_STORAGE_KEY, JSON.stringify(next));
-      const total = CHECKLIST.reduce((acc, cat) => acc + cat.items.length, 0);
-      const completed = Object.values(next).filter(Boolean).length;
-      if (completed === total) {
-        const dateStr = new Date().toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" });
-        setChecklistLastCompleted(dateStr);
-        localStorage.setItem(CHECKLIST_COMPLETED_KEY, dateStr);
-      }
-    } catch {
-      // ignore
+      const res = await fetch("/api/google-places/sync", { method: "POST" });
+      if (res.ok) await fetchRadar(selectedStoreId);
+    } finally {
+      setSyncLoading(false);
     }
   };
-
-  const resetChecklist = () => {
-    setCheckedItems({});
-    setChecklistLastCompleted(null);
-    try {
-      localStorage.removeItem(CHECKLIST_STORAGE_KEY);
-      localStorage.removeItem(CHECKLIST_COMPLETED_KEY);
-    } catch {
-      // ignore
-    }
-  };
-
-  function getTrend(current: OwnInspection, index: number, list: OwnInspection[]): "improving" | "steady" | "watching" {
-    if (index >= list.length - 1) return "steady";
-    const prev = list[index + 1];
-    if (current.criticalViolations < prev.criticalViolations) return "improving";
-    if (current.criticalViolations > prev.criticalViolations) return "watching";
-    return "steady";
-  }
 
   if (loading) return <div className="min-h-screen bg-zinc-950" />;
   if (newUser) {
@@ -312,15 +120,14 @@ export default function InspectionRadarPage() {
         <div className="flex items-center justify-between mb-4">
           <div>
             <h1 className="text-xl font-bold text-white flex items-center gap-2">
-              <Shield className="w-5 h-5 text-blue-400" />
-              Health Inspection Radar
+              <span className="text-orange-400">Inspection Radar</span>
             </h1>
             <p className="text-xs text-slate-400 mt-0.5">{newUserStoreName}</p>
           </div>
           <EducationInfoIcon metricKey="inspection_radar" size="lg" />
         </div>
         <div className="bg-zinc-900/50 rounded-xl border border-zinc-800/50 shadow-sm p-6 text-center">
-          <p className="text-sm text-zinc-300">Health inspection data for your county will appear here soon.</p>
+          <p className="text-sm text-zinc-300">Inspection Radar will be available here soon.</p>
         </div>
       </div>
     );
@@ -328,374 +135,264 @@ export default function InspectionRadarPage() {
 
   return (
     <div className="space-y-4 pb-28">
-      {/* Header */}
       <div className="flex items-center justify-between mb-4">
-        <div>
-          <h1 className="text-xl font-bold text-white flex items-center gap-2">
-            <Shield className="w-5 h-5 text-blue-400" />
-            Health Inspection Radar
-          </h1>
-          <p className="text-xs text-slate-400 mt-0.5">Inspector activity near your locations</p>
-        </div>
+        <h1 className="text-xl font-bold text-white">Inspection Radar</h1>
         <EducationInfoIcon metricKey="inspection_radar" size="lg" />
       </div>
 
-      {/* Store Selector */}
-      <div className="flex flex-wrap gap-2">
-        {STORE_OPTIONS.map((opt) => (
+      {/* Store tabs */}
+      <div className="flex gap-1 bg-slate-800 rounded-lg p-1">
+        {STORES.map((store) => (
           <button
-            key={opt.value}
+            key={store.id}
             type="button"
-            onClick={() => setSelectedStore(opt.value as "kent" | "aurora" | "lindseys" | "all")}
-            className={`px-3 py-2 rounded-lg text-xs font-medium min-h-[44px] touch-manipulation transition-colors ${
-              selectedStore === opt.value ? "bg-[#E65100]/20 border border-[#E65100]/40 text-[#E65100]" : "bg-slate-800 border border-slate-700 text-slate-400"
+            onClick={() => setSelectedStoreId(store.id)}
+            className={`flex-1 py-2 px-3 rounded-md text-sm font-medium transition-colors min-h-[44px] touch-manipulation ${
+              selectedStoreId === store.id ? "bg-slate-700 text-white" : "text-slate-500"
             }`}
           >
-            {opt.label}
+            {store.name}
           </button>
         ))}
       </div>
 
-      {/* Threat Level Hero */}
-      <div
-        className={`rounded-2xl border p-5 mb-4 ${
-          threat.level === "imminent"
-            ? "bg-red-600/20 border-red-500/40"
-            : threat.level === "high"
-              ? "bg-red-600/15 border-red-700/30"
-              : threat.level === "elevated"
-                ? "bg-amber-600/15 border-amber-700/30"
-                : "bg-emerald-600/10 border-emerald-700/20"
-        }`}
-      >
-        <div className="flex items-center gap-3 mb-3">
-          <EducationInfoIcon metricKey="risk_score" size="sm" />
-          <div
-            className={`w-12 h-12 rounded-full flex items-center justify-center ${
-              threat.level === "imminent" ? "bg-red-600/30" : threat.level === "high" ? "bg-red-600/20" : threat.level === "elevated" ? "bg-amber-600/20" : "bg-emerald-600/20"
-            }`}
-          >
-            {threat.level === "imminent" || threat.level === "high" ? (
-              <ShieldAlert className={`w-6 h-6 ${threat.level === "imminent" ? "text-red-400 animate-pulse" : "text-red-400"}`} />
-            ) : threat.level === "elevated" ? (
-              <ShieldAlert className="w-6 h-6 text-amber-400" />
-            ) : (
-              <ShieldCheck className="w-6 h-6 text-emerald-400" />
-            )}
-          </div>
-          <div>
-            <p
-              className={`text-sm font-bold uppercase tracking-wide ${
-                threat.level === "imminent" ? "text-red-400" : threat.level === "high" ? "text-red-400" : threat.level === "elevated" ? "text-amber-400" : "text-emerald-400"
-              }`}
-            >
-              {threat.level}
-            </p>
-            <p className="text-xs text-slate-400">{threat.label}</p>
-          </div>
-        </div>
-
-        <div className="grid grid-cols-3 gap-3">
-          <div className="text-center">
-            <p className="text-lg font-bold text-white">{threat.inspectionsThisWeek}</p>
-            <p className="text-[10px] text-slate-500">This Week</p>
-          </div>
-          <div className="text-center">
-            <p className="text-lg font-bold text-slate-400">{threat.fourWeekAverage}</p>
-            <p className="text-[10px] text-slate-500">4-Wk Avg</p>
-          </div>
-          <div className="text-center">
-            <p className="text-lg font-bold text-white">
-              {threat.nearestDistance < 99 ? `${threat.nearestDistance.toFixed(1)} mi` : "—"}
-            </p>
-            <p className="text-[10px] text-slate-500">Nearest</p>
-          </div>
-        </div>
-      </div>
-
-      {/* Operator's Last Inspection Card */}
-      {lastInspection && (
-        <div className="bg-slate-800 rounded-xl border border-slate-700 p-4 mb-4">
-          <div className="flex items-center justify-between mb-2">
-            <p className="text-xs font-semibold text-slate-400 uppercase tracking-wide">Your Last Inspection</p>
-            <FileText className="w-4 h-4 text-slate-600" />
-          </div>
-          <div className="flex items-center gap-3">
-            <div
-              className={`w-10 h-10 rounded-lg flex items-center justify-center ${
-                lastInspection.criticalViolations === 0 ? "bg-emerald-600/20" : "bg-amber-600/20"
-              }`}
-            >
-              <span
-                className={`text-lg font-bold ${lastInspection.criticalViolations === 0 ? "text-emerald-400" : "text-amber-400"}`}
-              >
-                {lastInspection.criticalViolations}
-              </span>
-            </div>
-            <div>
-              <p className="text-sm font-semibold text-white">
-                {lastInspection.criticalViolations === 0
-                  ? "No critical violations"
-                  : `${lastInspection.criticalViolations} critical violation${lastInspection.criticalViolations > 1 ? "s" : ""}`}
-              </p>
-              <p className="text-[10px] text-slate-500">
-                {new Date(lastInspection.date).toLocaleDateString("en-US", { month: "long", day: "numeric", year: "numeric" })} · {lastInspection.nonCriticalViolations} non-critical · {lastInspection.inspector}
-              </p>
-            </div>
-          </div>
-
-          <div className="mt-3 pt-3 border-t border-slate-700">
-            <p className="text-[10px] text-slate-500 mb-1.5">Most common critical violations for pizza restaurants in Ohio:</p>
-            {COMMON_PIZZA_VIOLATIONS.slice(0, 3).map((v, i) => (
-              <p key={i} className="text-[10px] text-slate-600 flex items-start gap-1.5 mb-0.5">
-                <Circle className="w-2 h-2 text-slate-700 mt-1 flex-shrink-0" />
-                {v}
-              </p>
-            ))}
-          </div>
-        </div>
-      )}
-
-      {/* Tabs */}
-      <div className="flex gap-1 mb-4 bg-slate-800 rounded-lg p-1">
-        {[
-          { id: "radar" as const, label: "Nearby Activity" },
-          { id: "history" as const, label: "Your History" },
-          { id: "checklist" as const, label: "Pre-Inspection" },
-        ].map((tab) => (
-          <button
-            key={tab.id}
-            type="button"
-            onClick={() => setActiveTab(tab.id)}
-            className={`flex-1 py-2 px-3 rounded-md text-xs font-medium transition-colors min-h-[44px] touch-manipulation ${
-              activeTab === tab.id ? "bg-slate-700 text-white" : "text-slate-500"
-            }`}
-          >
-            {tab.label}
-          </button>
-        ))}
-      </div>
-
-      {/* RADAR TAB */}
-      {activeTab === "radar" && (
+      {loadingData ? (
+        <div className="text-center py-8 text-slate-500 text-sm">Loading…</div>
+      ) : (
         <>
-          {nearbyInspections.map((item) => {
-            const isExpanded = expandedInspection === item.id;
-            return (
-              <div key={item.id} className="bg-slate-800 rounded-xl border border-slate-700 mb-2 overflow-hidden">
-                <button
-                  type="button"
-                  onClick={() => setExpandedInspection(isExpanded ? null : item.id)}
-                  className="w-full text-left p-3"
-                >
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-2 flex-1 min-w-0">
-                      <div
-                        className={`w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0 ${
-                          item.criticalViolations > 0 ? "bg-red-600/20" : "bg-emerald-600/15"
-                        }`}
-                      >
-                        <span className={`text-xs font-bold ${item.criticalViolations > 0 ? "text-red-400" : "text-emerald-400"}`}>
-                          {item.criticalViolations}
-                        </span>
-                      </div>
-                      <div className="min-w-0">
-                        <p className="text-xs font-medium text-white truncate">{item.establishment}</p>
-                        <p className="text-[10px] text-slate-500">
-                          {item.distance < 1 ? `${item.distance.toFixed(1)} mi` : `${item.distance.toFixed(1)} mi`} away · {formatDate(item.date)}
-                        </p>
-                      </div>
-                    </div>
-                    <ChevronDown className={`w-4 h-4 text-slate-500 flex-shrink-0 transition-transform ${isExpanded ? "rotate-180" : ""}`} />
-                  </div>
-                </button>
-                {isExpanded && (
-                  <div className="px-3 pb-3 border-t border-slate-700 pt-2">
-                    <div className="grid grid-cols-2 gap-2 text-[10px]">
-                      <div>
-                        <span className="text-slate-600">Address:</span> <span className="text-slate-400">{item.address}</span>
-                      </div>
-                      <div>
-                        <span className="text-slate-600">Type:</span> <span className="text-slate-400">{item.type}</span>
-                      </div>
-                      <div>
-                        <span className="text-slate-600">Critical:</span>{" "}
-                        <span className={item.criticalViolations > 0 ? "text-red-400" : "text-emerald-400"}>{item.criticalViolations}</span>
-                      </div>
-                      <div>
-                        <span className="text-slate-600">Non-Critical:</span> <span className="text-slate-400">{item.nonCriticalViolations}</span>
-                      </div>
-                      <div>
-                        <span className="text-slate-600">County:</span> <span className="text-slate-400">{item.county}</span>
-                      </div>
-                    </div>
-                  </div>
-                )}
-              </div>
-            );
-          })}
-
-          <div className="mt-3 p-3 rounded-lg bg-slate-800/50 border border-slate-700/50">
-            <p className="text-[10px] text-slate-600 leading-relaxed">
-              Based on publicly posted inspection records from Portage County Health District and Stark County Health Department. Updated daily. Actual inspector activity may be higher — not all inspections post immediately.
-            </p>
-            <div className="flex gap-2 mt-2 flex-wrap">
-              <a
-                href="https://inspections.myhealthdepartment.com/portage-ohio"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="text-[10px] text-blue-400 underline flex items-center gap-0.5"
-              >
-                Portage County <ExternalLink className="w-2.5 h-2.5" />
-              </a>
-              <a
-                href="https://www.healthspace.com/Clients/Ohio/Stark/Web.nsf/food-frameset"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="text-[10px] text-blue-400 underline flex items-center gap-0.5"
-              >
-                Stark County <ExternalLink className="w-2.5 h-2.5" />
-              </a>
+          {/* Card 1 — Your Google Profile */}
+          <div className="bg-slate-800 rounded-xl border border-slate-700 overflow-hidden">
+            <div className="p-4 border-b border-slate-700">
+              <h2 className="text-sm font-semibold text-white">Your Google Profile</h2>
             </div>
-          </div>
-        </>
-      )}
-
-      {/* HISTORY TAB */}
-      {activeTab === "history" && (
-        <>
-          {ownFiltered.map((insp, index) => {
-            const isExpanded = expandedInspection === insp.id;
-            const trend = getTrend(insp, index, ownFiltered);
-            return (
-              <div key={insp.id} className="bg-slate-800 rounded-xl border border-slate-700 mb-2 overflow-hidden">
-                <button
-                  type="button"
-                  onClick={() => setExpandedInspection(isExpanded ? null : insp.id)}
-                  className="w-full text-left p-3"
-                >
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-2 flex-1 min-w-0">
-                      <div
-                        className={`w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0 ${
-                          insp.criticalViolations > 0 ? "bg-amber-600/20" : "bg-emerald-600/15"
-                        }`}
-                      >
-                        <span className={`text-xs font-bold ${insp.criticalViolations > 0 ? "text-amber-400" : "text-emerald-400"}`}>
-                          {insp.criticalViolations}
-                        </span>
-                      </div>
-                      <div className="min-w-0">
-                        <p className="text-xs font-medium text-white">
-                          {new Date(insp.date).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })}
-                          {selectedStore === "all" && ` · ${insp.store}`}
-                        </p>
-                        <p className="text-[10px] text-slate-500">
-                          {insp.criticalViolations} critical, {insp.nonCriticalViolations} non-critical
-                          {trend === "improving" && " · Improving"}
-                          {trend === "watching" && " · Worth watching"}
-                        </p>
-                      </div>
-                    </div>
-                    <ChevronDown className={`w-4 h-4 text-slate-500 flex-shrink-0 transition-transform ${isExpanded ? "rotate-180" : ""}`} />
-                  </div>
-                </button>
-                {isExpanded && (
-                  <div className="px-3 pb-3 border-t border-slate-700 pt-2 space-y-2">
-                    <p className="text-[10px] text-slate-500">
-                      Type: {insp.type} · {insp.inspector} · {insp.county}
-                    </p>
-                    {insp.correctedOnSite > 0 && (
-                      <p className="text-[10px] text-emerald-500">{insp.correctedOnSite} corrected on site</p>
-                    )}
-                    {insp.details.length > 0 && (
-                      <ul className="list-disc list-inside text-[10px] text-slate-400 space-y-0.5">
-                        {insp.details.map((d, i) => (
-                          <li key={i}>{d}</li>
-                        ))}
-                      </ul>
-                    )}
-                  </div>
-                )}
-              </div>
-            );
-          })}
-
-          <div className="mt-4 p-3 rounded-lg bg-slate-800/50 border border-slate-700/50 text-center">
-            <p className="text-[10px] text-slate-500">
-              Inspection records are public. PrimeOS pulls your history from the same county databases available to anyone — including your customers.
-            </p>
-          </div>
-        </>
-      )}
-
-      {/* CHECKLIST TAB */}
-      {activeTab === "checklist" && (
-        <>
-          <div className="bg-slate-800 rounded-xl border border-slate-700 p-4 mb-4 text-center">
-            <p className="text-2xl font-bold text-white">
-              {completedCount} / {totalCount}
-            </p>
-            <p className="text-xs text-slate-400">items checked</p>
-            {completedCount === totalCount && (
-              <div className="mt-2 px-3 py-1.5 rounded-lg bg-emerald-600/20 inline-block">
-                <p className="text-xs text-emerald-400 font-medium">✓ Checklist complete</p>
-              </div>
-            )}
-            {checklistLastCompleted && <p className="text-[10px] text-slate-600 mt-2">Last completed: {checklistLastCompleted}</p>}
-          </div>
-
-          {CHECKLIST.map((cat) => {
-            const checkedInCategory = cat.items.filter((item) => checkedItems[item.id]).length;
-            const isExpanded = expandedCategory === cat.id;
-            return (
-              <div key={cat.id} className="mb-2">
-                <button
-                  type="button"
-                  onClick={() => setExpandedCategory(isExpanded ? null : cat.id)}
-                  className="w-full bg-slate-800 rounded-xl border border-slate-700 p-3 flex items-center justify-between min-h-[44px] touch-manipulation"
-                >
-                  <div className="flex items-center gap-2">
-                    <span className="text-base">{cat.icon}</span>
-                    <span className="text-xs font-medium text-white">{cat.title}</span>
-                    <span className="text-[10px] text-slate-600">
-                      {checkedInCategory}/{cat.items.length}
+            <div className="p-4">
+              {profile ? (
+                <>
+                  <p className="text-lg font-semibold text-white">{profile.name}</p>
+                  <div className="flex items-baseline gap-2 mt-2">
+                    <span className="text-3xl font-bold text-white">
+                      {profile.google_rating != null ? profile.google_rating.toFixed(1) : "—"}
+                    </span>
+                    <span className="text-slate-400 flex items-center gap-1">
+                      <Star className="w-4 h-4 fill-amber-400 text-amber-400" />
+                      {profile.google_review_count != null
+                        ? `based on ${profile.google_review_count} reviews`
+                        : ""}
                     </span>
                   </div>
-                  <ChevronDown className={`w-4 h-4 text-slate-500 transition-transform ${isExpanded ? "rotate-180" : ""}`} />
-                </button>
-                {isExpanded && (
-                  <div className="bg-slate-800/50 border border-slate-700 border-t-0 rounded-b-xl px-3 pb-3">
-                    {cat.items.map((item) => (
-                      <label
-                        key={item.id}
-                        className="flex items-start gap-3 py-2 border-b border-slate-700/50 last:border-0 cursor-pointer"
-                      >
-                        <input
-                          type="checkbox"
-                          checked={checkedItems[item.id] ?? false}
-                          onChange={() => toggleCheck(item.id)}
-                          className="mt-0.5 w-4 h-4 accent-[#E65100] flex-shrink-0"
-                        />
-                        <div className="flex-1">
-                          <p className={`text-xs ${checkedItems[item.id] ? "text-slate-600 line-through" : "text-slate-300"}`}>{item.text}</p>
-                          {item.critical && <span className="text-[9px] text-red-400 font-medium">CRITICAL ITEM</span>}
-                        </div>
-                      </label>
-                    ))}
-                  </div>
-                )}
-              </div>
-            );
-          })}
+                  {profile.price_level && (
+                    <p className="text-sm text-slate-400 mt-1">
+                      Price: {priceLevelDollars(profile.price_level)}
+                    </p>
+                  )}
+                  {profile.google_maps_url && (
+                    <a
+                      href={profile.google_maps_url}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="inline-flex items-center gap-1.5 mt-3 px-3 py-1.5 rounded-lg bg-slate-700 text-slate-200 text-sm hover:bg-slate-600"
+                    >
+                      <MapPin className="w-4 h-4" />
+                      Google Maps
+                      <ExternalLink className="w-3 h-3" />
+                    </a>
+                  )}
+                  {profile.last_synced_at && (
+                    <p className="text-xs text-slate-500 mt-3 text-right">
+                      Last synced: {new Date(profile.last_synced_at).toLocaleString()}
+                    </p>
+                  )}
+                </>
+              ) : (
+                <div className="text-center py-6 rounded-lg bg-slate-800/50 border border-slate-700/50">
+                  <p className="text-slate-500 text-sm mb-3">Sync to load your Google profile</p>
+                  <button
+                    type="button"
+                    onClick={handleSync}
+                    disabled={syncLoading}
+                    className="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-[#E65100] text-white text-sm font-medium disabled:opacity-50"
+                  >
+                    <RefreshCw className={`w-4 h-4 ${syncLoading ? "animate-spin" : ""}`} />
+                    Sync
+                  </button>
+                </div>
+              )}
+            </div>
+          </div>
 
-          <button
-            type="button"
-            onClick={resetChecklist}
-            className="w-full py-3 mt-4 rounded-xl border border-slate-700 text-xs text-slate-500 min-h-[44px] touch-manipulation"
-          >
-            Reset Checklist
-          </button>
+          {/* Card 2 — Inspection History */}
+          <div className="bg-slate-800 rounded-xl border border-slate-700 overflow-hidden">
+            <div className="p-4 border-b border-slate-700">
+              <h2 className="text-sm font-semibold text-white">Inspection History</h2>
+            </div>
+            <div className="p-4">
+              {inspections.length === 0 ? (
+                <p className="text-slate-500 text-sm py-4 text-center">
+                  Inspection reports are loaded as they come in. No reports on file yet.
+                </p>
+              ) : (
+                <div className="space-y-2">
+                  {inspections.map((insp) => {
+                    const isExpanded = expandedId === insp.id;
+                    const critical = Array.isArray(insp.critical_violations)
+                      ? insp.critical_violations
+                      : [];
+                    const noncritical = Array.isArray(insp.noncritical_violations)
+                      ? insp.noncritical_violations
+                      : [];
+                    return (
+                      <div
+                        key={insp.id}
+                        className="rounded-lg border border-slate-700 overflow-hidden"
+                      >
+                        <button
+                          type="button"
+                          onClick={() => setExpandedId(isExpanded ? null : insp.id)}
+                          className="w-full text-left p-3 flex items-center justify-between gap-2"
+                        >
+                          <div className="flex flex-wrap items-center gap-2 min-w-0">
+                            <span className="text-sm text-white font-medium">
+                              {formatDate(insp.inspection_date)}
+                            </span>
+                            <span className="px-2 py-0.5 rounded text-xs bg-slate-600/50 text-slate-300">
+                              {insp.inspection_type}
+                            </span>
+                            <span
+                              className={`px-2 py-0.5 rounded text-xs ${resultBadgeClass(insp.result)}`}
+                            >
+                              {insp.result ?? "—"}
+                            </span>
+                            {critical.length > 0 && (
+                              <span className="px-2 py-0.5 rounded text-xs bg-red-600/30 text-red-300">
+                                {critical.length} critical
+                              </span>
+                            )}
+                            {noncritical.length > 0 && (
+                              <span className="px-2 py-0.5 rounded text-xs bg-slate-600/50 text-slate-400">
+                                {noncritical.length} non-critical
+                              </span>
+                            )}
+                          </div>
+                          <ChevronDown
+                            className={`w-4 h-4 text-slate-500 flex-shrink-0 transition-transform ${isExpanded ? "rotate-180" : ""}`}
+                          />
+                        </button>
+                        {isExpanded && (
+                          <div className="px-3 pb-3 pt-1 border-t border-slate-700 space-y-2">
+                            {critical.length > 0 && (
+                              <div>
+                                <p className="text-xs font-medium text-red-400 mb-1">Critical</p>
+                                <ul className="space-y-0.5">
+                                  {critical.map((v, i) => (
+                                    <li key={i} className="text-xs text-red-300/90">
+                                      {typeof v === "string" ? v : JSON.stringify(v)}
+                                    </li>
+                                  ))}
+                                </ul>
+                              </div>
+                            )}
+                            {noncritical.length > 0 && (
+                              <div>
+                                <p className="text-xs font-medium text-slate-500 mb-1">Non-critical</p>
+                                <ul className="space-y-0.5">
+                                  {noncritical.map((v, i) => (
+                                    <li key={i} className="text-xs text-slate-400">
+                                      {typeof v === "string" ? v : JSON.stringify(v)}
+                                    </li>
+                                  ))}
+                                </ul>
+                              </div>
+                            )}
+                          </div>
+                        )}
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
+            </div>
+          </div>
+
+          {/* Card 3 — Nearby Competitors */}
+          <div className="bg-slate-800 rounded-xl border border-slate-700 overflow-hidden">
+            <div className="p-4 border-b border-slate-700 flex items-center justify-between">
+              <h2 className="text-sm font-semibold text-white">Nearby Competitors</h2>
+              <button
+                type="button"
+                onClick={handleSync}
+                disabled={syncLoading}
+                className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-slate-700 text-slate-200 text-xs font-medium hover:bg-slate-600 disabled:opacity-50"
+              >
+                <RefreshCw className={`w-3.5 h-3.5 ${syncLoading ? "animate-spin" : ""}`} />
+                Sync
+              </button>
+            </div>
+            <div className="p-4">
+              {competitors.length === 0 ? (
+                <p className="text-slate-500 text-sm py-4 text-center">
+                  Tap Sync to load nearby competitors.
+                </p>
+              ) : (
+                <>
+                  <div className="overflow-x-auto -mx-4 px-4">
+                    <table className="w-full text-sm">
+                      <thead>
+                        <tr className="text-left text-slate-500 border-b border-slate-700">
+                          <th className="pb-2 pr-2 font-medium">Name</th>
+                          <th className="pb-2 pr-2 font-medium">Miles Away</th>
+                          <th className="pb-2 pr-2 font-medium">Rating</th>
+                          <th className="pb-2 pr-2 font-medium">Reviews</th>
+                          <th className="pb-2 pr-2 font-medium">Price</th>
+                          <th className="pb-2 font-medium">Maps</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {competitors.map((c) => (
+                          <tr key={c.id} className="border-b border-slate-700/50">
+                            <td className="py-2 pr-2 text-white font-medium">{c.name}</td>
+                            <td className="py-2 pr-2 text-slate-400">
+                              {c.distance_miles != null ? `${c.distance_miles.toFixed(1)} mi` : "—"}
+                            </td>
+                            <td className="py-2 pr-2 text-slate-300">
+                              {c.google_rating != null ? (
+                                <span className="inline-flex items-center gap-0.5">
+                                  {c.google_rating.toFixed(1)} <Star className="w-3.5 h-3.5 fill-amber-400 text-amber-400" />
+                                </span>
+                              ) : (
+                                "—"
+                              )}
+                            </td>
+                            <td className="py-2 pr-2 text-slate-400">{c.google_review_count ?? "—"}</td>
+                            <td className="py-2 pr-2 text-slate-400">
+                              {priceLevelDollars(c.price_level)}
+                            </td>
+                            <td className="py-2">
+                              {c.google_maps_url ? (
+                                <a
+                                  href={c.google_maps_url}
+                                  target="_blank"
+                                  rel="noopener noreferrer"
+                                  className="text-slate-400 hover:text-white"
+                                  aria-label="Open in Maps"
+                                >
+                                  <ExternalLink className="w-4 h-4" />
+                                </a>
+                              ) : (
+                                "—"
+                              )}
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                  <p className="text-xs text-slate-500 mt-3">
+                    Google ratings within 5 miles — synced weekly
+                  </p>
+                </>
+              )}
+            </div>
+          </div>
         </>
       )}
     </div>
