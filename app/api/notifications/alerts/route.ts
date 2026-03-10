@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { createClient } from "@supabase/supabase-js";
 import { COCKPIT_STORE_SLUGS, COCKPIT_TARGETS, type CockpitStoreSlug } from "@/lib/cockpit-config";
+import { getRollingFoodCostWins } from "@/src/lib/win-notifications";
 
 export const dynamic = "force-dynamic";
 
@@ -13,6 +14,16 @@ export type AlertItem = {
   message: string;
   link: string;
   icon_color: string;
+  created_at: string;
+};
+
+export type WinItem = {
+  id: string;
+  store_id: string;
+  store_name: string;
+  title: string;
+  message: string;
+  link: string;
   created_at: string;
 };
 
@@ -39,6 +50,7 @@ export async function GET() {
     const stores = (storesRows ?? []).filter((r) => r.slug != null) as { id: string; slug: string }[];
     const storeIds = stores.map((s) => s.id);
     const slugById = new Map(stores.map((s) => [s.id, s.slug]));
+    const idBySlug = new Map(stores.map((s) => [s.slug, s.id]));
     const nameBySlug = (slug: string) => COCKPIT_TARGETS[slug as CockpitStoreSlug]?.name ?? slug;
 
     const now = new Date();
@@ -54,6 +66,8 @@ export async function GET() {
     const sixtyStart = sixtyDaysAgo.toISOString().slice(0, 10);
 
     const alerts: AlertItem[] = [];
+    const wins: WinItem[] = [];
+    const foodCostPctBySlug = new Map<string, number>();
     let alertSeq = 0;
 
     if (storeIds.length > 0) {
@@ -113,6 +127,8 @@ export async function GET() {
             icon_color: "text-red-400",
             created_at: now.toISOString(),
           });
+        } else if (foodCostPct != null && foodCostPct < 32 && totalNetSales > 0) {
+          foodCostPctBySlug.set(slug, foodCostPct);
         }
 
         const storeInvoices = invoices.filter((r) => r.store_id === storeId);
@@ -120,7 +136,8 @@ export async function GET() {
         const prior30 = storeInvoices.filter((r) => r.invoice_date >= sixtyStart && r.invoice_date < thirtyStart);
         const sumLast30 = last30.reduce((s, r) => s + (Number(r.total) || 0), 0);
         const sumPrior30 = prior30.reduce((s, r) => s + (Number(r.total) || 0), 0);
-        if (sumPrior30 > 0 && sumLast30 > sumPrior30 * 1.05) {
+        const priorEnoughForComparison = sumLast30 > 0 && sumPrior30 >= sumLast30 * 0.5;
+        if (priorEnoughForComparison && sumLast30 > sumPrior30 * 1.05) {
           const pctUp = ((sumLast30 - sumPrior30) / sumPrior30) * 100;
           alerts.push({
             id: `alert-${++alertSeq}-hillcrest`,
@@ -158,9 +175,35 @@ export async function GET() {
           }
         }
       }
+
+      const fetcher = async (storeSlug: string) => {
+        const uuid = idBySlug.get(storeSlug);
+        if (!uuid) return null;
+        const foodSpend = purchases.filter((r) => r.store_id === uuid).reduce((s, r) => s + (Number(r.food_spend) || 0), 0);
+        const totalSpend = sales.filter((r) => r.store_id === uuid).reduce((s, r) => s + (Number(r.net_sales) || 0), 0);
+        return totalSpend > 0 ? { foodSpend, totalSpend } : null;
+      };
+      const winNotifications = await getRollingFoodCostWins(fetcher);
+      for (const w of winNotifications) {
+        const slug = w.id.replace("food_cost_within_target_", "");
+        const storeId = idBySlug.get(slug);
+        const storeName = nameBySlug(slug);
+        const pct = storeId ? foodCostPctBySlug.get(slug) : null;
+        if (storeId != null && pct != null) {
+          wins.push({
+            id: w.id,
+            store_id: storeId,
+            store_name: storeName,
+            title: `Food Cost Within Target — ${storeName}`,
+            message: `Food cost is running at ${formatPct(pct)} — within the 28-32% industry benchmark. Good work.`,
+            link: "/food-cost-analysis",
+            created_at: now.toISOString(),
+          });
+        }
+      }
     }
 
-    return NextResponse.json({ alerts });
+    return NextResponse.json({ alerts, wins });
   } catch (err) {
     console.error("Alerts API error:", err);
     return NextResponse.json(

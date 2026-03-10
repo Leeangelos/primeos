@@ -28,13 +28,24 @@ export type AlertItem = {
   created_at: string;
 };
 
+export type WinItem = {
+  id: string;
+  store_id: string;
+  store_name: string;
+  title: string;
+  message: string;
+  link: string;
+  created_at: string;
+};
+
 export async function generateNotifications(): Promise<AppNotification[]> {
   try {
     const res = await fetch("/api/notifications/alerts");
     if (!res.ok) return [];
-    const { alerts } = (await res.json()) as { alerts?: AlertItem[] };
-    const list = alerts ?? [];
-    return list.map((a) => ({
+    const data = (await res.json()) as { alerts?: AlertItem[]; wins?: WinItem[] };
+    const alerts = data.alerts ?? [];
+    const wins = data.wins ?? [];
+    const alertItems: AppNotification[] = alerts.map((a) => ({
       id: a.id,
       store_id: a.store_id,
       type: a.type,
@@ -45,6 +56,22 @@ export async function generateNotifications(): Promise<AppNotification[]> {
       created_at: a.created_at,
       icon_color: a.icon_color,
     }));
+    const winItems: AppNotification[] = wins.map((w) => ({
+      id: w.id,
+      store_id: w.store_id,
+      type: "system",
+      title: w.title,
+      message: w.message,
+      link: w.link,
+      is_read: false,
+      created_at: w.created_at,
+      icon_color: "text-emerald-400",
+      isWin: true,
+    }));
+    const combined = [...alertItems, ...winItems].sort(
+      (a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
+    );
+    return combined;
   } catch {
     return [];
   }
