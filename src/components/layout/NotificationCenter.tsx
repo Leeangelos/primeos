@@ -12,22 +12,8 @@ import {
   Server,
   ChevronRight,
 } from "lucide-react";
-import {
-  generateNotifications,
-  formatNotificationTime,
-  AppNotification,
-} from "@/src/lib/notifications";
-import { SEED_WINS } from "@/src/lib/win-engine";
+import { generateNotifications, formatNotificationTime, AppNotification } from "@/src/lib/notifications";
 import { useRouter } from "next/navigation";
-
-function winDateToIso(dateStr: string): string {
-  const now = new Date();
-  if (dateStr === "Today") return now.toISOString();
-  if (dateStr === "Yesterday") return new Date(now.getTime() - 86400000).toISOString();
-  const match = dateStr.match(/^(\d+) days ago$/);
-  if (match) return new Date(now.getTime() - parseInt(match[1], 10) * 86400000).toISOString();
-  return now.toISOString();
-}
 
 export function NotificationCenter() {
   const [isOpen, setIsOpen] = useState(false);
@@ -41,23 +27,10 @@ export function NotificationCenter() {
 
   useEffect(() => {
     const regular = generateNotifications();
-    const winNotifications: AppNotification[] = SEED_WINS.map((win) => ({
-      id: win.id,
-      store_id: win.storeId ?? "kent",
-      type: "win" as const,
-      title: win.title,
-      message: win.body.length > 80 ? win.body.slice(0, 77) + "..." : win.body,
-      link: "/",
-      is_read: false,
-      created_at: winDateToIso(win.date),
-      icon_color: "text-emerald-400",
-      isWin: true,
-      displayTime: win.date,
-    }));
-    const combined = [...winNotifications, ...regular].sort(
+    const sorted = [...regular].sort(
       (a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
     );
-    setNotifications(combined);
+    setNotifications(sorted);
   }, []);
 
   const unreadCount = notifications.filter((n) => !n.is_read).length;
@@ -145,7 +118,7 @@ export function NotificationCenter() {
               {notifications.length === 0 ? (
                 <div className="flex flex-col items-center justify-center h-48 text-slate-500">
                   <Bell className="w-8 h-8 mb-2 opacity-30" />
-                  <p className="text-sm">No notifications</p>
+                <p className="text-sm">No wins to report yet — keep running your numbers</p>
                 </div>
               ) : (
                 <div className="divide-y divide-slate-800">
