@@ -87,6 +87,7 @@ function calculateMarketPosition(
   tier: Tier;
   tierLabel: string;
   tierEmoji: string;
+  displayPercentile: number;
 } {
   if (!profile) {
     return {
@@ -97,6 +98,7 @@ function calculateMarketPosition(
       tier: "red",
       tierLabel: "At Risk",
       tierEmoji: "⚠️",
+      displayPercentile: 0,
     };
   }
 
@@ -111,6 +113,7 @@ function calculateMarketPosition(
     totalCompetitors > 0
       ? ((totalCompetitors - yourRank + 1) / totalCompetitors) * 100
       : 0;
+  const displayPercentile = Math.round(percentile);
   let score = Math.round(percentile);
   if (ownRating >= 4.5) score += 5;
   if ((profile.google_review_count ?? 0) > 500) score += 5;
@@ -128,7 +131,38 @@ function calculateMarketPosition(
     tier,
     tierLabel,
     tierEmoji,
+    displayPercentile,
   };
+}
+
+function getCoachingLine(
+  tier: Tier,
+  score: number,
+  yourRank: number,
+  totalCompetitors: number,
+  reviewCount: number | null
+): string {
+  if (tier === "red") {
+    return "To reach Bronze: climb to top 60% of your market or get your rating above the market average.";
+  }
+  if (tier === "bronze") {
+    const targetRank = Math.max(1, Math.ceil(totalCompetitors * 0.4 + 1));
+    const reviewsNeeded = (reviewCount ?? 0) < 500 ? 500 - (reviewCount ?? 0) : 0;
+    const reviewPart =
+      reviewsNeeded > 0 ? `, or reach ${reviewsNeeded} more Google reviews` : "";
+    return `To reach Silver 🥈: Move from #${yourRank} to #${targetRank} in your market${reviewPart}.`;
+  }
+  if (tier === "silver") {
+    return "To reach Gold 🥇: Reach top 25% of your market and maintain a 4.5+ rating.";
+  }
+  return "🥇 Market Leader — you're in the top 20% of your market. Defend your position.";
+}
+
+function getProgressBarFillClass(tier: Tier): string {
+  if (tier === "gold") return "bg-amber-400";
+  if (tier === "silver") return "bg-slate-400";
+  if (tier === "bronze") return "bg-orange-400";
+  return "bg-red-400";
 }
 
 function consecutiveCleanStreak(inspections: Inspection[]): number {
@@ -158,6 +192,7 @@ export default function InspectionRadarPage() {
   const [loadingData, setLoadingData] = useState(true);
   const [syncLoading, setSyncLoading] = useState(false);
   const [expandedId, setExpandedId] = useState<string | null>(null);
+  const [animatedScore, setAnimatedScore] = useState(0);
 
   const fetchRadar = useCallback(async (storeId: string) => {
     setLoadingData(true);
@@ -232,6 +267,16 @@ export default function InspectionRadarPage() {
   const lastSynced = profile?.last_synced_at ?? null;
   const streak = useMemo(() => consecutiveCleanStreak(inspections), [inspections]);
   const ownRating = profile?.google_rating ?? null;
+
+  // Animate progress bar fill on load when score is available
+  useEffect(() => {
+    if (!profile || loadingData) return;
+    setAnimatedScore(0);
+    const t = requestAnimationFrame(() => {
+      requestAnimationFrame(() => setAnimatedScore(position.score));
+    });
+    return () => cancelAnimationFrame(t);
+  }, [profile, loadingData, position.score]);
 
   if (loading) return <div className="min-h-screen bg-zinc-950" />;
   if (newUser) {
@@ -312,8 +357,46 @@ export default function InspectionRadarPage() {
                   <p className={`mt-2 inline-block px-4 py-1.5 rounded-full text-sm font-semibold ${tierBadgeClass}`}>
                     {position.tierEmoji} {position.tierLabel}
                   </p>
+
+                  {/* Progress bar */}
+                  <div className="mt-6 max-w-md mx-auto">
+                    <div
+                      className="h-3 w-full rounded-full bg-slate-700 overflow-hidden"
+                      role="progressbar"
+                      aria-valuenow={position.score}
+                      aria-valuemin={0}
+                      aria-valuemax={100}
+                    >
+                      <div
+                        className={`h-full rounded-full transition-[width] duration-1000 ease-out ${getProgressBarFillClass(position.tier)}`}
+                        style={{ width: `${animatedScore}%` }}
+                      />
+                    </div>
+                    <div className="flex justify-between mt-1.5 text-[10px] text-slate-500">
+                      <span>⚠️ 0</span>
+                      <span>🥉 40</span>
+                      <span>🥈 60</span>
+                      <span>🥇 80</span>
+                      <span>100</span>
+                    </div>
+                  </div>
+
+                  {/* Next tier coaching line */}
+                  <p className="text-slate-300 text-sm mt-4 max-w-lg mx-auto">
+                    {getCoachingLine(
+                      position.tier,
+                      position.score,
+                      position.yourRank,
+                      position.totalCompetitors,
+                      profile.google_review_count
+                    )}
+                  </p>
+
                   <p className="text-slate-400 text-sm mt-3">
                     Ranked #{position.yourRank} out of {position.totalCompetitors} pizza spots within 5 miles
+                    {position.totalCompetitors > 0 && (
+                      <> — top {position.displayPercentile}% of your market</>
+                    )}
                   </p>
                   <p className="text-white text-sm mt-2">
                     Your rating: {ownRating != null ? `${ownRating.toFixed(1)}` : "—"} ⭐
