@@ -5,11 +5,23 @@ import { getRollingFoodCostWins } from "@/src/lib/win-notifications";
 
 export const dynamic = "force-dynamic";
 
+const STORE_IDS = {
+  kent: "7cd4cb61-7e90-44f5-8739-5f19074262b8",
+  aurora: "906e5dfb-6199-4460-936d-fc1e783e4574",
+  lindseys: "3fb37b49-cfe7-4a9f-9940-a472b5def680",
+} as const;
+
+const STORE_NAMES = {
+  kent: "LeeAngelo's Kent",
+  aurora: "LeeAngelo's Aurora",
+  lindseys: "Lindsey's Pizza",
+} as const;
+
 export type AlertItem = {
   id: string;
   store_id: string;
   store_name: string;
-  type: "red_kpi" | "vendor_increase" | "invoice_alert";
+  type: "red_kpi" | "vendor_increase" | "invoice_alert" | "google_rating_below_market";
   title: string;
   message: string;
   link: string;
@@ -171,6 +183,53 @@ export async function GET() {
             break;
           }
         }
+      }
+
+      // Google rating below market average — run for all three stores in parallel
+      const googleRatingChecks = (["kent", "aurora", "lindseys"] as const).map(
+        async (storeKey) => {
+          const storeId = STORE_IDS[storeKey];
+          const storeName = STORE_NAMES[storeKey];
+          const [ownRes, competitorsRes] = await Promise.all([
+            supabase
+              .from("store_competitor_profiles")
+              .select("google_rating, last_synced_at")
+              .eq("store_id", storeId)
+              .eq("is_own_store", true)
+              .maybeSingle(),
+            supabase
+              .from("store_competitor_profiles")
+              .select("google_rating")
+              .eq("store_id", storeId)
+              .eq("is_own_store", false),
+          ]);
+          const own = ownRes.data;
+          const competitors = competitorsRes.data ?? [];
+          if (!own?.last_synced_at || competitors.length === 0) return null;
+          const ownRating = own.google_rating != null ? Number(own.google_rating) : null;
+          const ratings = competitors
+            .map((r) => (r.google_rating != null ? Number(r.google_rating) : null))
+            .filter((r): r is number => r != null);
+          if (ratings.length === 0 || ownRating == null) return null;
+          const marketAvg = ratings.reduce((a, b) => a + b, 0) / ratings.length;
+          if (ownRating >= marketAvg) return null;
+          return { storeKey, storeId, storeName, ownRating, marketAvg };
+        }
+      );
+      const googleResults = await Promise.all(googleRatingChecks);
+      for (const r of googleResults) {
+        if (!r) continue;
+        alerts.push({
+          id: `alert-${++alertSeq}-google-rating-${r.storeKey}`,
+          store_id: r.storeId,
+          store_name: r.storeName,
+          type: "google_rating_below_market",
+          title: `${r.storeName} Below Market Average`,
+          message: `${r.storeName} is rated ${r.ownRating.toFixed(1)} vs market average ${r.marketAvg.toFixed(1)}. A Google review push could close this gap.`,
+          link: "/inspection-radar",
+          icon_color: "text-amber-400",
+          created_at: now.toISOString(),
+        });
       }
 
       const fetcher = async (storeSlug: string) => {
