@@ -73,6 +73,8 @@ export async function GET() {
           break;
         }
 
+        console.log("Raw /products response keys:", Object.keys(data || {}));
+
         const products = data.products || data.items || [];
         console.log(
           `Page ${page}: found ${Array.isArray(products) ? products.length : 0} products for unit ${unit.storeName}`,
