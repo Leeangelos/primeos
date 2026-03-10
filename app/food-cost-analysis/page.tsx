@@ -57,6 +57,11 @@ export default function FoodCostAnalysisPage() {
     return { foodTotal, paperTotal, beverageTotal, totalPurchases };
   }, [rangeData]);
 
+  const gapDollars = useMemo(() => {
+    if (!hasPurchaseData || totalSales <= 0 || actualPct <= 32) return 0;
+    return ((actualPct - 32) / 100) * totalSales;
+  }, [hasPurchaseData, totalSales, actualPct]);
+
   if (loading) return <div className="min-h-screen bg-zinc-950" />;
   if (newUser) {
     return (
@@ -198,6 +203,11 @@ export default function FoodCostAnalysisPage() {
                 <p className="text-[11px] text-slate-500">
                   Gap to upper benchmark (32%): {formatPct(Math.abs(actualPct - 32))}
                 </p>
+                {actualPct > 32 && (
+                  <p className="text-[11px] text-red-400 font-semibold">
+                    That&apos;s {formatDollars(gapDollars)} in excess food spend this month
+                  </p>
+                )}
               </>
             ) : (
               <p className="text-xs text-amber-400">Awaiting invoices — benchmark comparison will appear once invoices are synced.</p>
@@ -215,7 +225,7 @@ export default function FoodCostAnalysisPage() {
                   </p>
                 </div>
                 <div>
-                  <p className="text-slate-500">Paper</p>
+                  <p className="text-slate-500">Disposables</p>
                   <p className="text-white font-semibold">
                     {formatPct((paperTotal / totalPurchases) * 100)}
                   </p>
