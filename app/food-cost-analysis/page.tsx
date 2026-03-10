@@ -17,7 +17,11 @@ export default function FoodCostAnalysisPage() {
   const newUserStoreName = getNewUserStoreName(session);
   const [selectedStore, setSelectedStore] = useState("kent");
   const [showFormula, setShowFormula] = useState(false);
-  const [rangeData, setRangeData] = useState<{ sales: { net_sales?: number }[]; purchases: { food_spend?: number }[]; theoretical_food_cost_pct?: number | null } | null>(null);
+  const [rangeData, setRangeData] = useState<{
+    sales: { net_sales?: number }[];
+    purchases: { food_spend?: number; paper_spend?: number; beverage_spend?: number }[];
+    theoretical_food_cost_pct?: number | null;
+  } | null>(null);
 
   useEffect(() => {
     let cancelled = false;
@@ -44,11 +48,14 @@ export default function FoodCostAnalysisPage() {
     return { totalSales, totalFood, actualPct, hasPurchaseData };
   }, [rangeData]);
 
-  const theoreticalPct = rangeData?.theoretical_food_cost_pct ?? null;
-  const hasTheoretical = theoreticalPct != null && theoreticalPct > 0;
-  const variance = totalFood;
-  const variancePct = 0;
-  const storeData: { month: string }[] = [];
+  const { foodTotal, paperTotal, beverageTotal, totalPurchases } = useMemo(() => {
+    if (!rangeData?.purchases?.length) return { foodTotal: 0, paperTotal: 0, beverageTotal: 0, totalPurchases: 0 };
+    const foodTotal = rangeData.purchases.reduce((s, r) => s + (r.food_spend ?? 0), 0);
+    const paperTotal = rangeData.purchases.reduce((s, r) => s + (r.paper_spend ?? 0), 0);
+    const beverageTotal = rangeData.purchases.reduce((s, r) => s + (r.beverage_spend ?? 0), 0);
+    const totalPurchases = foodTotal + paperTotal + beverageTotal;
+    return { foodTotal, paperTotal, beverageTotal, totalPurchases };
+  }, [rangeData]);
 
   if (loading) return <div className="min-h-screen bg-zinc-950" />;
   if (newUser) {
@@ -75,7 +82,7 @@ export default function FoodCostAnalysisPage() {
       <div className="flex items-center justify-between mb-4">
         <div>
           <h1 className="text-xl font-bold text-white">Food Cost Analysis</h1>
-          <p className="text-xs text-slate-400 mt-0.5">Theoretical vs actual — where the money leaks</p>
+          <p className="text-xs text-slate-400 mt-0.5">Actual food cost powered by MarginEdge invoices</p>
         </div>
         <EducationInfoIcon metricKey="theoretical_food_cost" size="lg" />
       </div>
@@ -98,23 +105,11 @@ export default function FoodCostAnalysisPage() {
       {/* THE GAP — Hero Card */}
       <div className="bg-slate-800 rounded-xl border border-slate-700 p-4 mb-4">
         <div className="flex items-center gap-2 mb-3">
-        <h3 className="text-xs text-slate-500 uppercase tracking-wide">The Variance Gap</h3>
-        <EducationInfoIcon metricKey="variance_gap" size="sm" />
-      </div>
+          <h3 className="text-xs text-slate-500 uppercase tracking-wide">Actual food cost</h3>
+          <EducationInfoIcon metricKey="actual_food_cost" size="sm" />
+        </div>
 
-        <div className="grid grid-cols-3 gap-3 mb-3">
-          <div>
-            <div className="flex items-center gap-1">
-              <span className="text-xs text-slate-500">Theoretical</span>
-              <EducationInfoIcon metricKey="theoretical_food_cost" size="sm" />
-            </div>
-            <div className="text-lg text-emerald-400 font-bold">
-              {hasTheoretical ? `${formatPct(theoreticalPct!)} food cost` : "Calculating..."}
-            </div>
-            <div className="text-[10px] text-slate-600">
-              {hasTheoretical ? "Baseline from MarginEdge products" : ""}
-            </div>
-          </div>
+        <div className="grid grid-cols-2 gap-3 mb-3">
           <div>
             <div className="flex items-center gap-1">
               <span className="text-xs text-slate-500">Actual</span>
@@ -151,10 +146,7 @@ export default function FoodCostAnalysisPage() {
             <p>Actual = total food spend from MarginEdge (last 30 days) = {formatDollars(totalFood)}</p>
             <p>Revenue = net sales from POS = {formatDollars(totalSales)}</p>
             <p>Actual food cost % = {formatPct(actualPct)}</p>
-            <p>
-              Theoretical baseline % comes from MarginEdge products (average latest price across food items).
-              Use recipes for item-level theoretical vs actual.
-            </p>
+            <p>Benchmarks for pizza operations typically run 28–32% food cost.</p>
           </div>
         )}
       </div>
@@ -167,22 +159,82 @@ export default function FoodCostAnalysisPage() {
       )}
 
       {rangeData !== null && totalSales > 0 && (
-        <div className="bg-slate-800 rounded-xl border border-slate-700 p-4 mb-4">
-          <h3 className="text-sm font-semibold text-white mb-2">Last 30 days — Actual food cost</h3>
-          <p className="text-xs text-slate-500">Blended from MarginEdge invoices and POS sales. Theoretical comparison requires recipe cards.</p>
-          <p className="text-2xl font-bold text-white mt-2">
-            {hasPurchaseData ? (
+        <>
+          <div className="bg-slate-800 rounded-xl border border-slate-700 p-4 mb-4">
+            <h3 className="text-sm font-semibold text-white mb-2">Last 30 days — Actual food cost</h3>
+            <p className="text-xs text-slate-500">Blended from MarginEdge invoices and POS sales.</p>
+            <p className="text-2xl font-bold text-white mt-2">
+              {hasPurchaseData ? (
+                <>
+                  {formatPct(actualPct)} <span className="text-emerald-400 text-xs">● Invoices + POS</span>
+                </>
+              ) : (
+                <span className="text-amber-400 text-base">Awaiting invoices</span>
+              )}
+            </p>
+          </div>
+
+          <div className="bg-slate-800 rounded-xl border border-slate-700 p-4 mb-4">
+            <h3 className="text-sm font-semibold text-white mb-1">Industry benchmark — pizza operations</h3>
+            <p className="text-xs text-slate-500 mb-2">Typical food cost benchmark: 28–32% of net sales.</p>
+            {hasPurchaseData && totalSales > 0 ? (
               <>
-                {formatPct(actualPct)} <span className="text-emerald-400 text-xs">● Invoices + POS</span>
+                <div className="flex items-baseline justify-between mb-2">
+                  <div>
+                    <p className="text-xs text-slate-400">Angelo&apos;s actual</p>
+                    <p className="text-lg font-semibold text-white">{formatPct(actualPct)}</p>
+                  </div>
+                  <div className="text-right">
+                    <p className="text-xs text-slate-400">Status vs benchmark</p>
+                    <p
+                      className={`text-sm font-semibold ${
+                        actualPct > 32 ? "text-red-400" : "text-emerald-400"
+                      }`}
+                    >
+                      {actualPct > 32 ? "Above benchmark" : "Within benchmark"}
+                    </p>
+                  </div>
+                </div>
+                <p className="text-[11px] text-slate-500">
+                  Gap to upper benchmark (32%): {formatPct(Math.abs(actualPct - 32))}
+                </p>
               </>
             ) : (
-              <span className="text-amber-400 text-base">Awaiting invoices</span>
+              <p className="text-xs text-amber-400">Awaiting invoices — benchmark comparison will appear once invoices are synced.</p>
             )}
-          </p>
-        </div>
+          </div>
+
+          <div className="bg-slate-800 rounded-xl border border-slate-700 p-4 mb-4">
+            <h3 className="text-sm font-semibold text-white mb-2">Category breakdown — where the spend goes</h3>
+            {hasPurchaseData && totalPurchases > 0 ? (
+              <div className="grid grid-cols-3 gap-3 text-xs">
+                <div>
+                  <p className="text-slate-500">Food</p>
+                  <p className="text-white font-semibold">
+                    {formatPct((foodTotal / totalPurchases) * 100)}
+                  </p>
+                </div>
+                <div>
+                  <p className="text-slate-500">Paper</p>
+                  <p className="text-white font-semibold">
+                    {formatPct((paperTotal / totalPurchases) * 100)}
+                  </p>
+                </div>
+                <div>
+                  <p className="text-slate-500">Beverages</p>
+                  <p className="text-white font-semibold">
+                    {formatPct((beverageTotal / totalPurchases) * 100)}
+                  </p>
+                </div>
+              </div>
+            ) : (
+              <p className="text-xs text-amber-400">Awaiting invoices — category mix will appear once purchases are synced.</p>
+            )}
+          </div>
+        </>
       )}
 
-      <DataDisclaimer confidence="medium" details="Theoretical costs based on estimated recipe costs. Import your sales mix and invoices for higher accuracy." />
+      <DataDisclaimer confidence="high" details="Actual food cost powered by MarginEdge invoices and POS sales. Benchmarks are industry ranges for pizza operations." />
     </div>
   );
 }
