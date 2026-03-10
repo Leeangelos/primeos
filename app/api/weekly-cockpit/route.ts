@@ -267,7 +267,13 @@ export async function GET(request: NextRequest) {
 
     const weekDates = getWeekDates(week_start);
 
-    const todayStr = new Date().toISOString().slice(0, 10);
+    // Today in America/New_York (EST) so only fully completed days (strictly before today) are shown
+    const estNow = new Date(
+      new Date().toLocaleString("en-US", { timeZone: "America/New_York" })
+    );
+    const todayStr = `${estNow.getFullYear()}-${String(
+      estNow.getMonth() + 1
+    ).padStart(2, "0")}-${String(estNow.getDate()).padStart(2, "0")}`;
 
     /** 7-day rolling COGS % at each date: (sum labor+food+disp over [date-6, date]) / (sum net_sales) * 100. Future dates return null so the chart does not show a bell curve. */
     function dailyRolling7Cogs(
@@ -275,7 +281,7 @@ export async function GET(request: NextRequest) {
       dates: string[]
     ): { date: string; prime_pct: number | null }[] {
       return dates.map((date) => {
-        if (date > todayStr) return { date, prime_pct: null };
+        if (date >= todayStr) return { date, prime_pct: null };
         const end = new Date(date + "T12:00:00Z");
         const start = new Date(end);
         start.setUTCDate(start.getUTCDate() - 6);
