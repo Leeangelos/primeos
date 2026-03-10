@@ -78,6 +78,8 @@ export async function GET(request: Request) {
         n.includes("property") ||
         n.includes("realty") ||
         n.includes("real estate") ||
+        n.includes("storage") ||
+        n.includes("extra space") ||
         (n.includes("llc") && (n.includes("plaza") || n.includes("property") || n.includes("realty") || n.includes("real estate")))
       ) {
         return "rent";
@@ -88,6 +90,9 @@ export async function GET(request: Request) {
         n.includes("electric") ||
         n.includes("aep") ||
         n.includes("aep ohio") ||
+        n.includes("ohio edison") ||
+        n.includes("firstenergy") ||
+        n.includes("first energy") ||
         n.includes("gas") ||
         n.includes("water") ||
         n.includes("spectrum") ||
@@ -158,6 +163,9 @@ export async function GET(request: Request) {
         n.includes("drain") ||
         n.includes("sewer") ||
         n.includes("roto") ||
+        n.includes("fire extinguisher") ||
+        n.includes("fire protection") ||
+        n.includes("pitts fire") ||
         n.includes("plumbing") ||
         n.includes("hvac") ||
         n.includes("repair") ||
@@ -175,7 +183,10 @@ export async function GET(request: Request) {
         n.includes("google") ||
         n.includes("facebook") ||
         n.includes("meta") ||
-        n.includes("social")
+        n.includes("social") ||
+        n.includes("portage sports") ||
+        n.includes("sports llc") ||
+        n.includes("sponsorship")
       ) {
         return "marketing";
       }
@@ -191,11 +202,11 @@ export async function GET(request: Request) {
         n.includes("performance food") ||
         n.includes("buckeye brownies") ||
         n.includes("brownies") ||
+        n.includes("marcs") ||
         n.includes("grocery") ||
         n.includes("market") ||
         n.includes("farm") ||
-        n.includes("bakery") ||
-        n.includes("brewery")
+        n.includes("bakery")
       ) {
         return "food";
       }
@@ -387,6 +398,26 @@ export async function GET(request: Request) {
           "vendor_name.ilike.%aep%",
           "vendor_name.ilike.%roto%",
           "vendor_name.ilike.%kimble%",
+          "vendor_name.ilike.%aurora spirits%",
+          "vendor_name.ilike.%spirits%",
+          "vendor_name.ilike.%liquor%",
+          "vendor_name.ilike.%alcohol%",
+          "vendor_name.ilike.%winery%",
+          "vendor_name.ilike.%brewery%",
+          "vendor_name.ilike.%dispenser%",
+          "vendor_name.ilike.%multi-flow%",
+          "vendor_name.ilike.%ohio edison%",
+          "vendor_name.ilike.%firstenergy%",
+          "vendor_name.ilike.%first energy%",
+          "vendor_name.ilike.%fire extinguisher%",
+          "vendor_name.ilike.%fire protection%",
+          "vendor_name.ilike.%pitts fire%",
+          "vendor_name.ilike.%storage%",
+          "vendor_name.ilike.%extra space%",
+          "vendor_name.ilike.%portage sports%",
+          "vendor_name.ilike.%sports llc%",
+          "vendor_name.ilike.%sponsorship%",
+          "vendor_name.ilike.%marcs%",
         ].join(",")
       );
 
