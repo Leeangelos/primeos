@@ -149,7 +149,7 @@ function getActionableTip(title: string, description: string): string {
       /inspection|health department|food safety|violation/
     )
   ) {
-    return "Consider running through the Pre-Inspection Checklist in your Inspection Radar. Five minutes of prevention beats a violation every time.";
+    return "Consider running through the Pre-Inspection Checklist in Are We Winning? Five minutes of prevention beats a violation every time.";
   }
   return "Consider how this applies to your operation. The operators who stay informed adapt faster when conditions change.";
 }

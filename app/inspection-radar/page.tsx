@@ -2,7 +2,7 @@
 
 export const dynamic = "force-dynamic";
 
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useMemo } from "react";
 import { Star, ExternalLink, ChevronDown, RefreshCw, MapPin } from "lucide-react";
 import { useAuth } from "@/src/lib/auth-context";
 import { isNewUser, getNewUserStoreName } from "@/src/lib/user-scope";
@@ -68,6 +68,85 @@ function priceLevelDollars(level: string | null): string {
   return "$".repeat(Math.min(n, 4)) || "—";
 }
 
+type Tier = "gold" | "silver" | "bronze" | "red";
+function getTier(score: number): { tier: Tier; label: string; emoji: string } {
+  if (score >= 80) return { tier: "gold", label: "Market Leader", emoji: "🥇" };
+  if (score >= 60) return { tier: "silver", label: "Above Average", emoji: "🥈" };
+  if (score >= 40) return { tier: "bronze", label: "Holding Your Own", emoji: "🥉" };
+  return { tier: "red", label: "At Risk", emoji: "⚠️" };
+}
+
+function calculateMarketPosition(
+  profile: Profile | null,
+  competitors: Competitor[]
+): {
+  score: number;
+  yourRank: number;
+  totalCompetitors: number;
+  marketAvgRating: number | null;
+  tier: Tier;
+  tierLabel: string;
+  tierEmoji: string;
+} {
+  if (!profile) {
+    return {
+      score: 0,
+      yourRank: 0,
+      totalCompetitors: competitors.length,
+      marketAvgRating: null,
+      tier: "red",
+      tierLabel: "At Risk",
+      tierEmoji: "⚠️",
+    };
+  }
+
+  const totalCompetitors = 1 + competitors.length;
+  const ownRating = profile.google_rating ?? 0;
+  const ratings = competitors
+    .map((c) => c.google_rating)
+    .filter((r): r is number => r != null);
+  const countHigher = competitors.filter((c) => (c.google_rating ?? 0) > ownRating).length;
+  const yourRank = countHigher + 1;
+  const percentile =
+    totalCompetitors > 0
+      ? ((totalCompetitors - yourRank + 1) / totalCompetitors) * 100
+      : 0;
+  let score = Math.round(percentile);
+  if (ownRating >= 4.5) score += 5;
+  if ((profile.google_review_count ?? 0) > 500) score += 5;
+  score = Math.min(100, score);
+
+  const marketAvgRating =
+    ratings.length > 0 ? ratings.reduce((a, b) => a + b, 0) / ratings.length : null;
+  const { tier, label: tierLabel, emoji: tierEmoji } = getTier(score);
+
+  return {
+    score,
+    yourRank,
+    totalCompetitors,
+    marketAvgRating,
+    tier,
+    tierLabel,
+    tierEmoji,
+  };
+}
+
+function consecutiveCleanStreak(inspections: Inspection[]): number {
+  const sorted = [...inspections].sort(
+    (a, b) => new Date(b.inspection_date).getTime() - new Date(a.inspection_date).getTime()
+  );
+  let count = 0;
+  for (const i of sorted) {
+    const r = (i.result ?? "").toLowerCase();
+    if (r.includes("pass with condition") || (r.includes("pass") && !r.includes("fail"))) {
+      count++;
+    } else {
+      break;
+    }
+  }
+  return count;
+}
+
 export default function InspectionRadarPage() {
   const { session, loading } = useAuth();
   const newUser = isNewUser(session);
@@ -113,30 +192,92 @@ export default function InspectionRadarPage() {
     }
   };
 
+  const position = useMemo(
+    () => calculateMarketPosition(profile, competitors),
+    [profile, competitors]
+  );
+
+  const threats = useMemo(() => {
+    const ownRating = profile?.google_rating ?? 0;
+    return competitors.filter(
+      (c) => (c.google_rating ?? 0) >= ownRating && (c.distance_miles ?? 999) <= 2
+    );
+  }, [profile, competitors]);
+
+  const opportunities = useMemo(() => {
+    return competitors.filter(
+      (c) => (c.google_rating ?? 0) < 3.5 && (c.distance_miles ?? 999) <= 3
+    );
+  }, [competitors]);
+
+  const allTableRows = useMemo(() => {
+    const list: (Competitor & { isOwn?: boolean })[] = profile
+      ? [
+          {
+            id: profile.id,
+            name: profile.name,
+            distance_miles: 0,
+            google_rating: profile.google_rating,
+            google_review_count: profile.google_review_count,
+            price_level: profile.price_level,
+            google_maps_url: profile.google_maps_url,
+            isOwn: true,
+          },
+          ...competitors,
+        ]
+      : [...competitors];
+    return list.sort((a, b) => (b.google_rating ?? 0) - (a.google_rating ?? 0));
+  }, [profile, competitors]);
+
+  const lastSynced = profile?.last_synced_at ?? null;
+  const streak = useMemo(() => consecutiveCleanStreak(inspections), [inspections]);
+  const ownRating = profile?.google_rating ?? null;
+
   if (loading) return <div className="min-h-screen bg-zinc-950" />;
   if (newUser) {
     return (
       <div className="space-y-4 pb-28">
         <div className="flex items-center justify-between mb-4">
           <div>
-            <h1 className="text-xl font-bold text-white flex items-center gap-2">
-              <span className="text-orange-400">Inspection Radar</span>
-            </h1>
+            <h1 className="text-xl font-bold text-white">Are We Winning?</h1>
             <p className="text-xs text-slate-400 mt-0.5">{newUserStoreName}</p>
           </div>
           <EducationInfoIcon metricKey="inspection_radar" size="lg" />
         </div>
         <div className="bg-zinc-900/50 rounded-xl border border-zinc-800/50 shadow-sm p-6 text-center">
-          <p className="text-sm text-zinc-300">Inspection Radar will be available here soon.</p>
+          <p className="text-sm text-zinc-300">Are We Winning? will be available here soon.</p>
         </div>
       </div>
     );
   }
 
+  const tierBg =
+    position.tier === "gold"
+      ? "bg-amber-900/20 border-amber-500/30"
+      : position.tier === "silver"
+        ? "bg-slate-700/30 border-slate-400/30"
+        : position.tier === "bronze"
+          ? "bg-orange-900/20 border-orange-500/30"
+          : "bg-red-900/20 border-red-500/30";
+  const tierBadgeClass =
+    position.tier === "gold"
+      ? "bg-amber-500/30 text-amber-400"
+      : position.tier === "silver"
+        ? "bg-slate-500/30 text-slate-300"
+        : position.tier === "bronze"
+          ? "bg-orange-500/30 text-orange-400"
+          : "bg-red-500/30 text-red-400";
+
   return (
-    <div className="space-y-4 pb-28">
-      <div className="flex items-center justify-between mb-4">
-        <h1 className="text-xl font-bold text-white">Inspection Radar</h1>
+    <div className="space-y-5 pb-28">
+      {/* SECTION 0 — Page header */}
+      <div className="flex items-start justify-between gap-4">
+        <div>
+          <h1 className="text-xl font-bold text-white">Are We Winning?</h1>
+          <p className="text-sm text-slate-400 mt-0.5">
+            Your market position against every pizza competitor within 5 miles.
+          </p>
+        </div>
         <EducationInfoIcon metricKey="inspection_radar" size="lg" />
       </div>
 
@@ -157,77 +298,187 @@ export default function InspectionRadarPage() {
       </div>
 
       {loadingData ? (
-        <div className="text-center py-8 text-slate-500 text-sm">Loading…</div>
+        <div className="text-center py-12 text-slate-500 text-sm">Loading…</div>
       ) : (
         <>
-          {/* Card 1 — Your Google Profile */}
-          <div className="bg-slate-800 rounded-xl border border-slate-700 overflow-hidden">
-            <div className="p-4 border-b border-slate-700">
-              <h2 className="text-sm font-semibold text-white">Your Google Profile</h2>
-            </div>
-            <div className="p-4">
-              {profile ? (
-                <>
-                  <p className="text-lg font-semibold text-white">{profile.name}</p>
-                  <div className="flex items-baseline gap-2 mt-2">
-                    <span className="text-3xl font-bold text-white">
-                      {profile.google_rating != null ? profile.google_rating.toFixed(1) : "—"}
-                    </span>
-                    <span className="text-slate-400 flex items-center gap-1">
-                      <Star className="w-4 h-4 fill-amber-400 text-amber-400" />
-                      {profile.google_review_count != null
-                        ? `based on ${profile.google_review_count} reviews`
-                        : ""}
-                    </span>
-                  </div>
-                  {profile.price_level && (
-                    <p className="text-sm text-slate-400 mt-1">
-                      Price: {priceLevelDollars(profile.price_level)}
-                    </p>
-                  )}
-                  {profile.google_maps_url && (
-                    <a
-                      href={profile.google_maps_url}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="inline-flex items-center gap-1.5 mt-3 px-3 py-1.5 rounded-lg bg-slate-700 text-slate-200 text-sm hover:bg-slate-600"
-                    >
-                      <MapPin className="w-4 h-4" />
-                      Google Maps
-                      <ExternalLink className="w-3 h-3" />
-                    </a>
-                  )}
-                  {profile.last_synced_at && (
-                    <p className="text-xs text-slate-500 mt-3 text-right">
-                      Last synced: {new Date(profile.last_synced_at).toLocaleString()}
-                    </p>
-                  )}
-                </>
-              ) : (
-                <div className="text-center py-6 rounded-lg bg-slate-800/50 border border-slate-700/50">
-                  <p className="text-slate-500 text-sm mb-3">Sync to load your Google profile</p>
-                  <button
-                    type="button"
-                    onClick={handleSync}
-                    disabled={syncLoading}
-                    className="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-[#E65100] text-white text-sm font-medium disabled:opacity-50"
-                  >
-                    <RefreshCw className={`w-4 h-4 ${syncLoading ? "animate-spin" : ""}`} />
-                    Sync
-                  </button>
+          {/* SECTION 1 — Market Position Score (hero) */}
+          <div className={`rounded-2xl border p-6 sm:p-8 ${tierBg}`}>
+            {profile ? (
+              <>
+                <div className="text-center">
+                  <p className="text-6xl sm:text-7xl font-bold text-white tabular-nums">
+                    {position.score}
+                  </p>
+                  <p className={`mt-2 inline-block px-4 py-1.5 rounded-full text-sm font-semibold ${tierBadgeClass}`}>
+                    {position.tierEmoji} {position.tierLabel}
+                  </p>
+                  <p className="text-slate-400 text-sm mt-3">
+                    Ranked #{position.yourRank} out of {position.totalCompetitors} pizza spots within 5 miles
+                  </p>
+                  <p className="text-white text-sm mt-2">
+                    Your rating: {ownRating != null ? `${ownRating.toFixed(1)}` : "—"} ⭐
+                    {position.marketAvgRating != null && (
+                      <> vs Market avg: {position.marketAvgRating.toFixed(1)} ⭐</>
+                    )}
+                  </p>
                 </div>
+              </>
+            ) : (
+              <div className="text-center py-6">
+                <p className="text-slate-400 text-sm mb-4">Sync to calculate your score</p>
+                <button
+                  type="button"
+                  onClick={handleSync}
+                  disabled={syncLoading}
+                  className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-[#E65100] text-white font-medium disabled:opacity-50"
+                >
+                  <RefreshCw className={`w-5 h-5 ${syncLoading ? "animate-spin" : ""}`} />
+                  Sync
+                </button>
+              </div>
+            )}
+          </div>
+
+          {/* SECTION 2 — Your Google Profile (compact) */}
+          <div className="bg-slate-800 rounded-xl border border-slate-700 p-4">
+            <h2 className="text-xs font-semibold text-slate-500 uppercase tracking-wide mb-3">
+              Your Google Profile
+            </h2>
+            {profile ? (
+              <div className="flex flex-wrap items-center gap-x-4 gap-y-2 text-sm">
+                <span className="font-medium text-white">{profile.name}</span>
+                <span className="text-slate-400">
+                  {profile.google_rating != null ? (
+                    <span className="inline-flex items-center gap-0.5 text-white">
+                      {profile.google_rating.toFixed(1)} <Star className="w-4 h-4 fill-amber-400 text-amber-400" />
+                    </span>
+                  ) : (
+                    "—"
+                  )}
+                </span>
+                <span className="text-slate-500">
+                  {profile.google_review_count != null
+                    ? `${profile.google_review_count} reviews`
+                    : ""}
+                </span>
+                <span className="text-slate-500">
+                  {profile.price_level ? priceLevelDollars(profile.price_level) : ""}
+                </span>
+                {profile.google_maps_url && (
+                  <a
+                    href={profile.google_maps_url}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="inline-flex items-center gap-1 text-amber-400 hover:text-amber-300"
+                  >
+                    Maps <ExternalLink className="w-3.5 h-3.5" />
+                  </a>
+                )}
+                {profile.last_synced_at && (
+                  <span className="text-slate-600 text-xs ml-auto">
+                    Synced {new Date(profile.last_synced_at).toLocaleDateString()}
+                  </span>
+                )}
+              </div>
+            ) : (
+              <p className="text-slate-500 text-sm">Sync to load your Google profile.</p>
+            )}
+          </div>
+
+          {/* SECTION 3 — Threats & Opportunities */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="bg-red-950/30 rounded-xl border border-red-900/50 p-4">
+              <h3 className="text-sm font-bold text-red-400 mb-1">
+                🔴 Nearby Threats — High rated competitors close to you
+              </h3>
+              {threats.length === 0 ? (
+                <p className="text-slate-400 text-sm mt-2">
+                  🟢 No high-rated competitors within 2 miles. Hold your ground.
+                </p>
+              ) : (
+                <ul className="mt-2 space-y-2">
+                  {threats.map((c) => (
+                    <li key={c.id} className="flex justify-between items-baseline text-sm">
+                      <span className="text-white font-medium">{c.name}</span>
+                      <span className="text-slate-400">
+                        {c.distance_miles != null ? `${c.distance_miles.toFixed(1)} mi` : "—"} ·{" "}
+                        {c.google_rating != null ? c.google_rating.toFixed(1) : "—"} ⭐ ·{" "}
+                        {c.google_review_count ?? "—"} reviews
+                      </span>
+                    </li>
+                  ))}
+                </ul>
+              )}
+            </div>
+            <div className="bg-green-950/20 rounded-xl border border-green-900/40 p-4">
+              <h3 className="text-sm font-bold text-amber-400 mb-1">
+                🟡 Opportunities — Underperforming competitors nearby
+              </h3>
+              <p className="text-slate-500 text-xs mb-2">
+                Their customers are looking for better. Be the answer.
+              </p>
+              {opportunities.length === 0 ? (
+                <p className="text-slate-400 text-sm">
+                  Strong market — competitors near you are performing well.
+                </p>
+              ) : (
+                <ul className="space-y-2">
+                  {opportunities.map((c) => (
+                    <li key={c.id} className="flex justify-between items-baseline text-sm">
+                      <span className="text-white font-medium">{c.name}</span>
+                      <span className="text-slate-400">
+                        {c.distance_miles != null ? `${c.distance_miles.toFixed(1)} mi` : "—"} ·{" "}
+                        {c.google_rating != null ? c.google_rating.toFixed(1) : "—"} ⭐
+                      </span>
+                    </li>
+                  ))}
+                </ul>
               )}
             </div>
           </div>
 
-          {/* Card 2 — Inspection History */}
+          {/* SECTION 4 — Inspection Streak */}
+          <div className="bg-slate-800 rounded-xl border border-slate-700 p-4">
+            <h2 className="text-sm font-semibold text-white mb-2">Inspection Streak</h2>
+            {inspections.length > 0 && streak > 0 ? (
+              <div className="flex flex-wrap items-center gap-3">
+                <span className="text-2xl font-bold text-amber-400">🔥 {streak} consecutive clean inspections</span>
+                {inspections[0] && (
+                  <>
+                    <span className="text-slate-500 text-sm">
+                      Last: {formatDate(inspections[0].inspection_date)}
+                    </span>
+                    <span
+                      className={`px-2 py-0.5 rounded text-xs ${resultBadgeClass(inspections[0].result)}`}
+                    >
+                      {inspections[0].result ?? "—"}
+                    </span>
+                  </>
+                )}
+              </div>
+            ) : inspections.length > 0 ? (
+              <p className="text-slate-400 text-sm">
+                Last inspection: {formatDate(inspections[0].inspection_date)} —{" "}
+                <span className={resultBadgeClass(inspections[0].result)}>{inspections[0].result ?? "—"}</span>
+              </p>
+            ) : (
+              <>
+                <p className="text-slate-300 font-medium">Inspection streak starts with your first report.</p>
+                <p className="text-slate-500 text-sm mt-1">
+                  Reports are filed by your health district twice a year. They load here automatically as they come in.
+                </p>
+              </>
+            )}
+          </div>
+
+          {/* SECTION 5 — Inspection History */}
           <div className="bg-slate-800 rounded-xl border border-slate-700 overflow-hidden">
             <div className="p-4 border-b border-slate-700">
               <h2 className="text-sm font-semibold text-white">Inspection History</h2>
             </div>
             <div className="p-4">
               {inspections.length === 0 ? (
-                <p className="text-slate-500 text-sm py-4 text-center">
+                <p className="text-slate-500 text-sm py-2 text-center">
                   Inspection reports are loaded as they come in. No reports on file yet.
                 </p>
               ) : (
@@ -313,10 +564,10 @@ export default function InspectionRadarPage() {
             </div>
           </div>
 
-          {/* Card 3 — Nearby Competitors */}
+          {/* SECTION 6 — Full competitor table */}
           <div className="bg-slate-800 rounded-xl border border-slate-700 overflow-hidden">
-            <div className="p-4 border-b border-slate-700 flex items-center justify-between">
-              <h2 className="text-sm font-semibold text-white">Nearby Competitors</h2>
+            <div className="p-4 border-b border-slate-700 flex items-center justify-between flex-wrap gap-2">
+              <h2 className="text-sm font-semibold text-white">All Competitors Within 5 Miles</h2>
               <button
                 type="button"
                 onClick={handleSync}
@@ -327,71 +578,89 @@ export default function InspectionRadarPage() {
                 Sync
               </button>
             </div>
-            <div className="p-4">
-              {competitors.length === 0 ? (
-                <p className="text-slate-500 text-sm py-4 text-center">
-                  Tap Sync to load nearby competitors.
-                </p>
-              ) : (
-                <>
-                  <div className="overflow-x-auto -mx-4 px-4">
-                    <table className="w-full text-sm">
-                      <thead>
-                        <tr className="text-left text-slate-500 border-b border-slate-700">
-                          <th className="pb-2 pr-2 font-medium">Name</th>
-                          <th className="pb-2 pr-2 font-medium">Miles Away</th>
-                          <th className="pb-2 pr-2 font-medium">Rating</th>
-                          <th className="pb-2 pr-2 font-medium">Reviews</th>
-                          <th className="pb-2 pr-2 font-medium">Price</th>
-                          <th className="pb-2 font-medium">Maps</th>
-                        </tr>
-                      </thead>
-                      <tbody>
-                        {competitors.map((c) => (
-                          <tr key={c.id} className="border-b border-slate-700/50">
-                            <td className="py-2 pr-2 text-white font-medium">{c.name}</td>
-                            <td className="py-2 pr-2 text-slate-400">
-                              {c.distance_miles != null ? `${c.distance_miles.toFixed(1)} mi` : "—"}
-                            </td>
-                            <td className="py-2 pr-2 text-slate-300">
-                              {c.google_rating != null ? (
-                                <span className="inline-flex items-center gap-0.5">
-                                  {c.google_rating.toFixed(1)} <Star className="w-3.5 h-3.5 fill-amber-400 text-amber-400" />
-                                </span>
-                              ) : (
-                                "—"
-                              )}
-                            </td>
-                            <td className="py-2 pr-2 text-slate-400">{c.google_review_count ?? "—"}</td>
-                            <td className="py-2 pr-2 text-slate-400">
-                              {priceLevelDollars(c.price_level)}
-                            </td>
-                            <td className="py-2">
-                              {c.google_maps_url ? (
-                                <a
-                                  href={c.google_maps_url}
-                                  target="_blank"
-                                  rel="noopener noreferrer"
-                                  className="text-slate-400 hover:text-white"
-                                  aria-label="Open in Maps"
-                                >
-                                  <ExternalLink className="w-4 h-4" />
-                                </a>
-                              ) : (
-                                "—"
-                              )}
-                            </td>
-                          </tr>
-                        ))}
-                      </tbody>
-                    </table>
-                  </div>
-                  <p className="text-xs text-slate-500 mt-3">
-                    Google ratings within 5 miles — synced weekly
-                  </p>
-                </>
-              )}
+            <div className="overflow-x-auto">
+              <table className="w-full text-sm">
+                <thead>
+                  <tr className="text-left text-slate-500 border-b border-slate-700 bg-slate-800/80">
+                    <th className="py-3 px-3 font-medium">Rank</th>
+                    <th className="py-3 px-3 font-medium">Name</th>
+                    <th className="py-3 px-3 font-medium">Miles Away</th>
+                    <th className="py-3 px-3 font-medium">Rating</th>
+                    <th className="py-3 px-3 font-medium">Reviews</th>
+                    <th className="py-3 px-3 font-medium">Price</th>
+                    <th className="py-3 px-3 font-medium">Threat Level</th>
+                    <th className="py-3 px-3 font-medium">Maps</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {allTableRows.map((row, idx) => {
+                    const rank = idx + 1;
+                    const dist = row.distance_miles ?? 999;
+                    const rating = row.google_rating ?? 0;
+                    const isOwn = "isOwn" in row && row.isOwn;
+                    const threatLevel =
+                      rating >= (ownRating ?? 0) && dist <= 2
+                        ? "🔴"
+                        : rating >= (ownRating ?? 0) && dist <= 5
+                          ? "🟡"
+                          : "🟢";
+                    return (
+                      <tr
+                        key={row.id}
+                        className={`border-b border-slate-700/50 ${
+                          isOwn ? "bg-amber-900/10 border-l-2 border-l-amber-500/50" : ""
+                        }`}
+                      >
+                        <td className="py-2.5 px-3 font-medium text-slate-400">{rank}</td>
+                        <td className="py-2.5 px-3 text-white font-medium">
+                          {row.name}
+                          {isOwn && (
+                            <span className="ml-2 text-xs text-amber-400 font-normal">← You</span>
+                          )}
+                        </td>
+                        <td className="py-2.5 px-3 text-slate-400">
+                          {row.distance_miles != null ? `${row.distance_miles.toFixed(1)} mi` : "—"}
+                        </td>
+                        <td className="py-2.5 px-3 text-slate-300">
+                          {row.google_rating != null ? (
+                            <span className="inline-flex items-center gap-0.5">
+                              {row.google_rating.toFixed(1)}{" "}
+                              <Star className="w-3.5 h-3.5 fill-amber-400 text-amber-400" />
+                            </span>
+                          ) : (
+                            "—"
+                          )}
+                        </td>
+                        <td className="py-2.5 px-3 text-slate-400">{row.google_review_count ?? "—"}</td>
+                        <td className="py-2.5 px-3 text-slate-400">
+                          {priceLevelDollars(row.price_level)}
+                        </td>
+                        <td className="py-2.5 px-3 text-lg">{threatLevel}</td>
+                        <td className="py-2.5 px-3">
+                          {row.google_maps_url ? (
+                            <a
+                              href={row.google_maps_url}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="text-slate-400 hover:text-white"
+                              aria-label="Open in Maps"
+                            >
+                              <ExternalLink className="w-4 h-4" />
+                            </a>
+                          ) : (
+                            "—"
+                          )}
+                        </td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
             </div>
+            <p className="text-xs text-slate-500 p-4 border-t border-slate-700/50">
+              Google ratings synced weekly
+              {lastSynced && ` — last synced ${new Date(lastSynced).toLocaleDateString()}`}
+            </p>
           </div>
         </>
       )}
