@@ -2,7 +2,8 @@ export const dynamic = "force-dynamic";
 
 import { NextResponse } from "next/server";
 
-const TARGET_URL = "https://inspections.myhealthdepartment.com/portage-ohio";
+const PORTAGE_URL = "https://inspections.myhealthdepartment.com/portage-ohio";
+const FACILITIES_URL = "https://inspections.myhealthdepartment.com/portage-ohio/facilities";
 
 export async function GET() {
   const apiKey = process.env.SCRAPINGBEE_API_KEY;
@@ -13,20 +14,30 @@ export async function GET() {
     );
   }
 
-  const params = new URLSearchParams({
-    api_key: apiKey,
-    url: TARGET_URL,
-    render_js: "true",
-  });
-  const scrapingBeeUrl = `https://app.scrapingbee.com/api/v1/?${params.toString()}`;
+  async function fetchViaScrapingBee(targetUrl: string) {
+    const params = new URLSearchParams({
+      api_key: apiKey!,
+      url: targetUrl,
+      render_js: "true",
+      wait: "5000",
+    });
+    const scrapingBeeUrl = `https://app.scrapingbee.com/api/v1/?${params.toString()}`;
+    const res = await fetch(scrapingBeeUrl, { cache: "no-store" });
+    const body = await res.text();
+    return {
+      status: res.status,
+      responseLength: body.length,
+      preview: body.slice(0, 1000),
+    };
+  }
 
-  const res = await fetch(scrapingBeeUrl, { cache: "no-store" });
-  const body = await res.text();
-  const preview = body.slice(0, 500);
+  const [portage, facilities] = await Promise.all([
+    fetchViaScrapingBee(PORTAGE_URL),
+    fetchViaScrapingBee(FACILITIES_URL),
+  ]);
 
   return NextResponse.json({
-    status: res.status,
-    responseLength: body.length,
-    preview,
+    portage,
+    facilities,
   });
 }
