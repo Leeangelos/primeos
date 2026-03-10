@@ -13,6 +13,7 @@ const STORES = [
   { id: "906e5dfb-6199-4460-936d-fc1e783e4574", name: "Aurora" },
   { id: "3fb37b49-cfe7-4a9f-9940-a472b5def680", name: "Lindsey's" },
 ];
+const AURORA_STORE_ID = "906e5dfb-6199-4460-936d-fc1e783e4574";
 
 type Profile = {
   id: string;
@@ -42,7 +43,28 @@ type Competitor = {
   google_review_count: number | null;
   price_level: string | null;
   google_maps_url: string | null;
+  categories?: string[] | null;
 };
+
+const FOOD_INCLUDE = [
+  "pizza", "italian", "sandwich", "wings", "chicken", "burger", "fast food",
+  "casual dining", "american", "mexican", "chinese", "subs", "hoagie",
+  "stromboli", "calzone", "pasta",
+];
+const FOOD_EXCLUDE = [
+  "bowling", "brewery", "bar", "golf", "entertainment", "go_kart", "movie_theater",
+  "spa", "gym", "hotel", "gas_station", "convenience_store", "grocery", "supermarket",
+  "cafe", "coffee", "thai", "japanese", "sushi", "indian", "mediterranean", "greek",
+];
+
+function isFoodCompetitor(categories: string[] | null | undefined): boolean {
+  if (!categories || categories.length === 0) return false;
+  const lower = categories.map((c) => c.toLowerCase().replace(/_/g, " "));
+  const norm = (t: string) => t.toLowerCase().replace(/_/g, " ");
+  const hasInclude = FOOD_INCLUDE.some((term) => lower.some((c) => c.includes(norm(term))));
+  const hasExclude = FOOD_EXCLUDE.some((term) => lower.some((c) => c.includes(norm(term))));
+  return hasInclude && !hasExclude;
+}
 
 function formatDate(dateStr: string): string {
   return new Date(dateStr + "T00:00:00Z").toLocaleDateString("en-US", {
@@ -232,18 +254,28 @@ export default function InspectionRadarPage() {
     [profile, competitors]
   );
 
-  const threats = useMemo(() => {
+  const threatsRaw = useMemo(() => {
     const ownRating = profile?.google_rating ?? 0;
     return competitors.filter(
       (c) => (c.google_rating ?? 0) >= ownRating && (c.distance_miles ?? 999) <= 2
     );
   }, [profile, competitors]);
 
-  const opportunities = useMemo(() => {
+  const threats = useMemo(
+    () => threatsRaw.filter((c) => isFoodCompetitor(c.categories)),
+    [threatsRaw]
+  );
+
+  const opportunitiesRaw = useMemo(() => {
     return competitors.filter(
       (c) => (c.google_rating ?? 0) < 3.5 && (c.distance_miles ?? 999) <= 3
     );
   }, [competitors]);
+
+  const opportunities = useMemo(
+    () => opportunitiesRaw.filter((c) => isFoodCompetitor(c.categories)),
+    [opportunitiesRaw]
+  );
 
   const allTableRows = useMemo(() => {
     const list: (Competitor & { isOwn?: boolean })[] = profile
@@ -422,6 +454,18 @@ export default function InspectionRadarPage() {
             )}
           </div>
 
+          {/* Aurora below market average callout */}
+          {selectedStoreId === AURORA_STORE_ID &&
+            profile &&
+            ownRating != null &&
+            position.marketAvgRating != null &&
+            ownRating < position.marketAvgRating && (
+              <div className="rounded-xl bg-amber-900/60 border border-amber-700/50 p-4 text-amber-400 text-sm">
+                ⚠️ Aurora is the only store below market average. A Google review push could move
+                this score significantly. Even 50 new reviews at 4.5+ would improve your rank.
+              </div>
+            )}
+
           {/* SECTION 2 — Your Google Profile (compact) */}
           <div className="bg-slate-800 rounded-xl border border-slate-700 p-4">
             <h2 className="text-xs font-semibold text-slate-500 uppercase tracking-wide mb-3">
@@ -476,7 +520,9 @@ export default function InspectionRadarPage() {
               </h3>
               {threats.length === 0 ? (
                 <p className="text-slate-400 text-sm mt-2">
-                  🟢 No high-rated competitors within 2 miles. Hold your ground.
+                  {threatsRaw.length > 0
+                    ? "🟢 No pizza or food competitors rated higher than you within 2 miles."
+                    : "🟢 No high-rated competitors within 2 miles. Hold your ground."}
                 </p>
               ) : (
                 <ul className="mt-2 space-y-2">
