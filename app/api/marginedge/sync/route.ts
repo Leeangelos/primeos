@@ -200,67 +200,6 @@ export async function GET(request: Request) {
       totalStores++;
     }
 
-    // Sync MarginEdge products into me_products
-    for (const unit of storeMap) {
-      console.log(`\n--- Products sync for ${unit.storeName} (ME ID: ${unit.meUnitId}) ---`);
-      let url: string | null = `/products?restaurantUnitId=${unit.meUnitId}`;
-      let productCount = 0;
-
-      while (url) {
-        const data = await fetchME(url);
-        console.log("Raw /products response:", JSON.stringify(data)?.slice(0, 500) || null);
-        if (!data) break;
-
-        const products = data.products || data.items || [];
-        console.log(
-          `Found ${Array.isArray(products) ? products.length : 0} products for unit ${unit.storeName}`,
-          Array.isArray(products) && products.length > 0 ? products[0] : null
-        );
-
-        if (Array.isArray(products)) {
-          for (const p of products) {
-            const rawId = p.productId ?? p.id ?? p.itemId ?? null;
-            const meProductId = rawId != null ? String(rawId) : "";
-            const productName = p.productName || p.name || "Unknown";
-            const latestPrice = Number(p.latestPrice || p.unitPrice || 0);
-            const unitName = p.reportByUnit || p.unit || "each";
-            const category = mapProductCategory(p.categories || []);
-
-            const { error: upsertError } = await supabase.from("me_products").upsert(
-              {
-                store_id: unit.storeId,
-                me_product_id: meProductId || null,
-                product_name: productName,
-                latest_price: latestPrice,
-                unit: unitName,
-                category,
-                synced_at: new Date().toISOString(),
-              },
-              { onConflict: "store_id,product_name" }
-            );
-
-            if (upsertError) {
-              console.error("me_products upsert error", {
-                storeId: unit.storeId,
-                meProductId,
-                message: upsertError.message,
-              });
-            }
-
-            productCount++;
-          }
-        }
-
-        if (data.nextPage) {
-          url = `/products?restaurantUnitId=${unit.meUnitId}&page=${data.nextPage}`;
-        } else {
-          url = null;
-        }
-      }
-
-      console.log(`Synced ${productCount} products for ${unit.storeName}`);
-    }
-
     return NextResponse.json({
       success: true,
       startDate: startISO,
