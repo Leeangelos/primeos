@@ -55,9 +55,6 @@ export async function GET() {
 
     const now = new Date();
     const today = now.toISOString().slice(0, 10);
-    const sevenDaysAgo = new Date(now);
-    sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
-    const sevenStart = sevenDaysAgo.toISOString().slice(0, 10);
     const thirtyDaysAgo = new Date(now);
     thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
     const thirtyStart = thirtyDaysAgo.toISOString().slice(0, 10);
@@ -76,14 +73,14 @@ export async function GET() {
           .from("me_daily_purchases")
           .select("store_id, business_day, food_spend")
           .in("store_id", storeIds)
-          .gte("business_day", sevenStart)
+          .gte("business_day", thirtyStart)
           .lte("business_day", today)
           .order("business_day", { ascending: true }),
         supabase
           .from("foodtec_daily_sales")
           .select("store_id, business_day, net_sales")
           .in("store_id", storeIds)
-          .gte("business_day", sevenStart)
+          .gte("business_day", thirtyStart)
           .lte("business_day", today)
           .order("business_day", { ascending: true }),
         supabase
