@@ -8,188 +8,250 @@ type RawInspection = {
   county: "portage" | "stark";
   establishment_name: string;
   address: string | null;
-  inspection_date: string; // YYYY-MM-DD
+  inspection_date: string;
   violations_count: number;
   critical_violations: number;
   result: string | null;
   raw: unknown;
 };
 
-const STORE_COORDS: Record<string, { lat: number; lng: number }> = {
-  kent: { lat: 41.1534, lng: -81.3579 },
-  aurora: { lat: 41.3145, lng: -81.3459 },
-  lindseys: { lat: 40.7934, lng: -81.3784 },
+type EndpointResult = {
+  url: string;
+  status: number;
+  preview: string;
+  skipped: boolean;
+  dataShape?: string;
+  inspectionCount?: number;
 };
 
-function toISODate(input: string): string | null {
-  const d = new Date(input);
+const PORTAGE_ENDPOINTS = [
+  "https://inspections.myhealthdepartment.com/portage-ohio/api/inspections?limit=50&offset=0",
+  "https://inspections.myhealthdepartment.com/portage-ohio/api/facilities/search?q=pizza&limit=50",
+  "https://inspections.myhealthdepartment.com/portage-ohio/api/inspections/recent?days=30",
+];
+
+const STARK_ENDPOINTS = [
+  "https://www.healthspace.com/Clients/Ohio/Stark/Web.nsf/api/inspections?format=json",
+  "https://www.healthspace.com/Clients/Ohio/Stark/Web.nsf/food-inspections.xsp?format=json",
+];
+
+function toISODate(input: unknown): string | null {
+  if (input == null) return null;
+  const s = String(input).trim();
+  const d = new Date(s);
   if (Number.isNaN(d.getTime())) return null;
   return d.toISOString().slice(0, 10);
 }
 
-// Very simple table-row based extraction; if markup changes this will safely return an empty list.
-function parseTableInspections(html: string, county: "portage" | "stark"): RawInspection[] {
-  const rows = html.split(/<tr[^>]*>/i).slice(1);
-  const inspections: RawInspection[] = [];
-  const today = new Date();
+function normalizeInspectionsFromPayload(
+  data: unknown,
+  county: "portage" | "stark"
+): RawInspection[] {
+  const out: RawInspection[] = [];
+  const arr = Array.isArray(data) ? data : (data as Record<string, unknown>)?.data != null ? (data as Record<string, unknown>).data as unknown[] : Array.isArray((data as Record<string, unknown>)?.inspections) ? (data as Record<string, unknown>).inspections as unknown[] : [];
+  if (!Array.isArray(arr)) return out;
+
   const thirtyDaysAgo = new Date();
   thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
 
-  for (const row of rows) {
-    const cellMatches = row.match(/<td[^>]*>(.*?)<\/td>/gi) || [];
-    const cells = cellMatches.map((cell) =>
-      cell
-        .replace(/<td[^>]*>/i, "")
-        .replace(/<\/td>/i, "")
-        .replace(/<[^>]+>/g, "")
-        .replace(/\s+/g, " ")
-        .trim()
-    );
-    if (cells.length < 4) continue;
+  for (const item of arr) {
+    const o = item as Record<string, unknown>;
+    const name =
+      (o.facilityName as string) ??
+      (o.establishment_name as string) ??
+      (o.establishmentName as string) ??
+      (o.name as string) ??
+      "";
+    const dateStr =
+      toISODate(o.inspection_date ?? o.inspectionDate ?? o.date) ?? null;
+    if (!dateStr || name === "") continue;
+    const d = new Date(dateStr + "T00:00:00Z");
+    if (d < thirtyDaysAgo) continue;
 
-    const establishment_name = cells[0] || "";
-    const address = cells[1] || null;
-    const dateText = cells[2] || "";
-    const result = cells[3] || null;
-    const violationsText = cells[4] || "";
+    const violations = Number(o.violations_count ?? o.violationsCount ?? o.violations ?? 0) || 0;
+    const critical = Number(o.critical_violations ?? o.criticalViolations ?? o.critical ?? 0) || 0;
+    const result = (o.result as string) ?? (o.grade as string) ?? (o.status as string) ?? null;
+    const address = (o.address as string) ?? (o.facilityAddress as string) ?? null;
 
-    const iso = toISODate(dateText);
-    if (!iso) continue;
-    const d = new Date(iso + "T00:00:00Z");
-    if (d < thirtyDaysAgo || d > today) continue;
-
-    const violations_count = parseInt(violationsText.replace(/[^\d]/g, ""), 10) || 0;
-
-    inspections.push({
+    out.push({
       county,
-      establishment_name,
-      address,
-      inspection_date: iso,
-      violations_count,
-      critical_violations: 0,
-      result,
-      raw: { row: cells },
+      establishment_name: name,
+      address: address ? String(address).trim() || null : null,
+      inspection_date: dateStr,
+      violations_count: violations,
+      critical_violations: critical,
+      result: result != null ? String(result) : null,
+      raw: o,
     });
   }
-
-  return inspections;
+  return out;
 }
 
-async function fetchPortageInspections(): Promise<RawInspection[]> {
+async function tryEndpoint(
+  url: string,
+  county: "portage" | "stark"
+): Promise<{ result: EndpointResult; inspections: RawInspection[] }> {
+  const inspections: RawInspection[] = [];
+  let status = 0;
+  let preview = "";
+  let dataShape: string | undefined;
+  let inspectionCount: number | undefined;
+
   try {
-    const res = await fetch("https://inspections.myhealthdepartment.com/portage-ohio", {
-      headers: { Accept: "text/html,application/xhtml+xml" },
+    const res = await fetch(url, {
+      headers: { Accept: "application/json" },
       cache: "no-store",
     });
-    if (!res.ok) {
-      console.error("Portage inspections HTTP error", res.status);
-      return [];
-    }
-    const html = await res.text();
-    return parseTableInspections(html, "portage");
-  } catch (err) {
-    console.error("Portage inspections fetch error", err);
-    return [];
-  }
-}
+    status = res.status;
 
-async function fetchStarkInspections(): Promise<RawInspection[]> {
-  try {
-    const res = await fetch(
-      "https://www.healthspace.com/Clients/Ohio/Stark/Web.nsf/food-frameset",
-      {
-        headers: { Accept: "text/html,application/xhtml+xml" },
-        cache: "no-store",
-      }
-    );
-    if (!res.ok) {
-      console.error("Stark inspections HTTP error", res.status);
-      return [];
+    const text = await res.text();
+    preview = text.slice(0, 200).replace(/\s+/g, " ");
+
+    if (res.status === 403 || res.status === 404) {
+      console.log(`[${url}] status=${res.status}, skipped`);
+      return {
+        result: { url, status, preview, skipped: true },
+        inspections: [],
+      };
     }
-    const html = await res.text();
-    return parseTableInspections(html, "stark");
+
+    let data: unknown;
+    try {
+      data = JSON.parse(text);
+    } catch {
+      return {
+        result: { url, status, preview, skipped: false, dataShape: "not JSON" },
+        inspections: [],
+      };
+    }
+
+    const normalized = normalizeInspectionsFromPayload(data, county);
+    if (normalized.length > 0) {
+      inspections.push(...normalized);
+      inspectionCount = normalized.length;
+      const first = normalized[0];
+      const raw = first?.raw as Record<string, unknown> | undefined;
+      const keys = raw && typeof raw === "object" ? Object.keys(raw) : [];
+      dataShape = `inspections array, item keys: ${keys.slice(0, 10).join(", ")}`;
+    } else {
+      const type = Array.isArray(data) ? "array" : typeof data;
+      const keys = data !== null && typeof data === "object" ? Object.keys(data as object) : [];
+      dataShape = `${type}${keys.length ? ` keys: ${keys.slice(0, 8).join(", ")}` : ""}`;
+    }
+
+    console.log(`[${url}] status=${status} preview=${preview.slice(0, 100)}... dataShape=${dataShape}`);
   } catch (err) {
-    console.error("Stark inspections fetch error", err);
-    return [];
+    preview = err instanceof Error ? err.message : String(err);
+    console.log(`[${url}] fetch error: ${preview}`);
   }
+
+  return {
+    result: {
+      url,
+      status,
+      preview,
+      skipped: status === 403 || status === 404,
+      dataShape,
+      inspectionCount,
+    },
+    inspections,
+  };
 }
 
 export async function GET() {
-  try {
-    const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
-    const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
-    if (!supabaseUrl || !supabaseKey) {
-      throw new Error("Supabase environment variables are not set");
-    }
-    const supabase = createClient(supabaseUrl, supabaseKey);
+  const endpointResults: EndpointResult[] = [];
+  const allPortage: RawInspection[] = [];
+  const allStark: RawInspection[] = [];
 
-    const [storesRes, portage, stark] = await Promise.all([
-      supabase.from("stores").select("id, slug"),
-      fetchPortageInspections(),
-      fetchStarkInspections(),
-    ]);
-
-    const stores = (storesRes.data ?? []) as { id: string; slug: string }[];
-    const idBySlug = new Map(stores.map((s) => [s.slug, s.id]));
-
-    function pickNearestStore(county: "portage" | "stark"): { slug: string; id: string | undefined } {
-      if (county === "portage") {
-        return { slug: "kent", id: idBySlug.get("kent") };
-      }
-      return { slug: "lindseys", id: idBySlug.get("lindseys") };
-    }
-
-    const allRaw = [...portage, ...stark];
-    let portageCount = 0;
-    let starkCount = 0;
-
-    for (const insp of allRaw) {
-      const { slug, id: nearStoreId } = pickNearestStore(insp.county);
-      if (!nearStoreId) continue;
-
-      // Approximate distance: assume inspections are in the same city as the mapped store.
-      const distanceMiles = 0;
-      if (distanceMiles > 5) continue;
-
-      const { error } = await supabase
-        .from("nearby_inspections")
-        .upsert(
-          {
-            county: insp.county,
-            establishment_name: insp.establishment_name,
-            address: insp.address,
-            inspection_date: insp.inspection_date,
-            violations_count: insp.violations_count,
-            critical_violations: insp.critical_violations,
-            result: insp.result,
-            distance_miles: distanceMiles,
-            near_store_id: nearStoreId,
-            raw_data: insp.raw,
-          },
-          { onConflict: "county,establishment_name,inspection_date" }
-        );
-
-      if (error) {
-        console.error("nearby_inspections upsert error", error);
-        continue;
-      }
-
-      if (insp.county === "portage") portageCount += 1;
-      else starkCount += 1;
-    }
-
-    return NextResponse.json({
-      ok: true,
-      portage_inspections_upserted: portageCount,
-      stark_inspections_upserted: starkCount,
-      total: portageCount + starkCount,
-    });
-  } catch (err) {
-    console.error("Health inspections sync error:", err);
-    return NextResponse.json(
-      { ok: false, error: err instanceof Error ? err.message : String(err) },
-      { status: 500 }
-    );
+  for (const url of PORTAGE_ENDPOINTS) {
+    const { result, inspections } = await tryEndpoint(url, "portage");
+    endpointResults.push(result);
+    allPortage.push(...inspections);
   }
-}
 
+  for (const url of STARK_ENDPOINTS) {
+    const { result, inspections } = await tryEndpoint(url, "stark");
+    endpointResults.push(result);
+    allStark.push(...inspections);
+  }
+
+  // Dedupe by (county, establishment_name, inspection_date)
+  const seen = new Set<string>();
+  const portageDeduped = allPortage.filter((i) => {
+    const key = `${i.county}|${i.establishment_name}|${i.inspection_date}`;
+    if (seen.has(key)) return false;
+    seen.add(key);
+    return true;
+  });
+  const starkDeduped = allStark.filter((i) => {
+    const key = `${i.county}|${i.establishment_name}|${i.inspection_date}`;
+    if (seen.has(key)) return false;
+    seen.add(key);
+    return true;
+  });
+
+  let portageUpserted = 0;
+  let starkUpserted = 0;
+
+  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+  const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
+  if (supabaseUrl && supabaseKey) {
+    const supabase = createClient(supabaseUrl, supabaseKey);
+    const { data: stores } = await supabase.from("stores").select("id, slug");
+    const idBySlug = new Map(
+      ((stores ?? []) as { id: string; slug: string }[]).map((s) => [s.slug, s.id])
+    );
+    const kentId = idBySlug.get("kent");
+    const lindseysId = idBySlug.get("lindseys");
+
+    for (const insp of portageDeduped) {
+      if (!kentId) continue;
+      const { error } = await supabase.from("nearby_inspections").upsert(
+        {
+          county: insp.county,
+          establishment_name: insp.establishment_name,
+          address: insp.address,
+          inspection_date: insp.inspection_date,
+          violations_count: insp.violations_count,
+          critical_violations: insp.critical_violations,
+          result: insp.result,
+          distance_miles: 0,
+          near_store_id: kentId,
+          raw_data: insp.raw,
+        },
+        { onConflict: "county,establishment_name,inspection_date" }
+      );
+      if (!error) portageUpserted += 1;
+    }
+    for (const insp of starkDeduped) {
+      if (!lindseysId) continue;
+      const { error } = await supabase.from("nearby_inspections").upsert(
+        {
+          county: insp.county,
+          establishment_name: insp.establishment_name,
+          address: insp.address,
+          inspection_date: insp.inspection_date,
+          violations_count: insp.violations_count,
+          critical_violations: insp.critical_violations,
+          result: insp.result,
+          distance_miles: 0,
+          near_store_id: lindseysId,
+          raw_data: insp.raw,
+        },
+        { onConflict: "county,establishment_name,inspection_date" }
+      );
+      if (!error) starkUpserted += 1;
+    }
+  }
+
+  return NextResponse.json({
+    ok: true,
+    endpoints: endpointResults,
+    summary: {
+      portage_inspections_parsed: portageDeduped.length,
+      stark_inspections_parsed: starkDeduped.length,
+      portage_upserted: portageUpserted,
+      stark_upserted: starkUpserted,
+    },
+  });
+}
