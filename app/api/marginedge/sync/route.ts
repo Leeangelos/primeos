@@ -185,6 +185,8 @@ export async function GET(request: Request) {
         n.includes("us foods") ||
         n.includes("u.s. foods") ||
         n.includes("performance food") ||
+        n.includes("buckeye brownies") ||
+        n.includes("brownies") ||
         n.includes("grocery") ||
         n.includes("market") ||
         n.includes("farm") ||
@@ -356,6 +358,27 @@ export async function GET(request: Request) {
       console.error("Error loading existing invoices for recategorization:", existingInvoicesError);
     } else if (existingInvoices && existingInvoices.length > 0) {
       for (const inv of existingInvoices) {
+        const newCategory = categorizeVendor(inv.vendor_name || "");
+        await supabase
+          .from("me_invoices")
+          .update({ category: newCategory })
+          .eq("store_id", inv.store_id)
+          .eq("me_order_id", inv.me_order_id);
+      }
+    }
+
+    // Targeted recategorization for specific vendors across all history
+    const { data: vendorInvoices, error: vendorInvoicesError } = await supabase
+      .from("me_invoices")
+      .select("store_id, me_order_id, vendor_name")
+      .or(
+        "vendor_name.ilike.%university plaza%,vendor_name.ilike.%adp%,vendor_name.ilike.%cintas%,vendor_name.ilike.%buckeye brownies%,vendor_name.ilike.%brownies%"
+      );
+
+    if (vendorInvoicesError) {
+      console.error("Error loading vendor-specific invoices for recategorization:", vendorInvoicesError);
+    } else if (vendorInvoices && vendorInvoices.length > 0) {
+      for (const inv of vendorInvoices) {
         const newCategory = categorizeVendor(inv.vendor_name || "");
         await supabase
           .from("me_invoices")
