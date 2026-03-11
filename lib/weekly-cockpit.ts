@@ -45,12 +45,12 @@ export interface DailyComputed {
   customers: number;
 }
 
-/** Monday of week containing dateStr (ISO week Mon–Sun) */
+/** Monday of week containing dateStr (ISO week Mon–Sun) in local (EST-aware) calendar terms. */
 export function getWeekStart(dateStr: string): string {
-  const d = new Date(dateStr + "T12:00:00Z");
-  const day = d.getUTCDay();
+  const d = new Date(dateStr + "T00:00:00");
+  const day = d.getDay(); // 0 = Sun, 1 = Mon
   const diff = day === 0 ? -6 : 1 - day;
-  d.setUTCDate(d.getUTCDate() + diff);
+  d.setDate(d.getDate() + diff);
   return d.toISOString().slice(0, 10);
 }
 

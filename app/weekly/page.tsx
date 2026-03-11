@@ -111,17 +111,29 @@ function getChangeArrow(current: number, previous: number): string {
   return change > 0 ? "↑" : "↓";
 }
 
+function todayForEST(): string {
+  const now = new Date();
+  const fmt = new Intl.DateTimeFormat("en-US", {
+    timeZone: "America/New_York",
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+  });
+  const parts = fmt.formatToParts(now).reduce<Record<string, string>>((acc, p) => {
+    if (p.type === "year" || p.type === "month" || p.type === "day") acc[p.type] = p.value;
+    return acc;
+  }, {});
+  return `${parts.year}-${parts.month}-${parts.day}`;
+}
+
 function WeeklyPageContent() {
   const { session, loading: authLoading } = useAuth();
   const newUser = isNewUser(session);
   const newUserStoreName = getNewUserStoreName(session);
   const searchParams = useSearchParams();
-  const today = (() => {
-    const t = new Date();
-    return `${t.getFullYear()}-${String(t.getMonth() + 1).padStart(2, "0")}-${String(t.getDate()).padStart(2, "0")}`;
-  })();
-  const defaultMonday = getWeekStart(today);
-  const [weekStart, setWeekStart] = useState(defaultMonday);
+  const today = todayForEST();
+  const currentWeekStart = getWeekStart(today);
+  const [weekStart, setWeekStart] = useState(currentWeekStart);
   const [store, setStore] = useState<"all" | CockpitStoreSlug>("all");
   const [data, setData] = useState<ApiPayload | null>(null);
   const [loading, setLoading] = useState(true);
@@ -342,9 +354,17 @@ function WeeklyPageContent() {
             </div>
             <button
               type="button"
-              onClick={() => setWeekStart(nextMonday)}
-              className="rounded-lg border border-border/50 bg-black/30 min-h-[44px] min-w-[44px] flex items-center justify-center text-muted hover:bg-black/40 hover:text-white shrink-0"
+              onClick={() => {
+                if (weekStart < currentWeekStart) setWeekStart(nextMonday);
+              }}
+              disabled={weekStart >= currentWeekStart}
+              className={`rounded-lg border min-h-[44px] min-w-[44px] flex items-center justify-center shrink-0 ${
+                weekStart >= currentWeekStart
+                  ? "border-slate-800 bg-black/20 text-slate-600 cursor-not-allowed"
+                  : "border-border/50 bg-black/30 text-muted hover:bg-black/40 hover:text-white"
+              }`}
               aria-label="Next week"
+              aria-disabled={weekStart >= currentWeekStart}
             >
               →
             </button>

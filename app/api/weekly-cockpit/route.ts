@@ -28,12 +28,32 @@ function isValidSlug(s: string): s is CockpitStoreSlug {
  * week_start = Monday of the week. Defaults to current week if omitted.
  * Resolves store slug(s) to UUID via stores table (same pattern as dashboard/daily-data).
  */
+function todayForEST(): string {
+  const now = new Date();
+  const fmt = new Intl.DateTimeFormat("en-US", {
+    timeZone: "America/New_York",
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+  });
+  const parts = fmt.formatToParts(now).reduce<Record<string, string>>((acc, p) => {
+    if (p.type === "year" || p.type === "month" || p.type === "day") acc[p.type] = p.value;
+    return acc;
+  }, {});
+  return `${parts.year}-${parts.month}-${parts.day}`;
+}
+
 export async function GET(request: NextRequest) {
   const { searchParams } = new URL(request.url);
   const storeParam = searchParams.get("store") ?? "all";
   const weekStartParam = searchParams.get("week_start");
-  const today = new Date().toISOString().slice(0, 10);
-  const week_start = weekStartParam ? getWeekStart(weekStartParam) : getWeekStart(today);
+  const today = todayForEST();
+  const currentWeekStart = getWeekStart(today);
+  let week_start = weekStartParam ? getWeekStart(weekStartParam) : currentWeekStart;
+  if (week_start > currentWeekStart) {
+    // Never allow selecting a week beyond the current week
+    week_start = currentWeekStart;
+  }
   const week_end = getWeekEnd(week_start);
   const prev_start = prevWeekStart(week_start);
   const prev_end = getWeekEnd(prev_start);
