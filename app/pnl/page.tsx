@@ -87,7 +87,7 @@ function getNoiTier(netProfitPct: number): {
   return { label: "Printing Money", color: "green" };
 }
 
-export const dynamic = "force-dynamic";
+export const dynamic = 'force-dynamic';
 
 export default function PnlPage() {
   const { session, loading } = useAuth();
@@ -99,6 +99,8 @@ export default function PnlPage() {
   const shareRef = useRef<HTMLDivElement>(null);
 
   const [useCustomRange, setUseCustomRange] = useState(false);
+  const [viewMonth, setViewMonth] = useState(() => new Date().getMonth() + 1);
+  const [viewYear, setViewYear] = useState(() => new Date().getFullYear());
   const [customStartMonth, setCustomStartMonth] = useState(1);
   const [customStartYear, setCustomStartYear] = useState(() => new Date().getFullYear());
   const [customEndMonth, setCustomEndMonth] = useState(() => new Date().getMonth() + 1);
@@ -107,8 +109,15 @@ export default function PnlPage() {
 
   const { startDate, endDate, label: mtdLabel } = useMemo(() => {
     if (appliedCustomRange) return appliedCustomRange;
-    return getMTDRange();
-  }, [appliedCustomRange]);
+    const start = `${viewYear}-${String(viewMonth).padStart(2, "0")}-01`;
+    const lastDay = new Date(viewYear, viewMonth, 0).getDate();
+    const end = `${viewYear}-${String(viewMonth).padStart(2, "0")}-${String(lastDay).padStart(2, "0")}`;
+    const label = new Date(viewYear, viewMonth - 1, 1).toLocaleDateString("en-US", {
+      month: "long",
+      year: "numeric",
+    });
+    return { startDate: start, endDate: end, label };
+  }, [appliedCustomRange, viewMonth, viewYear]);
 
   const storeForSeed = storeFilter === "all" ? "kent" : storeFilter;
   const storeName = storeFilter === "all" ? "All Locations" : COCKPIT_TARGETS[storeFilter].name;
@@ -122,7 +131,11 @@ export default function PnlPage() {
   useEffect(() => {
     let cancelled = false;
     const store = storeFilter === "all" ? "all" : storeFilter;
-    fetch(`/api/dashboard/daily-data?store_id=${encodeURIComponent(store)}&range=60`)
+    const params = new URLSearchParams();
+    params.set("store_id", store);
+    params.set("start", startDate);
+    params.set("end", endDate);
+    fetch(`/api/dashboard/daily-data?${params.toString()}`)
       .then((r) => r.json())
       .then((d) => {
         if (cancelled || !d.sales) return;
@@ -130,7 +143,7 @@ export default function PnlPage() {
       })
       .catch(() => setRangeData(null));
     return () => { cancelled = true; };
-  }, [storeFilter]);
+  }, [storeFilter, startDate, endDate]);
 
   useEffect(() => {
     let cancelled = false;
@@ -165,7 +178,12 @@ export default function PnlPage() {
           "Gas",
           "Water & Sewer",
           "Telephone/Internet/Cable",
+          "Telephone, Internet, Cable",
+          "Electric & Gas",
+          "Electric/Gas/Water",
           "Business Insurance",
+          "Workers Comp",
+          "Medical Insurance",
           "Accounting",
           "Linen and Uniforms",
           "Trash",
@@ -177,7 +195,6 @@ export default function PnlPage() {
           "Bank Service Charges",
           "Repairs & Maintenance",
           "Equipment Rental",
-          "Workers Comp",
           "Pest Control",
           "Storage Rent",
           "Dues & Subscriptions",
@@ -188,7 +205,7 @@ export default function PnlPage() {
           const cat = String((r as any).gl_category ?? "");
           if (!fixedCategories.has(cat)) continue;
           const amt = Number((r as any).debit) || 0;
-          if (!amt) continue;
+          // include zeros so categories explicitly show $0 when present
           byCategory[cat] = (byCategory[cat] ?? 0) + amt;
           total += amt;
         }
@@ -327,6 +344,11 @@ export default function PnlPage() {
     );
   }
 
+  const now = new Date();
+  const currentMonth = now.getMonth() + 1;
+  const currentYear = now.getFullYear();
+  const isCurrentMonth = viewYear === currentYear && viewMonth === currentMonth;
+
   return (
     <div className="space-y-6 min-w-0 overflow-x-hidden pb-28 animate-fade-in">
       {shareToast && (
@@ -366,14 +388,14 @@ export default function PnlPage() {
             <span>{shareGenerating ? "Generating..." : "Share"}</span>
           </button>
         </div>
-        <p className="text-xs text-muted">Current snapshot — how you&apos;re doing right now. Month-to-date.</p>
+        <p className="text-xs text-muted">Snapshot for the selected period — how you&apos;re doing right now.</p>
         {rangeData !== null && pnl.totalSales === 0 && (
           <div className="rounded-xl border border-slate-700 bg-slate-800/50 p-4 text-center text-zinc-500">
             <p className="text-sm">No data for this period.</p>
             <p className="text-xs mt-1">Connect your POS — data syncs daily. <a href="mailto:hello@getprimeos.com" className="text-[#E65100] underline">hello@getprimeos.com</a></p>
           </div>
         )}
-        <div className="flex flex-wrap gap-2 items-center">
+        <div className="flex flex-wrap gap-2 items-center justify-between">
           <select
             value={storeFilter}
             onChange={(e) => setStoreFilter(e.target.value as "all" | CockpitStoreSlug)}
@@ -384,16 +406,65 @@ export default function PnlPage() {
               <option key={slug} value={slug}>{COCKPIT_TARGETS[slug].name}</option>
             ))}
           </select>
-          <button
-            type="button"
-            onClick={() => { if (useCustomRange) setAppliedCustomRange(null); setUseCustomRange(!useCustomRange); }}
-            className="min-h-[44px] rounded-lg border border-zinc-700 bg-zinc-800 px-3 py-2 text-sm text-zinc-400 hover:text-white"
-          >
-            Custom Range
-          </button>
-          {appliedCustomRange && (
-            <button type="button" onClick={() => setAppliedCustomRange(null)} className="min-h-[44px] rounded-lg border border-zinc-600 px-3 py-2 text-xs text-zinc-400 hover:text-white">Clear custom</button>
-          )}
+          <div className="flex items-center gap-2">
+            <div className="flex items-center gap-1">
+              <button
+                type="button"
+                onClick={() => {
+                  const prevMonthDate = viewMonth === 1 ? 12 : viewMonth - 1;
+                  const prevYearDate = viewMonth === 1 ? viewYear - 1 : viewYear;
+                  setViewMonth(prevMonthDate);
+                  setViewYear(prevYearDate);
+                }}
+                className="rounded-lg border border-slate-600 bg-black/30 p-2 text-slate-400 hover:text-white"
+                aria-label="Previous month"
+              >
+                ←
+              </button>
+              <span className="min-w-[120px] text-center text-sm font-medium text-white">
+                {new Date(viewYear, viewMonth - 1, 1).toLocaleDateString("en-US", { month: "long", year: "numeric" })}
+              </span>
+              <button
+                type="button"
+                onClick={() => {
+                  const now = new Date();
+                  const currentMonth = now.getMonth() + 1;
+                  const currentYear = now.getFullYear();
+                  const nextMonthVal = viewMonth === 12 ? 1 : viewMonth + 1;
+                  const nextYearVal = viewMonth === 12 ? viewYear + 1 : viewYear;
+                  if (nextYearVal > currentYear || (nextYearVal === currentYear && nextMonthVal > currentMonth)) {
+                    return;
+                  }
+                  setViewMonth(nextMonthVal);
+                  setViewYear(nextYearVal);
+                }}
+                className="rounded-lg border border-slate-600 bg-black/30 p-2 text-slate-400 hover:text-white disabled:opacity-40"
+                aria-label="Next month"
+                disabled={isCurrentMonth}
+              >
+                →
+              </button>
+            </div>
+            <button
+              type="button"
+              onClick={() => {
+                if (useCustomRange) setAppliedCustomRange(null);
+                setUseCustomRange(!useCustomRange);
+              }}
+              className="min-h-[44px] rounded-lg border border-zinc-700 bg-zinc-800 px-3 py-2 text-sm text-zinc-400 hover:text-white"
+            >
+              Custom Range
+            </button>
+            {appliedCustomRange && (
+              <button
+                type="button"
+                onClick={() => setAppliedCustomRange(null)}
+                className="min-h-[44px] rounded-lg border border-zinc-600 px-3 py-2 text-xs text-zinc-400 hover:text-white"
+              >
+                Clear custom
+              </button>
+            )}
+          </div>
         </div>
         {useCustomRange && (
           <div className="rounded-xl border border-zinc-800/50 shadow-sm bg-zinc-900 p-4 space-y-3">
@@ -474,7 +545,9 @@ export default function PnlPage() {
       <div ref={shareRef}>
       <div className="bg-slate-800 rounded-xl border border-slate-700 overflow-hidden min-w-0">
         <div className="flex justify-between items-center p-4 border-b border-slate-700">
-          <h3 className="text-sm font-semibold text-white">{appliedCustomRange ? `P&L: ${appliedCustomRange.label}` : `${mtdLabel} MTD`}</h3>
+          <h3 className="text-sm font-semibold text-white">
+            {appliedCustomRange ? `P&L: ${appliedCustomRange.label}` : `P&L: ${mtdLabel}`}
+          </h3>
           <span className="text-xs text-slate-400">{storeName}</span>
         </div>
 
@@ -549,10 +622,33 @@ export default function PnlPage() {
             <span className="text-xs text-slate-500 uppercase tracking-wide">Fixed Expenses</span>
             <EducationInfoIcon metricKey="occupancy_pct" size="sm" />
           </div>
-          <LineItem label="Rent / Mortgage" amount={formatDollars(0)} />
-          <LineItem label="Insurance" amount={formatDollars(0)} />
-          <LineItem label="Utilities" amount={formatDollars(0)} />
-          <LineItem label="Loan Payments" amount={formatDollars(0)} />
+          {(() => {
+            const rentTotal =
+              (fixedFromGl.byCategory["Rent Expense"] ?? 0) +
+              (fixedFromGl.byCategory["Storage Rent"] ?? 0);
+            const insuranceTotal =
+              (fixedFromGl.byCategory["Business Insurance"] ?? 0) +
+              (fixedFromGl.byCategory["Workers Comp"] ?? 0) +
+              (fixedFromGl.byCategory["Medical Insurance"] ?? 0);
+            const utilitiesTotal =
+              (fixedFromGl.byCategory["Electricity"] ?? 0) +
+              (fixedFromGl.byCategory["Gas"] ?? 0) +
+              (fixedFromGl.byCategory["Water & Sewer"] ?? 0) +
+              (fixedFromGl.byCategory["Telephone/Internet/Cable"] ?? 0) +
+              (fixedFromGl.byCategory["Telephone, Internet, Cable"] ?? 0) +
+              (fixedFromGl.byCategory["Electric & Gas"] ?? 0) +
+              (fixedFromGl.byCategory["Electric/Gas/Water"] ?? 0);
+            const mappedSum = rentTotal + insuranceTotal + utilitiesTotal;
+            const otherFixed = Math.max(0, fixedFromGl.total - mappedSum);
+            return (
+              <>
+                <LineItem label="Rent / Mortgage" amount={formatDollars(rentTotal)} />
+                <LineItem label="Insurance" amount={formatDollars(insuranceTotal)} />
+                <LineItem label="Utilities" amount={formatDollars(utilitiesTotal)} />
+                <LineItem label="Other Fixed" amount={formatDollars(otherFixed)} />
+              </>
+            );
+          })()}
           <div className="flex justify-between items-center gap-2 py-1.5 mt-1 pt-2 border-t border-zinc-700">
             <div className="flex items-center gap-2 min-w-0">
               <span className="text-slate-200 font-semibold">Total Fixed Expenses</span>

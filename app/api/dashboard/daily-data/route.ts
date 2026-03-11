@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { createClient } from "@supabase/supabase-js";
 
-export const dynamic = "force-dynamic";
+export const dynamic = 'force-dynamic';
 
 // --- FOOD COST % CALCULATION LOCATIONS (for range response) ---
 // RANGE "all" stores (exact lines):
@@ -28,8 +28,14 @@ export async function GET(request: Request) {
     const storeIdParam = searchParams.get("store_id");
     const day = searchParams.get("day");
     const range = searchParams.get("range");
+    const startParam = searchParams.get("start");
+    const endParam = searchParams.get("end");
 
-    console.log(`DAILY-DATA API: store_id=${storeIdParam}, day=${day ?? "n/a"}, range=${range ?? "n/a"}`);
+    console.log(
+      `DAILY-DATA API: store_id=${storeIdParam}, day=${day ?? "n/a"}, range=${
+        range ?? "n/a"
+      }, start=${startParam ?? "n/a"}, end=${endParam ?? "n/a"}`
+    );
 
     if (!storeIdParam) return NextResponse.json({ error: "store_id required" }, { status: 400 });
 
@@ -50,7 +56,7 @@ export async function GET(request: Request) {
       }
     }
 
-    if (day && !range) {
+    if (day && !range && !startParam && !endParam) {
       const dayStart = new Date(day + "T00:00:00Z");
       const rollStart = new Date(dayStart);
       rollStart.setUTCDate(rollStart.getUTCDate() - 6);
@@ -337,6 +343,205 @@ export async function GET(request: Request) {
         fixedExpensesPct30,
         fixedExpensesGapDollars30,
         hasFixedExpensesData,
+      });
+    }
+
+    if (startParam && endParam) {
+      const startISO = startParam;
+      const endISO = endParam;
+
+      if (isAllStores) {
+        const [salesRes, laborRes, purchasesRes] = await Promise.all([
+          supabase
+            .from("foodtec_daily_sales")
+            .select("*")
+            .in("store_id", storeIds)
+            .gte("business_day", startISO)
+            .lte("business_day", endISO)
+            .order("business_day", { ascending: true }),
+          supabase
+            .from("foodtec_daily_labor")
+            .select("*")
+            .in("store_id", storeIds)
+            .gte("business_day", startISO)
+            .lte("business_day", endISO)
+            .order("business_day", { ascending: true }),
+          supabase
+            .from("me_daily_purchases")
+            .select("*")
+            .in("store_id", storeIds)
+            .gte("business_day", startISO)
+            .lte("business_day", endISO)
+            .order("business_day", { ascending: true }),
+        ]);
+        const salesRows = salesRes.data ?? [];
+        const laborRows = laborRes.data ?? [];
+        const purchasesRows = purchasesRes.data ?? [];
+
+        const days = [
+          ...new Set(
+            salesRows
+              .map((r) => r.business_day)
+              .concat(laborRows.map((r) => r.business_day))
+              .concat(purchasesRows.map((r) => r.business_day))
+          ),
+        ]
+          .filter(Boolean)
+          .sort() as string[];
+        const sumByDay = (rows: Record<string, any>[], day: string, key: string) =>
+          rows
+            .filter((r) => r.business_day === day)
+            .reduce((s, r) => s + (Number(r[key]) || 0), 0);
+        const sales = days.map((d) => ({
+          business_day: d,
+          net_sales: sumByDay(salesRows as any[], d, "net_sales"),
+          total_orders: sumByDay(salesRows as any[], d, "total_orders"),
+          dine_in_sales: sumByDay(salesRows as any[], d, "dine_in_sales"),
+          pickup_sales: sumByDay(salesRows as any[], d, "pickup_sales"),
+          delivery_sales: sumByDay(salesRows as any[], d, "delivery_sales"),
+          web_sales: sumByDay(salesRows as any[], d, "web_sales"),
+          doordash_sales: sumByDay(salesRows as any[], d, "doordash_sales"),
+          cash_sales: sumByDay(salesRows as any[], d, "cash_sales"),
+          card_sales: sumByDay(salesRows as any[], d, "card_sales"),
+          house_account_owed: sumByDay(salesRows as any[], d, "house_account_owed"),
+          house_account_received: sumByDay(salesRows as any[], d, "house_account_received"),
+        }));
+        const labor = days.map((d) => ({
+          business_day: d,
+          total_labor_cost: sumByDay(laborRows as any[], d, "total_labor_cost"),
+          total_overtime_cost: sumByDay(laborRows as any[], d, "total_overtime_cost"),
+          regular_hours: sumByDay(laborRows as any[], d, "regular_hours"),
+          overtime_hours: sumByDay(laborRows as any[], d, "overtime_hours"),
+        }));
+        const purchases = days.map((d) => ({
+          business_day: d,
+          total_spend: sumByDay(purchasesRows as any[], d, "total_spend"),
+          food_spend: sumByDay(purchasesRows as any[], d, "food_spend"),
+          paper_spend: sumByDay(purchasesRows as any[], d, "paper_spend"),
+        }));
+
+        const totalNetSales = salesRows.reduce((s, r) => s + (Number((r as any).net_sales) || 0), 0);
+        const totalFoodSpend = purchasesRows.reduce(
+          (s, r) => s + (Number((r as any).food_spend) || 0),
+          0
+        );
+        const totalPaperSpend = purchasesRows.reduce(
+          (s, r) => s + (Number((r as any).paper_spend) || 0),
+          0
+        );
+        const totalLaborCost = laborRows.reduce(
+          (s, r) =>
+            s +
+            (Number((r as any).total_labor_cost) || 0) +
+            (Number((r as any).total_overtime_cost) || 0),
+          0
+        );
+        const foodCostPct =
+          totalNetSales > 0 ? (totalFoodSpend / totalNetSales) * 100 : null;
+        const paperCostPct =
+          totalNetSales > 0 ? (totalPaperSpend / totalNetSales) * 100 : null;
+        const cogsPct =
+          totalNetSales > 0
+            ? ((totalFoodSpend + totalPaperSpend + totalLaborCost) / totalNetSales) * 100
+            : null;
+
+        return NextResponse.json({
+          range: null,
+          sales,
+          labor,
+          purchases,
+          totalNetSales,
+          totalFoodSpend,
+          totalPaperSpend,
+          totalLaborCost,
+          foodCostPct,
+          paperCostPct,
+          cogsPct,
+        });
+      }
+
+      const [salesRes, laborRes, purchasesRes, productsRes] = await Promise.all([
+        supabase
+          .from("foodtec_daily_sales")
+          .select("*")
+          .eq("store_id", storeId)
+          .gte("business_day", startISO)
+          .lte("business_day", endISO)
+          .order("business_day", { ascending: true }),
+        supabase
+          .from("foodtec_daily_labor")
+          .select("*")
+          .eq("store_id", storeId)
+          .gte("business_day", startISO)
+          .lte("business_day", endISO)
+          .order("business_day", { ascending: true }),
+        supabase
+          .from("me_daily_purchases")
+          .select("*")
+          .eq("store_id", storeId)
+          .gte("business_day", startISO)
+          .lte("business_day", endISO)
+          .order("business_day", { ascending: true }),
+        supabase
+          .from("me_products")
+          .select("latest_price, category")
+          .eq("store_id", storeId)
+          .neq("category", "paper")
+          .neq("category", "beverages"),
+      ]);
+
+      const salesRows = salesRes.data ?? [];
+      const laborRows = laborRes.data ?? [];
+      const purchasesRows = purchasesRes.data ?? [];
+      const productsRows = productsRes.data ?? [];
+      const totalNetSales = salesRows.reduce(
+        (s, r) => s + (Number((r as any).net_sales) || 0),
+        0
+      );
+      const totalFoodSpend = purchasesRows.reduce(
+        (s, r) => s + (Number((r as any).food_spend) || 0),
+        0
+      );
+      const totalPaperSpend = purchasesRows.reduce(
+        (s, r) => s + (Number((r as any).paper_spend) || 0),
+        0
+      );
+      const totalLaborCost = laborRows.reduce(
+        (s, r) =>
+          s +
+          (Number((r as any).total_labor_cost) || 0) +
+          (Number((r as any).total_overtime_cost) || 0),
+        0
+      );
+      const foodCostPct =
+        totalNetSales > 0 ? (totalFoodSpend / totalNetSales) * 100 : null;
+      const paperCostPct =
+        totalNetSales > 0 ? (totalPaperSpend / totalNetSales) * 100 : null;
+      const cogsPct =
+        totalNetSales > 0
+          ? ((totalFoodSpend + totalPaperSpend + totalLaborCost) / totalNetSales) * 100
+          : null;
+      const theoreticalFoodCostPct =
+        productsRows.length > 0
+          ? productsRows.reduce(
+              (s, r) => s + (Number((r as any).latest_price) || 0),
+              0
+            ) / productsRows.length
+          : null;
+
+      return NextResponse.json({
+        range: null,
+        sales: salesRows,
+        labor: laborRows,
+        purchases: purchasesRows,
+        totalNetSales,
+        totalFoodSpend,
+        totalPaperSpend,
+        totalLaborCost,
+        foodCostPct,
+        paperCostPct,
+        cogsPct,
+        theoretical_food_cost_pct: theoreticalFoodCostPct,
       });
     }
 
