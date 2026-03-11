@@ -366,7 +366,7 @@ export default function PnlPage() {
       fixedPct,
       netProfitPct,
     };
-  }, [rangeData, startDate, endDate, fixedBreakdown, fixedFromGl.foodGl]);
+  }, [rangeData, startDate, endDate, fixedBreakdown, fixedFromGl]);
 
   async function handleShare() {
     setShareGenerating(true);
