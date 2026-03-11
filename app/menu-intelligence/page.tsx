@@ -1,6 +1,7 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useMemo, useState, useEffect, useCallback } from "react";
+import { createPortal } from "react-dom";
 import { ChevronDown, ChevronRight } from "lucide-react";
 import { cn } from "@/lib/utils";
 import type { MenuItem } from "@/src/lib/menu-data";
@@ -16,6 +17,24 @@ import { formatDollars } from "@/src/lib/formatters";
 import { EducationInfoIcon } from "@/src/components/education/InfoIcon";
 import { DataDisclaimer } from "@/src/components/ui/DataDisclaimer";
 import { SmartQuestion } from "@/src/components/ui/SmartQuestion";
+
+type KitchenIqItem = {
+  item_name: string;
+  size: string;
+  sizeDisplay: string;
+  category: string;
+  total_units: number;
+  total_revenue: number;
+  avg_unit_price: number;
+  cost_to_make: number | null;
+  includes_disposables: boolean;
+  notes: string | null;
+};
+
+type KitchenIqData = {
+  catalog: KitchenIqItem[];
+  actualHillcrestLast30: number;
+};
 
 const PRICING_GAPS = [
   { item_name: "Large Pepperoni Pizza", store_id: "kent", menuPrice: 29.95, avgActualPrice: 27.4, unitsSold: 180, gap: -2.55, gapPct: -8.5, cause: "Possible causes: unapplied POS price updates, staff discounts, coupon overuse, or incorrect ringing." },
@@ -92,8 +111,60 @@ export default function MenuIntelligencePage() {
   const newUser = isNewUser(session);
   const newUserStoreName = getNewUserStoreName(session);
   const [storeId, setStoreId] = useState("all");
-  const [view, setView] = useState<"menu" | "compare" | "gaps" | "pricing-gaps">("menu");
+  const [view, setView] = useState<"menu" | "compare" | "gaps" | "pricing-gaps" | "kitchen-iq">("menu");
   const [openCategories, setOpenCategories] = useState<Set<string>>(new Set());
+
+  const [kitchenIqData, setKitchenIqData] = useState<KitchenIqData | null>(null);
+  const [kitchenIqLoading, setKitchenIqLoading] = useState(false);
+  const [selectedKitchenItem, setSelectedKitchenItem] = useState<KitchenIqItem | null>(null);
+  const [costInput, setCostInput] = useState("");
+  const [includesDisposables, setIncludesDisposables] = useState(false);
+  const [costSheetMounted, setCostSheetMounted] = useState(false);
+  const [savingCost, setSavingCost] = useState(false);
+
+  useEffect(() => {
+    if (view !== "kitchen-iq") return;
+    let cancelled = false;
+    setKitchenIqLoading(true);
+    fetch("/api/kitchen-iq")
+      .then((r) => r.json())
+      .then((d) => {
+        if (!cancelled && d.catalog) setKitchenIqData({ catalog: d.catalog, actualHillcrestLast30: d.actualHillcrestLast30 ?? 0 });
+      })
+      .catch(() => { if (!cancelled) setKitchenIqData(null); })
+      .finally(() => { if (!cancelled) setKitchenIqLoading(false); });
+    return () => { cancelled = true; };
+  }, [view]);
+
+  useEffect(() => {
+    if (selectedKitchenItem) {
+      setCostInput(selectedKitchenItem.cost_to_make != null ? String(selectedKitchenItem.cost_to_make) : "");
+      setIncludesDisposables(selectedKitchenItem.includes_disposables);
+      const t = requestAnimationFrame(() => setCostSheetMounted(true));
+      return () => cancelAnimationFrame(t);
+    }
+    setCostSheetMounted(false);
+  }, [selectedKitchenItem]);
+
+  const refetchKitchenIq = useCallback(() => {
+    fetch("/api/kitchen-iq")
+      .then((r) => r.json())
+      .then((d) => {
+        if (d.catalog) setKitchenIqData({ catalog: d.catalog, actualHillcrestLast30: d.actualHillcrestLast30 ?? 0 });
+      })
+      .catch(() => {});
+  }, []);
+
+  useEffect(() => {
+    if (!selectedKitchenItem) return;
+    const onEscape = (e: KeyboardEvent) => e.key === "Escape" && setSelectedKitchenItem(null);
+    document.addEventListener("keydown", onEscape);
+    document.body.style.overflow = "hidden";
+    return () => {
+      document.removeEventListener("keydown", onEscape);
+      document.body.style.overflow = "";
+    };
+  }, [selectedKitchenItem]);
 
   const items = useMemo(() => getMenuByStore(storeId), [storeId]);
   const categories = useMemo(() => getCategories(storeId), [storeId]);
@@ -245,6 +316,18 @@ export default function MenuIntelligencePage() {
           )}
         >
           Price Gaps
+        </button>
+        <button
+          type="button"
+          onClick={() => setView("kitchen-iq")}
+          className={cn(
+            "flex-1 py-2 rounded-md text-xs font-medium transition-colors",
+            view === "kitchen-iq"
+              ? "bg-slate-700 text-white"
+              : "text-slate-400 hover:text-slate-300"
+          )}
+        >
+          Kitchen IQ
         </button>
       </div>
 
@@ -454,10 +537,247 @@ export default function MenuIntelligencePage() {
         );
       })()}
 
-      <DataDisclaimer
-        confidence="high"
-        details="Prices sourced directly from your public menu websites. Last synced February 23, 2026."
-      />
+      {view === "kitchen-iq" && (() => {
+        const catalog = kitchenIqData?.catalog ?? [];
+        const totalItems = catalog.length;
+        const costedItems = catalog.filter((i) => i.cost_to_make != null && i.cost_to_make > 0);
+        const costedCount = costedItems.length;
+        const pct = totalItems > 0 ? Math.round((costedCount / totalItems) * 100) : 0;
+        const theoretical = costedItems.reduce((s, i) => s + (i.cost_to_make ?? 0) * i.total_units, 0);
+        const totalRevenue30 = catalog.reduce((s, i) => s + i.total_revenue, 0);
+        const costedRevenue = costedItems.reduce((s, i) => s + i.total_revenue, 0);
+        const costedRevenuePct = totalRevenue30 > 0 ? Math.round((costedRevenue / totalRevenue30) * 100) : 0;
+        const actualHillcrest = kitchenIqData?.actualHillcrestLast30 ?? 0;
+        const variance = actualHillcrest - theoretical;
+        const uncostedByRevenue = catalog.filter((i) => i.cost_to_make == null || i.cost_to_make <= 0).slice(0, 5);
+        const potentialVisibility = uncostedByRevenue.reduce((s, i) => s + i.total_revenue, 0);
+
+        const milestones = [
+          { min: 0, max: 0, label: "Cost your menu to unlock your true margins" },
+          { min: 1, max: 1, label: "Started 🔥", count: 1 },
+          { min: 25, max: 49, label: "Top items costed — estimates unlocked" },
+          { min: 50, max: 74, label: "Halfway — food cost model active" },
+          { min: 75, max: 99, label: "Almost there 💪" },
+          { min: 100, max: 100, label: "Kitchen IQ: Elite 🏆 — Full theoretical food cost active" },
+        ];
+        let milestoneLabel = milestones[0].label;
+        if (costedCount >= 1 && pct < 25) milestoneLabel = milestones[1].label;
+        else if (pct >= 25 && pct < 50) milestoneLabel = milestones[2].label;
+        else if (pct >= 50 && pct < 75) milestoneLabel = milestones[3].label;
+        else if (pct >= 75 && pct < 100) milestoneLabel = milestones[4].label;
+        else if (pct >= 100) milestoneLabel = milestones[5].label;
+
+        const foodCostStatus = (pctVal: number) =>
+          pctVal <= 32 ? "✅ Healthy" : pctVal <= 40 ? "⚠️ Watch" : "🔴 Investigate";
+
+        return (
+          <div className="space-y-4">
+            <h2 className="text-2xl font-bold text-white">Kitchen IQ</h2>
+
+            {kitchenIqLoading ? (
+              <div className="bg-slate-800 rounded-xl border border-slate-700 p-6 text-center text-slate-400 text-sm">Loading…</div>
+            ) : (
+              <>
+                <div className="bg-slate-800 rounded-xl border border-slate-700 p-4">
+                  <div className="flex justify-between text-sm mb-2">
+                    <span className="text-slate-400">{costedCount} of {totalItems} items costed — {pct}%</span>
+                  </div>
+                  <div className="h-2 rounded-full bg-slate-700 overflow-hidden">
+                    <div
+                      className="h-full bg-emerald-500 transition-all duration-300"
+                      style={{ width: `${Math.min(100, pct)}%` }}
+                    />
+                  </div>
+                  <p className="text-xs text-slate-500 mt-2">{milestoneLabel}</p>
+                </div>
+
+                <p className="text-xs text-slate-400">Start with your top 20 — they drive 80% of your food cost story.</p>
+
+                {costedCount >= 10 && (
+                  <div className="bg-slate-800 rounded-xl border border-slate-700 p-4">
+                    <h3 className="text-sm font-semibold text-white mb-2">Theoretical food cost</h3>
+                    <p className="text-lg font-bold text-white">{formatDollars(theoretical)} <span className="text-sm font-normal text-slate-400">this month</span></p>
+                    <p className="text-xs text-slate-500 mt-1">Based on {costedCount} costed items representing {costedRevenuePct}% of revenue</p>
+                    <p className="text-xs text-slate-400 mt-1">Actual food cost (Hillcrest): {formatDollars(actualHillcrest)}</p>
+                    <p className="text-xs text-slate-400 mt-1">Variance: {formatDollars(variance)} — Possible waste/theft/portioning</p>
+                  </div>
+                )}
+
+                <div className="space-y-2">
+                  <h3 className="text-sm font-semibold text-white">Items</h3>
+                  {catalog.map((item) => {
+                    const costed = item.cost_to_make != null && item.cost_to_make > 0;
+                    const foodCostPct = costed && item.avg_unit_price > 0
+                      ? ((item.cost_to_make ?? 0) / item.avg_unit_price) * 100
+                      : null;
+                    const profitPerItem = costed && item.avg_unit_price > 0
+                      ? item.avg_unit_price - (item.cost_to_make ?? 0)
+                      : null;
+                    return (
+                      <button
+                        key={`${item.item_name}|${item.size}|${item.category}`}
+                        type="button"
+                        onClick={() => setSelectedKitchenItem(item)}
+                        className="w-full text-left bg-slate-800 rounded-xl border border-slate-700 p-3 flex items-center gap-3"
+                      >
+                        <span className={cn("w-2 h-2 rounded-full shrink-0", costed ? "bg-emerald-500" : "bg-amber-500")} />
+                        <div className="min-w-0 flex-1">
+                          <div className="font-medium text-white">{item.item_name} {item.sizeDisplay}</div>
+                          <div className="flex flex-wrap gap-2 mt-1">
+                            <span className="px-1.5 py-0.5 rounded text-[10px] bg-slate-700 text-slate-400">{item.category}</span>
+                            <span className="text-xs text-slate-500">{item.total_units} sold</span>
+                            <span className="text-xs text-slate-400">Sells for: ${(item.avg_unit_price || 0).toFixed(2)}</span>
+                          </div>
+                          <div className="mt-1 text-xs">
+                            Cost to make:{" "}
+                            {costed ? (
+                              <span className="text-emerald-400">${(item.cost_to_make ?? 0).toFixed(2)} ✓</span>
+                            ) : (
+                              <span className="text-slate-500">Not costed</span>
+                            )}
+                            {foodCostPct != null && (
+                              <span className="ml-2 text-slate-400">Food cost {foodCostPct.toFixed(1)}%</span>
+                            )}
+                            {profitPerItem != null && (
+                              <span className="ml-2 text-slate-400">Margin {formatDollars(profitPerItem)}</span>
+                            )}
+                          </div>
+                        </div>
+                        {costed ? <span className="text-emerald-400 shrink-0">✓</span> : null}
+                      </button>
+                    );
+                  })}
+                </div>
+
+                {uncostedByRevenue.length > 0 && (
+                  <div className="bg-slate-800 rounded-xl border border-slate-700 p-4">
+                    <h3 className="text-sm font-semibold text-white mb-2">Biggest margin opportunities</h3>
+                    <p className="text-xs text-slate-400 mb-2">Top 5 uncosted items by revenue:</p>
+                    <ul className="space-y-1 text-xs text-slate-300">
+                      {uncostedByRevenue.map((i) => (
+                        <li key={`${i.item_name}|${i.size}|${i.category}`}>{i.item_name} {i.sizeDisplay} — {formatDollars(i.total_revenue)} revenue</li>
+                      ))}
+                    </ul>
+                    <p className="text-xs text-amber-400 mt-2">Cost these 5 items to unlock {formatDollars(potentialVisibility)} in potential savings visibility.</p>
+                  </div>
+                )}
+              </>
+            )}
+
+            {selectedKitchenItem && typeof document !== "undefined" && createPortal(
+              <div
+                className="fixed inset-0 z-[9999] flex items-end justify-center sm:items-center"
+                aria-modal="true"
+                role="dialog"
+              >
+                <div
+                  className="absolute inset-0 bg-black/60 backdrop-blur-sm transition-opacity duration-150"
+                  style={{ opacity: costSheetMounted ? 1 : 0 }}
+                  onClick={() => setSelectedKitchenItem(null)}
+                  aria-hidden="true"
+                />
+                <div
+                  className="relative w-full max-w-lg bg-slate-800 rounded-t-2xl max-h-[85vh] overflow-y-auto shadow-2xl transition-all duration-200 ease-out sm:rounded-2xl"
+                  style={{
+                    transform: costSheetMounted ? "translateY(0) scale(1)" : "translateY(100%) scale(0.95)",
+                    opacity: costSheetMounted ? 1 : 0,
+                  }}
+                  onClick={(e) => e.stopPropagation()}
+                >
+                  <div className="p-5 pt-6 pb-8">
+                    <button
+                      type="button"
+                      onClick={() => setSelectedKitchenItem(null)}
+                      className="absolute top-3 right-3 z-10 p-2 rounded-lg text-slate-400 hover:text-white hover:bg-slate-700"
+                      aria-label="Close"
+                    >
+                      <span className="text-lg leading-none">×</span>
+                    </button>
+                    <h2 className="text-lg font-bold text-white pr-8">{selectedKitchenItem.item_name} {selectedKitchenItem.sizeDisplay}</h2>
+                    <p className="text-sm text-slate-400 mt-1">Sells for: ${(selectedKitchenItem.avg_unit_price || 0).toFixed(2)}</p>
+                    <div className="mt-4">
+                      <label className="block text-xs text-slate-500 mb-1">Cost to make ($)</label>
+                      <input
+                        type="number"
+                        min={0}
+                        step={0.01}
+                        inputMode="decimal"
+                        value={costInput}
+                        onChange={(e) => setCostInput(e.target.value)}
+                        className="w-full min-h-[48px] px-3 rounded-xl border border-slate-600 bg-slate-900 text-white text-lg font-semibold"
+                      />
+                    </div>
+                    <label className="flex items-center gap-2 mt-4 cursor-pointer">
+                      <input
+                        type="checkbox"
+                        checked={includesDisposables}
+                        onChange={(e) => setIncludesDisposables(e.target.checked)}
+                        className="rounded border-slate-600"
+                      />
+                      <span className="text-sm text-slate-400">Includes box/disposables</span>
+                    </label>
+                    {(() => {
+                      const cost = parseFloat(costInput);
+                      const valid = !Number.isNaN(cost) && cost >= 0;
+                      const price = selectedKitchenItem.avg_unit_price || 0;
+                      const foodCostPct = valid && price > 0 ? (cost / price) * 100 : null;
+                      const profitPerItem = valid && price > 0 ? price - cost : null;
+                      const monthlyProfit = profitPerItem != null ? profitPerItem * selectedKitchenItem.total_units : null;
+                      return (
+                        <div className="mt-4 space-y-2 text-sm">
+                          {foodCostPct != null && <p className="text-slate-300">Food Cost %: {foodCostPct.toFixed(1)}%</p>}
+                          {profitPerItem != null && <p className="text-slate-300">Profit per item: {formatDollars(profitPerItem)}</p>}
+                          {monthlyProfit != null && <p className="text-slate-300">Monthly profit at current volume: {formatDollars(monthlyProfit)}</p>}
+                          {foodCostPct != null && <p className="font-medium">{foodCostStatus(foodCostPct)}</p>}
+                        </div>
+                      );
+                    })()}
+                    <button
+                      type="button"
+                      disabled={savingCost || (parseFloat(costInput) ?? NaN) < 0}
+                      onClick={async () => {
+                        const cost = parseFloat(costInput);
+                        if (Number.isNaN(cost) || cost < 0) return;
+                        setSavingCost(true);
+                        try {
+                          const res = await fetch("/api/kitchen-iq", {
+                            method: "POST",
+                            headers: { "Content-Type": "application/json" },
+                            body: JSON.stringify({
+                              item_name: selectedKitchenItem.item_name,
+                              size: selectedKitchenItem.size,
+                              category: selectedKitchenItem.category,
+                              cost_to_make: cost,
+                              includes_disposables: includesDisposables,
+                            }),
+                          });
+                          if (res.ok) {
+                            refetchKitchenIq();
+                            setSelectedKitchenItem(null);
+                          }
+                        } finally {
+                          setSavingCost(false);
+                        }
+                      }}
+                      className="mt-6 w-full py-3 rounded-xl bg-emerald-600 text-white font-semibold disabled:opacity-50"
+                    >
+                      {savingCost ? "Saving…" : "Save Cost"}
+                    </button>
+                  </div>
+                </div>
+              </div>,
+              document.body
+            )}
+          </div>
+        );
+      })()}
+
+      {view !== "kitchen-iq" && (
+        <DataDisclaimer
+          confidence="high"
+          details="Prices sourced directly from your public menu websites. Last synced February 23, 2026."
+        />
+      )}
     </div>
   );
 }
