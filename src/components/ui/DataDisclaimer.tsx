@@ -1,11 +1,15 @@
 "use client";
 
+import { EducationInfoIcon } from "@/src/components/education/InfoIcon";
+
 interface DataDisclaimerProps {
   confidence: "high" | "medium" | "low" | "no-data";
   details?: string;
+  /** When set, shows (ⓘ) next to the Data Confidence label; opens education modal. */
+  educationMetricKey?: string;
 }
 
-export function DataDisclaimer({ confidence, details }: DataDisclaimerProps) {
+export function DataDisclaimer({ confidence, details, educationMetricKey }: DataDisclaimerProps) {
   const configs = {
     high: { color: "bg-emerald-400", label: "High", desc: "Based on 6+ months of consistent data." },
     medium: { color: "bg-amber-400", label: "Medium", desc: "Based on partial data. Import more months for higher accuracy." },
@@ -19,6 +23,7 @@ export function DataDisclaimer({ confidence, details }: DataDisclaimerProps) {
       <div className="flex items-center gap-2 mb-1">
         <div className={`w-2 h-2 rounded-full ${cfg.color}`} />
         <span className="text-xs text-slate-400 font-medium">Data Confidence: {cfg.label}</span>
+        {educationMetricKey && <EducationInfoIcon metricKey={educationMetricKey} size="sm" />}
       </div>
       <p className="text-xs text-slate-500">{details || cfg.desc}</p>
       <p className="text-xs text-slate-600 mt-1">Calculations are based on your imported data. Verify against your actual financial records.</p>

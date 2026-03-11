@@ -1365,4 +1365,62 @@ export const EDUCATION_CONTENT: Record<string, EducationEntry> = {
       "Consider reviewing every misc charge at least once a year. Small recurring fees add up.",
     ],
   },
+
+  // Food Cost Analysis page — card-specific education
+  fca_actual_food_cost: {
+    title: "Actual Food Cost",
+    whatItMeans:
+      "Food cost % = total Hillcrest invoices ÷ net sales revenue. Lower is better. Best-in-class pizza operations run 28-32%. Yours includes all Hillcrest deliveries logged in MarginEdge.",
+    whenRedPlaybook: [
+      "Use this metric to track how your real spend compares to revenue and benchmarks.",
+    ],
+  },
+  fca_last_30_days: {
+    title: "Last 30 Days",
+    whatItMeans:
+      "This is a rolling 30-day window — not a calendar month. It blends invoice dates from MarginEdge with daily sales from your POS. Useful for spotting trends in real time.",
+    whenRedPlaybook: [
+      "Use this rolling view to spot trends before month-close.",
+    ],
+  },
+  fca_industry_benchmark: {
+    title: "Industry Benchmark",
+    whatItMeans:
+      "Benchmark range 28-32% is sourced from Toast Restaurant Industry Report 2024 for pizza operations. Your gap in dollars shows what you would save monthly if you hit the upper benchmark. This does not account for menu price differences or market.",
+    whenRedPlaybook: [
+      "Use this benchmark as a directional target; your market and menu may differ.",
+    ],
+  },
+  fca_category_breakdown: {
+    title: "Category Breakdown",
+    whatItMeans:
+      "Food = raw ingredients. Disposables = boxes, bags, napkins. Beverages = sodas and drinks. A rising Disposables % may indicate over-boxing or waste. A rising Beverages % may indicate shrinkage.",
+    whenRedPlaybook: [
+      "Track category mix over time to spot over-boxing, waste, or beverage shrinkage.",
+    ],
+  },
+  fca_kitchen_score: {
+    title: "Kitchen Score",
+    whatItMeans:
+      "Your Kitchen Score compares this month's food cost % against your own historical baseline — not an industry average. It learns your operation. Grade improves automatically as your food cost aligns with your baseline. A = at or below your baseline. B = within 1.5% above. C = 1.5-4% above. D = 4-7% above. F = 7%+ above.",
+    whenRedPlaybook: [
+      "Use your grade to prioritize which months need attention vs which are on track.",
+    ],
+  },
+  fca_baseline: {
+    title: "Baseline",
+    whatItMeans:
+      "Your baseline is the average food cost % from all complete months in PrimeOS. It represents YOUR normal — not an industry standard. Confidence increases as more months of data accumulate. 4+ months = reliable baseline.",
+    whenRedPlaybook: [
+      "More complete months improve baseline reliability; avoid comparing to baseline with fewer than 4 months.",
+    ],
+  },
+  fca_data_confidence: {
+    title: "Data Confidence",
+    whatItMeans:
+      "High confidence means both invoice data from MarginEdge and sales data from FoodTec are present and reconciled. If either source is missing, confidence drops and calculations become estimates.",
+    whenRedPlaybook: [
+      "Ensure both MarginEdge and FoodTec are synced for the most accurate food cost view.",
+    ],
+  },
 };

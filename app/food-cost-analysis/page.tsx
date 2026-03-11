@@ -376,14 +376,14 @@ export default function FoodCostAnalysisPage() {
       <div className="bg-slate-800 rounded-xl border border-slate-700 p-4 mb-4">
         <div className="flex items-center gap-2 mb-3">
           <h3 className="text-xs text-slate-500 uppercase tracking-wide">Actual food cost</h3>
-          <EducationInfoIcon metricKey="actual_food_cost" size="sm" />
+          <EducationInfoIcon metricKey="fca_actual_food_cost" size="sm" />
         </div>
 
         <div className="grid grid-cols-2 gap-3 mb-3">
           <div>
             <div className="flex items-center gap-1">
               <span className="text-xs text-slate-500">Actual</span>
-              <EducationInfoIcon metricKey="actual_food_cost" size="sm" />
+              <EducationInfoIcon metricKey="fca_actual_food_cost" size="sm" />
             </div>
             <div className="text-lg text-red-400 font-bold">{safeDollars(totalFood)}</div>
             <div className="text-[10px] text-slate-600">
@@ -431,7 +431,10 @@ export default function FoodCostAnalysisPage() {
       {rangeData !== null && totalSales > 0 && (
         <>
           <div className="bg-slate-800 rounded-xl border border-slate-700 p-4 mb-4">
-            <h3 className="text-sm font-semibold text-white mb-2">Last 30 days — Actual food cost</h3>
+            <div className="flex items-center gap-2 mb-2">
+              <h3 className="text-sm font-semibold text-white">Last 30 days — Actual food cost</h3>
+              <EducationInfoIcon metricKey="fca_last_30_days" size="sm" />
+            </div>
             <p className="text-xs text-slate-500">Blended from MarginEdge invoices and POS sales.</p>
             <p className="text-2xl font-bold text-white mt-2">
                   {hasPurchaseData ? (
@@ -445,7 +448,10 @@ export default function FoodCostAnalysisPage() {
           </div>
 
           <div className="bg-slate-800 rounded-xl border border-slate-700 p-4 mb-4">
-            <h3 className="text-sm font-semibold text-white mb-1">Industry benchmark — pizza operations</h3>
+            <div className="flex items-center gap-2 mb-1">
+              <h3 className="text-sm font-semibold text-white">Industry benchmark — pizza operations</h3>
+              <EducationInfoIcon metricKey="fca_industry_benchmark" size="sm" />
+            </div>
             <p className="text-xs text-slate-500 mb-2">Typical food cost benchmark: 28–32% of net sales.</p>
             {hasPurchaseData && totalSales > 0 ? (
               <>
@@ -480,7 +486,10 @@ export default function FoodCostAnalysisPage() {
           </div>
 
           <div className="bg-slate-800 rounded-xl border border-slate-700 p-4 mb-4">
-            <h3 className="text-sm font-semibold text-white mb-2">Category breakdown — where the spend goes</h3>
+            <div className="flex items-center gap-2 mb-2">
+              <h3 className="text-sm font-semibold text-white">Category breakdown — where the spend goes</h3>
+              <EducationInfoIcon metricKey="fca_category_breakdown" size="sm" />
+            </div>
             {hasPurchaseData && totalPurchases > 0 ? (
               <div className="grid grid-cols-3 gap-3 text-xs">
                 <div>
@@ -509,7 +518,7 @@ export default function FoodCostAnalysisPage() {
         </>
       )}
 
-      <DataDisclaimer confidence="high" details="Actual food cost powered by MarginEdge invoices and POS sales. Benchmarks are industry ranges for pizza operations." />
+      <DataDisclaimer confidence="high" details="Actual food cost powered by MarginEdge invoices and POS sales. Benchmarks are industry ranges for pizza operations." educationMetricKey="fca_data_confidence" />
 
       {/* Your Baseline — Expected vs Actual */}
       <section className="mt-6 space-y-4">
@@ -557,7 +566,10 @@ export default function FoodCostAnalysisPage() {
           <>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div className="bg-slate-800 rounded-xl border border-slate-700 p-4">
-                <h3 className="text-sm font-semibold text-white mb-2">Baseline</h3>
+                <div className="flex items-center gap-2 mb-2">
+                  <h3 className="text-sm font-semibold text-white">Baseline</h3>
+                  <EducationInfoIcon metricKey="fca_baseline" size="sm" />
+                </div>
                 <p className="text-2xl font-bold text-white">
                   {baselineData.baselinePct != null ? safePct(baselineData.baselinePct) : "—"}
                 </p>
@@ -583,9 +595,12 @@ export default function FoodCostAnalysisPage() {
               </div>
 
               <div className="bg-slate-800 rounded-xl border border-slate-700 p-4">
-                <p className="text-[10px] font-semibold tracking-[0.2em] text-slate-500 uppercase">
-                  Kitchen Score — food cost efficiency
-                </p>
+                <div className="flex items-center gap-2">
+                  <p className="text-[10px] font-semibold tracking-[0.2em] text-slate-500 uppercase">
+                    Kitchen Score — food cost efficiency
+                  </p>
+                  <EducationInfoIcon metricKey="fca_kitchen_score" size="sm" />
+                </div>
                 <div className={`mt-2 text-5xl sm:text-6xl font-black tabular-nums ${getKitchenGradeColorClass(baselineData.currentGrade)}`}>
                   {baselineData.currentGrade ?? "—"}
                 </div>
