@@ -246,6 +246,13 @@ export default function PnlPage() {
             foodGl += amt;
           }
         }
+        console.log("GP P&L fixedFromGl agg", {
+          monthKey,
+          storeFilter,
+          storeId,
+          foodGl,
+          byCategory,
+        });
         if (!cancelled) {
           setFixedFromGl({
             total,
@@ -290,7 +297,7 @@ export default function PnlPage() {
   }, [fixedFromGl]);
 
   const pnl = useMemo(() => {
-    if (!rangeData) {
+    if (!rangeData?.sales?.length) {
       const totalFixed = fixedBreakdown.totalFixed;
       const totalSales = 0;
       const totalFood = fixedFromGl.foodGl ?? 0;
