@@ -36,7 +36,18 @@ type KitchenIqData = {
   actualHillcrestLast30: number;
 };
 
-const PRICING_GAPS = [
+type PricingGapItem = {
+  item_name: string;
+  store_id: string;
+  menuPrice: number;
+  avgActualPrice: number;
+  unitsSold: number;
+  gap: number;
+  gapPct: number;
+  cause: string;
+};
+
+const PRICING_GAPS: PricingGapItem[] = [
   { item_name: "Large Pepperoni Pizza", store_id: "kent", menuPrice: 29.95, avgActualPrice: 27.4, unitsSold: 180, gap: -2.55, gapPct: -8.5, cause: "Possible causes: unapplied POS price updates, staff discounts, coupon overuse, or incorrect ringing." },
   { item_name: "Large Cheese Pizza", store_id: "kent", menuPrice: 15.95, avgActualPrice: 15.2, gapPct: -4.7, unitsSold: 420, gap: -0.75, cause: "Within acceptable range. Minor variance likely from loyalty discounts." },
   { item_name: "Traditional Wings 10pc", store_id: "kent", menuPrice: 15.95, avgActualPrice: 14.5, unitsSold: 140, gap: -1.45, gapPct: -9.1, cause: "Possible causes: combo pricing applied incorrectly, or manual price override at register." },
@@ -122,6 +133,17 @@ export default function MenuIntelligencePage() {
   const [costSheetMounted, setCostSheetMounted] = useState(false);
   const [savingCost, setSavingCost] = useState(false);
 
+  const [selectedPricingGap, setSelectedPricingGap] = useState<PricingGapItem | null>(null);
+  const [priceGapSheetMounted, setPriceGapSheetMounted] = useState(false);
+  const [selectedCompareItem, setSelectedCompareItem] = useState<{
+    item_name: string;
+    commonSizes: string[];
+    stores: { store_id: string; storeName: string; sizes: { size_name: string; price: number }[] }[];
+    gapPct: number;
+  } | null>(null);
+  const [selectedCompareSize, setSelectedCompareSize] = useState<string | null>(null);
+  const [compareSheetMounted, setCompareSheetMounted] = useState(false);
+
   useEffect(() => {
     if (view !== "kitchen-iq") return;
     let cancelled = false;
@@ -165,6 +187,39 @@ export default function MenuIntelligencePage() {
       document.body.style.overflow = "";
     };
   }, [selectedKitchenItem]);
+
+  useEffect(() => {
+    if (selectedPricingGap) {
+      const t = requestAnimationFrame(() => setPriceGapSheetMounted(true));
+      return () => cancelAnimationFrame(t);
+    }
+    setPriceGapSheetMounted(false);
+  }, [selectedPricingGap]);
+
+  useEffect(() => {
+    if (selectedCompareItem) {
+      const t = requestAnimationFrame(() => setCompareSheetMounted(true));
+      return () => cancelAnimationFrame(t);
+    }
+    setCompareSheetMounted(false);
+  }, [selectedCompareItem]);
+
+  useEffect(() => {
+    if (!selectedPricingGap && !selectedCompareItem) return;
+    const onEscape = (e: KeyboardEvent) => {
+      if (e.key === "Escape") {
+        setSelectedPricingGap(null);
+        setSelectedCompareItem(null);
+        setSelectedCompareSize(null);
+      }
+    };
+    document.addEventListener("keydown", onEscape);
+    document.body.style.overflow = "hidden";
+    return () => {
+      document.removeEventListener("keydown", onEscape);
+      document.body.style.overflow = "";
+    };
+  }, [selectedPricingGap, selectedCompareItem]);
 
   const items = useMemo(() => getMenuByStore(storeId), [storeId]);
   const categories = useMemo(() => getCategories(storeId), [storeId]);
@@ -412,50 +467,73 @@ export default function MenuIntelligencePage() {
             </h3>
             <EducationInfoIcon metricKey="menu_compare" />
           </div>
-          {comparableWithGaps.map((item) => (
-            <div
-              key={item.item_name}
-              className="bg-slate-800 rounded-xl border border-slate-700 p-3 mb-2"
-            >
-              <div className="flex items-center justify-between gap-2 mb-2 flex-wrap">
-                <span className="text-sm font-medium text-white min-w-0">
-                  {item.item_name}
-                </span>
-                {item.hasLargeGap && item.stores.length >= 2 && (
-                  <span className="px-1.5 py-0.5 rounded text-[10px] font-medium bg-amber-600/20 text-amber-400 border border-amber-700/30 shrink-0">
-                    {Math.round(item.gapPct)}% gap
+          {comparableWithGaps.map((item) => {
+            const gapBadgeClass =
+              item.gapPct < 10
+                ? "bg-slate-600/20 text-slate-400 border border-slate-600/30"
+                : item.gapPct < 25
+                  ? "bg-amber-600/20 text-amber-400 border border-amber-700/30"
+                  : "bg-red-600/20 text-red-400 border border-red-700/30";
+            return (
+              <button
+                key={item.item_name}
+                type="button"
+                onClick={() => setSelectedCompareItem(item)}
+                className="w-full text-left bg-slate-800 rounded-xl border border-slate-700 p-3 mb-2"
+              >
+                <div className="flex items-center justify-between gap-2 mb-2 flex-wrap">
+                  <span className="text-sm font-medium text-white min-w-0">
+                    {item.item_name}
                   </span>
-                )}
-              </div>
-              {item.commonSizes.map((size) => (
-                <div
-                  key={size}
-                  className="flex items-center justify-between text-xs py-1 border-b border-slate-700/50 last:border-0 gap-2 flex-wrap"
-                >
-                  <span className="text-slate-500 w-16 shrink-0">{size}</span>
-                  <div className="flex flex-wrap gap-x-3 gap-y-0.5">
-                    {item.stores.map((store) => {
-                      const sizeData = store.sizes.find((s) => s.size_name === size);
-                      const shortName =
-                        store.storeName.split("'s ")[1] || store.storeName;
-                      return sizeData ? (
-                        <span key={store.store_id} className="text-slate-300">
-                          {shortName}:{" "}
-                          <span className="text-emerald-400">
-                            ${sizeData.price.toFixed(2)}
-                          </span>
-                        </span>
-                      ) : (
-                        <span key={store.store_id} className="text-slate-600">
-                          —
-                        </span>
-                      );
-                    })}
-                  </div>
+                  {item.stores.length >= 2 && (
+                    <span className={cn("px-1.5 py-0.5 rounded text-[10px] font-medium shrink-0", gapBadgeClass)}>
+                      {Math.round(item.gapPct)}% gap
+                    </span>
+                  )}
                 </div>
-              ))}
-            </div>
-          ))}
+                {item.commonSizes.map((size) => {
+                  const pricesWithStore = item.stores
+                    .map((store) => {
+                      const sizeData = store.sizes.find((s) => s.size_name === size);
+                      return sizeData ? { store_id: store.store_id, storeName: store.storeName, shortName: store.storeName.split("'s ")[1] || store.storeName, price: sizeData.price } : null;
+                    })
+                    .filter(Boolean) as { store_id: string; storeName: string; shortName: string; price: number }[];
+                  const minPrice = pricesWithStore.length ? Math.min(...pricesWithStore.map((p) => p.price)) : 0;
+                  const maxPrice = pricesWithStore.length ? Math.max(...pricesWithStore.map((p) => p.price)) : 0;
+                  const diff = maxPrice - minPrice;
+                  const lowerStore = pricesWithStore.find((p) => p.price === minPrice);
+                  const higherStore = pricesWithStore.find((p) => p.price === maxPrice);
+                  return (
+                    <div
+                      key={size}
+                      className="flex items-center justify-between text-xs py-1 border-b border-slate-700/50 last:border-0 gap-2 flex-wrap"
+                    >
+                      <span className="text-slate-500 w-16 shrink-0">{size}</span>
+                      <div className="flex flex-wrap gap-x-3 gap-y-0.5">
+                        {item.stores.map((store) => {
+                          const sizeData = store.sizes.find((s) => s.size_name === size);
+                          const shortName = store.storeName.split("'s ")[1] || store.storeName;
+                          const isLowest = sizeData && sizeData.price === minPrice && pricesWithStore.length > 1;
+                          return sizeData ? (
+                            <span key={store.store_id} className={cn("text-slate-300", isLowest && "text-amber-400 font-medium")}>
+                              {shortName}: <span className={cn(isLowest ? "text-amber-400" : "text-emerald-400")}>${sizeData.price.toFixed(2)}</span>
+                            </span>
+                          ) : (
+                            <span key={store.store_id} className="text-slate-600">—</span>
+                          );
+                        })}
+                      </div>
+                      {diff > 0 && lowerStore && higherStore && (
+                        <p className="text-[11px] text-slate-400 w-full mt-0.5">
+                          If {higherStore.shortName} matched {lowerStore.shortName}&apos;s price on {item.item_name} {size} — that&apos;s +${diff.toFixed(2)}/order at current volume
+                        </p>
+                      )}
+                    </div>
+                  );
+                })}
+              </button>
+            );
+          })}
         </div>
       )}
 
@@ -495,6 +573,20 @@ export default function MenuIntelligencePage() {
           (item) => item.gapPct < -2 && (storeId === "all" || item.store_id === storeId)
         );
         const totalMonthlyGap = filtered.reduce((sum, item) => sum + Math.abs(item.gap * item.unitsSold), 0);
+        const top3 = filtered.slice(0, 3);
+        const top3Recover = top3.reduce((sum, item) => sum + Math.abs(item.gap * item.unitsSold), 0);
+        const gapCardBorder = (gapPct: number) => {
+          const abs = Math.abs(gapPct);
+          if (abs <= 3) return "border-emerald-600/40 bg-emerald-600/5";
+          if (abs <= 7) return "border-amber-600/40 bg-amber-600/5";
+          return "border-red-600/40 bg-red-600/5";
+        };
+        const gapBadgeClass = (gapPct: number) => {
+          const abs = Math.abs(gapPct);
+          if (abs <= 3) return "bg-emerald-600/20 text-emerald-400 border border-emerald-700/30";
+          if (abs <= 7) return "bg-amber-600/20 text-amber-400 border border-amber-700/30";
+          return "bg-red-600/20 text-red-400 border border-red-700/30";
+        };
         return (
           <div className="space-y-3">
             <div className="flex items-center gap-2">
@@ -509,12 +601,23 @@ export default function MenuIntelligencePage() {
                     <span className="text-white font-semibold">{formatDollars(totalMonthlyGap)}</span>/month in lost revenue.
                     That&apos;s <span className="text-white font-semibold">{formatDollars(totalMonthlyGap * 12)}</span>/year.
                   </p>
+                  {top3.length > 0 && (
+                    <p className="text-xs text-red-300 mt-2">
+                      Fix your top 3 gaps and recover{" "}
+                      <span className="text-red-400 font-semibold">{formatDollars(top3Recover)}</span>/month
+                    </p>
+                  )}
                 </div>
                 {filtered.map((item, i) => (
-                  <div key={i} className="bg-slate-800 rounded-xl border border-slate-700 p-3 mb-2">
+                  <button
+                    key={i}
+                    type="button"
+                    onClick={() => setSelectedPricingGap(item)}
+                    className={cn("w-full text-left rounded-xl border p-3 mb-2", gapCardBorder(item.gapPct))}
+                  >
                     <div className="flex items-center justify-between mb-1">
                       <span className="text-sm font-medium text-white">{item.item_name}</span>
-                      <span className={`text-xs px-2 py-0.5 rounded-full ${item.gapPct < -5 ? "bg-red-600/20 text-red-400 border border-red-700/30" : "bg-amber-600/20 text-amber-400 border border-amber-700/30"}`}>
+                      <span className={cn("text-xs px-2 py-0.5 rounded-full", gapBadgeClass(item.gapPct))}>
                         {item.gapPct.toFixed(1)}% gap
                       </span>
                     </div>
@@ -527,13 +630,107 @@ export default function MenuIntelligencePage() {
                       <span className="text-red-400">Revenue gap: {formatDollars(Math.abs(item.gap * item.unitsSold))}/month</span>
                     </div>
                     <p className="text-xs text-slate-500 mt-2">{item.cause}</p>
-                  </div>
+                  </button>
                 ))}
               </>
             ) : (
               <p className="text-xs text-slate-500">No items with a price gap &gt; 2% for this store.</p>
             )}
           </div>
+        );
+      })()}
+
+      {selectedPricingGap && typeof document !== "undefined" && createPortal(
+        <div className="fixed inset-0 z-[9999] flex items-end justify-center sm:items-center" aria-modal="true" role="dialog">
+          <div className="absolute inset-0 bg-black/60 backdrop-blur-sm transition-opacity duration-150" style={{ opacity: priceGapSheetMounted ? 1 : 0 }} onClick={() => setSelectedPricingGap(null)} aria-hidden="true" />
+          <div className="relative w-full max-w-lg bg-slate-800 rounded-t-2xl max-h-[85vh] overflow-y-auto shadow-2xl transition-all duration-200 ease-out sm:rounded-2xl" style={{ transform: priceGapSheetMounted ? "translateY(0) scale(1)" : "translateY(100%) scale(0.95)", opacity: priceGapSheetMounted ? 1 : 0 }} onClick={(e) => e.stopPropagation()}>
+            <div className="p-5 pt-6 pb-8">
+              <button type="button" onClick={() => setSelectedPricingGap(null)} className="absolute top-3 right-3 z-10 p-2 rounded-lg text-slate-400 hover:text-white hover:bg-slate-700" aria-label="Close"><span className="text-lg leading-none">×</span></button>
+              <h2 className="text-lg font-bold text-white pr-8">{selectedPricingGap.item_name}</h2>
+              <section className="mt-4">
+                <h3 className="text-sm font-semibold text-slate-300 uppercase tracking-wide">What This Means</h3>
+                <p className="mt-2 text-sm text-slate-400 leading-relaxed">
+                  Your menu price is ${selectedPricingGap.menuPrice.toFixed(2)} but customers are paying an average of ${selectedPricingGap.avgActualPrice.toFixed(2)}. The difference is ${Math.abs(selectedPricingGap.gap).toFixed(2)} per order — multiplied by {selectedPricingGap.unitsSold} orders that&apos;s {formatDollars(Math.abs(selectedPricingGap.gap * selectedPricingGap.unitsSold))} walking out the door every month.
+                </p>
+              </section>
+              <section className="mt-6">
+                <h3 className="text-sm font-semibold text-slate-300 uppercase tracking-wide">Why It Matters</h3>
+                <p className="mt-2 text-sm text-slate-400 leading-relaxed">
+                  A gap this size on a high-volume item is almost never random. Something systematic is causing it.
+                </p>
+              </section>
+              <section className="mt-6">
+                <h3 className="text-sm font-semibold text-amber-400/90 uppercase tracking-wide">Playbook</h3>
+                {Math.abs(selectedPricingGap.gapPct) <= 7 ? (
+                  <ul className="mt-2 space-y-2 text-sm text-slate-400 leading-relaxed">
+                    <li>1. Check if this item is part of a combo or special that discounts it.</li>
+                    <li>2. Review loyalty redemptions on this item.</li>
+                    <li>3. Check for manual price overrides at the register.</li>
+                  </ul>
+                ) : (
+                  <ul className="mt-2 space-y-2 text-sm text-slate-400 leading-relaxed">
+                    <li>1. Pull void report for this item — check for re-rings at lower price.</li>
+                    <li>2. Check if staff are applying employee discount incorrectly.</li>
+                    <li>3. Verify POS price matches your menu price — a mismatch here costs you every single order.</li>
+                  </ul>
+                )}
+              </section>
+            </div>
+          </div>
+        </div>,
+        document.body
+      )}
+
+      {selectedCompareItem && typeof document !== "undefined" && (() => {
+        const item = selectedCompareItem;
+        const pricesBySize = item.commonSizes.map((size) => {
+          const withStore = item.stores.map((store) => ({ store, sizeData: store.sizes.find((s) => s.size_name === size) })).filter((x) => x.sizeData);
+          const prices = withStore.map((x) => ({ store: x.store, price: x.sizeData!.price }));
+          const minP = prices.length ? Math.min(...prices.map((p) => p.price)) : 0;
+          const maxP = prices.length ? Math.max(...prices.map((p) => p.price)) : 0;
+          const lower = prices.find((p) => p.price === minP)?.store;
+          const higher = prices.find((p) => p.price === maxP)?.store;
+          return { size, prices, minP, maxP, lower, higher, diff: maxP - minP };
+        });
+        const bestSize = pricesBySize.filter((s) => s.diff > 0).sort((a, b) => b.diff - a.diff)[0];
+        const sizeForCopy = selectedCompareSize || bestSize?.size || item.commonSizes[0];
+        const sizeRow = pricesBySize.find((s) => s.size === sizeForCopy);
+        const lowerStore = sizeRow?.lower;
+        const higherStore = sizeRow?.higher;
+        const priceDiff = sizeRow?.diff ?? 0;
+        const storeNameA = higherStore?.storeName.split("'s ")[1] || higherStore?.storeName || "Store A";
+        const storeNameB = lowerStore?.storeName.split("'s ")[1] || lowerStore?.storeName || "Store B";
+        return createPortal(
+          <div className="fixed inset-0 z-[9999] flex items-end justify-center sm:items-center" aria-modal="true" role="dialog">
+            <div className="absolute inset-0 bg-black/60 backdrop-blur-sm transition-opacity duration-150" style={{ opacity: compareSheetMounted ? 1 : 0 }} onClick={() => { setSelectedCompareItem(null); setSelectedCompareSize(null); }} aria-hidden="true" />
+            <div className="relative w-full max-w-lg bg-slate-800 rounded-t-2xl max-h-[85vh] overflow-y-auto shadow-2xl transition-all duration-200 ease-out sm:rounded-2xl" style={{ transform: compareSheetMounted ? "translateY(0) scale(1)" : "translateY(100%) scale(0.95)", opacity: compareSheetMounted ? 1 : 0 }} onClick={(e) => e.stopPropagation()}>
+              <div className="p-5 pt-6 pb-8">
+                <button type="button" onClick={() => { setSelectedCompareItem(null); setSelectedCompareSize(null); }} className="absolute top-3 right-3 z-10 p-2 rounded-lg text-slate-400 hover:text-white hover:bg-slate-700" aria-label="Close"><span className="text-lg leading-none">×</span></button>
+                <h2 className="text-lg font-bold text-white pr-8">{item.item_name}</h2>
+                <section className="mt-4">
+                  <h3 className="text-sm font-semibold text-slate-300 uppercase tracking-wide">What This Means</h3>
+                  <p className="mt-2 text-sm text-slate-400 leading-relaxed">
+                    The same {item.item_name} costs ${priceDiff.toFixed(2)} more at {storeNameA} than {storeNameB}. Customers at {storeNameB} are getting a better deal.
+                  </p>
+                </section>
+                <section className="mt-6">
+                  <h3 className="text-sm font-semibold text-slate-300 uppercase tracking-wide">Why It Matters</h3>
+                  <p className="mt-2 text-sm text-slate-400 leading-relaxed">
+                    Price inconsistency across locations erodes your brand and leaves money on the table at lower-priced stores.
+                  </p>
+                </section>
+                <section className="mt-6">
+                  <h3 className="text-sm font-semibold text-amber-400/90 uppercase tracking-wide">Playbook</h3>
+                  <ul className="mt-2 space-y-2 text-sm text-slate-400 leading-relaxed">
+                    <li>1. Decide if the price difference is intentional (different market, different costs).</li>
+                    <li>2. If not intentional, update the lower store&apos;s POS price.</li>
+                    <li>3. A $1 increase on {item.item_name} at {storeNameA} = more revenue per order at current volume.</li>
+                  </ul>
+                </section>
+              </div>
+            </div>
+          </div>,
+          document.body
         );
       })()}
 
