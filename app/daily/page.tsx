@@ -176,6 +176,10 @@ function DailyPageContent() {
     splh?: number | null;
     /** 7-day rolling (food+disposables)/sales % from API; used as fallback when no sales today */
     rollingFoodDisposablesPct?: number | null;
+    fixedExpensesDollars30?: number | null;
+    fixedExpensesPct30?: number | null;
+    fixedExpensesGapDollars30?: number | null;
+    hasFixedExpensesData?: boolean;
   } | null>(null);
   const [warnings, setWarnings] = useState<WarningItem[]>([]);
   const [storeChangeWarning, setStoreChangeWarning] = useState<string | null>(null);
@@ -377,6 +381,10 @@ function DailyPageContent() {
           paperSpend: dayRes.paperSpend,
           splh: dayRes.splh,
           rollingFoodDisposablesPct: dayRes.foodDisposablesPctRolling ?? null,
+          fixedExpensesDollars30: dayRes.fixedExpensesDollars30 ?? null,
+          fixedExpensesPct30: dayRes.fixedExpensesPct30 ?? null,
+          fixedExpensesGapDollars30: dayRes.fixedExpensesGapDollars30 ?? null,
+          hasFixedExpensesData: !!dayRes.hasFixedExpensesData,
         });
         if (dayRes.hasSalesData) {
           setNetSales(dayRes.netSales != null ? String(dayRes.netSales) : "");
@@ -529,6 +537,9 @@ function DailyPageContent() {
   const slphStatus = getSlphStatus(storeId, computed.slph);
   /** Food+Disposables % is always 7-day rolling on this page — never single-day. */
   const displayFoodDispPct = rolling?.foodDispPct ?? liveDayData?.rollingFoodDisposablesPct ?? null;
+  const fixedExpensesPct30 = liveDayData?.fixedExpensesPct30 ?? null;
+  const fixedExpensesGapDollars30 = liveDayData?.fixedExpensesGapDollars30 ?? null;
+  const hasFixedExpensesData = !!liveDayData?.hasFixedExpensesData;
   const foodDispStatus = getFoodDisposablesStatus(storeId, displayFoodDispPct);
 
   const netSalesInvalid = ns != null && ns < 0;
@@ -886,6 +897,44 @@ function DailyPageContent() {
             </div>
           );
         })()}
+        {/* Fixed Expenses % — 30-day rolling from GL, directly below COGS */}
+        <div
+          className={cn(
+            KPI_PRIMARY_BASE,
+            "border w-full text-center",
+            hasFixedExpensesData
+              ? fixedExpensesPct30 != null && fixedExpensesPct30 > 28
+                ? "border-red-500/50 bg-red-500/10 text-red-400"
+                : "border-emerald-500/50 bg-emerald-500/10 text-emerald-400"
+              : STATUS_NEUTRAL
+          )}
+        >
+          <div className="text-[10px] font-medium uppercase tracking-widest text-muted/70 flex items-center justify-center gap-1.5">
+            Fixed Expenses %
+            <EducationInfoIcon metricKey="fixed_expenses_pct" size="sm" />
+          </div>
+          <div className="mt-3 sm:mt-5 text-3xl sm:text-5xl font-black tabular-nums tracking-tight leading-none">
+            {hasFixedExpensesData && fixedExpensesPct30 != null ? formatPct(fixedExpensesPct30) : "—"}
+          </div>
+          <div className="mt-2 text-xs text-muted/70">Benchmark: ≤28%</div>
+          {hasFixedExpensesData && fixedExpensesGapDollars30 != null && (
+            <div
+              className={cn(
+                "text-xs mt-1",
+                fixedExpensesGapDollars30 > 0 ? "text-red-400" : "text-emerald-400"
+              )}
+            >
+              Gap vs 28%: {formatDollars(Math.round(Math.abs(fixedExpensesGapDollars30)))}{" "}
+              {fixedExpensesGapDollars30 > 0 ? "more" : "less"} per 30 days
+            </div>
+          )}
+          {!hasFixedExpensesData && (
+            <div className="text-xs text-muted/60 mt-1">
+              No GL data yet for this store — fixed expenses will appear once GL transactions are
+              loaded.
+            </div>
+          )}
+        </div>
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
           {[scoreboardItems[1], scoreboardItems[3], scoreboardItems[2], scoreboardItems[4]].map(
             ({ label, value, target, status, valueIsRollingFallback }) => {

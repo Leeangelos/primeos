@@ -1,6 +1,8 @@
 import { NextResponse } from "next/server";
 import { createClient } from "@supabase/supabase-js";
 
+export const dynamic = "force-dynamic";
+
 // --- FOOD COST % CALCULATION LOCATIONS (for range response) ---
 // RANGE "all" stores (exact lines):
 //   const totalNetSales = salesRows.reduce((s, r) => s + (Number(r.net_sales) || 0), 0);
@@ -55,12 +57,19 @@ export async function GET(request: Request) {
       const startISO = rollStart.toISOString().split("T")[0];
 
       if (isAllStores) {
-        const [salesRowsRes, laborRowsRes, purchasesRowsRes, salesRangeRes, purchasesRangeRes] = await Promise.all([
+        const [salesRowsRes, laborRowsRes, purchasesRowsRes, salesRangeRes, purchasesRangeRes, sales30Res, fixedRes] = await Promise.all([
           supabase.from("foodtec_daily_sales").select("*").in("store_id", storeIds).eq("business_day", day),
           supabase.from("foodtec_daily_labor").select("*").in("store_id", storeIds).eq("business_day", day),
           supabase.from("me_daily_purchases").select("*").in("store_id", storeIds).eq("business_day", day),
           supabase.from("foodtec_daily_sales").select("net_sales").in("store_id", storeIds).gte("business_day", startISO).lte("business_day", day),
           supabase.from("me_daily_purchases").select("food_spend, paper_spend").in("store_id", storeIds).gte("business_day", startISO).lte("business_day", day),
+          supabase.from("foodtec_daily_sales").select("net_sales").in("store_id", storeIds).gte("business_day", startISO).lte("business_day", day),
+          supabase
+            .from("gl_transactions")
+            .select("store_id, date, gl_category, debit")
+            .in("store_id", storeIds)
+            .gte("date", startISO)
+            .lte("date", day),
         ]);
         const salesRows = salesRowsRes.data ?? [];
         const laborRows = laborRowsRes.data ?? [];
@@ -92,6 +101,45 @@ export async function GET(request: Request) {
         const bumpPickup = salesRows.map((r) => Number(r.avg_bump_time_pickup)).filter((v) => v != null && v > 0);
         const bumpDelivery = salesRows.map((r) => Number(r.avg_bump_time_delivery)).filter((v) => v != null && v > 0);
         const avgBump = (arr: number[]) => (arr.length > 0 ? arr.reduce((a, b) => a + b, 0) / arr.length : 0);
+
+        const fixedCategories = new Set([
+          "Rent Expense",
+          "Electricity",
+          "Gas",
+          "Water & Sewer",
+          "Telephone/Internet/Cable",
+          "Business Insurance",
+          "Accounting",
+          "Linen and Uniforms",
+          "Trash",
+          "Cleaning",
+          "Security Expense",
+          "POS Software Expenses",
+          "Computer and Software Expenses",
+          "Payroll Fees",
+          "Bank Service Charges",
+          "Repairs & Maintenance",
+          "Equipment Rental",
+          "Workers Comp",
+          "Pest Control",
+          "Storage Rent",
+          "Dues & Subscriptions",
+        ]);
+        const fixedRows = fixedRes.data ?? [];
+        const totalSales30 = (sales30Res.data ?? []).reduce(
+          (s, r) => s + (Number((r as any).net_sales) || 0),
+          0
+        );
+        const totalFixed30 = fixedRows.reduce((s, r) => {
+          const cat = String((r as any).gl_category ?? "");
+          if (!fixedCategories.has(cat)) return s;
+          return s + (Number((r as any).debit) || 0);
+        }, 0);
+        const hasFixedExpensesData = fixedRows.length > 0;
+        const fixedExpensesPct30 =
+          hasFixedExpensesData && totalSales30 > 0 ? (totalFixed30 / totalSales30) * 100 : null;
+        const fixedExpensesGapDollars30 =
+          fixedExpensesPct30 != null ? ((fixedExpensesPct30 - 28) / 100) * totalSales30 : null;
 
         return NextResponse.json({
           day,
@@ -143,15 +191,26 @@ export async function GET(request: Request) {
           foodDisposablesPctRolling,
           cogsPct,
           grossProfitPct,
+          fixedExpensesDollars30: hasFixedExpensesData ? totalFixed30 : null,
+          fixedExpensesPct30,
+          fixedExpensesGapDollars30,
+          hasFixedExpensesData,
         });
       }
 
-      const [salesRes, laborRes, purchasesRes, salesRangeRes, purchasesRangeRes] = await Promise.all([
+      const [salesRes, laborRes, purchasesRes, salesRangeRes, purchasesRangeRes, sales30Res, fixedRes] = await Promise.all([
         supabase.from("foodtec_daily_sales").select("*").eq("store_id", storeId).eq("business_day", day).maybeSingle(),
         supabase.from("foodtec_daily_labor").select("*").eq("store_id", storeId).eq("business_day", day).maybeSingle(),
         supabase.from("me_daily_purchases").select("*").eq("store_id", storeId).eq("business_day", day).maybeSingle(),
         supabase.from("foodtec_daily_sales").select("net_sales").eq("store_id", storeId).gte("business_day", startISO).lte("business_day", day),
         supabase.from("me_daily_purchases").select("food_spend, paper_spend").eq("store_id", storeId).gte("business_day", startISO).lte("business_day", day),
+        supabase.from("foodtec_daily_sales").select("net_sales").eq("store_id", storeId).gte("business_day", startISO).lte("business_day", day),
+        supabase
+          .from("gl_transactions")
+          .select("date, gl_category, debit")
+          .eq("store_id", storeId)
+          .gte("date", startISO)
+          .lte("date", day),
       ]);
 
       console.log(`Sales data: ${salesRes.data ? "FOUND" : "NULL"}, Labor data: ${laborRes.data ? "FOUND" : "NULL"}, Purchases data: ${purchasesRes.data ? "FOUND" : "NULL"}`);
@@ -185,6 +244,45 @@ export async function GET(request: Request) {
       const grossProfitPct = cogsPct != null ? 100 - cogsPct : null;
       const totalHours = (labor?.regular_hours ?? 0) + (labor?.overtime_hours ?? 0);
       const splh = totalHours > 0 ? netSales / totalHours : null;
+
+      const fixedCategories = new Set([
+        "Rent Expense",
+        "Electricity",
+        "Gas",
+        "Water & Sewer",
+        "Telephone/Internet/Cable",
+        "Business Insurance",
+        "Accounting",
+        "Linen and Uniforms",
+        "Trash",
+        "Cleaning",
+        "Security Expense",
+        "POS Software Expenses",
+        "Computer and Software Expenses",
+        "Payroll Fees",
+        "Bank Service Charges",
+        "Repairs & Maintenance",
+        "Equipment Rental",
+        "Workers Comp",
+        "Pest Control",
+        "Storage Rent",
+        "Dues & Subscriptions",
+      ]);
+      const fixedRows = fixedRes.data ?? [];
+      const totalSales30 = (sales30Res.data ?? []).reduce(
+        (s, r) => s + (Number((r as any).net_sales) || 0),
+        0
+      );
+      const totalFixed30 = fixedRows.reduce((s, r) => {
+        const cat = String((r as any).gl_category ?? "");
+        if (!fixedCategories.has(cat)) return s;
+        return s + (Number((r as any).debit) || 0);
+      }, 0);
+      const hasFixedExpensesData = fixedRows.length > 0;
+      const fixedExpensesPct30 =
+        hasFixedExpensesData && totalSales30 > 0 ? (totalFixed30 / totalSales30) * 100 : null;
+      const fixedExpensesGapDollars30 =
+        fixedExpensesPct30 != null ? ((fixedExpensesPct30 - 28) / 100) * totalSales30 : null;
 
       return NextResponse.json({
         day,
@@ -236,6 +334,10 @@ export async function GET(request: Request) {
         foodDisposablesPctRolling,
         cogsPct,
         grossProfitPct,
+        fixedExpensesDollars30: hasFixedExpensesData ? totalFixed30 : null,
+        fixedExpensesPct30,
+        fixedExpensesGapDollars30,
+        hasFixedExpensesData,
       });
     }
 
