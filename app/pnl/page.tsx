@@ -10,6 +10,7 @@ import {
 import { getStoreColor } from "@/lib/store-colors";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/src/lib/auth-context";
+import { createClient } from "@/lib/supabase";
 import { isNewUser, getNewUserStoreName } from "@/src/lib/user-scope";
 import { EducationInfoIcon } from "@/src/components/education/InfoIcon";
 import { ExportButton } from "@/src/components/ui/ExportButton";
@@ -86,6 +87,8 @@ function getNoiTier(netProfitPct: number): {
   return { label: "Printing Money", color: "green" };
 }
 
+export const dynamic = "force-dynamic";
+
 export default function PnlPage() {
   const { session, loading } = useAuth();
   const newUser = isNewUser(session);
@@ -111,6 +114,11 @@ export default function PnlPage() {
   const storeName = storeFilter === "all" ? "All Locations" : COCKPIT_TARGETS[storeFilter].name;
 
   const [rangeData, setRangeData] = useState<{ sales: { business_day: string; net_sales?: number }[]; labor: { business_day: string; total_labor_cost?: number; total_overtime_cost?: number }[]; purchases: { business_day: string; food_spend?: number; paper_spend?: number }[] } | null>(null);
+  const [fixedFromGl, setFixedFromGl] = useState<{ total: number; byCategory: Record<string, number>; hasData: boolean }>({
+    total: 0,
+    byCategory: {},
+    hasData: false,
+  });
   useEffect(() => {
     let cancelled = false;
     const store = storeFilter === "all" ? "all" : storeFilter;
@@ -123,6 +131,85 @@ export default function PnlPage() {
       .catch(() => setRangeData(null));
     return () => { cancelled = true; };
   }, [storeFilter]);
+
+  useEffect(() => {
+    let cancelled = false;
+    async function loadFixed() {
+      try {
+        const monthKey = (startDate || "").slice(0, 7);
+        if (!monthKey || storeFilter === "all") {
+          if (!cancelled) {
+            setFixedFromGl({ total: 0, byCategory: {}, hasData: false });
+          }
+          return;
+        }
+        const supabase = createClient();
+        const { data: storeRow } = await supabase
+          .from("stores")
+          .select("id")
+          .eq("slug", storeFilter)
+          .maybeSingle();
+        const storeId = storeRow?.id as string | undefined;
+        if (!storeId) {
+          if (!cancelled) setFixedFromGl({ total: 0, byCategory: {}, hasData: false });
+          return;
+        }
+        const { data: rows } = await supabase
+          .from("gl_transactions")
+          .select("gl_category,debit,source_month")
+          .eq("store_id", storeId)
+          .eq("source_month", monthKey);
+        const fixedCategories = new Set([
+          "Rent Expense",
+          "Electricity",
+          "Gas",
+          "Water & Sewer",
+          "Telephone/Internet/Cable",
+          "Business Insurance",
+          "Accounting",
+          "Linen and Uniforms",
+          "Trash",
+          "Cleaning",
+          "Security Expense",
+          "POS Software Expenses",
+          "Computer and Software Expenses",
+          "Payroll Fees",
+          "Bank Service Charges",
+          "Repairs & Maintenance",
+          "Equipment Rental",
+          "Workers Comp",
+          "Pest Control",
+          "Storage Rent",
+          "Dues & Subscriptions",
+        ]);
+        const byCategory: Record<string, number> = {};
+        let total = 0;
+        for (const r of rows ?? []) {
+          const cat = String((r as any).gl_category ?? "");
+          if (!fixedCategories.has(cat)) continue;
+          const amt = Number((r as any).debit) || 0;
+          if (!amt) continue;
+          byCategory[cat] = (byCategory[cat] ?? 0) + amt;
+          total += amt;
+        }
+        if (!cancelled) {
+          setFixedFromGl({
+            total,
+            byCategory,
+            hasData: (rows ?? []).length > 0,
+          });
+        }
+      } catch {
+        if (!cancelled) {
+          setFixedFromGl({ total: 0, byCategory: {}, hasData: false });
+        }
+      }
+    }
+    loadFixed();
+    return () => {
+      cancelled = true;
+    };
+  }, [startDate, storeFilter]);
 
   const pnl = useMemo(() => {
     if (!rangeData?.sales?.length) {
@@ -144,14 +231,14 @@ export default function PnlPage() {
     }
     const totalCOGS = totalFood + totalLabor + totalDisposables;
     const grossProfit = totalSales - totalCOGS;
-    const totalFixed = 0;
+    const totalFixed = fixedFromGl.total;
     const netProfit = grossProfit - totalFixed;
     const foodPct = totalSales > 0 ? (totalFood / totalSales) * 100 : 0;
     const dispPct = totalSales > 0 ? (totalDisposables / totalSales) * 100 : 0;
     const cogsPct = totalSales > 0 ? (totalCOGS / totalSales) * 100 : 0;
     const laborPct = totalSales > 0 ? (totalLabor / totalSales) * 100 : 0;
     const gpPct = totalSales > 0 ? (grossProfit / totalSales) * 100 : 0;
-    const fixedPct = totalSales > 0 ? (totalFixed / totalSales) * 100 : 0;
+    const fixedPct = totalSales > 0 && totalFixed > 0 ? (totalFixed / totalSales) * 100 : 0;
     const netProfitPct = totalSales > 0 ? (netProfit / totalSales) * 100 : 0;
     return {
       totalSales,
@@ -170,7 +257,7 @@ export default function PnlPage() {
       fixedPct,
       netProfitPct,
     };
-  }, [rangeData, startDate, endDate]);
+  }, [rangeData, startDate, endDate, fixedFromGl]);
 
   async function handleShare() {
     setShareGenerating(true);

@@ -55,6 +55,7 @@ export async function GET(request: Request) {
       const rollStart = new Date(dayStart);
       rollStart.setUTCDate(rollStart.getUTCDate() - 6);
       const startISO = rollStart.toISOString().split("T")[0];
+      const sourceMonth = day.slice(0, 7);
 
       if (isAllStores) {
         const [salesRowsRes, laborRowsRes, purchasesRowsRes, salesRangeRes, purchasesRangeRes, sales30Res, fixedRes] = await Promise.all([
@@ -66,10 +67,9 @@ export async function GET(request: Request) {
           supabase.from("foodtec_daily_sales").select("net_sales").in("store_id", storeIds).gte("business_day", startISO).lte("business_day", day),
           supabase
             .from("gl_transactions")
-            .select("store_id, date, gl_category, debit")
+            .select("store_id, source_month, gl_category, debit")
             .in("store_id", storeIds)
-            .gte("date", startISO)
-            .lte("date", day),
+            .eq("source_month", sourceMonth),
         ]);
         const salesRows = salesRowsRes.data ?? [];
         const laborRows = laborRowsRes.data ?? [];
@@ -139,7 +139,7 @@ export async function GET(request: Request) {
         const fixedExpensesPct30 =
           hasFixedExpensesData && totalSales30 > 0 ? (totalFixed30 / totalSales30) * 100 : null;
         const fixedExpensesGapDollars30 =
-          fixedExpensesPct30 != null ? ((fixedExpensesPct30 - 28) / 100) * totalSales30 : null;
+          hasFixedExpensesData && fixedExpensesPct30 != null ? ((fixedExpensesPct30 - 28) / 100) * totalSales30 : null;
 
         return NextResponse.json({
           day,
@@ -207,10 +207,9 @@ export async function GET(request: Request) {
         supabase.from("foodtec_daily_sales").select("net_sales").eq("store_id", storeId).gte("business_day", startISO).lte("business_day", day),
         supabase
           .from("gl_transactions")
-          .select("date, gl_category, debit")
+          .select("source_month, gl_category, debit")
           .eq("store_id", storeId)
-          .gte("date", startISO)
-          .lte("date", day),
+          .eq("source_month", sourceMonth),
       ]);
 
       console.log(`Sales data: ${salesRes.data ? "FOUND" : "NULL"}, Labor data: ${laborRes.data ? "FOUND" : "NULL"}, Purchases data: ${purchasesRes.data ? "FOUND" : "NULL"}`);
@@ -282,7 +281,7 @@ export async function GET(request: Request) {
       const fixedExpensesPct30 =
         hasFixedExpensesData && totalSales30 > 0 ? (totalFixed30 / totalSales30) * 100 : null;
       const fixedExpensesGapDollars30 =
-        fixedExpensesPct30 != null ? ((fixedExpensesPct30 - 28) / 100) * totalSales30 : null;
+        hasFixedExpensesData && fixedExpensesPct30 != null ? ((fixedExpensesPct30 - 28) / 100) * totalSales30 : null;
 
       return NextResponse.json({
         day,
