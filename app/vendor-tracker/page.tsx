@@ -333,9 +333,20 @@ export default function VendorTrackerPage() {
     async function loadAnnualMonths() {
       try {
         const supabase = createClient();
+        const { data: storeRow } = await supabase
+          .from("stores")
+          .select("id, slug")
+          .eq("slug", selectedStore)
+          .maybeSingle();
+        const storeId = storeRow?.id as string | undefined;
+        if (!storeId) {
+          if (!cancelled) setAnnualMonths(DEFAULT_ANNUAL_MONTHS);
+          return;
+        }
         const { data, error } = await supabase
           .from("me_invoices")
           .select("invoice_date")
+          .eq("store_id", storeId)
           .order("invoice_date", { ascending: true })
           .limit(1)
           .maybeSingle();
@@ -370,7 +381,7 @@ export default function VendorTrackerPage() {
     return () => {
       cancelled = true;
     };
-  }, []);
+  }, [selectedStore]);
 
   const storeVendors = useMemo(() => getVendorsByStore(selectedStore), [selectedStore]);
   const allCosts = useMemo(() => [...invoiceCosts, ...addedEntries], [invoiceCosts, addedEntries]);
