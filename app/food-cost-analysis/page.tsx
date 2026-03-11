@@ -9,8 +9,18 @@ import { EducationInfoIcon } from "@/src/components/education/InfoIcon";
 import { DataDisclaimer } from "@/src/components/ui/DataDisclaimer";
 import { COCKPIT_STORE_SLUGS, COCKPIT_TARGETS } from "@/lib/cockpit-config";
 import { createClient } from "@/lib/supabase";
+import {
+  getKitchenGrade,
+  getKitchenGradeColorClass,
+  getNextKitchenGradeTarget,
+  isKitchenGradeInRange,
+  type KitchenGrade,
+} from "@/lib/kitchen-score";
 
-const STORE_OPTIONS = COCKPIT_STORE_SLUGS.map((s) => ({ value: s, label: COCKPIT_TARGETS[s].name }));
+const STORE_OPTIONS = [
+  { value: "all", label: "All stores" },
+  ...COCKPIT_STORE_SLUGS.map((s) => ({ value: s, label: COCKPIT_TARGETS[s].name })),
+];
 
 type BaselineMonth = {
   month: string;
@@ -20,7 +30,7 @@ type BaselineMonth = {
   foodCostPct: number | null;
   isCurrentMonth: boolean;
   isComplete: boolean;
-  status: "In Range" | "Watch" | "Investigate" | null;
+  grade: KitchenGrade | null;
 };
 
 type BaselineData = {
@@ -31,9 +41,21 @@ type BaselineData = {
   currentSpend: number;
   currentRevenue: number;
   currentPct: number | null;
-  currentStatus: "In Range" | "Watch" | "Investigate" | null;
+  currentGrade: KitchenGrade | null;
+  diffPct: number | null;
   paceDollars: number | null;
   avgMonthlyRevenue: number | null;
+  streakMonths: number;
+  nextGradeTarget: { nextGrade: KitchenGrade; reducePct: number } | null;
+};
+
+type LeaderboardRow = {
+  slug: string;
+  name: string;
+  grade: KitchenGrade | null;
+  currentPct: number | null;
+  expectedPct: number | null;
+  diffPct: number | null;
 };
 
 export default function FoodCostAnalysisPage() {
@@ -43,6 +65,7 @@ export default function FoodCostAnalysisPage() {
   const [selectedStore, setSelectedStore] = useState("kent");
   const [showFormula, setShowFormula] = useState(false);
   const [baselineData, setBaselineData] = useState<BaselineData | null>(null);
+  const [leaderboardData, setLeaderboardData] = useState<LeaderboardRow[] | null>(null);
   const [rangeData, setRangeData] = useState<{
     sales: { net_sales?: number }[];
     purchases: { food_spend?: number; paper_spend?: number; beverage_spend?: number }[];
@@ -70,6 +93,83 @@ export default function FoodCostAnalysisPage() {
     async function loadBaseline() {
       try {
         const supabase = createClient();
+        const now = new Date();
+        const currentMonthKey = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}`;
+
+        if (selectedStore === "all") {
+          const rows: LeaderboardRow[] = [];
+          for (const slug of COCKPIT_STORE_SLUGS) {
+            const { data: storeRow } = await supabase
+              .from("stores")
+              .select("id")
+              .eq("slug", slug)
+              .maybeSingle();
+            const storeId = storeRow?.id as string | undefined;
+            if (!storeId) continue;
+            const [invRes, salesRes] = await Promise.all([
+              supabase
+                .from("me_invoices")
+                .select("invoice_date, total")
+                .eq("store_id", storeId)
+                .eq("vendor_name", "Hillcrest Foodservice"),
+              supabase
+                .from("foodtec_daily_sales")
+                .select("business_day, net_sales")
+                .eq("store_id", storeId),
+            ]);
+            const invoices = (invRes.data ?? []) as { invoice_date: string; total: number }[];
+            const sales = (salesRes.data ?? []) as { business_day: string; net_sales: number }[];
+            const hillcrestByMonth: Record<string, number> = {};
+            const revenueByMonth: Record<string, number> = {};
+            for (const row of invoices) {
+              const d = row.invoice_date;
+              if (!d || typeof d !== "string") continue;
+              const month = d.slice(0, 7);
+              hillcrestByMonth[month] = (hillcrestByMonth[month] ?? 0) + (Number(row.total) || 0);
+            }
+            for (const row of sales) {
+              const d = row.business_day;
+              if (!d || typeof d !== "string") continue;
+              const month = d.slice(0, 7);
+              revenueByMonth[month] = (revenueByMonth[month] ?? 0) + (Number(row.net_sales) || 0);
+            }
+            const completeMonthsPct: number[] = [];
+            for (const monthKey of Object.keys(revenueByMonth)) {
+              if (monthKey === currentMonthKey) continue;
+              const rev = revenueByMonth[monthKey] ?? 0;
+              const spend = hillcrestByMonth[monthKey] ?? 0;
+              if (rev > 0) completeMonthsPct.push((spend / rev) * 100);
+            }
+            const baselinePct =
+              completeMonthsPct.length > 0
+                ? completeMonthsPct.reduce((a, b) => a + b, 0) / completeMonthsPct.length
+                : null;
+            const currentSpend = hillcrestByMonth[currentMonthKey] ?? 0;
+            const currentRevenue = revenueByMonth[currentMonthKey] ?? 0;
+            const currentPct = currentRevenue > 0 ? (currentSpend / currentRevenue) * 100 : null;
+            const diffPct = baselinePct != null && currentPct != null ? currentPct - baselinePct : null;
+            rows.push({
+              slug,
+              name: COCKPIT_TARGETS[slug].name,
+              grade: getKitchenGrade(diffPct),
+              currentPct,
+              expectedPct: baselinePct,
+              diffPct,
+            });
+          }
+          rows.sort((a, b) => {
+            const order: Record<KitchenGrade, number> = { A: 0, B: 1, C: 2, D: 3, F: 4 };
+            const ga = a.grade ? order[a.grade] : 5;
+            const gb = b.grade ? order[b.grade] : 5;
+            return ga - gb;
+          });
+          if (!cancelled) {
+            setLeaderboardData(rows);
+            setBaselineData(null);
+          }
+          return;
+        }
+
         const { data: storeRow } = await supabase
           .from("stores")
           .select("id")
@@ -77,9 +177,13 @@ export default function FoodCostAnalysisPage() {
           .maybeSingle();
         const storeId = storeRow?.id as string | undefined;
         if (!storeId) {
-          if (!cancelled) setBaselineData(null);
+          if (!cancelled) {
+            setBaselineData(null);
+            setLeaderboardData(null);
+          }
           return;
         }
+        if (!cancelled) setLeaderboardData(null);
         const [invRes, salesRes] = await Promise.all([
           supabase
             .from("me_invoices")
@@ -110,8 +214,6 @@ export default function FoodCostAnalysisPage() {
         }
         const allMonths = new Set([...Object.keys(hillcrestByMonth), ...Object.keys(revenueByMonth)]);
         const sortedMonths = Array.from(allMonths).sort();
-        const now = new Date();
-        const currentMonthKey = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}`;
         const completeMonthsPct: number[] = [];
         let avgMonthlyRevenue = 0;
         let completeRevenueCount = 0;
@@ -129,7 +231,6 @@ export default function FoodCostAnalysisPage() {
           }
           const [y, m] = monthKey.split("-").map(Number);
           const monthLabel = new Date(y, m - 1, 1).toLocaleDateString("en-US", { month: "short", year: "numeric" });
-          let status: "In Range" | "Watch" | "Investigate" | null = null;
           monthly.push({
             month: monthKey,
             monthLabel,
@@ -138,7 +239,7 @@ export default function FoodCostAnalysisPage() {
             foodCostPct: pct,
             isCurrentMonth,
             isComplete,
-            status,
+            grade: null,
           });
         }
         const baselinePct =
@@ -153,25 +254,25 @@ export default function FoodCostAnalysisPage() {
           const row = monthly[i];
           if (baselinePct != null && row.foodCostPct != null) {
             const diff = row.foodCostPct - baselinePct;
-            if (diff <= 3) row.status = "In Range";
-            else if (diff <= 7) row.status = "Watch";
-            else row.status = "Investigate";
+            row.grade = getKitchenGrade(diff);
           }
         }
         const currentRow = monthly.find((r) => r.isCurrentMonth);
         const currentSpend = currentRow?.hillcrestSpend ?? 0;
         const currentRevenue = currentRow?.revenue ?? 0;
         const currentPct = currentRevenue > 0 ? (currentSpend / currentRevenue) * 100 : null;
-        let currentStatus: "In Range" | "Watch" | "Investigate" | null = null;
-        if (baselinePct != null && currentPct != null) {
-          const diff = currentPct - baselinePct;
-          if (diff <= 3) currentStatus = "In Range";
-          else if (diff <= 7) currentStatus = "Watch";
-          else currentStatus = "Investigate";
-        }
+        const diffPct = baselinePct != null && currentPct != null ? currentPct - baselinePct : null;
+        const currentGrade = getKitchenGrade(diffPct);
         let paceDollars: number | null = null;
         if (avgRev != null && baselinePct != null && currentPct != null) {
           paceDollars = ((currentPct - baselinePct) / 100) * avgRev;
+        }
+        const nextGradeTarget = getNextKitchenGradeTarget(currentGrade, diffPct);
+        const completeOrdered = [...monthly].filter((r) => r.isComplete).sort((a, b) => b.month.localeCompare(a.month));
+        let streakMonths = 0;
+        for (const row of completeOrdered) {
+          if (isKitchenGradeInRange(row.grade)) streakMonths += 1;
+          else break;
         }
         if (!cancelled) {
           setBaselineData({
@@ -182,13 +283,19 @@ export default function FoodCostAnalysisPage() {
             currentSpend,
             currentRevenue,
             currentPct,
-            currentStatus,
+            currentGrade,
+            diffPct,
             paceDollars,
             avgMonthlyRevenue: avgRev,
+            streakMonths,
+            nextGradeTarget,
           });
         }
       } catch {
-        if (!cancelled) setBaselineData(null);
+        if (!cancelled) {
+          setBaselineData(null);
+          setLeaderboardData(null);
+        }
       }
     }
     loadBaseline();
@@ -408,7 +515,45 @@ export default function FoodCostAnalysisPage() {
       <section className="mt-6 space-y-4">
         <h2 className="text-lg font-bold text-white">Your Baseline — Expected vs Actual</h2>
 
-        {baselineData && (
+        {selectedStore === "all" && leaderboardData && (
+          <>
+            <h3 className="text-sm font-semibold text-white">This month&apos;s Kitchen Leaderboard</h3>
+            <div className="bg-slate-800 rounded-xl border border-slate-700 p-4 overflow-x-auto">
+              <table className="w-full text-sm">
+                <thead>
+                  <tr className="text-left text-slate-500 border-b border-slate-700">
+                    <th className="pb-2 pr-4">Store</th>
+                    <th className="pb-2 pr-4">Grade</th>
+                    <th className="pb-2 pr-4">Food cost %</th>
+                    <th className="pb-2">vs Expected</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {leaderboardData.map((row) => (
+                    <tr key={row.slug} className="border-b border-slate-700/50">
+                      <td className="py-2 pr-4 text-white">{row.name}</td>
+                      <td className="py-2 pr-4">
+                        <span className={`font-bold ${getKitchenGradeColorClass(row.grade)}`}>
+                          {row.grade ?? "—"}
+                        </span>
+                      </td>
+                      <td className="py-2 pr-4 text-slate-300">
+                        {row.currentPct != null ? safePct(row.currentPct) : "—"}
+                      </td>
+                      <td className="py-2 text-slate-300">
+                        {row.diffPct != null
+                          ? (row.diffPct > 0 ? "+" : "") + safePct(row.diffPct) + " pts"
+                          : "—"}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </>
+        )}
+
+        {baselineData && selectedStore !== "all" && (
           <>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div className="bg-slate-800 rounded-xl border border-slate-700 p-4">
@@ -438,32 +583,32 @@ export default function FoodCostAnalysisPage() {
               </div>
 
               <div className="bg-slate-800 rounded-xl border border-slate-700 p-4">
-                <h3 className="text-sm font-semibold text-white mb-2">Current month (MTD)</h3>
-                <p className="text-sm text-slate-400">
-                  Hillcrest spend: {safeDollars(baselineData.currentSpend)} / Revenue: {safeDollars(baselineData.currentRevenue)}
+                <p className="text-[10px] font-semibold tracking-[0.2em] text-slate-500 uppercase">
+                  Kitchen Score — food cost efficiency
                 </p>
-                {baselineData.currentPct != null && (
-                  <p className="text-lg font-bold text-white mt-1">{safePct(baselineData.currentPct)} food cost MTD</p>
-                )}
-                {baselineData.currentStatus && (
-                  <p
-                    className={`text-sm font-semibold mt-2 ${
-                      baselineData.currentStatus === "In Range"
-                        ? "text-emerald-400"
-                        : baselineData.currentStatus === "Watch"
-                          ? "text-amber-400"
-                          : "text-red-400"
-                    }`}
-                  >
-                    Status vs baseline: {baselineData.currentStatus}
+                <div className={`mt-2 text-5xl sm:text-6xl font-black tabular-nums ${getKitchenGradeColorClass(baselineData.currentGrade)}`}>
+                  {baselineData.currentGrade ?? "—"}
+                </div>
+                {baselineData.currentPct != null && baselineData.baselinePct != null && (
+                  <p className="text-xs text-slate-400 mt-1">
+                    Current {safePct(baselineData.currentPct)} vs expected {safePct(baselineData.baselinePct)}
                   </p>
                 )}
                 {baselineData.paceDollars != null && baselineData.paceDollars !== 0 && (
-                  <p className="text-xs mt-1 text-slate-300">
+                  <p className="text-sm text-slate-300 mt-2">
+                    Your {baselineData.currentGrade ?? "—"} grade means you are on pace to{" "}
                     {baselineData.paceDollars > 0
-                      ? `You are on pace to overspend by ${safeDollars(baselineData.paceDollars)} this month`
-                      : `You are on pace to save ${safeDollars(-baselineData.paceDollars)} this month`}
+                      ? `overspend ${safeDollars(baselineData.paceDollars)} this month`
+                      : `save ${safeDollars(-baselineData.paceDollars)} this month`}
                   </p>
+                )}
+                {baselineData.nextGradeTarget && (
+                  <p className="text-xs text-slate-400 mt-2">
+                    Reduce food cost by {safePct(baselineData.nextGradeTarget.reducePct)} to reach {baselineData.nextGradeTarget.nextGrade}
+                  </p>
+                )}
+                {baselineData.streakMonths >= 2 && (
+                  <p className="text-xs text-amber-400 mt-2">{baselineData.streakMonths} month streak 🔥</p>
                 )}
               </div>
             </div>
@@ -478,7 +623,7 @@ export default function FoodCostAnalysisPage() {
                       <th className="pb-2 pr-4">Revenue</th>
                       <th className="pb-2 pr-4">Hillcrest spend</th>
                       <th className="pb-2 pr-4">Food cost %</th>
-                      <th className="pb-2">Status</th>
+                      <th className="pb-2">Grade</th>
                     </tr>
                   </thead>
                   <tbody>
@@ -501,21 +646,9 @@ export default function FoodCostAnalysisPage() {
                           {row.foodCostPct != null ? safePct(row.foodCostPct) : "—"}
                         </td>
                         <td className="py-2">
-                          {row.status ? (
-                            <span
-                              className={
-                                row.status === "In Range"
-                                  ? "text-emerald-400"
-                                  : row.status === "Watch"
-                                    ? "text-amber-400"
-                                    : "text-red-400"
-                              }
-                            >
-                              {row.status}
-                            </span>
-                          ) : (
-                            "—"
-                          )}
+                          <span className={`font-semibold ${getKitchenGradeColorClass(row.grade)}`}>
+                            {row.grade ?? "—"}
+                          </span>
                         </td>
                       </tr>
                     ))}
@@ -530,8 +663,11 @@ export default function FoodCostAnalysisPage() {
           </>
         )}
 
-        {baselineData === null && !loading && (
+        {baselineData === null && leaderboardData === null && !loading && selectedStore !== "all" && (
           <p className="text-sm text-slate-500">No baseline data for this store yet. Connect Hillcrest invoices and POS sales.</p>
+        )}
+        {selectedStore === "all" && leaderboardData === null && !loading && (
+          <p className="text-sm text-slate-500">No leaderboard data yet.</p>
         )}
       </section>
     </div>

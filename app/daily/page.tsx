@@ -16,6 +16,7 @@ import {
   type CockpitStatusLabel,
 } from "@/lib/cockpit-config";
 import { getStoreColor } from "@/lib/store-colors";
+import { getKitchenGradeColorClass, type KitchenGrade } from "@/lib/kitchen-score";
 import { cn } from "@/lib/utils";
 import { getGradeBg, getGradeColor } from "@/src/lib/design-tokens";
 import { useAuth } from "@/src/lib/auth-context";
@@ -616,6 +617,12 @@ function DailyPageContent() {
   ];
 
   const [recentEntriesData, setRecentEntriesData] = useState<{ date: string; sales: number; food_cost_pct: number; labor_pct: number; transactions?: number }[]>([]);
+  const [kitchenScore, setKitchenScore] = useState<{
+    grade: KitchenGrade | null;
+    currentPct: number | null;
+    expectedPct: number | null;
+    paceDollars: number | null;
+  } | null>(null);
   useEffect(() => {
     let cancelled = false;
     const origin = typeof window !== "undefined" ? window.location.origin : "";
@@ -650,6 +657,23 @@ function DailyPageContent() {
         setRecentEntriesData(entries);
       })
       .catch(() => {});
+    return () => { cancelled = true; };
+  }, [storeId]);
+  useEffect(() => {
+    let cancelled = false;
+    const origin = typeof window !== "undefined" ? window.location.origin : "";
+    fetch(`${origin}/api/kitchen-score?store=${encodeURIComponent(storeId)}`)
+      .then((r) => r.json())
+      .then((d) => {
+        if (cancelled || d.error) return;
+        setKitchenScore({
+          grade: (d.grade as KitchenGrade) ?? null,
+          currentPct: d.currentPct ?? null,
+          expectedPct: d.expectedPct ?? null,
+          paceDollars: d.paceDollars ?? null,
+        });
+      })
+      .catch(() => setKitchenScore(null));
     return () => { cancelled = true; };
   }, [storeId]);
   const recentEntries = recentEntriesData;
@@ -998,6 +1022,47 @@ function DailyPageContent() {
           )}
         </div>
       </div>
+
+      {/* Kitchen Score — compact card */}
+      <Link
+        href="/food-cost-analysis"
+        className="block mt-4"
+      >
+        <div
+          className={cn(
+            KPI_SECONDARY_BASE,
+            "border w-full text-center cursor-pointer hover:opacity-90 transition-opacity"
+          )}
+        >
+          <div className="text-[10px] font-medium uppercase tracking-widest text-muted/70">
+            Kitchen Score
+          </div>
+          <div
+            className={cn(
+              "mt-2 sm:mt-3 text-4xl font-black tabular-nums tracking-tight",
+              kitchenScore?.grade ? getKitchenGradeColorClass(kitchenScore.grade) : "text-muted"
+            )}
+          >
+            {kitchenScore?.grade ?? "—"}
+          </div>
+          {kitchenScore?.currentPct != null && kitchenScore?.expectedPct != null && (
+            <div className="mt-1 text-[11px] text-muted/70">
+              Food cost {formatPct(kitchenScore.currentPct)} vs expected {formatPct(kitchenScore.expectedPct)}
+            </div>
+          )}
+          {kitchenScore?.paceDollars != null && kitchenScore.paceDollars !== 0 && (
+            <div
+              className={cn(
+                "text-xs mt-1",
+                kitchenScore.paceDollars > 0 ? "text-red-300" : "text-emerald-300"
+              )}
+            >
+              On pace to {kitchenScore.paceDollars > 0 ? "overspend" : "save"} {formatDollars(Math.abs(Math.round(kitchenScore.paceDollars)))} this month
+            </div>
+          )}
+          <div className="text-[10px] text-muted/50 mt-1">Tap for Food Cost Analysis</div>
+        </div>
+      </Link>
 
       {/* Validation messages */}
       {netSalesInvalid && (
