@@ -348,6 +348,10 @@ export default function PnlPage() {
   const currentMonth = now.getMonth() + 1;
   const currentYear = now.getFullYear();
   const isCurrentMonth = viewYear === currentYear && viewMonth === currentMonth;
+  const isPrePosCutover =
+    viewYear < 2026 || (viewYear === 2026 && viewMonth < 2);
+  const noPosForPeriod =
+    rangeData !== null && (rangeData.sales?.length ?? 0) === 0 && isPrePosCutover;
 
   return (
     <div className="space-y-6 min-w-0 overflow-x-hidden pb-28 animate-fade-in">
@@ -562,6 +566,11 @@ export default function PnlPage() {
             metricKey="daily_sales"
             amountColor="green"
           />
+          {noPosForPeriod && (
+            <p className="mt-1 text-xs text-slate-400">
+              POS data not available before February 2026 — COGS figures unavailable for this period.
+            </p>
+          )}
         </div>
 
         <div className="p-4 border-b border-slate-700">
@@ -571,24 +580,24 @@ export default function PnlPage() {
           </div>
           <LineItem
             label="Food Cost"
-            amount={formatDollars(pnl.totalFood)}
-            pct={formatPct(pnl.foodPct)}
-            grade={pctToGrade(pnl.foodPct, 31)}
+            amount={noPosForPeriod ? "—" : formatDollars(pnl.totalFood)}
+            pct={noPosForPeriod ? "—" : formatPct(pnl.foodPct)}
+            grade={noPosForPeriod ? undefined : pctToGrade(pnl.foodPct, 31)}
             metricKey="food_cost"
             amountColor="red"
           />
           <LineItem
             label="Labor Cost"
-            amount={formatDollars(pnl.totalLabor)}
-            pct={formatPct(pnl.laborPct)}
-            grade={pctToGrade(pnl.laborPct, 22)}
+            amount={noPosForPeriod ? "—" : formatDollars(pnl.totalLabor)}
+            pct={noPosForPeriod ? "—" : formatPct(pnl.laborPct)}
+            grade={noPosForPeriod ? undefined : pctToGrade(pnl.laborPct, 22)}
             metricKey="labor_pct"
             amountColor="red"
           />
           <LineItem
             label="Disposables"
-            amount={formatDollars(pnl.totalDisposables)}
-            pct={formatPct(pnl.dispPct)}
+            amount={noPosForPeriod ? "—" : formatDollars(pnl.totalDisposables)}
+            pct={noPosForPeriod ? "—" : formatPct(pnl.dispPct)}
             metricKey="disposables_pct"
             amountColor="red"
           />
