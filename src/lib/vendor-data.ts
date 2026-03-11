@@ -324,7 +324,7 @@ function buildLindseyCosts(kentCosts: VendorCost[]): VendorCost[] {
 }
 
 const kentAll = [...kentCostsMar2025Feb2026, ...buildKentRecurringCosts()];
-export const VENDOR_COSTS: VendorCost[] = [...kentAll, ...buildAuroraCosts(kentAll), ...buildLindseyCosts(kentAll)];
+export const VENDOR_COSTS: VendorCost[] = [];
 
 // HELPER FUNCTIONS
 

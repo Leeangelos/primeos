@@ -57,6 +57,50 @@ const GL_FIXED_CATEGORIES = [
   "Dues & Subscriptions",
 ] as const;
 
+type VendorGroupMeta = { id: string; label: string; category: string };
+
+const RAW_VENDOR_GROUPS: Record<string, VendorGroupMeta> = {
+  // Food distribution
+  "Hillcrest Foodservice": { id: "group-food-hillcrest", label: "Hillcrest Food Services", category: "Food Distribution" },
+  "Restaurant Depot / Jetro": { id: "group-food-hillcrest", label: "Hillcrest Food Services", category: "Food Distribution" },
+  "Gordon Food Service": { id: "group-food-hillcrest", label: "Hillcrest Food Services", category: "Food Distribution" },
+  Marcs: { id: "group-food-hillcrest", label: "Hillcrest Food Services", category: "Food Distribution" },
+
+  // Beverage
+  "Pepsi Beverages Company": { id: "group-beverage-pepsi", label: "Pepsi Beverages", category: "Beverage" },
+
+  // Cleaning / Supplies
+  Cintas: { id: "group-cleaning-cintas", label: "Cintas", category: "Cleaning/Supplies" },
+
+  // Internet / Phone
+  Spectrum: { id: "group-internet-spectrum", label: "Spectrum Business", category: "Internet/Phone" },
+
+  // Trash
+  "WM Waste Management": { id: "group-trash-wm", label: "WM Waste Management", category: "Waste/Trash" },
+
+  // Rent
+  "University Plaza Kent": { id: "group-rent", label: "Rent", category: "Rent/Lease" },
+
+  // Insurance
+  "State Farm": { id: "group-insurance", label: "Insurance", category: "Insurance" },
+
+  // Software / POS
+  "Foodtec Solutions Inc": { id: "group-software-pos", label: "Software & POS", category: "Technology/Software" },
+  "Pizza Cloud": { id: "group-software-pos", label: "Software & POS", category: "Technology/Software" },
+  MarginEdge: { id: "group-software-pos", label: "Software & POS", category: "Technology/Software" },
+
+  // Accounting / Payroll
+  "J&R Accounting": { id: "group-accounting-payroll", label: "Accounting & Payroll", category: "Accounting/Payroll" },
+  "ADP Payroll": { id: "group-accounting-payroll", label: "Accounting & Payroll", category: "Accounting/Payroll" },
+  "7Shifts Inc.": { id: "group-accounting-payroll", label: "Accounting & Payroll", category: "Accounting/Payroll" },
+
+  // Repairs / Maintenance
+  "Allen Drain Service Inc.": { id: "group-repairs-maint", label: "Repairs & Maintenance", category: "Repairs & Maintenance" },
+  "Quick Service Welding & Machine Co., Inc.": { id: "group-repairs-maint", label: "Repairs & Maintenance", category: "Repairs & Maintenance" },
+  "A-Best Termite & Pest Control": { id: "group-repairs-maint", label: "Repairs & Maintenance", category: "Repairs & Maintenance" },
+  "Ace Hardware": { id: "group-repairs-maint", label: "Repairs & Maintenance", category: "Repairs & Maintenance" },
+};
+
 /** CC processing per store: quoted rate and actual volume/fees for actual rate calculation. Actual rate = (monthly_fees / monthly_volume) * 100 */
 const CC_PROCESSING_BY_STORE: Record<string, { processorName: string; quotedRatePct: number; monthlyVolume: number; monthlyFees: number }> = {
   kent: { processorName: "Square", quotedRatePct: 2.6, monthlyVolume: 85000, monthlyFees: 2380 },
@@ -127,7 +171,8 @@ export default function VendorTrackerPage() {
   const [glAnnualByKey, setGlAnnualByKey] = useState<Record<string, number> | null>(null);
   const [glLoading, setGlLoading] = useState(false);
   const [annualMonths, setAnnualMonths] = useState(DEFAULT_ANNUAL_MONTHS);
-  const [invoiceCosts, setInvoiceCosts] = useState<VendorCost[]>([]);
+  type UITVendorCost = VendorCost & { displayName: string; displayCategory: string };
+  const [invoiceCosts, setInvoiceCosts] = useState<UITVendorCost[]>([]);
 
   useEffect(() => {
     let cancelled = false;
@@ -245,19 +290,16 @@ export default function VendorTrackerPage() {
           if (!cancelled) setInvoiceCosts([]);
           return;
         }
-        const vendorsForStore = VENDORS.filter((v) => v.store_id === selectedStore);
-        const byName = new Map<string, string>();
-        vendorsForStore.forEach((v) => {
-          byName.set(v.vendor_name, v.id);
-        });
-        const mapped: VendorCost[] = rows
+        const mapped: UITVendorCost[] = rows
           .map((r) => {
             const dateStr = String((r as any).invoice_date ?? "").slice(0, 10);
             const d = new Date(dateStr);
             if (Number.isNaN(d.getTime())) return null;
             const vendorName = String((r as any).vendor_name ?? "");
-            const vendorId = byName.get(vendorName);
-            if (!vendorId) return null;
+            const group = RAW_VENDOR_GROUPS[vendorName];
+            const vendorId = group?.id ?? `other::${vendorName}`;
+            const displayName = group?.label ?? vendorName;
+            const displayCategory = group?.category ?? "Other";
             const amount = Number((r as any).total) || 0;
             if (amount <= 0) return null;
             return {
@@ -270,9 +312,11 @@ export default function VendorTrackerPage() {
               year: d.getFullYear(),
               invoice_number: String((r as any).me_order_id ?? ""),
               notes: "",
-            } as VendorCost;
+              displayName,
+              displayCategory,
+            } as UITVendorCost;
           })
-          .filter((v): v is VendorCost => v !== null);
+          .filter((v): v is UITVendorCost => v !== null);
         if (!cancelled) setInvoiceCosts(mapped);
       } catch {
         if (!cancelled) setInvoiceCosts([]);
@@ -351,19 +395,51 @@ export default function VendorTrackerPage() {
   }
 
   const summary = useMemo(() => {
-    const vendors = getVendorsByStore(selectedStore);
     const costs = allCosts.filter((c) => c.store_id === selectedStore);
     const prevMonthNum = selectedMonth === 1 ? 12 : selectedMonth - 1;
     const prevYearNum = selectedMonth === 1 ? selectedYear - 1 : selectedYear;
-    return vendors
-      .map((v) => {
-        const current = costs.find((c) => c.vendor_id === v.id && c.month === selectedMonth && c.year === selectedYear);
-        const prev = costs.find((c) => c.vendor_id === v.id && c.month === prevMonthNum && c.year === prevYearNum);
+    const vendorMeta = new Map<
+      string,
+      { name: string; category: string }
+    >();
+    for (const c of costs) {
+      const anyCost = c as UITVendorCost & VendorCost;
+      let name = anyCost.displayName;
+      let category = anyCost.displayCategory;
+      if (!name || !category) {
+        const v = VENDORS.find((x) => x.id === c.vendor_id);
+        name = name || v?.vendor_name || "Other";
+        category = category || v?.category || "Other";
+      }
+      vendorMeta.set(c.vendor_id, { name, category });
+    }
+    return Array.from(vendorMeta.entries())
+      .map(([vendorId, meta]) => {
+        const current = costs.find(
+          (c) =>
+            c.vendor_id === vendorId &&
+            c.month === selectedMonth &&
+            c.year === selectedYear
+        );
+        const prev = costs.find(
+          (c) =>
+            c.vendor_id === vendorId &&
+            c.month === prevMonthNum &&
+            c.year === prevYearNum
+        );
         const amount = current?.amount ?? 0;
         const prevAmount = prev?.amount ?? 0;
         const change = amount - prevAmount;
         const changePct = prevAmount > 0 ? (change / prevAmount) * 100 : 0;
-        return { vendorId: v.id, vendorName: v.vendor_name, category: v.category, amount, prevAmount, change, changePct };
+        return {
+          vendorId,
+          vendorName: meta.name,
+          category: meta.category,
+          amount,
+          prevAmount,
+          change,
+          changePct,
+        };
       })
       .filter((v) => v.amount > 0 || v.prevAmount > 0);
   }, [selectedStore, selectedMonth, selectedYear, allCosts]);
