@@ -245,12 +245,12 @@ export default function VendorTrackerPage() {
   const summary = useMemo(() => {
     const vendors = getVendorsByStore(selectedStore);
     const costs = allCosts.filter((c) => c.store_id === selectedStore);
-    const prevMonth = selectedMonth === 1 ? 12 : selectedMonth - 1;
-    const prevYear = selectedMonth === 1 ? selectedYear - 1 : selectedYear;
+    const prevMonthNum = selectedMonth === 1 ? 12 : selectedMonth - 1;
+    const prevYearNum = selectedMonth === 1 ? selectedYear - 1 : selectedYear;
     return vendors
       .map((v) => {
         const current = costs.find((c) => c.vendor_id === v.id && c.month === selectedMonth && c.year === selectedYear);
-        const prev = costs.find((c) => c.vendor_id === v.id && c.month === prevMonth && c.year === prevYear);
+        const prev = costs.find((c) => c.vendor_id === v.id && c.month === prevMonthNum && c.year === prevYearNum);
         const amount = current?.amount ?? 0;
         const prevAmount = prev?.amount ?? 0;
         const change = amount - prevAmount;
@@ -260,18 +260,38 @@ export default function VendorTrackerPage() {
       .filter((v) => v.amount > 0 || v.prevAmount > 0);
   }, [selectedStore, selectedMonth, selectedYear, allCosts]);
 
-  const totalThisMonth = useMemo(() => summary.reduce((s, v) => s + v.amount, 0), [summary]);
-  const totalPrevMonth = useMemo(() => summary.reduce((s, v) => s + v.prevAmount, 0), [summary]);
+  const totalThisMonth = useMemo(
+    () => summary.reduce((s, v) => s + v.amount, 0),
+    [summary]
+  );
+  const totalPrevMonth = useMemo(
+    () => summary.reduce((s, v) => s + v.prevAmount, 0),
+    [summary]
+  );
   const totalChange = totalThisMonth - totalPrevMonth;
-  const totalChangePct = totalPrevMonth > 0 ? (totalChange / totalPrevMonth) * 100 : 0;
+  const totalChangePct =
+    totalPrevMonth > 0 ? (totalChange / totalPrevMonth) * 100 : 0;
 
   const biggestIncrease = useMemo(() => {
-    const withIncrease = summary.filter((v) => v.changePct > 0);
-    return withIncrease.length ? withIncrease.reduce((a, b) => (b.changePct > a.changePct ? b : a)) : null;
+    const withIncrease = summary.filter(
+      (v) => v.changePct > 0 && v.amount > 0 && v.prevAmount > 0
+    );
+    return withIncrease.length
+      ? withIncrease.reduce((a, b) =>
+          b.changePct > a.changePct ? b : a
+        )
+      : null;
   }, [summary]);
+
   const biggestDecrease = useMemo(() => {
-    const withDecrease = summary.filter((v) => v.changePct < 0);
-    return withDecrease.length ? withDecrease.reduce((a, b) => (b.changePct < a.changePct ? b : a)) : null;
+    const withDecrease = summary.filter(
+      (v) => v.changePct < 0 && v.amount > 0 && v.prevAmount > 0
+    );
+    return withDecrease.length
+      ? withDecrease.reduce((a, b) =>
+          b.changePct < a.changePct ? b : a
+        )
+      : null;
   }, [summary]);
   const unchangedCount = useMemo(() => summary.filter((v) => Math.abs(v.changePct) <= 1).length, [summary]);
 
@@ -302,12 +322,32 @@ export default function VendorTrackerPage() {
   }, [glAnnualByKey, selectedMonth, selectedYear]);
 
   const topMovers = useMemo(() => {
+    const now = new Date();
+    const currentMonth = now.getMonth() + 1;
+    const currentYear = now.getFullYear();
+    const isCurrentCalendarMonth =
+      selectedYear === currentYear && selectedMonth === currentMonth;
+
     const manual = [...summary]
-      .filter((v) => Math.abs(v.changePct) > 3)
+      .filter((v) => {
+        if (!isCurrentCalendarMonth) return Math.abs(v.changePct) > 3;
+        // In current month, require spend in both periods to be a mover
+        if (v.amount === 0 || v.prevAmount === 0) return false;
+        return Math.abs(v.changePct) > 3;
+      })
       .map((v) => ({ ...v, source: "manual" as const }));
-    const glOnly = glMovers.filter((v) => Math.abs(v.changePct) > 3);
-    return [...manual, ...glOnly].sort((a, b) => Math.abs(b.changePct) - Math.abs(a.changePct));
-  }, [summary, glMovers]);
+
+    const glOnly = glMovers
+      .filter((v) => {
+        if (!isCurrentCalendarMonth) return Math.abs(v.changePct) > 3;
+        if (v.amount === 0 || v.prevAmount === 0) return false;
+        return Math.abs(v.changePct) > 3;
+      });
+
+    return [...manual, ...glOnly].sort(
+      (a, b) => Math.abs(b.changePct) - Math.abs(a.changePct)
+    );
+  }, [summary, glMovers, selectedMonth, selectedYear]);
 
   const allVendorsSorted = useMemo(() => [...summary].sort((a, b) => b.amount - a.amount), [summary]);
 
