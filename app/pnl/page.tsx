@@ -169,7 +169,7 @@ export default function PnlPage() {
         }
         const { data: rows } = await supabase
           .from("gl_transactions")
-          .select("gl_category,debit,source_month")
+          .select("gl_category,debit,source_month,vendor_name")
           .eq("store_id", storeId)
           .eq("source_month", monthKey);
         const fixedCategories = new Set([
@@ -202,10 +202,16 @@ export default function PnlPage() {
         const byCategory: Record<string, number> = {};
         let total = 0;
         for (const r of rows ?? []) {
-          const cat = String((r as any).gl_category ?? "");
-          if (!fixedCategories.has(cat)) continue;
+          const rawCat = String((r as any).gl_category ?? "");
+          const vendor = String((r as any).vendor_name ?? "");
+          const isUnivPlaza = vendor.toLowerCase().includes("univ plaza");
+          let cat = rawCat;
+          if (isUnivPlaza) {
+            cat = "University Plaza";
+          } else if (!fixedCategories.has(cat)) {
+            continue;
+          }
           const amt = Number((r as any).debit) || 0;
-          // include zeros so categories explicitly show $0 when present
           byCategory[cat] = (byCategory[cat] ?? 0) + amt;
           total += amt;
         }
