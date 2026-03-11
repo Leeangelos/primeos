@@ -71,11 +71,15 @@ const CC_PROCESSING_BY_STORE: Record<string, { processorName: string; quotedRate
 const STORE_OPTIONS = COCKPIT_STORE_SLUGS.map((s) => ({ value: s, label: COCKPIT_TARGETS[s].name }));
 
 // 12 months Mar 2025 – Feb 2026 for annual view
-const ANNUAL_MONTHS: { month: number; year: number; short: string }[] = [];
+const DEFAULT_ANNUAL_MONTHS: { month: number; year: number; short: string }[] = [];
 for (let i = 0; i < 12; i++) {
   const m = i < 10 ? i + 3 : i - 9;
   const y = m >= 3 ? 2025 : 2026;
-  ANNUAL_MONTHS.push({ month: m, year: y, short: `${MONTH_NAMES[m - 1]} '${String(y).slice(-2)}` });
+  DEFAULT_ANNUAL_MONTHS.push({
+    month: m,
+    year: y,
+    short: `${MONTH_NAMES[m - 1]} '${String(y).slice(-2)}`,
+  });
 }
 
 function getMonthLabel(month: number, year: number): string {
@@ -126,6 +130,7 @@ export default function VendorTrackerPage() {
   const [glMonthByCategory, setGlMonthByCategory] = useState<Record<string, number> | null>(null);
   const [glAnnualByKey, setGlAnnualByKey] = useState<Record<string, number> | null>(null);
   const [glLoading, setGlLoading] = useState(false);
+  const [annualMonths, setAnnualMonths] = useState(DEFAULT_ANNUAL_MONTHS);
 
   useEffect(() => {
     let cancelled = false;
@@ -156,8 +161,8 @@ export default function VendorTrackerPage() {
           monthEnd.getMonth() + 1
         ).padStart(2, "0")}-${String(monthEnd.getDate()).padStart(2, "0")}`;
 
-        const annualStartMonth = ANNUAL_MONTHS[0];
-        const annualEndMonth = ANNUAL_MONTHS[ANNUAL_MONTHS.length - 1];
+        const annualStartMonth = annualMonths[0];
+        const annualEndMonth = annualMonths[annualMonths.length - 1];
         const annualStartStr = `${annualStartMonth.year}-${String(
           annualStartMonth.month
         ).padStart(2, "0")}-01`;
@@ -219,6 +224,50 @@ export default function VendorTrackerPage() {
       cancelled = true;
     };
   }, [selectedStore, selectedMonth, selectedYear]);
+
+  useEffect(() => {
+    let cancelled = false;
+    async function loadAnnualMonths() {
+      try {
+        const supabase = createClient();
+        const { data, error } = await supabase
+          .from("me_invoices")
+          .select("invoice_date")
+          .order("invoice_date", { ascending: true })
+          .limit(1)
+          .maybeSingle();
+        if (error || !data?.invoice_date) {
+          if (!cancelled) setAnnualMonths(DEFAULT_ANNUAL_MONTHS);
+          return;
+        }
+        const earliest = new Date(data.invoice_date as string);
+        if (Number.isNaN(earliest.getTime())) {
+          if (!cancelled) setAnnualMonths(DEFAULT_ANNUAL_MONTHS);
+          return;
+        }
+        const startYear = earliest.getFullYear();
+        const startMonth = earliest.getMonth() + 1;
+        const months: { month: number; year: number; short: string }[] = [];
+        for (let i = 0; i < 12; i++) {
+          const d = new Date(startYear, startMonth - 1 + i, 1);
+          const m = d.getMonth() + 1;
+          const y = d.getFullYear();
+          months.push({
+            month: m,
+            year: y,
+            short: `${MONTH_NAMES[m - 1]} '${String(y).slice(-2)}`,
+          });
+        }
+        if (!cancelled) setAnnualMonths(months);
+      } catch {
+        if (!cancelled) setAnnualMonths(DEFAULT_ANNUAL_MONTHS);
+      }
+    }
+    loadAnnualMonths();
+    return () => {
+      cancelled = true;
+    };
+  }, []);
 
   const storeVendors = useMemo(() => getVendorsByStore(selectedStore), [selectedStore]);
   const allCosts = useMemo(() => [...VENDOR_COSTS, ...addedEntries], [addedEntries]);
@@ -913,7 +962,7 @@ export default function VendorTrackerPage() {
       {/* SECTION 4: ALL VENDORS VIEW */}
       {view === "all" && (
         <div className="space-y-3">
-          {allVendorsSorted.map((v) => {
+                {allVendorsSorted.map((v) => {
             const vendor = VENDORS.find((x) => x.id === v.vendorId);
             const costs = getCostsByVendorWithAdded(v.vendorId).slice(-12);
             const yearTotal = costs.reduce((s, c) => s + c.amount, 0);
@@ -943,10 +992,21 @@ export default function VendorTrackerPage() {
                       <div className="text-right">
                         <div className="text-sm font-medium text-white">{formatDollars(v.amount)}</div>
                         <div
-                          className={`text-xs ${v.changePct > 0 ? "text-red-400" : v.changePct < 0 ? "text-emerald-400" : "text-slate-500"}`}
+                          className={`text-xs ${
+                            v.changePct > 0 ? "text-red-400" : v.changePct < 0 ? "text-emerald-400" : "text-slate-500"
+                          }`}
                         >
-                          {v.changePct > 0 ? "+" : ""}
-                          {formatPct(v.changePct)} vs last month
+                          {(() => {
+                            const now = new Date();
+                            const currentMonth = now.getMonth() + 1;
+                            const currentYear = now.getFullYear();
+                            const isCurrentCalendarMonth =
+                              selectedYear === currentYear && selectedMonth === currentMonth;
+                            if (isCurrentCalendarMonth && v.amount === 0 && v.prevAmount > 0) {
+                              return "—";
+                            }
+                            return `${v.changePct > 0 ? "+" : ""}${formatPct(v.changePct)} vs last month`;
+                          })()}
                         </div>
                       </div>
                       <ChevronDown
@@ -1044,7 +1104,7 @@ export default function VendorTrackerPage() {
                 <th className="text-left text-slate-500 py-2 pr-3 sticky left-0 bg-slate-900 min-w-[120px] z-10">
                   Vendor
                 </th>
-                {ANNUAL_MONTHS.map((m) => (
+                {annualMonths.map((m) => (
                   <th key={`${m.year}-${m.month}`} className="text-right text-slate-500 py-2 px-1 min-w-[60px]">
                     {m.short}
                   </th>
@@ -1058,10 +1118,10 @@ export default function VendorTrackerPage() {
                 return (
                   <tr key={v.id} className="border-b border-slate-700/50">
                     <td className="text-slate-300 py-2 pr-3 sticky left-0 bg-slate-900 z-10">{v.vendor_name}</td>
-                    {ANNUAL_MONTHS.map((m, colIndex) => {
+                    {annualMonths.map((m, colIndex) => {
                       const cost = getCostForMonth(v.id, m.month, m.year);
                       ytd += cost;
-                      const prev = colIndex > 0 ? ANNUAL_MONTHS[colIndex - 1] : null;
+                      const prev = colIndex > 0 ? annualMonths[colIndex - 1] : null;
                       const prevCost = prev ? getCostForMonth(v.id, prev.month, prev.year) : 0;
                       const changePct = prevCost > 0 ? ((cost - prevCost) / prevCost) * 100 : 0;
                       const cellClass =
@@ -1091,12 +1151,12 @@ export default function VendorTrackerPage() {
               })}
               <tr className="border-t-2 border-slate-600">
                 <td className="text-white font-semibold py-2 pr-3 sticky left-0 bg-slate-900 z-10">TOTAL</td>
-                {ANNUAL_MONTHS.map((m, colIndex) => {
+                {annualMonths.map((m, colIndex) => {
                   const monthTotal = vendorsForAnnual.reduce(
                     (s, v) => s + getCostForMonth(v.id, m.month, m.year),
                     0
                   );
-                  const prev = colIndex > 0 ? ANNUAL_MONTHS[colIndex - 1] : null;
+                  const prev = colIndex > 0 ? annualMonths[colIndex - 1] : null;
                   const prevTotal = prev
                     ? vendorsForAnnual.reduce((s, v) => s + getCostForMonth(v.id, prev.month, prev.year), 0)
                     : 0;
@@ -1120,7 +1180,7 @@ export default function VendorTrackerPage() {
                 <td className="text-right text-white font-semibold py-2 pl-2 tabular-nums">
                   {formatDollars(
                     vendorsForAnnual.reduce((s, v) => {
-                      return s + ANNUAL_MONTHS.reduce((t, m) => t + getCostForMonth(v.id, m.month, m.year), 0);
+                      return s + annualMonths.reduce((t, m) => t + getCostForMonth(v.id, m.month, m.year), 0);
                     }, 0)
                   )}
                 </td>
@@ -1142,7 +1202,7 @@ export default function VendorTrackerPage() {
                     <th className="text-left text-slate-500 py-2 pr-3 sticky left-0 bg-slate-900 min-w-[140px] z-10">
                       Category
                     </th>
-                    {ANNUAL_MONTHS.map((m) => (
+                    {annualMonths.map((m) => (
                       <th
                         key={`${m.year}-${m.month}`}
                         className="text-right text-slate-500 py-2 px-1 min-w-[60px]"
@@ -1158,10 +1218,10 @@ export default function VendorTrackerPage() {
                       <td className="text-slate-300 py-2 pr-3 sticky left-0 bg-slate-900 z-10">
                         {cat}
                       </td>
-                      {ANNUAL_MONTHS.map((m, colIndex) => {
+                      {annualMonths.map((m, colIndex) => {
                         const key = `${m.year}-${m.month}-${cat}`;
                         const amount = glAnnualByKey[key] ?? 0;
-                        const prev = colIndex > 0 ? ANNUAL_MONTHS[colIndex - 1] : null;
+                        const prev = colIndex > 0 ? annualMonths[colIndex - 1] : null;
                         const prevKey = prev ? `${prev.year}-${prev.month}-${cat}` : null;
                         const prevAmount = prevKey ? glAnnualByKey[prevKey] ?? 0 : 0;
                         const changePct =
