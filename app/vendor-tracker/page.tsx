@@ -1,6 +1,6 @@
 "use client";
 
-export const dynamic = "force-dynamic";
+export const dynamic = 'force-dynamic';
 
 import { useState, useMemo, useEffect } from "react";
 import {
@@ -17,11 +17,7 @@ import { useAuth } from "@/src/lib/auth-context";
 import { isNewUser } from "@/src/lib/user-scope";
 import {
   VENDORS,
-  VENDOR_COSTS,
   getVendorsByStore,
-  getVendorMonthlySummary,
-  getVendorCostsByVendor,
-  getVendorCostForMonth,
   STORE_DETAILS,
   type VendorCost,
 } from "@/src/lib/vendor-data";
@@ -131,6 +127,7 @@ export default function VendorTrackerPage() {
   const [glAnnualByKey, setGlAnnualByKey] = useState<Record<string, number> | null>(null);
   const [glLoading, setGlLoading] = useState(false);
   const [annualMonths, setAnnualMonths] = useState(DEFAULT_ANNUAL_MONTHS);
+  const [invoiceCosts, setInvoiceCosts] = useState<VendorCost[]>([]);
 
   useEffect(() => {
     let cancelled = false;
@@ -227,6 +224,68 @@ export default function VendorTrackerPage() {
 
   useEffect(() => {
     let cancelled = false;
+    async function loadInvoices() {
+      try {
+        const supabase = createClient();
+        const { data: storeRow } = await supabase
+          .from("stores")
+          .select("id, slug")
+          .eq("slug", selectedStore)
+          .maybeSingle();
+        const storeId = storeRow?.id as string | undefined;
+        if (!storeId) {
+          if (!cancelled) setInvoiceCosts([]);
+          return;
+        }
+        const { data: rows, error } = await supabase
+          .from("me_invoices")
+          .select("me_order_id, store_id, vendor_name, invoice_date, total")
+          .eq("store_id", storeId);
+        if (error || !rows) {
+          if (!cancelled) setInvoiceCosts([]);
+          return;
+        }
+        const vendorsForStore = VENDORS.filter((v) => v.store_id === selectedStore);
+        const byName = new Map<string, string>();
+        vendorsForStore.forEach((v) => {
+          byName.set(v.vendor_name, v.id);
+        });
+        const mapped: VendorCost[] = rows
+          .map((r) => {
+            const dateStr = String((r as any).invoice_date ?? "").slice(0, 10);
+            const d = new Date(dateStr);
+            if (Number.isNaN(d.getTime())) return null;
+            const vendorName = String((r as any).vendor_name ?? "");
+            const vendorId = byName.get(vendorName);
+            if (!vendorId) return null;
+            const amount = Number((r as any).total) || 0;
+            if (amount <= 0) return null;
+            return {
+              id: `inv-${(r as any).me_order_id ?? `${vendorId}-${dateStr}`}`,
+              store_id: selectedStore,
+              vendor_id: vendorId,
+              amount,
+              date: dateStr,
+              month: d.getMonth() + 1,
+              year: d.getFullYear(),
+              invoice_number: String((r as any).me_order_id ?? ""),
+              notes: "",
+            } as VendorCost;
+          })
+          .filter((v): v is VendorCost => v !== null);
+        if (!cancelled) setInvoiceCosts(mapped);
+      } catch {
+        if (!cancelled) setInvoiceCosts([]);
+      }
+    }
+    loadInvoices();
+    return () => {
+      cancelled = true;
+    };
+  }, [selectedStore]);
+
+  useEffect(() => {
+    let cancelled = false;
     async function loadAnnualMonths() {
       try {
         const supabase = createClient();
@@ -270,7 +329,7 @@ export default function VendorTrackerPage() {
   }, []);
 
   const storeVendors = useMemo(() => getVendorsByStore(selectedStore), [selectedStore]);
-  const allCosts = useMemo(() => [...VENDOR_COSTS, ...addedEntries], [addedEntries]);
+  const allCosts = useMemo(() => [...invoiceCosts, ...addedEntries], [invoiceCosts, addedEntries]);
   const invoicesThisMonth = useMemo(() => {
     return allCosts
       .filter((c) => c.store_id === selectedStore && c.month === selectedMonth && c.year === selectedYear)
@@ -283,7 +342,7 @@ export default function VendorTrackerPage() {
   }
 
   function getCostsByVendorWithAdded(vendorId: string): VendorCost[] {
-    const base = getVendorCostsByVendor(vendorId);
+    const base = invoiceCosts.filter((c) => c.vendor_id === vendorId);
     const added = addedEntries.filter((e) => e.vendor_id === vendorId);
     const byKey = new Map<string, VendorCost>();
     base.forEach((c) => byKey.set(`${c.month}-${c.year}`, c));
