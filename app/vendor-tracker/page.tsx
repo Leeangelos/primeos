@@ -951,51 +951,85 @@ export default function VendorTrackerPage() {
 
       {/* LOGGED INVOICES */}
       <div className="mb-6">
-        <h3 className="text-sm font-semibold text-zinc-400 uppercase tracking-wide mb-2">Logged invoices</h3>
-        {invoicesThisMonth.length === 0 ? (
-          <p className="text-sm text-zinc-500">No invoices logged for this month.</p>
-        ) : (
-          <div className="space-y-2">
-            {invoicesThisMonth.map((inv) => {
-              const vendor = VENDORS.find((v) => v.id === inv.vendor_id);
-              const vendorName = vendor?.vendor_name ?? inv.vendor_id;
-              const isExpanded = expandedInvoiceId === inv.id;
-              return (
-                <div
-                  key={inv.id}
-                  className="bg-zinc-900 rounded-xl border border-zinc-800/50 border-l-[3px] border-l-[#E65100] shadow-sm p-4"
-                >
-                  <button
-                    type="button"
-                    onClick={() => setExpandedInvoiceId(isExpanded ? null : inv.id)}
-                    className="w-full text-left flex items-center justify-between gap-2 min-h-[44px]"
-                  >
-                    <div className="min-w-0 flex-1">
-                      <div className="text-white font-medium truncate">{vendorName}</div>
-                      <div className="text-zinc-400 text-sm">{inv.invoice_number || "—"}</div>
-                      <div className="text-zinc-500 text-sm">{inv.date}</div>
-                    </div>
-                    <div className="flex items-center gap-2 shrink-0">
-                      <span className="text-white font-bold tabular-nums">{formatDollars(inv.amount)}</span>
-                      <ChevronDown className={cn("w-4 h-4 text-zinc-500 transition-transform", isExpanded && "rotate-180")} aria-hidden />
-                    </div>
-                  </button>
-                  {isExpanded && (
-                    <div className="mt-3 pt-3 border-t border-zinc-800/50 space-y-2">
-                      {inv.notes ? (
-                        <div>
-                          <div className="text-xs text-zinc-500 uppercase tracking-wide mb-0.5">Notes</div>
-                          <p className="text-sm text-zinc-300">{inv.notes}</p>
+        <button
+          type="button"
+          onClick={() => setExpandedInvoiceId(expandedInvoiceId === "__logged" ? null : "__logged")}
+          className="w-full flex items-center justify-between text-sm text-zinc-400 mb-2"
+        >
+          <span>
+            Logged Invoices ({invoicesThisMonth.length} this month)
+          </span>
+          <ChevronDown
+            className={cn(
+              "w-4 h-4 text-zinc-500 transition-transform",
+              expandedInvoiceId === "__logged" && "rotate-180"
+            )}
+            aria-hidden
+          />
+        </button>
+        {expandedInvoiceId === "__logged" && (
+          <>
+            {invoicesThisMonth.length === 0 ? (
+              <p className="text-sm text-zinc-500">No invoices logged for this month.</p>
+            ) : (
+              <div className="space-y-2">
+                {invoicesThisMonth.map((inv) => {
+                  const any = invoiceCosts.find((c) => c.id === inv.id);
+                  const displayName =
+                    (any as any)?.displayName ??
+                    VENDORS.find((v) => v.id === inv.vendor_id)?.vendor_name ??
+                    inv.vendor_id;
+                  const isExpanded = expandedInvoiceId === inv.id;
+                  return (
+                    <div
+                      key={inv.id}
+                      className="bg-zinc-900 rounded-xl border border-zinc-800/50 border-l-[3px] border-l-[#E65100] shadow-sm p-4"
+                    >
+                      <button
+                        type="button"
+                        onClick={() => setExpandedInvoiceId(isExpanded ? "__logged" : inv.id)}
+                        className="w-full text-left flex items-center justify-between gap-2 min-h-[44px]"
+                      >
+                        <div className="min-w-0 flex-1">
+                          <div className="text-white font-medium truncate">{displayName}</div>
+                          <div className="text-zinc-400 text-sm">{inv.invoice_number || "—"}</div>
+                          <div className="text-zinc-500 text-sm">{inv.date}</div>
                         </div>
-                      ) : (
-                        <p className="text-xs text-zinc-500">No notes, line items, or approval data for this entry.</p>
+                        <div className="flex items-center gap-2 shrink-0">
+                          <span className="text-white font-bold tabular-nums">
+                            {formatDollars(inv.amount)}
+                          </span>
+                          <ChevronDown
+                            className={cn(
+                              "w-4 h-4 text-zinc-500 transition-transform",
+                              isExpanded && "rotate-180"
+                            )}
+                            aria-hidden
+                          />
+                        </div>
+                      </button>
+                      {isExpanded && (
+                        <div className="mt-3 pt-3 border-t border-zinc-800/50 space-y-2">
+                          {inv.notes ? (
+                            <div>
+                              <div className="text-xs text-zinc-500 uppercase tracking-wide mb-0.5">
+                                Notes
+                              </div>
+                              <p className="text-sm text-zinc-300">{inv.notes}</p>
+                            </div>
+                          ) : (
+                            <p className="text-xs text-zinc-500">
+                              No notes, line items, or approval data for this entry.
+                            </p>
+                          )}
+                        </div>
                       )}
                     </div>
-                  )}
-                </div>
-              );
-            })}
-          </div>
+                  );
+                })}
+              </div>
+            )}
+          </>
         )}
       </div>
 
@@ -1248,52 +1282,109 @@ export default function VendorTrackerPage() {
               </tr>
             </thead>
             <tbody>
-              {vendorsForAnnual.map((v) => {
-                let ytd = 0;
-                return (
-                  <tr key={v.id} className="border-b border-slate-700/50">
-                    <td className="text-slate-300 py-2 pr-3 sticky left-0 bg-slate-900 z-10">{v.vendor_name}</td>
-                    {annualMonths.map((m, colIndex) => {
-                      const cost = getCostForMonth(v.id, m.month, m.year);
-                      ytd += cost;
-                      const prev = colIndex > 0 ? annualMonths[colIndex - 1] : null;
-                      const prevCost = prev ? getCostForMonth(v.id, prev.month, prev.year) : 0;
-                      const changePct = prevCost > 0 ? ((cost - prevCost) / prevCost) * 100 : 0;
-                      const cellClass =
-                        prevCost === 0
-                          ? "text-white"
-                          : changePct <= -2
-                            ? "text-emerald-400 bg-emerald-600/5"
-                            : changePct > 5
-                              ? "text-red-400 bg-red-600/5"
-                              : changePct > 2
-                                ? "text-amber-400 bg-amber-600/5"
-                                : "text-white";
-                      return (
-                        <td
-                          key={`${m.year}-${m.month}`}
-                          className={`text-right py-2 px-1 tabular-nums ${cellClass}`}
-                        >
-                          {cost > 0 ? `$${(cost / 1000).toFixed(1)}k` : "—"}
-                        </td>
-                      );
-                    })}
-                    <td className="text-right text-white font-medium py-2 pl-2 tabular-nums">
-                      {formatDollars(ytd)}
-                    </td>
-                  </tr>
+              {(() => {
+                const vendorIds = Array.from(
+                  invoiceCosts
+                    .filter((c) => c.store_id === selectedStore)
+                    .reduce((set, c) => set.add(c.vendor_id), new Set<string>())
                 );
-              })}
+                return vendorIds.map((vendorId) => {
+                  const meta =
+                    summary.find((s) => s.vendorId === vendorId) ??
+                    (() => {
+                      const any = invoiceCosts.find(
+                        (c) => c.store_id === selectedStore && c.vendor_id === vendorId
+                      );
+                      const name = (any as any)?.displayName ?? "Other";
+                      const category = (any as any)?.displayCategory ?? "Other";
+                      return {
+                        vendorId,
+                        vendorName: name,
+                        category,
+                        amount: 0,
+                        prevAmount: 0,
+                        change: 0,
+                        changePct: 0,
+                      };
+                    })();
+                  let ytd = 0;
+                  return (
+                    <tr key={vendorId} className="border-b border-slate-700/50">
+                      <td className="text-slate-300 py-2 pr-3 sticky left-0 bg-slate-900 z-10">
+                        {meta.vendorName}
+                      </td>
+                      {annualMonths.map((m, colIndex) => {
+                        const cost = invoiceCosts
+                          .filter(
+                            (c) =>
+                              c.store_id === selectedStore &&
+                              c.vendor_id === vendorId &&
+                              c.month === m.month &&
+                              c.year === m.year
+                          )
+                          .reduce((s, c) => s + c.amount, 0);
+                        ytd += cost;
+                        const prev = colIndex > 0 ? annualMonths[colIndex - 1] : null;
+                        const prevCost = prev
+                          ? invoiceCosts
+                              .filter(
+                                (c) =>
+                                  c.store_id === selectedStore &&
+                                  c.vendor_id === vendorId &&
+                                  c.month === prev.month &&
+                                  c.year === prev.year
+                              )
+                              .reduce((s, c) => s + c.amount, 0)
+                          : 0;
+                        const changePct =
+                          prevCost > 0 ? ((cost - prevCost) / prevCost) * 100 : 0;
+                        const cellClass =
+                          prevCost === 0
+                            ? "text-white"
+                            : changePct <= -2
+                              ? "text-emerald-400 bg-emerald-600/5"
+                              : changePct > 5
+                                ? "text-red-400 bg-red-600/5"
+                                : changePct > 2
+                                  ? "text-amber-400 bg-amber-600/5"
+                                  : "text-white";
+                        return (
+                          <td
+                            key={`${m.year}-${m.month}`}
+                            className={`text-right py-2 px-1 tabular-nums ${cellClass}`}
+                          >
+                            {cost > 0 ? `$${(cost / 1000).toFixed(1)}k` : "—"}
+                          </td>
+                        );
+                      })}
+                      <td className="text-right text-white font-medium py-2 pl-2 tabular-nums">
+                        {formatDollars(ytd)}
+                      </td>
+                    </tr>
+                  );
+                });
+              })()}
               <tr className="border-t-2 border-slate-600">
                 <td className="text-white font-semibold py-2 pr-3 sticky left-0 bg-slate-900 z-10">TOTAL</td>
                 {annualMonths.map((m, colIndex) => {
-                  const monthTotal = vendorsForAnnual.reduce(
-                    (s, v) => s + getCostForMonth(v.id, m.month, m.year),
-                    0
-                  );
+                  const monthTotal = invoiceCosts
+                    .filter(
+                      (c) =>
+                        c.store_id === selectedStore &&
+                        c.month === m.month &&
+                        c.year === m.year
+                    )
+                    .reduce((s, c) => s + c.amount, 0);
                   const prev = colIndex > 0 ? annualMonths[colIndex - 1] : null;
                   const prevTotal = prev
-                    ? vendorsForAnnual.reduce((s, v) => s + getCostForMonth(v.id, prev.month, prev.year), 0)
+                    ? invoiceCosts
+                        .filter(
+                          (c) =>
+                            c.store_id === selectedStore &&
+                            c.month === prev.month &&
+                            c.year === prev.year
+                        )
+                        .reduce((s, c) => s + c.amount, 0)
                     : 0;
                   const changePct = prevTotal > 0 ? ((monthTotal - prevTotal) / prevTotal) * 100 : 0;
                   const cellClass =
@@ -1314,9 +1405,9 @@ export default function VendorTrackerPage() {
                 })}
                 <td className="text-right text-white font-semibold py-2 pl-2 tabular-nums">
                   {formatDollars(
-                    vendorsForAnnual.reduce((s, v) => {
-                      return s + annualMonths.reduce((t, m) => t + getCostForMonth(v.id, m.month, m.year), 0);
-                    }, 0)
+                    invoiceCosts
+                      .filter((c) => c.store_id === selectedStore)
+                      .reduce((s, c) => s + c.amount, 0)
                   )}
                 </td>
               </tr>
