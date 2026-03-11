@@ -3,7 +3,7 @@
 export const dynamic = "force-dynamic";
 
 import { useState, useEffect, useCallback, useMemo } from "react";
-import { Star, ExternalLink, ChevronDown, RefreshCw, MapPin } from "lucide-react";
+import { Star, ExternalLink, ChevronDown, RefreshCw, MapPin, Plus, Check } from "lucide-react";
 import { useAuth } from "@/src/lib/auth-context";
 import { isNewUser, getNewUserStoreName } from "@/src/lib/user-scope";
 import { EducationInfoIcon } from "@/src/components/education/InfoIcon";
@@ -203,6 +203,70 @@ function consecutiveCleanStreak(inspections: Inspection[]): number {
   return count;
 }
 
+const PRE_INSPECTION_CHECKLIST: { title: string; items: string[] }[] = [
+  {
+    title: "EMPLOYEE HEALTH & HYGIENE",
+    items: [
+      "All employees free of illness, wounds, or infections",
+      "Proper handwashing observed (20 seconds, soap, paper towel)",
+      "Hair restraints in place for all food handlers",
+      "No bare-hand contact with ready-to-eat foods",
+      "Gloves used correctly and changed between tasks",
+    ],
+  },
+  {
+    title: "FOOD TEMPERATURES",
+    items: [
+      "Hot hold foods at 135°F or above",
+      "Cold hold foods at 41°F or below",
+      "Cooked chicken/poultry at 165°F internal temp",
+      "Ground beef/pork at 155°F internal temp",
+      "Cooling procedures: 135°F to 70°F within 2 hours, 70°F to 41°F within 4 hours",
+      "Thermometers calibrated and available",
+    ],
+  },
+  {
+    title: "FOOD STORAGE & LABELING",
+    items: [
+      "Raw meats stored below ready-to-eat foods",
+      "All food containers labeled with name and date",
+      "FIFO (first in first out) practiced",
+      "No expired or adulterated food in storage",
+      "Food stored 6 inches off the floor",
+    ],
+  },
+  {
+    title: "EQUIPMENT & SURFACES",
+    items: [
+      "Food contact surfaces clean and sanitized",
+      "Sanitizer solution at correct concentration (test strip verified)",
+      "Three-compartment sink set up correctly (wash, rinse, sanitize)",
+      "Dishwasher reaching proper sanitizing temp or chemical level",
+      "Ice machine clean, no mold or buildup",
+      "All equipment in good repair",
+    ],
+  },
+  {
+    title: "FACILITY & PEST",
+    items: [
+      "Handwashing sinks stocked (soap, paper towels, signage)",
+      "Handwashing sinks clear and accessible (nothing stored in them)",
+      "No evidence of pests (droppings, gnaw marks, live insects)",
+      "Pest control log up to date",
+      "Back door sealed, no gaps under doors",
+    ],
+  },
+  {
+    title: "DOCUMENTATION",
+    items: [
+      "Food safety certification posted and current",
+      "Most recent inspection report posted or available",
+      "Employee illness reporting policy on file",
+      "HACCP or food safety plan available if required",
+    ],
+  },
+];
+
 export default function InspectionRadarPage() {
   const { session, loading } = useAuth();
   const newUser = isNewUser(session);
@@ -215,6 +279,18 @@ export default function InspectionRadarPage() {
   const [syncLoading, setSyncLoading] = useState(false);
   const [expandedId, setExpandedId] = useState<string | null>(null);
   const [animatedScore, setAnimatedScore] = useState(0);
+  const [showAddForm, setShowAddForm] = useState(false);
+  const [addFormError, setAddFormError] = useState<string | null>(null);
+  const [successToast, setSuccessToast] = useState(false);
+  const [addDate, setAddDate] = useState("");
+  const [addType, setAddType] = useState("Standard");
+  const [addResult, setAddResult] = useState("Pass");
+  const [addCritical, setAddCritical] = useState("");
+  const [addNoncritical, setAddNoncritical] = useState("");
+  const [addNotes, setAddNotes] = useState("");
+  const [addSubmitting, setAddSubmitting] = useState(false);
+  const [checklistOpen, setChecklistOpen] = useState(false);
+  const [checklistChecked, setChecklistChecked] = useState<Set<number>>(new Set());
 
   const fetchRadar = useCallback(async (storeId: string) => {
     setLoadingData(true);
@@ -247,6 +323,65 @@ export default function InspectionRadarPage() {
     } finally {
       setSyncLoading(false);
     }
+  };
+
+  const handleAddReportSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setAddFormError(null);
+    if (!addDate.trim()) {
+      setAddFormError("Inspection date is required.");
+      return;
+    }
+    setAddSubmitting(true);
+    try {
+      const criticalArr = addCritical
+        .split(/\n/)
+        .map((s) => s.trim())
+        .filter(Boolean);
+      const noncriticalArr = addNoncritical
+        .split(/\n/)
+        .map((s) => s.trim())
+        .filter(Boolean);
+      const res = await fetch("/api/inspection-radar/add", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          store_id: selectedStoreId,
+          inspection_date: addDate.trim(),
+          inspection_type: addType,
+          result: addResult,
+          critical_violations: criticalArr,
+          noncritical_violations: noncriticalArr,
+          inspector_notes: addNotes.trim() || null,
+        }),
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        setAddFormError(data?.error ?? "Failed to save report.");
+        return;
+      }
+      setShowAddForm(false);
+      setAddDate("");
+      setAddType("Standard");
+      setAddResult("Pass");
+      setAddCritical("");
+      setAddNoncritical("");
+      setAddNotes("");
+      await fetchRadar(selectedStoreId);
+      setSuccessToast(true);
+      setTimeout(() => setSuccessToast(false), 3000);
+    } finally {
+      setAddSubmitting(false);
+    }
+  };
+
+  const toggleChecklistItem = (index: number) => {
+    setChecklistChecked((prev) => {
+      const next = new Set(prev);
+      if (next.has(index)) next.delete(index);
+      else next.add(index);
+      return next;
+    });
   };
 
   const position = useMemo(
@@ -373,6 +508,12 @@ export default function InspectionRadarPage() {
           </button>
         ))}
       </div>
+
+      {successToast && (
+        <div className="rounded-xl bg-emerald-900/50 border border-emerald-700/50 px-4 py-3 text-emerald-300 text-sm font-medium">
+          Inspection report saved.
+        </div>
+      )}
 
       {loadingData ? (
         <div className="text-center py-12 text-slate-500 text-sm">Loading…</div>
@@ -602,9 +743,124 @@ export default function InspectionRadarPage() {
 
           {/* SECTION 5 — Inspection History */}
           <div className="bg-slate-800 rounded-xl border border-slate-700 overflow-hidden">
-            <div className="p-4 border-b border-slate-700">
+            <div className="p-4 border-b border-slate-700 flex items-center justify-between flex-wrap gap-2">
               <h2 className="text-sm font-semibold text-white">Inspection History</h2>
+              <button
+                type="button"
+                onClick={() => {
+                  setShowAddForm((v) => !v);
+                  setAddFormError(null);
+                }}
+                className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-slate-700 text-slate-200 text-xs font-medium hover:bg-slate-600"
+              >
+                <Plus className="w-3.5 h-3.5" />
+                Add Report
+              </button>
             </div>
+            {showAddForm && (
+              <div className="px-4 pb-4 border-b border-slate-700">
+                <form onSubmit={handleAddReportSubmit} className="space-y-3">
+                  <div>
+                    <label className="block text-xs font-medium text-slate-400 mb-1">
+                      Inspection Date <span className="text-red-400">*</span>
+                    </label>
+                    <input
+                      type="date"
+                      required
+                      value={addDate}
+                      onChange={(e) => setAddDate(e.target.value)}
+                      className="w-full px-3 py-2 rounded-lg bg-slate-700 border border-slate-600 text-white text-sm"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-xs font-medium text-slate-400 mb-1">
+                      Inspection Type <span className="text-red-400">*</span>
+                    </label>
+                    <select
+                      value={addType}
+                      onChange={(e) => setAddType(e.target.value)}
+                      className="w-full px-3 py-2 rounded-lg bg-slate-700 border border-slate-600 text-white text-sm"
+                    >
+                      <option value="Standard">Standard</option>
+                      <option value="Follow-Up">Follow-Up</option>
+                      <option value="Complaint">Complaint</option>
+                      <option value="CCP">CCP</option>
+                    </select>
+                  </div>
+                  <div>
+                    <label className="block text-xs font-medium text-slate-400 mb-1">
+                      Result <span className="text-red-400">*</span>
+                    </label>
+                    <select
+                      value={addResult}
+                      onChange={(e) => setAddResult(e.target.value)}
+                      className="w-full px-3 py-2 rounded-lg bg-slate-700 border border-slate-600 text-white text-sm"
+                    >
+                      <option value="Pass">Pass</option>
+                      <option value="Pass with Conditions">Pass with Conditions</option>
+                      <option value="Fail">Fail</option>
+                    </select>
+                  </div>
+                  <div>
+                    <label className="block text-xs font-medium text-slate-400 mb-1">
+                      Critical Violations
+                    </label>
+                    <textarea
+                      value={addCritical}
+                      onChange={(e) => setAddCritical(e.target.value)}
+                      placeholder="List each violation on a new line. Leave blank if none."
+                      rows={3}
+                      className="w-full px-3 py-2 rounded-lg bg-slate-700 border border-slate-600 text-white text-sm placeholder-slate-500 resize-y"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-xs font-medium text-slate-400 mb-1">
+                      Non-Critical Violations
+                    </label>
+                    <textarea
+                      value={addNoncritical}
+                      onChange={(e) => setAddNoncritical(e.target.value)}
+                      placeholder="List each violation on a new line. Leave blank if none."
+                      rows={3}
+                      className="w-full px-3 py-2 rounded-lg bg-slate-700 border border-slate-600 text-white text-sm placeholder-slate-500 resize-y"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-xs font-medium text-slate-400 mb-1">
+                      Inspector Notes
+                    </label>
+                    <textarea
+                      value={addNotes}
+                      onChange={(e) => setAddNotes(e.target.value)}
+                      rows={2}
+                      className="w-full px-3 py-2 rounded-lg bg-slate-700 border border-slate-600 text-white text-sm placeholder-slate-500 resize-y"
+                    />
+                  </div>
+                  {addFormError && (
+                    <p className="text-sm text-red-400">{addFormError}</p>
+                  )}
+                  <div className="flex gap-2">
+                    <button
+                      type="submit"
+                      disabled={addSubmitting}
+                      className="px-4 py-2 rounded-lg bg-emerald-600 text-white text-sm font-medium hover:bg-emerald-500 disabled:opacity-50"
+                    >
+                      {addSubmitting ? "Saving…" : "Save Report"}
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setShowAddForm(false);
+                        setAddFormError(null);
+                      }}
+                      className="px-4 py-2 rounded-lg bg-slate-600 text-slate-200 text-sm font-medium hover:bg-slate-500"
+                    >
+                      Cancel
+                    </button>
+                  </div>
+                </form>
+              </div>
+            )}
             <div className="p-4">
               {inspections.length === 0 ? (
                 <p className="text-slate-500 text-sm py-2 text-center">
@@ -691,6 +947,78 @@ export default function InspectionRadarPage() {
                 </div>
               )}
             </div>
+          </div>
+
+          {/* 31-Point Pre-Inspection Checklist */}
+          <div className="bg-slate-800 rounded-xl border border-slate-700 overflow-hidden">
+            <button
+              type="button"
+              onClick={() => setChecklistOpen((o) => !o)}
+              className="w-full p-4 flex items-center justify-between gap-2 text-left"
+            >
+              <div>
+                <h2 className="text-sm font-semibold text-white">
+                  31-Point Pre-Inspection Checklist
+                </h2>
+                <p className="text-xs text-slate-500 mt-0.5">
+                  Run this before every health inspection.
+                </p>
+              </div>
+              <ChevronDown
+                className={`w-5 h-5 text-slate-500 flex-shrink-0 transition-transform ${checklistOpen ? "rotate-180" : ""}`}
+              />
+            </button>
+            {checklistOpen && (
+              <div className="px-4 pb-4 border-t border-slate-700 space-y-4">
+                {(() => {
+                  let idx = 0;
+                  return PRE_INSPECTION_CHECKLIST.map((cat) => (
+                    <div key={cat.title}>
+                      <p className="text-xs font-bold text-slate-300 uppercase tracking-wide mb-2">
+                        {cat.title}
+                      </p>
+                      <ul className="space-y-1.5">
+                        {cat.items.map((item) => {
+                          const i = idx++;
+                          const checked = checklistChecked.has(i);
+                          return (
+                            <li key={i}>
+                              <label className="flex items-start gap-2 cursor-pointer group">
+                                <span
+                                  role="checkbox"
+                                  aria-checked={checked}
+                                  tabIndex={0}
+                                  onClick={(e) => {
+                                    e.preventDefault();
+                                    toggleChecklistItem(i);
+                                  }}
+                                  onKeyDown={(e) => {
+                                    if (e.key === "Enter" || e.key === " ") {
+                                      e.preventDefault();
+                                      toggleChecklistItem(i);
+                                    }
+                                  }}
+                                  className={`mt-0.5 w-5 h-5 rounded border flex-shrink-0 flex items-center justify-center transition-colors ${
+                                    checked
+                                      ? "bg-emerald-600 border-emerald-500 text-white"
+                                      : "border-slate-600 bg-slate-700 group-hover:border-slate-500"
+                                  }`}
+                                >
+                                  {checked && <Check className="w-3 h-3" />}
+                                </span>
+                                <span className="text-sm text-slate-300 group-hover:text-slate-200">
+                                  {item}
+                                </span>
+                              </label>
+                            </li>
+                          );
+                        })}
+                      </ul>
+                    </div>
+                  ));
+                })()}
+              </div>
+            )}
           </div>
 
           {/* SECTION 6 — Full competitor table */}
