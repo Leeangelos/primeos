@@ -23,7 +23,7 @@ import { COLORS, getGradeColor } from "@/src/lib/design-tokens";
 import { useRedAlert } from "@/src/lib/useRedAlert";
 import { EducationInfoIcon } from "@/src/components/education/InfoIcon";
 import { ExportButton } from "@/src/components/ui/ExportButton";
-import { formatPct, formatDollars } from "@/src/lib/formatters";
+import { safePct, safeDollars } from "@/src/lib/format";
 import { Share2 } from "lucide-react";
 
 /** Store slug for daily drill-down; daily page uses cockpit slugs (kent, aurora, lindseys). */
@@ -177,8 +177,8 @@ function WeeklyPageContent() {
   const comparisonKpis = useMemo((): { label: string; key: string; thisWeek: string; lastWeek: string; changePct: number; changeArrow: string; gradeColor: string; changeColor: string }[] => {
     if (!data?.hero || !data?.secondary) return [];
     const targets = COCKPIT_TARGETS[store === "all" ? "kent" : store];
-    const fmtPct = (n: number | null) => (n != null ? formatPct(n) : "—");
-    const fmtDollars = (n: number) => `$${n.toLocaleString("en-US", { maximumFractionDigits: 0 })}`;
+    const fmtPct = (n: number | null) => (n != null ? safePct(n) : "—");
+    const fmtDollars = (n: number) => safeDollars(n);
     const changePct = (curr: number, prev: number) => (prev === 0 ? 0 : Math.round(((curr - prev) / prev) * 1000) / 10);
     const gradeClass = (value: number, target: number, lowerIsBetter: boolean): string => {
       const hex = getGradeColor(value, target, lowerIsBetter ? "lower_is_better" : "higher_is_better");
@@ -219,7 +219,7 @@ function WeeklyPageContent() {
   async function handleShare() {
     const weekLabel = `Week of ${new Date(weekStart + "T12:00:00Z").toLocaleDateString("en-US", { month: "short", day: "numeric" })} – ${new Date(getWeekEnd(weekStart) + "T12:00:00Z").toLocaleDateString("en-US", { month: "short", day: "numeric" })}`;
     const textBody = data?.hero && data?.secondary
-      ? `COGS %: ${data.hero.weekly_prime_pct != null ? formatPct(data.hero.weekly_prime_pct) : "—"}\nLabor: ${data.secondary.labor_pct != null ? formatPct(data.secondary.labor_pct) : "—"}\nFood+Disp: ${data.secondary.food_disp_pct != null ? formatPct(data.secondary.food_disp_pct) : "—"}\nSLPH: ${data.secondary.slph != null ? data.secondary.slph.toFixed(0) : "—"}`
+      ? `COGS %: ${data.hero.weekly_prime_pct != null ? safePct(data.hero.weekly_prime_pct) : "—"}\nLabor: ${data.secondary.labor_pct != null ? safePct(data.secondary.labor_pct) : "—"}\nFood+Disp: ${data.secondary.food_disp_pct != null ? safePct(data.secondary.food_disp_pct) : "—"}\nSLPH: ${data.secondary.slph != null ? data.secondary.slph.toFixed(0) : "—"}`
       : "No data for this week.";
     const shareText = `PrimeOS — Weekly Snapshot\n${storeName}\n${weekLabel}\n\n${textBody}\n\nPowered by PrimeOS — getprimeos.com`;
 
@@ -374,7 +374,7 @@ function WeeklyPageContent() {
                 <div>
                   <div className="text-xs text-slate-500">Change</div>
                   <div className={`text-lg font-bold ${kpi.changeColor}`}>
-                    {kpi.changeArrow} {(kpi.changePct > 0 ? "+" : "") + formatPct(kpi.changePct)}
+                    {kpi.changeArrow} {(kpi.changePct > 0 ? "+" : "") + safePct(kpi.changePct)}
                   </div>
                 </div>
               </div>
@@ -428,7 +428,7 @@ function WeeklyPageContent() {
               <div className="mt-2 flex flex-wrap items-baseline gap-4">
                 <span className="text-3xl sm:text-4xl font-bold tabular-nums">
                   {data.hero.weekly_prime_pct != null
-                    ? formatPct(data.hero.weekly_prime_pct)
+                    ? safePct(data.hero.weekly_prime_pct)
                     : "—"}
                 </span>
                 <span className="text-sm text-muted">
@@ -447,13 +447,13 @@ function WeeklyPageContent() {
                   <span className="text-sm">
                     Variance vs benchmark:{" "}
                     {data.hero.variance_pct >= 0 ? "+" : ""}
-                    {formatPct(data.hero.variance_pct)}
+                    {safePct(data.hero.variance_pct)}
                   </span>
                 )}
                 {data.hero.wow_delta_pct != null && (
                   <span className="text-sm inline-flex items-center gap-1">
                     WoW: {data.hero.wow_delta_pct >= 0 ? "+" : ""}
-                    {formatPct(data.hero.wow_delta_pct)}
+                    {safePct(data.hero.wow_delta_pct)}
                     <EducationInfoIcon metricKey="wow_pct_change" size="sm" />
                   </span>
                 )}
@@ -500,7 +500,7 @@ function WeeklyPageContent() {
                       }}
                       labelStyle={{ color: "#9ca3af", fontSize: "11px", marginBottom: "4px" }}
                       itemStyle={{ color: "#fff", padding: "2px 0" }}
-                      formatter={(v: number | undefined) => [v != null ? formatPct(v) : "—", "COGS %"]}
+                      formatter={(v: number | undefined) => [v != null ? safePct(v) : "—", "COGS %"]}
                       labelFormatter={(_, payload) =>
                         payload?.[0]?.payload?.date ?? ""
                       }
@@ -533,7 +533,7 @@ function WeeklyPageContent() {
                     {new Date(d.date + "T12:00:00Z").toLocaleDateString("en-US", {
                       weekday: "short",
                     })}{" "}
-                    {d.prime_pct != null ? formatPct(d.prime_pct) : "—"}
+                    {d.prime_pct != null ? safePct(d.prime_pct) : "—"}
                   </Link>
                 ))}
               </div>
@@ -562,14 +562,14 @@ function WeeklyPageContent() {
                   </div>
                   <div className="text-xl font-bold tabular-nums">
                     {data.secondary.labor_pct != null
-                      ? formatPct(data.secondary.labor_pct)
+                      ? safePct(data.secondary.labor_pct)
                       : "—"}
                   </div>
                   <div className="text-xs text-muted">
                     Benchmark: {data.secondary.labor_target} •{" "}
                     {data.secondary.labor_status}
                     {data.secondary.labor_wow != null &&
-                      ` • WoW ${data.secondary.labor_wow >= 0 ? "+" : ""}${formatPct(data.secondary.labor_wow)}`}
+                      ` • WoW ${data.secondary.labor_wow >= 0 ? "+" : ""}${safePct(data.secondary.labor_wow)}`}
                   </div>
                 </div>
                 <div className="rounded border border-border/50 bg-black/20 p-3">
@@ -586,14 +586,14 @@ function WeeklyPageContent() {
                   </div>
                   <div className="text-xl font-bold tabular-nums">
                     {data.secondary.food_disp_pct != null
-                      ? formatPct(data.secondary.food_disp_pct)
+                      ? safePct(data.secondary.food_disp_pct)
                       : "—"}
                   </div>
                   <div className="text-xs text-muted">
                     Benchmark: {data.secondary.food_disp_target} •{" "}
                     {data.secondary.food_disp_status}
                     {data.secondary.food_disp_wow != null &&
-                      ` • WoW ${data.secondary.food_disp_wow >= 0 ? "+" : ""}${formatPct(data.secondary.food_disp_wow)}`}
+                      ` • WoW ${data.secondary.food_disp_wow >= 0 ? "+" : ""}${safePct(data.secondary.food_disp_wow)}`}
                   </div>
                 </div>
                 <div className="rounded border border-border/50 bg-black/20 p-3">
@@ -731,9 +731,9 @@ function WeeklyPageContent() {
                               <span className="font-medium">{row.name}</span>
                             </div>
                           </td>
-                          <td className="py-2 pr-4 tabular-nums">{row.weekly_prime_pct != null ? formatPct(row.weekly_prime_pct) : "—"}</td>
-                          <td className="py-2 pr-4 tabular-nums">{row.weekly_labor_pct != null ? formatPct(row.weekly_labor_pct) : "—"}</td>
-                          <td className="py-2 pr-4 tabular-nums">{row.weekly_food_disposables_pct != null ? formatPct(row.weekly_food_disposables_pct) : "—"}</td>
+                          <td className="py-2 pr-4 tabular-nums">{row.weekly_prime_pct != null ? safePct(row.weekly_prime_pct) : "—"}</td>
+                          <td className="py-2 pr-4 tabular-nums">{row.weekly_labor_pct != null ? safePct(row.weekly_labor_pct) : "—"}</td>
+                          <td className="py-2 pr-4 tabular-nums">{row.weekly_food_disposables_pct != null ? safePct(row.weekly_food_disposables_pct) : "—"}</td>
                           <td className="py-2 pr-4 tabular-nums">{row.weekly_slph != null ? row.weekly_slph.toFixed(0) : "—"}</td>
                           <td className="py-2">
                             <span className={row.status === "on_track" ? "text-emerald-500" : "text-red-500"}>
@@ -772,15 +772,15 @@ function WeeklyPageContent() {
                       <div className="grid grid-cols-2 gap-2 text-sm">
                         <div>
                           <div className="text-[10px] uppercase text-muted">COGS %</div>
-                          <div className="text-lg font-bold tabular-nums">{row.weekly_prime_pct != null ? formatPct(row.weekly_prime_pct) : "—"}</div>
                         </div>
                         <div>
                           <div className="text-[10px] uppercase text-muted">Labor %</div>
-                          <div className="text-lg font-bold tabular-nums">{row.weekly_labor_pct != null ? formatPct(row.weekly_labor_pct) : "—"}</div>
                         </div>
                         <div>
                           <div className="text-[10px] uppercase text-muted">Food+Disp %</div>
-                          <div className="text-lg font-bold tabular-nums">{row.weekly_food_disposables_pct != null ? formatPct(row.weekly_food_disposables_pct) : "—"}</div>
+                          <div className="text-lg font-bold tabular-nums">{row.weekly_prime_pct != null ? safePct(row.weekly_prime_pct) : "—"}</div>
+                          <div className="text-lg font-bold tabular-nums">{row.weekly_labor_pct != null ? safePct(row.weekly_labor_pct) : "—"}</div>
+                          <div className="text-lg font-bold tabular-nums">{row.weekly_food_disposables_pct != null ? safePct(row.weekly_food_disposables_pct) : "—"}</div>
                         </div>
                         <div>
                           <div className="text-[10px] uppercase text-muted">SLPH</div>

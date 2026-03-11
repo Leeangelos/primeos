@@ -4,7 +4,7 @@ import { useState, useMemo, useEffect } from "react";
 import { Scale, Info } from "lucide-react";
 import { useAuth } from "@/src/lib/auth-context";
 import { isNewUser, getNewUserStoreName } from "@/src/lib/user-scope";
-import { formatDollars, formatPct } from "@/src/lib/formatters";
+import { safeDollars, safePct } from "@/src/lib/format";
 import { EducationInfoIcon } from "@/src/components/education/InfoIcon";
 import { DataDisclaimer } from "@/src/components/ui/DataDisclaimer";
 import { COCKPIT_STORE_SLUGS, COCKPIT_TARGETS } from "@/lib/cockpit-config";
@@ -120,11 +120,11 @@ export default function FoodCostAnalysisPage() {
               <span className="text-xs text-slate-500">Actual</span>
               <EducationInfoIcon metricKey="actual_food_cost" size="sm" />
             </div>
-            <div className="text-lg text-red-400 font-bold">{formatDollars(totalFood)}</div>
+            <div className="text-lg text-red-400 font-bold">{safeDollars(totalFood)}</div>
             <div className="text-[10px] text-slate-600">
               {hasPurchaseData ? (
                 <>
-                  {formatPct(actualPct)} of revenue <span className="text-emerald-400 text-xs">● Invoices</span>
+                  {safePct(actualPct)} of revenue <span className="text-emerald-400 text-xs">● Invoices</span>
                 </>
               ) : (
                 <span className="text-amber-400">Awaiting invoices</span>
@@ -133,7 +133,7 @@ export default function FoodCostAnalysisPage() {
           </div>
           <div>
             <div className="text-xs text-slate-500">Revenue (30d)</div>
-            <div className="text-lg font-bold text-white">{formatDollars(totalSales)}</div>
+            <div className="text-lg font-bold text-white">{safeDollars(totalSales)}</div>
             <div className="text-[10px] text-slate-600">Net sales <span className="text-emerald-400">● POS</span></div>
           </div>
         </div>
@@ -148,9 +148,9 @@ export default function FoodCostAnalysisPage() {
         </button>
         {showFormula && (
           <div className="mt-2 p-3 rounded-lg bg-slate-700/50 text-[10px] text-slate-400 space-y-1 font-mono">
-            <p>Actual = total food spend from MarginEdge (last 30 days) = {formatDollars(totalFood)}</p>
-            <p>Revenue = net sales from POS = {formatDollars(totalSales)}</p>
-            <p>Actual food cost % = {formatPct(actualPct)}</p>
+            <p>Actual = total food spend from MarginEdge (last 30 days) = {safeDollars(totalFood)}</p>
+            <p>Revenue = net sales from POS = {safeDollars(totalSales)}</p>
+            <p>Actual food cost % = {safePct(actualPct)}</p>
             <p>Benchmarks for pizza operations typically run 28–32% food cost.</p>
           </div>
         )}
@@ -169,9 +169,9 @@ export default function FoodCostAnalysisPage() {
             <h3 className="text-sm font-semibold text-white mb-2">Last 30 days — Actual food cost</h3>
             <p className="text-xs text-slate-500">Blended from MarginEdge invoices and POS sales.</p>
             <p className="text-2xl font-bold text-white mt-2">
-              {hasPurchaseData ? (
+                  {hasPurchaseData ? (
                 <>
-                  {formatPct(actualPct)} <span className="text-emerald-400 text-xs">● Invoices + POS</span>
+                  {safePct(actualPct)} <span className="text-emerald-400 text-xs">● Invoices + POS</span>
                 </>
               ) : (
                 <span className="text-amber-400 text-base">Awaiting invoices</span>
@@ -187,7 +187,7 @@ export default function FoodCostAnalysisPage() {
                 <div className="flex items-baseline justify-between mb-2">
                   <div>
                     <p className="text-xs text-slate-400">Your actual</p>
-                    <p className="text-lg font-semibold text-white">{formatPct(actualPct)}</p>
+                    <p className="text-lg font-semibold text-white">{safePct(actualPct)}</p>
                   </div>
                   <div className="text-right">
                     <p className="text-xs text-slate-400">Status vs benchmark</p>
@@ -201,11 +201,11 @@ export default function FoodCostAnalysisPage() {
                   </div>
                 </div>
                 <p className="text-[11px] text-slate-500">
-                  Gap to upper benchmark (32%): {formatPct(Math.abs(actualPct - 32))}
+                  Gap to upper benchmark (32%): {safePct(Math.abs(actualPct - 32))}
                 </p>
                 {actualPct > 32 && (
                   <p className="text-[11px] text-red-400 font-semibold">
-                    That&apos;s {formatDollars(gapDollars)} in excess food spend this month
+                    That&apos;s {safeDollars(gapDollars)} in excess food spend this month
                   </p>
                 )}
               </>
@@ -221,19 +221,19 @@ export default function FoodCostAnalysisPage() {
                 <div>
                   <p className="text-slate-500">Food</p>
                   <p className="text-white font-semibold">
-                    {formatPct((foodTotal / totalPurchases) * 100)}
+                    {safePct((foodTotal / totalPurchases) * 100)}
                   </p>
                 </div>
                 <div>
                   <p className="text-slate-500">Disposables</p>
                   <p className="text-white font-semibold">
-                    {formatPct((paperTotal / totalPurchases) * 100)}
+                    {safePct((paperTotal / totalPurchases) * 100)}
                   </p>
                 </div>
                 <div>
                   <p className="text-slate-500">Beverages</p>
                   <p className="text-white font-semibold">
-                    {formatPct((beverageTotal / totalPurchases) * 100)}
+                    {safePct((beverageTotal / totalPurchases) * 100)}
                   </p>
                 </div>
               </div>

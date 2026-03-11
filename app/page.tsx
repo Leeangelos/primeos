@@ -10,7 +10,7 @@ import { useRedAlert } from "@/src/lib/useRedAlert";
 import { useAuth } from "@/src/lib/auth-context";
 import { isNewUser } from "@/src/lib/user-scope";
 import { EducationInfoIcon } from "@/src/components/education/InfoIcon";
-import { formatPct } from "@/src/lib/formatters";
+import { safePct } from "@/src/lib/format";
 import { EDUCATION_CONTENT } from "@/src/lib/education-content";
 import { COCKPIT_STORE_SLUGS, COCKPIT_TARGETS, getBenchmarksForStore as getBenchmarksFromCockpit } from "@/lib/cockpit-config";
 import { calculateOperatorScore } from "@/src/lib/score-engine";
@@ -256,7 +256,7 @@ function PillarPanel({
   if (!isOpen) return null;
 
   if (pillarId === "product") {
-    const value = kpi && kpi.foodCostPct != null ? formatPct(kpi.foodCostPct) : "—";
+    const value = kpi && kpi.foodCostPct != null ? safePct(kpi.foodCostPct) : "—";
     const subtext = kpi?.foodCostPct == null ? "Upload invoices to see your grade" : "A: &lt;28% | B: 28-32% | C: 32-36% | D: 36-40% | F: &gt;40%";
     return (
       <div className="bg-zinc-900/50 border-t border-zinc-700 overflow-hidden transition-all duration-300 ease-in-out">
@@ -287,7 +287,7 @@ function PillarPanel({
   }
 
   if (pillarId === "people") {
-    const value = kpi ? formatPct(kpi.laborPct) : "—";
+    const value = kpi ? safePct(kpi.laborPct) : "—";
     return (
       <div className="bg-zinc-900/50 border-t border-zinc-700 overflow-hidden transition-all duration-300 ease-in-out">
         <div className="p-4 space-y-4">
@@ -327,7 +327,7 @@ function PillarPanel({
       <div className="p-4 space-y-4">
         <div className="flex items-start justify-between gap-2">
           <div>
-            <p className="text-2xl font-bold tabular-nums text-white">{kpi ? formatPct(kpi.primePct) : "—"}</p>
+            <p className="text-2xl font-bold tabular-nums text-white">{kpi ? safePct(kpi.primePct) : "—"}</p>
             <p className={`text-lg font-semibold ${gradeColor}`}>{grade}</p>
             <p className="text-xs text-zinc-500 mt-1">A: &lt;50% | B: 50-55% | C: 55-60% | D: 60-65% | F: &gt;65%</p>
           </div>
@@ -336,7 +336,7 @@ function PillarPanel({
         <div>
           <p className="text-xs text-zinc-400 font-medium uppercase tracking-wide mb-2">COGS breakdown:</p>
           <p className="text-sm text-zinc-300">
-            Food ({formatPct(foodPct)}) + Labor ({formatPct(laborPct)}) + Disposables ({formatPct(dispPct)}) = COGS ({formatPct(primePct)})
+            Food ({safePct(foodPct)}) + Labor ({safePct(laborPct)}) + Disposables ({safePct(dispPct)}) = COGS ({safePct(primePct)})
           </p>
           <p className="text-xs text-zinc-500 mt-1">
             <span className={foodWorse ? "text-amber-400" : "text-zinc-400"}>Food</span>
@@ -754,14 +754,14 @@ export default function HomePage() {
           severity: "red",
           key: "food_cost",
           label: `Food Cost (${storeLabel})`,
-          message: `Food cost is above the benchmark. You're at ${formatPct(kpi.foodCostPct)}. Target: ≤${targetFc}%. Tap for playbook.`,
+          message: `Food cost is above the benchmark. You're at ${safePct(kpi.foodCostPct)}. Target: ≤${targetFc}%. Tap for playbook.`,
         });
       } else if (kpi.foodCostPct >= targetFc - 10 && kpi.foodCostPct <= targetFc) {
         list.push({
           severity: "yellow",
           key: "food_cost",
           label: `Food Cost (${storeLabel})`,
-          message: `Food cost is getting close to the benchmark. You're at ${formatPct(kpi.foodCostPct)}. Target: ≤${targetFc}%. Tap for playbook.`,
+          message: `Food cost is getting close to the benchmark. You're at ${safePct(kpi.foodCostPct)}. Target: ≤${targetFc}%. Tap for playbook.`,
         });
       }
     }
@@ -771,14 +771,14 @@ export default function HomePage() {
         severity: "red",
         key: "labor_pct",
         label: `Labor % (${storeLabel})`,
-        message: `Labor cost is above the benchmark. You're at ${formatPct(kpi.laborPct)}. Target: ≤${targetLabor}%. Tap for playbook.`,
+        message: `Labor cost is above the benchmark. You're at ${safePct(kpi.laborPct)}. Target: ≤${targetLabor}%. Tap for playbook.`,
       });
     } else if (kpi.laborPct >= targetLabor - 10 && kpi.laborPct <= targetLabor) {
       list.push({
         severity: "yellow",
         key: "labor_pct",
         label: `Labor % (${storeLabel})`,
-        message: `Labor is getting close to the benchmark. You're at ${formatPct(kpi.laborPct)}. Target: ≤${targetLabor}%. Tap for playbook.`,
+        message: `Labor is getting close to the benchmark. You're at ${safePct(kpi.laborPct)}. Target: ≤${targetLabor}%. Tap for playbook.`,
       });
     }
 
@@ -787,14 +787,14 @@ export default function HomePage() {
         severity: "red",
         key: "prime_cost",
         label: `COGS % (${storeLabel})`,
-        message: `COGS % is above the benchmark. You're at ${formatPct(kpi.primePct)}. Target: ≤${targetPrime}%. Tap for playbook.`,
+        message: `COGS % is above the benchmark. You're at ${safePct(kpi.primePct)}. Target: ≤${targetPrime}%. Tap for playbook.`,
       });
     } else if (kpi.primePct >= targetPrime - 10 && kpi.primePct <= targetPrime) {
       list.push({
         severity: "yellow",
         key: "prime_cost",
         label: `COGS % (${storeLabel})`,
-        message: `COGS % is getting close to the benchmark. You're at ${formatPct(kpi.primePct)}. Target: ≤${targetPrime}%. Tap for playbook.`,
+        message: `COGS % is getting close to the benchmark. You're at ${safePct(kpi.primePct)}. Target: ≤${targetPrime}%. Tap for playbook.`,
       });
     }
 
@@ -815,10 +815,10 @@ export default function HomePage() {
     const list: { id: string; title: string; body: string; emoji: string; magnitude: "big" | "medium" | "small"; date: string }[] = [];
     if (range30Agg) {
       if (range30Agg.foodCostPct != null && range30Agg.foodCostPct < 30) {
-        list.push({ id: "live-fc", title: "Food cost under 30%", body: `30-day avg food cost: ${range30Agg.foodCostPct.toFixed(1)}%.`, emoji: "🍕", magnitude: "medium", date: "30-day avg" });
+        list.push({ id: "live-fc", title: "Food cost under 30%", body: `30-day avg food cost: ${safePct(range30Agg.foodCostPct)}.`, emoji: "🍕", magnitude: "medium", date: "30-day avg" });
       }
       if (range30Agg.laborPct != null && range30Agg.laborPct < 25) {
-        list.push({ id: "live-labor", title: "Labor under 25%", body: `30-day avg labor: ${range30Agg.laborPct.toFixed(1)}% (target ≤25%).`, emoji: "👥", magnitude: "medium", date: "30-day avg" });
+        list.push({ id: "live-labor", title: "Labor under 25%", body: `30-day avg labor: ${safePct(range30Agg.laborPct)} (target ≤25%).`, emoji: "👥", magnitude: "medium", date: "30-day avg" });
       }
       if (liveDailyData?.splh != null && liveDailyData.splh >= 60) {
         const splh = liveDailyData.splh;
@@ -1046,7 +1046,7 @@ export default function HomePage() {
                   </div>
                 </div>
                 <div className="text-2xl font-bold tabular-nums" style={{ color: hasFc ? borderColor : "inherit" }}>
-                  {hasFc ? formatPct(fcVal) : "—"}
+                  {hasFc ? safePct(fcVal) : "—"}
                 </div>
                 <div className="text-xs text-zinc-500">Target: ≤{benchmarks.foodCostTargetPct}%</div>
               </div>
@@ -1066,7 +1066,7 @@ export default function HomePage() {
                   </div>
                 </div>
                 <div className="text-2xl font-bold tabular-nums" style={{ color: borderColor }}>
-                  {formatPct(laborVal)}
+                  {safePct(laborVal)}
                 </div>
                 <div className="text-xs text-zinc-500">Target: ≤{benchmarks.laborTargetPct}%</div>
               </div>
@@ -1088,7 +1088,7 @@ export default function HomePage() {
                   </div>
                 </div>
                 <div className="text-2xl font-bold tabular-nums" style={{ color: borderColor }}>
-                  {formatPct(primeVal)}
+                  {safePct(primeVal)}
                 </div>
                 <div className="text-xs text-zinc-500">Target: ≤{benchmarks.primeTargetPct}%</div>
               </div>
