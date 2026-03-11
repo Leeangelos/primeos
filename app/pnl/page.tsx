@@ -123,10 +123,11 @@ export default function PnlPage() {
   const storeName = storeFilter === "all" ? "All Locations" : COCKPIT_TARGETS[storeFilter].name;
 
   const [rangeData, setRangeData] = useState<{ sales: { business_day: string; net_sales?: number }[]; labor: { business_day: string; total_labor_cost?: number; total_overtime_cost?: number }[]; purchases: { business_day: string; food_spend?: number; paper_spend?: number }[] } | null>(null);
-  const [fixedFromGl, setFixedFromGl] = useState<{ total: number; byCategory: Record<string, number>; hasData: boolean }>({
+  const [fixedFromGl, setFixedFromGl] = useState<{ total: number; byCategory: Record<string, number>; hasData: boolean; foodGl: number }>({
     total: 0,
     byCategory: {},
     hasData: false,
+    foodGl: 0,
   });
   useEffect(() => {
     let cancelled = false;
@@ -152,7 +153,7 @@ export default function PnlPage() {
         const monthKey = (startDate || "").slice(0, 7);
         if (!monthKey || storeFilter === "all") {
           if (!cancelled) {
-            setFixedFromGl({ total: 0, byCategory: {}, hasData: false });
+            setFixedFromGl({ total: 0, byCategory: {}, hasData: false, foodGl: 0 });
           }
           return;
         }
@@ -175,7 +176,7 @@ export default function PnlPage() {
           .maybeSingle();
         const storeId = storeRow?.id as string | undefined;
         if (!storeId) {
-          if (!cancelled) setFixedFromGl({ total: 0, byCategory: {}, hasData: false });
+          if (!cancelled) setFixedFromGl({ total: 0, byCategory: {}, hasData: false, foodGl: 0 });
           return;
         }
         const { data: rows } = await supabase
@@ -217,8 +218,17 @@ export default function PnlPage() {
           "Storage Rent",
           "Dues & Subscriptions",
         ]);
+        const glFoodCategories = new Set([
+          "Food COGs Hillcrest",
+          "Food COGs - Hillcrest",
+          "Food Purchases",
+          "Hillcrest Foods",
+          "Beverage Purchases",
+          "Liquor Purchases",
+        ]);
         const byCategory: Record<string, number> = {};
         let total = 0;
+        let foodGl = 0;
         for (const r of rows ?? []) {
           const rawCat = String((r as any).gl_category ?? "");
           const vendor = String((r as any).vendor_name ?? "");
@@ -232,17 +242,21 @@ export default function PnlPage() {
           const amt = Number((r as any).debit) || 0;
           byCategory[cat] = (byCategory[cat] ?? 0) + amt;
           total += amt;
+          if (glFoodCategories.has(rawCat)) {
+            foodGl += amt;
+          }
         }
         if (!cancelled) {
           setFixedFromGl({
             total,
             byCategory,
             hasData: (rows ?? []).length > 0,
+            foodGl,
           });
         }
       } catch {
         if (!cancelled) {
-          setFixedFromGl({ total: 0, byCategory: {}, hasData: false });
+          setFixedFromGl({ total: 0, byCategory: {}, hasData: false, foodGl: 0 });
         }
       }
     }
@@ -276,17 +290,20 @@ export default function PnlPage() {
   }, [fixedFromGl]);
 
   const pnl = useMemo(() => {
-    if (!rangeData?.sales?.length) {
+    if (!rangeData) {
       const totalFixed = fixedBreakdown.totalFixed;
       const totalSales = 0;
-      const totalCOGS = 0;
+      const totalFood = fixedFromGl.foodGl ?? 0;
+      const totalLabor = 0;
+      const totalDisposables = 0;
+      const totalCOGS = totalFood + totalLabor + totalDisposables;
       const grossProfit = totalSales - totalCOGS;
       const netProfit = grossProfit - totalFixed;
       return {
         totalSales,
-        totalFood: 0,
-        totalLabor: 0,
-        totalDisposables: 0,
+        totalFood,
+        totalLabor,
+        totalDisposables,
         totalCOGS,
         grossProfit,
         totalFixed,
@@ -314,8 +331,8 @@ export default function PnlPage() {
       totalFood += pur?.food ?? 0;
       totalDisposables += pur?.paper ?? 0;
     }
-    const totalCOGS = totalFood + totalLabor + totalDisposables;
-    const grossProfit = totalSales - totalCOGS;
+    let totalCOGS = totalFood + totalLabor + totalDisposables;
+    let grossProfit = totalSales - totalCOGS;
     const totalFixed = fixedBreakdown.totalFixed;
     const netProfit = grossProfit - totalFixed;
     const foodPct = totalSales > 0 ? (totalFood / totalSales) * 100 : 0;
@@ -342,7 +359,7 @@ export default function PnlPage() {
       fixedPct,
       netProfitPct,
     };
-  }, [rangeData, startDate, endDate, fixedBreakdown]);
+  }, [rangeData, startDate, endDate, fixedBreakdown, fixedFromGl.foodGl]);
 
   async function handleShare() {
     setShareGenerating(true);
@@ -636,7 +653,7 @@ export default function PnlPage() {
           />
           {noPosForPeriod && (
             <p className="mt-1 text-xs text-slate-400">
-              POS data not available before February 2026 — COGS figures unavailable for this period.
+              Sales and labor data not available before February 2026. Food cost sourced from GL.
             </p>
           )}
         </div>
@@ -646,14 +663,34 @@ export default function PnlPage() {
             <span className="text-xs text-slate-500 uppercase tracking-wide">Cost of Goods Sold (COGS)</span>
             <EducationInfoIcon metricKey="cogs_pl" size="sm" />
           </div>
-          <LineItem
-            label="Food Cost"
-            amount={noPosForPeriod ? "—" : formatDollars(pnl.totalFood)}
-            pct={noPosForPeriod ? "—" : formatPct(pnl.foodPct)}
-            grade={noPosForPeriod ? undefined : pctToGrade(pnl.foodPct, 31)}
-            metricKey="food_cost"
-            amountColor="red"
-          />
+          {noPosForPeriod ? (
+            <div className="flex justify-between items-center gap-2 py-1.5">
+              <div className="flex items-center gap-2 min-w-0">
+                <span className="text-slate-300">Food Cost</span>
+                <EducationInfoIcon metricKey="food_cost" />
+              </div>
+              <div className="flex items-center gap-2 shrink-0">
+                <span className="tabular-nums font-medium text-red-400">
+                  {formatDollars(pnl.totalFood)}
+                </span>
+                <span className="px-1.5 py-0.5 rounded-full text-[10px] bg-slate-800 text-slate-400 border border-slate-600">
+                  GL
+                </span>
+                <span className="text-xs tabular-nums text-slate-400">
+                  {formatPct(pnl.foodPct)}
+                </span>
+              </div>
+            </div>
+          ) : (
+            <LineItem
+              label="Food Cost"
+              amount={formatDollars(pnl.totalFood)}
+              pct={formatPct(pnl.foodPct)}
+              grade={pctToGrade(pnl.foodPct, 31)}
+              metricKey="food_cost"
+              amountColor="red"
+            />
+          )}
           <LineItem
             label="Labor Cost"
             amount={noPosForPeriod ? "—" : formatDollars(pnl.totalLabor)}
