@@ -228,9 +228,53 @@ export default function PnlPage() {
     };
   }, [startDate, storeFilter]);
 
+  const fixedBreakdown = useMemo(() => {
+    const rentTotal =
+      (fixedFromGl.byCategory["Rent Expense"] ?? 0) +
+      (fixedFromGl.byCategory["Storage Rent"] ?? 0) +
+      (fixedFromGl.byCategory["University Plaza"] ?? 0);
+    const insuranceTotal =
+      (fixedFromGl.byCategory["Business Insurance"] ?? 0) +
+      (fixedFromGl.byCategory["Workers Comp"] ?? 0) +
+      (fixedFromGl.byCategory["Medical Insurance"] ?? 0);
+    const utilitiesTotal =
+      (fixedFromGl.byCategory["Electricity"] ?? 0) +
+      (fixedFromGl.byCategory["Gas"] ?? 0) +
+      (fixedFromGl.byCategory["Water & Sewer"] ?? 0) +
+      (fixedFromGl.byCategory["Telephone/Internet/Cable"] ?? 0) +
+      (fixedFromGl.byCategory["Telephone, Internet, Cable"] ?? 0) +
+      (fixedFromGl.byCategory["Electric & Gas"] ?? 0) +
+      (fixedFromGl.byCategory["Electric/Gas/Water"] ?? 0);
+    const mappedSum = rentTotal + insuranceTotal + utilitiesTotal;
+    const otherFixed = Math.max(0, fixedFromGl.total - mappedSum);
+    const totalFixed = rentTotal + insuranceTotal + utilitiesTotal + otherFixed;
+    return { rentTotal, insuranceTotal, utilitiesTotal, otherFixed, totalFixed };
+  }, [fixedFromGl]);
+
   const pnl = useMemo(() => {
     if (!rangeData?.sales?.length) {
-      return { totalSales: 0, totalFood: 0, totalLabor: 0, totalDisposables: 0, totalCOGS: 0, grossProfit: 0, totalFixed: 0, netProfit: 0, foodPct: 0, dispPct: 0, cogsPct: 0, laborPct: 0, gpPct: 0, fixedPct: 0, netProfitPct: 0 };
+      const totalFixed = fixedBreakdown.totalFixed;
+      const totalSales = 0;
+      const totalCOGS = 0;
+      const grossProfit = totalSales - totalCOGS;
+      const netProfit = grossProfit - totalFixed;
+      return {
+        totalSales,
+        totalFood: 0,
+        totalLabor: 0,
+        totalDisposables: 0,
+        totalCOGS,
+        grossProfit,
+        totalFixed,
+        netProfit,
+        foodPct: 0,
+        dispPct: 0,
+        cogsPct: 0,
+        laborPct: 0,
+        gpPct: 0,
+        fixedPct: 0,
+        netProfitPct: 0,
+      };
     }
     const inRange = (date: string) => date >= startDate && date <= endDate;
     const salesInRange = rangeData.sales.filter((s) => inRange(s.business_day));
@@ -248,7 +292,7 @@ export default function PnlPage() {
     }
     const totalCOGS = totalFood + totalLabor + totalDisposables;
     const grossProfit = totalSales - totalCOGS;
-    const totalFixed = fixedFromGl.total;
+    const totalFixed = fixedBreakdown.totalFixed;
     const netProfit = grossProfit - totalFixed;
     const foodPct = totalSales > 0 ? (totalFood / totalSales) * 100 : 0;
     const dispPct = totalSales > 0 ? (totalDisposables / totalSales) * 100 : 0;
@@ -274,7 +318,7 @@ export default function PnlPage() {
       fixedPct,
       netProfitPct,
     };
-  }, [rangeData, startDate, endDate, fixedFromGl]);
+  }, [rangeData, startDate, endDate, fixedBreakdown]);
 
   async function handleShare() {
     setShareGenerating(true);
@@ -632,29 +676,12 @@ export default function PnlPage() {
             <EducationInfoIcon metricKey="occupancy_pct" size="sm" />
           </div>
           {(() => {
-            const rentTotal =
-              (fixedFromGl.byCategory["Rent Expense"] ?? 0) +
-              (fixedFromGl.byCategory["Storage Rent"] ?? 0);
-            const insuranceTotal =
-              (fixedFromGl.byCategory["Business Insurance"] ?? 0) +
-              (fixedFromGl.byCategory["Workers Comp"] ?? 0) +
-              (fixedFromGl.byCategory["Medical Insurance"] ?? 0);
-            const utilitiesTotal =
-              (fixedFromGl.byCategory["Electricity"] ?? 0) +
-              (fixedFromGl.byCategory["Gas"] ?? 0) +
-              (fixedFromGl.byCategory["Water & Sewer"] ?? 0) +
-              (fixedFromGl.byCategory["Telephone/Internet/Cable"] ?? 0) +
-              (fixedFromGl.byCategory["Telephone, Internet, Cable"] ?? 0) +
-              (fixedFromGl.byCategory["Electric & Gas"] ?? 0) +
-              (fixedFromGl.byCategory["Electric/Gas/Water"] ?? 0);
-            const mappedSum = rentTotal + insuranceTotal + utilitiesTotal;
-            const otherFixed = Math.max(0, fixedFromGl.total - mappedSum);
             return (
               <>
-                <LineItem label="Rent / Mortgage" amount={formatDollars(rentTotal)} />
-                <LineItem label="Insurance" amount={formatDollars(insuranceTotal)} />
-                <LineItem label="Utilities" amount={formatDollars(utilitiesTotal)} />
-                <LineItem label="Other Fixed" amount={formatDollars(otherFixed)} />
+                <LineItem label="Rent / Mortgage" amount={formatDollars(fixedBreakdown.rentTotal)} />
+                <LineItem label="Insurance" amount={formatDollars(fixedBreakdown.insuranceTotal)} />
+                <LineItem label="Utilities" amount={formatDollars(fixedBreakdown.utilitiesTotal)} />
+                <LineItem label="Other Fixed" amount={formatDollars(fixedBreakdown.otherFixed)} />
               </>
             );
           })()}
