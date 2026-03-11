@@ -8,8 +8,33 @@ import { safeDollars, safePct } from "@/src/lib/format";
 import { EducationInfoIcon } from "@/src/components/education/InfoIcon";
 import { DataDisclaimer } from "@/src/components/ui/DataDisclaimer";
 import { COCKPIT_STORE_SLUGS, COCKPIT_TARGETS } from "@/lib/cockpit-config";
+import { createClient } from "@/lib/supabase";
 
 const STORE_OPTIONS = COCKPIT_STORE_SLUGS.map((s) => ({ value: s, label: COCKPIT_TARGETS[s].name }));
+
+type BaselineMonth = {
+  month: string;
+  monthLabel: string;
+  revenue: number;
+  hillcrestSpend: number;
+  foodCostPct: number | null;
+  isCurrentMonth: boolean;
+  isComplete: boolean;
+  status: "In Range" | "Watch" | "Investigate" | null;
+};
+
+type BaselineData = {
+  monthly: BaselineMonth[];
+  baselinePct: number | null;
+  baselineN: number;
+  confidence: "Low" | "Medium" | "High";
+  currentSpend: number;
+  currentRevenue: number;
+  currentPct: number | null;
+  currentStatus: "In Range" | "Watch" | "Investigate" | null;
+  paceDollars: number | null;
+  avgMonthlyRevenue: number | null;
+};
 
 export default function FoodCostAnalysisPage() {
   const { session, loading } = useAuth();
@@ -17,6 +42,7 @@ export default function FoodCostAnalysisPage() {
   const newUserStoreName = getNewUserStoreName(session);
   const [selectedStore, setSelectedStore] = useState("kent");
   const [showFormula, setShowFormula] = useState(false);
+  const [baselineData, setBaselineData] = useState<BaselineData | null>(null);
   const [rangeData, setRangeData] = useState<{
     sales: { net_sales?: number }[];
     purchases: { food_spend?: number; paper_spend?: number; beverage_spend?: number }[];
@@ -37,6 +63,138 @@ export default function FoodCostAnalysisPage() {
       })
       .catch(() => setRangeData(null));
     return () => { cancelled = true; };
+  }, [selectedStore]);
+
+  useEffect(() => {
+    let cancelled = false;
+    async function loadBaseline() {
+      try {
+        const supabase = createClient();
+        const { data: storeRow } = await supabase
+          .from("stores")
+          .select("id")
+          .eq("slug", selectedStore)
+          .maybeSingle();
+        const storeId = storeRow?.id as string | undefined;
+        if (!storeId) {
+          if (!cancelled) setBaselineData(null);
+          return;
+        }
+        const [invRes, salesRes] = await Promise.all([
+          supabase
+            .from("me_invoices")
+            .select("invoice_date, total")
+            .eq("store_id", storeId)
+            .eq("vendor_name", "Hillcrest Foodservice"),
+          supabase
+            .from("foodtec_daily_sales")
+            .select("business_day, net_sales")
+            .eq("store_id", storeId),
+        ]);
+        if (cancelled) return;
+        const invoices = (invRes.data ?? []) as { invoice_date: string; total: number }[];
+        const sales = (salesRes.data ?? []) as { business_day: string; net_sales: number }[];
+        const hillcrestByMonth: Record<string, number> = {};
+        for (const row of invoices) {
+          const d = row.invoice_date;
+          if (!d || typeof d !== "string") continue;
+          const month = d.slice(0, 7);
+          hillcrestByMonth[month] = (hillcrestByMonth[month] ?? 0) + (Number(row.total) || 0);
+        }
+        const revenueByMonth: Record<string, number> = {};
+        for (const row of sales) {
+          const d = row.business_day;
+          if (!d || typeof d !== "string") continue;
+          const month = d.slice(0, 7);
+          revenueByMonth[month] = (revenueByMonth[month] ?? 0) + (Number(row.net_sales) || 0);
+        }
+        const allMonths = new Set([...Object.keys(hillcrestByMonth), ...Object.keys(revenueByMonth)]);
+        const sortedMonths = Array.from(allMonths).sort();
+        const now = new Date();
+        const currentMonthKey = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}`;
+        const completeMonthsPct: number[] = [];
+        let avgMonthlyRevenue = 0;
+        let completeRevenueCount = 0;
+        const monthly: BaselineMonth[] = [];
+        for (const monthKey of sortedMonths) {
+          const rev = revenueByMonth[monthKey] ?? 0;
+          const spend = hillcrestByMonth[monthKey] ?? 0;
+          const pct = rev > 0 ? (spend / rev) * 100 : null;
+          const isCurrentMonth = monthKey === currentMonthKey;
+          const isComplete = !isCurrentMonth;
+          if (isComplete && pct != null) completeMonthsPct.push(pct);
+          if (isComplete && rev > 0) {
+            avgMonthlyRevenue += rev;
+            completeRevenueCount += 1;
+          }
+          const [y, m] = monthKey.split("-").map(Number);
+          const monthLabel = new Date(y, m - 1, 1).toLocaleDateString("en-US", { month: "short", year: "numeric" });
+          let status: "In Range" | "Watch" | "Investigate" | null = null;
+          monthly.push({
+            month: monthKey,
+            monthLabel,
+            revenue: rev,
+            hillcrestSpend: spend,
+            foodCostPct: pct,
+            isCurrentMonth,
+            isComplete,
+            status,
+          });
+        }
+        const baselinePct =
+          completeMonthsPct.length > 0
+            ? completeMonthsPct.reduce((a, b) => a + b, 0) / completeMonthsPct.length
+            : null;
+        const baselineN = completeMonthsPct.length;
+        const confidence: "Low" | "Medium" | "High" =
+          baselineN >= 6 ? "High" : baselineN >= 3 ? "Medium" : baselineN >= 1 ? "Low" : "Low";
+        const avgRev = completeRevenueCount > 0 ? avgMonthlyRevenue / completeRevenueCount : null;
+        for (let i = 0; i < monthly.length; i++) {
+          const row = monthly[i];
+          if (baselinePct != null && row.foodCostPct != null) {
+            const diff = row.foodCostPct - baselinePct;
+            if (diff <= 3) row.status = "In Range";
+            else if (diff <= 7) row.status = "Watch";
+            else row.status = "Investigate";
+          }
+        }
+        const currentRow = monthly.find((r) => r.isCurrentMonth);
+        const currentSpend = currentRow?.hillcrestSpend ?? 0;
+        const currentRevenue = currentRow?.revenue ?? 0;
+        const currentPct = currentRevenue > 0 ? (currentSpend / currentRevenue) * 100 : null;
+        let currentStatus: "In Range" | "Watch" | "Investigate" | null = null;
+        if (baselinePct != null && currentPct != null) {
+          const diff = currentPct - baselinePct;
+          if (diff <= 3) currentStatus = "In Range";
+          else if (diff <= 7) currentStatus = "Watch";
+          else currentStatus = "Investigate";
+        }
+        let paceDollars: number | null = null;
+        if (avgRev != null && baselinePct != null && currentPct != null) {
+          paceDollars = ((currentPct - baselinePct) / 100) * avgRev;
+        }
+        if (!cancelled) {
+          setBaselineData({
+            monthly,
+            baselinePct,
+            baselineN,
+            confidence,
+            currentSpend,
+            currentRevenue,
+            currentPct,
+            currentStatus,
+            paceDollars,
+            avgMonthlyRevenue: avgRev,
+          });
+        }
+      } catch {
+        if (!cancelled) setBaselineData(null);
+      }
+    }
+    loadBaseline();
+    return () => {
+      cancelled = true;
+    };
   }, [selectedStore]);
 
   const { totalSales, totalFood, actualPct, hasPurchaseData } = useMemo(() => {
@@ -245,6 +403,137 @@ export default function FoodCostAnalysisPage() {
       )}
 
       <DataDisclaimer confidence="high" details="Actual food cost powered by MarginEdge invoices and POS sales. Benchmarks are industry ranges for pizza operations." />
+
+      {/* Your Baseline — Expected vs Actual */}
+      <section className="mt-6 space-y-4">
+        <h2 className="text-lg font-bold text-white">Your Baseline — Expected vs Actual</h2>
+
+        {baselineData && (
+          <>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div className="bg-slate-800 rounded-xl border border-slate-700 p-4">
+                <h3 className="text-sm font-semibold text-white mb-2">Baseline</h3>
+                <p className="text-2xl font-bold text-white">
+                  {baselineData.baselinePct != null ? safePct(baselineData.baselinePct) : "—"}
+                </p>
+                <p className="text-xs text-slate-500 mt-1">Expected Food Cost %</p>
+                <p className="text-xs text-slate-400 mt-1">Based on {baselineData.baselineN} month{baselineData.baselineN !== 1 ? "s" : ""} of data</p>
+                <p className="text-xs text-slate-400 mt-0.5">
+                  Confidence:{" "}
+                  <span
+                    className={
+                      baselineData.confidence === "High"
+                        ? "text-emerald-400"
+                        : baselineData.confidence === "Medium"
+                          ? "text-amber-400"
+                          : "text-slate-400"
+                    }
+                  >
+                    {baselineData.confidence}
+                  </span>
+                  {baselineData.confidence === "Low" && " (1–2 months)"}
+                  {baselineData.confidence === "Medium" && " (3–5 months)"}
+                  {baselineData.confidence === "High" && " (6+ months)"}
+                </p>
+              </div>
+
+              <div className="bg-slate-800 rounded-xl border border-slate-700 p-4">
+                <h3 className="text-sm font-semibold text-white mb-2">Current month (MTD)</h3>
+                <p className="text-sm text-slate-400">
+                  Hillcrest spend: {safeDollars(baselineData.currentSpend)} / Revenue: {safeDollars(baselineData.currentRevenue)}
+                </p>
+                {baselineData.currentPct != null && (
+                  <p className="text-lg font-bold text-white mt-1">{safePct(baselineData.currentPct)} food cost MTD</p>
+                )}
+                {baselineData.currentStatus && (
+                  <p
+                    className={`text-sm font-semibold mt-2 ${
+                      baselineData.currentStatus === "In Range"
+                        ? "text-emerald-400"
+                        : baselineData.currentStatus === "Watch"
+                          ? "text-amber-400"
+                          : "text-red-400"
+                    }`}
+                  >
+                    Status vs baseline: {baselineData.currentStatus}
+                  </p>
+                )}
+                {baselineData.paceDollars != null && baselineData.paceDollars !== 0 && (
+                  <p className="text-xs mt-1 text-slate-300">
+                    {baselineData.paceDollars > 0
+                      ? `You are on pace to overspend by ${safeDollars(baselineData.paceDollars)} this month`
+                      : `You are on pace to save ${safeDollars(-baselineData.paceDollars)} this month`}
+                  </p>
+                )}
+              </div>
+            </div>
+
+            {baselineData.monthly.length > 0 && (
+              <div className="bg-slate-800 rounded-xl border border-slate-700 p-4 overflow-x-auto">
+                <h3 className="text-sm font-semibold text-white mb-3">Month by month</h3>
+                <table className="w-full text-sm">
+                  <thead>
+                    <tr className="text-left text-slate-500 border-b border-slate-700">
+                      <th className="pb-2 pr-4">Month</th>
+                      <th className="pb-2 pr-4">Revenue</th>
+                      <th className="pb-2 pr-4">Hillcrest spend</th>
+                      <th className="pb-2 pr-4">Food cost %</th>
+                      <th className="pb-2">Status</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {[...baselineData.monthly].reverse().map((row) => (
+                      <tr
+                        key={row.month}
+                        className={`border-b border-slate-700/50 ${
+                          row.isCurrentMonth ? "bg-slate-700/50" : ""
+                        }`}
+                      >
+                        <td className="py-2 pr-4 text-white">
+                          {row.monthLabel}
+                          {!row.isComplete && (
+                            <span className="ml-1 text-xs text-amber-400">MTD</span>
+                          )}
+                        </td>
+                        <td className="py-2 pr-4 text-slate-300">{safeDollars(row.revenue)}</td>
+                        <td className="py-2 pr-4 text-slate-300">{safeDollars(row.hillcrestSpend)}</td>
+                        <td className="py-2 pr-4 text-slate-300">
+                          {row.foodCostPct != null ? safePct(row.foodCostPct) : "—"}
+                        </td>
+                        <td className="py-2">
+                          {row.status ? (
+                            <span
+                              className={
+                                row.status === "In Range"
+                                  ? "text-emerald-400"
+                                  : row.status === "Watch"
+                                    ? "text-amber-400"
+                                    : "text-red-400"
+                              }
+                            >
+                              {row.status}
+                            </span>
+                          ) : (
+                            "—"
+                          )}
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            )}
+
+            <p className="text-xs text-slate-500">
+              Baseline updates automatically as each month closes. 4+ months recommended for a reliable baseline.
+            </p>
+          </>
+        )}
+
+        {baselineData === null && !loading && (
+          <p className="text-sm text-slate-500">No baseline data for this store yet. Connect Hillcrest invoices and POS sales.</p>
+        )}
+      </section>
     </div>
   );
 }
