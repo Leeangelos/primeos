@@ -132,6 +132,8 @@ export default function MenuIntelligencePage() {
   const [includesDisposables, setIncludesDisposables] = useState(false);
   const [costSheetMounted, setCostSheetMounted] = useState(false);
   const [savingCost, setSavingCost] = useState(false);
+  const [kitchenIqCategory, setKitchenIqCategory] = useState<string>("All");
+  const [saveFlash, setSaveFlash] = useState(false);
 
   const [selectedPricingGap, setSelectedPricingGap] = useState<PricingGapItem | null>(null);
   const [priceGapSheetMounted, setPriceGapSheetMounted] = useState(false);
@@ -746,16 +748,19 @@ export default function MenuIntelligencePage() {
         const costedRevenuePct = totalRevenue30 > 0 ? Math.round((costedRevenue / totalRevenue30) * 100) : 0;
         const actualHillcrest = kitchenIqData?.actualHillcrestLast30 ?? 0;
         const variance = actualHillcrest - theoretical;
-        const uncostedByRevenue = catalog.filter((i) => i.cost_to_make == null || i.cost_to_make <= 0).slice(0, 5);
-        const potentialVisibility = uncostedByRevenue.reduce((s, i) => s + i.total_revenue, 0);
+        const uncostedByRevenue = catalog.filter((i) => i.cost_to_make == null || i.cost_to_make <= 0);
+        const top3Uncosted = uncostedByRevenue.slice(0, 3);
+        const top3Revenue = top3Uncosted.reduce((s, i) => s + i.total_revenue, 0);
+        const top3Pct = totalRevenue30 > 0 ? Math.round((top3Revenue / totalRevenue30) * 100) : 0;
 
+        const ringColor = pct <= 24 ? "#ef4444" : pct <= 49 ? "#f97316" : pct <= 74 ? "#eab308" : "#22c55e";
         const milestones = [
-          { min: 0, max: 0, label: "Cost your menu to unlock your true margins" },
-          { min: 1, max: 1, label: "Started 🔥", count: 1 },
-          { min: 25, max: 49, label: "Top items costed — estimates unlocked" },
-          { min: 50, max: 74, label: "Halfway — food cost model active" },
-          { min: 75, max: 99, label: "Almost there 💪" },
-          { min: 100, max: 100, label: "Kitchen IQ: Elite 🏆 — Full theoretical food cost active" },
+          { label: "Cost your menu to unlock your true margins" },
+          { label: "Started 🔥" },
+          { label: "Top items costed — estimates unlocked" },
+          { label: "Halfway — food cost model active" },
+          { label: "Almost there 💪" },
+          { label: "Kitchen IQ: Elite 🏆 — Full theoretical food cost active" },
         ];
         let milestoneLabel = milestones[0].label;
         if (costedCount >= 1 && pct < 25) milestoneLabel = milestones[1].label;
@@ -764,31 +769,104 @@ export default function MenuIntelligencePage() {
         else if (pct >= 75 && pct < 100) milestoneLabel = milestones[4].label;
         else if (pct >= 100) milestoneLabel = milestones[5].label;
 
+        const xpPerItem = 10;
+        const top20Revenue = catalog.slice(0, 20);
+        const highRevenueBonus = 25;
+        const xpFromCosted = costedCount * xpPerItem;
+        const xpFromHighRevenue = costedItems.filter((i) => top20Revenue.some((t) => t.item_name === i.item_name && t.size === i.size && t.category === i.category)).length * highRevenueBonus;
+        const totalXp = xpFromCosted + xpFromHighRevenue;
+
+        const categories = ["All", ...Array.from(new Set(catalog.map((i) => i.category)))].filter(Boolean);
+        const uncostedCountByCategory = (cat: string) =>
+          cat === "All" ? uncostedByRevenue.length : catalog.filter((i) => i.category === cat && (i.cost_to_make == null || i.cost_to_make <= 0)).length;
+        const filteredCatalog = kitchenIqCategory === "All" ? catalog : catalog.filter((i) => i.category === kitchenIqCategory);
+
         const foodCostStatus = (pctVal: number) =>
           pctVal <= 32 ? "✅ Healthy" : pctVal <= 40 ? "⚠️ Watch" : "🔴 Investigate";
+        const foodCostColor = (pctVal: number) => (pctVal <= 32 ? "text-emerald-400" : pctVal <= 40 ? "text-amber-400" : "text-red-400");
+
+        const circumference = 2 * Math.PI * 54;
+        const strokeDash = (pct / 100) * circumference;
 
         return (
           <div className="space-y-4">
-            <h2 className="text-2xl font-bold text-white">Kitchen IQ</h2>
-
             {kitchenIqLoading ? (
               <div className="bg-slate-800 rounded-xl border border-slate-700 p-6 text-center text-slate-400 text-sm">Loading…</div>
             ) : (
               <>
-                <div className="bg-slate-800 rounded-xl border border-slate-700 p-4">
-                  <div className="flex justify-between text-sm mb-2">
-                    <span className="text-slate-400">{costedCount} of {totalItems} items costed — {pct}%</span>
+                {/* Hero: circular progress ring */}
+                <div className="flex flex-col items-center py-4">
+                  <div className="relative w-[140px] h-[140px]">
+                    <svg className="w-full h-full -rotate-90" viewBox="0 0 120 120">
+                      <circle cx="60" cy="60" r="54" fill="none" stroke="rgb(51 65 85)" strokeWidth="10" />
+                      <circle
+                        cx="60"
+                        cy="60"
+                        r="54"
+                        fill="none"
+                        stroke={ringColor}
+                        strokeWidth="10"
+                        strokeLinecap="round"
+                        strokeDasharray={circumference}
+                        strokeDashoffset={circumference - strokeDash}
+                        className="transition-all duration-700 ease-out"
+                      />
+                    </svg>
+                    <div className="absolute inset-0 flex flex-col items-center justify-center">
+                      <span className="text-3xl font-black tabular-nums text-white">{pct}%</span>
+                    </div>
                   </div>
-                  <div className="h-2 rounded-full bg-slate-700 overflow-hidden">
-                    <div
-                      className="h-full bg-emerald-500 transition-all duration-300"
-                      style={{ width: `${Math.min(100, pct)}%` }}
-                    />
-                  </div>
-                  <p className="text-xs text-slate-500 mt-2">{milestoneLabel}</p>
+                  <p className="text-sm font-semibold text-white mt-2">Kitchen IQ</p>
+                  <p className="text-xs text-slate-400">{costedCount} of {totalItems} items costed</p>
+                  <div className="mt-2 px-3 py-1.5 rounded-full bg-slate-700/80 text-xs text-slate-200">{milestoneLabel}</div>
                 </div>
 
-                <p className="text-xs text-slate-400">Start with your top 20 — they drive 80% of your food cost story.</p>
+                {/* XP */}
+                <div className="bg-slate-800/80 rounded-xl border border-slate-700 p-3 text-center">
+                  <p className="text-[10px] uppercase tracking-wide text-slate-500">XP earned</p>
+                  <p className="text-2xl font-bold text-amber-400 tabular-nums">{totalXp}</p>
+                  <p className="text-[10px] text-slate-500 mt-0.5">+10 per item costed · +25 for top revenue items</p>
+                </div>
+
+                {/* Category filter */}
+                <div className="overflow-x-auto pb-1 -mx-1 no-scrollbar">
+                  <div className="flex gap-2 min-w-max px-1">
+                    {categories.map((cat) => {
+                      const uncosted = uncostedCountByCategory(cat);
+                      const active = kitchenIqCategory === cat;
+                      return (
+                        <button
+                          key={cat}
+                          type="button"
+                          onClick={() => setKitchenIqCategory(cat)}
+                          className={cn(
+                            "shrink-0 px-3 py-2 rounded-full text-xs font-medium transition-colors",
+                            active ? "bg-emerald-600 text-white" : "bg-slate-700/80 text-slate-300 hover:bg-slate-700"
+                          )}
+                        >
+                          {cat}
+                          {cat !== "All" && uncosted > 0 && (
+                            <span className="ml-1.5 text-slate-400">({uncosted})</span>
+                          )}
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
+
+                {/* Top opportunities banner — sticky */}
+                {top3Uncosted.length > 0 && (
+                  <div className="sticky top-0 z-10 bg-slate-900/95 backdrop-blur border-b border-slate-700 py-3 -mx-1 px-3 rounded-lg">
+                    <p className="text-xs text-slate-300 mb-2">Cost these 3 items to cover {top3Pct}% of your food cost story</p>
+                    <div className="flex flex-wrap gap-2">
+                      {top3Uncosted.map((i) => (
+                        <span key={`${i.item_name}|${i.size}|${i.category}`} className="px-2 py-1 rounded-full text-[11px] bg-amber-600/20 text-amber-300 border border-amber-600/40">
+                          {i.item_name} {i.sizeDisplay}
+                        </span>
+                      ))}
+                    </div>
+                  </div>
+                )}
 
                 {costedCount >= 10 && (
                   <div className="bg-slate-800 rounded-xl border border-slate-700 p-4">
@@ -800,171 +878,135 @@ export default function MenuIntelligencePage() {
                   </div>
                 )}
 
+                {/* Item cards */}
                 <div className="space-y-2">
-                  <h3 className="text-sm font-semibold text-white">Items</h3>
-                  {catalog.map((item) => {
+                  {filteredCatalog.map((item) => {
+                    const rank = catalog.findIndex((i) => i.item_name === item.item_name && i.size === item.size && i.category === item.category) + 1 || 1;
                     const costed = item.cost_to_make != null && item.cost_to_make > 0;
-                    const foodCostPct = costed && item.avg_unit_price > 0
-                      ? ((item.cost_to_make ?? 0) / item.avg_unit_price) * 100
-                      : null;
-                    const profitPerItem = costed && item.avg_unit_price > 0
-                      ? item.avg_unit_price - (item.cost_to_make ?? 0)
-                      : null;
+                    const foodCostPct = costed && item.avg_unit_price > 0 ? ((item.cost_to_make ?? 0) / item.avg_unit_price) * 100 : null;
+                    const profitPerItem = costed && item.avg_unit_price > 0 ? item.avg_unit_price - (item.cost_to_make ?? 0) : null;
+                    const leftBarColor = costed ? "bg-emerald-500" : "bg-red-500/80";
                     return (
                       <button
                         key={`${item.item_name}|${item.size}|${item.category}`}
                         type="button"
                         onClick={() => setSelectedKitchenItem(item)}
-                        className="w-full text-left bg-slate-800 rounded-xl border border-slate-700 p-3 flex items-center gap-3"
+                        className="w-full text-left bg-slate-800 rounded-xl border border-slate-700 overflow-hidden flex"
                       >
-                        <span className={cn("w-2 h-2 rounded-full shrink-0", costed ? "bg-emerald-500" : "bg-amber-500")} />
-                        <div className="min-w-0 flex-1">
-                          <div className="font-medium text-white">{item.item_name} {item.sizeDisplay}</div>
-                          <div className="flex flex-wrap gap-2 mt-1">
-                            <span className="px-1.5 py-0.5 rounded text-[10px] bg-slate-700 text-slate-400">{item.category}</span>
-                            <span className="text-xs text-slate-500">{item.total_units} sold</span>
-                            <span className="text-xs text-slate-400">Sells for: ${(item.avg_unit_price || 0).toFixed(2)}</span>
+                        <div className={cn("w-1.5 shrink-0", leftBarColor)} />
+                        <div className="flex items-center gap-3 p-3 min-w-0 flex-1">
+                          <span className="text-slate-500 font-bold text-sm shrink-0">#{rank}</span>
+                          <div className="min-w-0 flex-1">
+                            <div className="font-medium text-white">{item.item_name} {item.sizeDisplay}</div>
+                            <p className="text-xs text-cyan-400 mt-0.5">{formatDollars(item.total_revenue)} revenue</p>
+                            <div className="flex flex-wrap gap-2 mt-1 text-[11px] text-slate-500">
+                              <span>{item.total_units} sold</span>
+                              {costed && foodCostPct != null && <span className="text-emerald-400">Food cost {foodCostPct.toFixed(1)}%</span>}
+                              {costed && profitPerItem != null && <span className="text-emerald-400">Margin {formatDollars(profitPerItem)}</span>}
+                            </div>
                           </div>
-                          <div className="mt-1 text-xs">
-                            Cost to make:{" "}
-                            {costed ? (
-                              <span className="text-emerald-400">${(item.cost_to_make ?? 0).toFixed(2)} ✓</span>
-                            ) : (
-                              <span className="text-slate-500">Not costed</span>
-                            )}
-                            {foodCostPct != null && (
-                              <span className="ml-2 text-slate-400">Food cost {foodCostPct.toFixed(1)}%</span>
-                            )}
-                            {profitPerItem != null && (
-                              <span className="ml-2 text-slate-400">Margin {formatDollars(profitPerItem)}</span>
-                            )}
-                          </div>
+                          {costed ? <span className="text-emerald-400 shrink-0">✓</span> : null}
                         </div>
-                        {costed ? <span className="text-emerald-400 shrink-0">✓</span> : null}
                       </button>
                     );
                   })}
                 </div>
-
-                {uncostedByRevenue.length > 0 && (
-                  <div className="bg-slate-800 rounded-xl border border-slate-700 p-4">
-                    <h3 className="text-sm font-semibold text-white mb-2">Biggest margin opportunities</h3>
-                    <p className="text-xs text-slate-400 mb-2">Top 5 uncosted items by revenue:</p>
-                    <ul className="space-y-1 text-xs text-slate-300">
-                      {uncostedByRevenue.map((i) => (
-                        <li key={`${i.item_name}|${i.size}|${i.category}`}>{i.item_name} {i.sizeDisplay} — {formatDollars(i.total_revenue)} revenue</li>
-                      ))}
-                    </ul>
-                    <p className="text-xs text-amber-400 mt-2">Cost these 5 items to unlock {formatDollars(potentialVisibility)} in potential savings visibility.</p>
-                  </div>
-                )}
               </>
             )}
 
-            {selectedKitchenItem && typeof document !== "undefined" && createPortal(
-              <div
-                className="fixed inset-0 z-[9999] flex items-end justify-center sm:items-center"
-                aria-modal="true"
-                role="dialog"
-              >
-                <div
-                  className="absolute inset-0 bg-black/60 backdrop-blur-sm transition-opacity duration-150"
-                  style={{ opacity: costSheetMounted ? 1 : 0 }}
-                  onClick={() => setSelectedKitchenItem(null)}
-                  aria-hidden="true"
-                />
-                <div
-                  className="relative w-full max-w-lg bg-slate-800 rounded-t-2xl max-h-[85vh] overflow-y-auto shadow-2xl transition-all duration-200 ease-out sm:rounded-2xl"
-                  style={{
-                    transform: costSheetMounted ? "translateY(0) scale(1)" : "translateY(100%) scale(0.95)",
-                    opacity: costSheetMounted ? 1 : 0,
-                  }}
-                  onClick={(e) => e.stopPropagation()}
-                >
-                  <div className="p-5 pt-6 pb-8">
-                    <button
-                      type="button"
-                      onClick={() => setSelectedKitchenItem(null)}
-                      className="absolute top-3 right-3 z-10 p-2 rounded-lg text-slate-400 hover:text-white hover:bg-slate-700"
-                      aria-label="Close"
-                    >
-                      <span className="text-lg leading-none">×</span>
-                    </button>
-                    <h2 className="text-lg font-bold text-white pr-8">{selectedKitchenItem.item_name} {selectedKitchenItem.sizeDisplay}</h2>
-                    <p className="text-sm text-slate-400 mt-1">Sells for: ${(selectedKitchenItem.avg_unit_price || 0).toFixed(2)}</p>
-                    <div className="mt-4">
-                      <label className="block text-xs text-slate-500 mb-1">Cost to make ($)</label>
-                      <input
-                        type="number"
-                        min={0}
-                        step={0.01}
-                        inputMode="decimal"
-                        value={costInput}
-                        onChange={(e) => setCostInput(e.target.value)}
-                        className="w-full min-h-[48px] px-3 rounded-xl border border-slate-600 bg-slate-900 text-white text-lg font-semibold"
-                      />
-                    </div>
-                    <label className="flex items-center gap-2 mt-4 cursor-pointer">
-                      <input
-                        type="checkbox"
-                        checked={includesDisposables}
-                        onChange={(e) => setIncludesDisposables(e.target.checked)}
-                        className="rounded border-slate-600"
-                      />
-                      <span className="text-sm text-slate-400">Includes box/disposables</span>
-                    </label>
-                    {(() => {
-                      const cost = parseFloat(costInput);
-                      const valid = !Number.isNaN(cost) && cost >= 0;
-                      const price = selectedKitchenItem.avg_unit_price || 0;
-                      const foodCostPct = valid && price > 0 ? (cost / price) * 100 : null;
-                      const profitPerItem = valid && price > 0 ? price - cost : null;
-                      const monthlyProfit = profitPerItem != null ? profitPerItem * selectedKitchenItem.total_units : null;
-                      return (
-                        <div className="mt-4 space-y-2 text-sm">
-                          {foodCostPct != null && <p className="text-slate-300">Food Cost %: {foodCostPct.toFixed(1)}%</p>}
-                          {profitPerItem != null && <p className="text-slate-300">Profit per item: {formatDollars(profitPerItem)}</p>}
-                          {monthlyProfit != null && <p className="text-slate-300">Monthly profit at current volume: {formatDollars(monthlyProfit)}</p>}
-                          {foodCostPct != null && <p className="font-medium">{foodCostStatus(foodCostPct)}</p>}
+            {selectedKitchenItem && typeof document !== "undefined" && (() => {
+              const item = selectedKitchenItem;
+              const cat = kitchenIqData?.catalog ?? [];
+              const rank = cat.findIndex((i) => i.item_name === item.item_name && i.size === item.size && i.category === item.category) + 1 || 1;
+              const numPad = (n: string) => {
+                if (n === "⌫") setCostInput((v) => v.slice(0, -1));
+                else if (n === "C") setCostInput("");
+                else if (n === ".") setCostInput((v) => (v.includes(".") ? v : v + n));
+                else setCostInput((v) => v + n);
+              };
+              const cost = parseFloat(costInput);
+              const valid = !Number.isNaN(cost) && cost >= 0;
+              const price = item.avg_unit_price || 0;
+              const foodCostPct = valid && price > 0 ? (cost / price) * 100 : null;
+              const profitPerItem = valid && price > 0 ? price - cost : null;
+              const monthlyProfit = profitPerItem != null ? profitPerItem * item.total_units : null;
+              const annualProfit = monthlyProfit != null ? monthlyProfit * 12 : null;
+              return createPortal(
+                <div className="fixed inset-0 z-[9999] flex items-end justify-center sm:items-center" aria-modal="true" role="dialog">
+                  <div className="absolute inset-0 bg-black/60 backdrop-blur-sm transition-opacity duration-150" style={{ opacity: costSheetMounted ? 1 : 0 }} onClick={() => setSelectedKitchenItem(null)} aria-hidden="true" />
+                  <div
+                    className={cn("relative w-full max-w-lg bg-slate-800 rounded-t-2xl max-h-[90vh] overflow-y-auto shadow-2xl transition-all duration-200 ease-out sm:rounded-2xl", saveFlash && "ring-4 ring-emerald-400 animate-pulse")}
+                    style={{ transform: costSheetMounted ? "translateY(0) scale(1)" : "translateY(100%) scale(0.95)", opacity: costSheetMounted ? 1 : 0 }}
+                    onClick={(e) => e.stopPropagation()}
+                  >
+                    <div className="p-5 pt-6 pb-8">
+                      <button type="button" onClick={() => setSelectedKitchenItem(null)} className="absolute top-3 right-3 z-10 p-2 rounded-lg text-slate-400 hover:text-white hover:bg-slate-700" aria-label="Close"><span className="text-lg leading-none">×</span></button>
+                      <p className="text-xs text-slate-500">#{rank} · {formatDollars(item.total_revenue)} revenue</p>
+                      <h2 className="text-lg font-bold text-white pr-8 mt-0.5">{item.item_name} {item.sizeDisplay}</h2>
+                      <p className="text-sm text-slate-400">Sells for: ${(item.avg_unit_price || 0).toFixed(2)}</p>
+
+                      <div className="mt-4">
+                        <label className="block text-xs text-slate-500 mb-2">Cost to make ($)</label>
+                        <div className="min-h-[52px] px-4 py-3 rounded-xl border border-slate-600 bg-slate-900 text-white text-2xl font-semibold tabular-nums">
+                          {costInput || "0"}
                         </div>
-                      );
-                    })()}
-                    <button
-                      type="button"
-                      disabled={savingCost || (parseFloat(costInput) ?? NaN) < 0}
-                      onClick={async () => {
-                        const cost = parseFloat(costInput);
-                        if (Number.isNaN(cost) || cost < 0) return;
-                        setSavingCost(true);
-                        try {
-                          const res = await fetch("/api/kitchen-iq", {
-                            method: "POST",
-                            headers: { "Content-Type": "application/json" },
-                            body: JSON.stringify({
-                              item_name: selectedKitchenItem.item_name,
-                              size: selectedKitchenItem.size,
-                              category: selectedKitchenItem.category,
-                              cost_to_make: cost,
-                              includes_disposables: includesDisposables,
-                            }),
-                          });
-                          if (res.ok) {
-                            refetchKitchenIq();
-                            setSelectedKitchenItem(null);
+                        <div className="grid grid-cols-3 gap-2 mt-3">
+                          {["1", "2", "3", "4", "5", "6", "7", "8", "9", ".", "0", "⌫"].map((key) => (
+                            <button key={key} type="button" onClick={() => numPad(key)} className="h-12 rounded-xl bg-slate-700 text-white font-medium hover:bg-slate-600 active:bg-slate-500">
+                              {key}
+                            </button>
+                          ))}
+                          <button type="button" onClick={() => numPad("C")} className="h-12 rounded-xl bg-slate-600 text-slate-300 text-sm hover:bg-slate-500 col-span-3">
+                            Clear
+                          </button>
+                        </div>
+                      </div>
+
+                      <label className="flex items-center gap-2 mt-4 cursor-pointer">
+                        <input type="checkbox" checked={includesDisposables} onChange={(e) => setIncludesDisposables(e.target.checked)} className="rounded border-slate-600" />
+                        <span className="text-sm text-slate-400">Includes box/disposables</span>
+                      </label>
+
+                      <div className="mt-5 space-y-2 text-sm">
+                        {foodCostPct != null && <p className={cn("font-semibold", foodCostColor(foodCostPct))}>Food Cost %: {foodCostPct.toFixed(1)}% — {foodCostStatus(foodCostPct)}</p>}
+                        {profitPerItem != null && <p className="text-slate-300">Profit per item: {formatDollars(profitPerItem)}</p>}
+                        {monthlyProfit != null && <p className="text-slate-300">Monthly profit at volume: {formatDollars(monthlyProfit)}</p>}
+                        {annualProfit != null && <p className="text-emerald-400 font-medium">Annual profit: {formatDollars(annualProfit)}</p>}
+                      </div>
+
+                      <button
+                        type="button"
+                        disabled={savingCost || (parseFloat(costInput) ?? NaN) < 0}
+                        onClick={async () => {
+                          const c = parseFloat(costInput);
+                          if (Number.isNaN(c) || c < 0) return;
+                          setSavingCost(true);
+                          try {
+                            const res = await fetch("/api/kitchen-iq", {
+                              method: "POST",
+                              headers: { "Content-Type": "application/json" },
+                              body: JSON.stringify({ item_name: item.item_name, size: item.size, category: item.category, cost_to_make: c, includes_disposables: includesDisposables }),
+                            });
+                            if (res.ok) {
+                              setSaveFlash(true);
+                              setTimeout(() => setSaveFlash(false), 600);
+                              refetchKitchenIq();
+                              setTimeout(() => setSelectedKitchenItem(null), 400);
+                            }
+                          } finally {
+                            setSavingCost(false);
                           }
-                        } finally {
-                          setSavingCost(false);
-                        }
-                      }}
-                      className="mt-6 w-full py-3 rounded-xl bg-emerald-600 text-white font-semibold disabled:opacity-50"
-                    >
-                      {savingCost ? "Saving…" : "Save Cost"}
-                    </button>
+                        }}
+                        className="mt-6 w-full py-3 rounded-xl bg-emerald-600 text-white font-semibold disabled:opacity-50"
+                      >
+                        {savingCost ? "Saving…" : "Save Cost"}
+                      </button>
+                    </div>
                   </div>
-                </div>
-              </div>,
-              document.body
-            )}
+                </div>,
+                document.body
+              );
+            })()}
           </div>
         );
       })()}
