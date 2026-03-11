@@ -8,6 +8,7 @@ import {
   type CockpitStoreSlug,
 } from "@/lib/cockpit-config";
 import { getStoreColor } from "@/lib/store-colors";
+import { cn } from "@/lib/utils";
 import { useAuth } from "@/src/lib/auth-context";
 import { isNewUser, getNewUserStoreName } from "@/src/lib/user-scope";
 import { EducationInfoIcon } from "@/src/components/education/InfoIcon";
@@ -72,6 +73,17 @@ function pctToGrade(pct: number, targetMax: number): "green" | "yellow" | "red" 
   if (pct <= targetMax) return "green";
   if (pct <= targetMax + 2) return "yellow";
   return "red";
+}
+
+function getNoiTier(netProfitPct: number): {
+  label: string;
+  color: "red" | "amber" | "orange" | "teal" | "green";
+} {
+  if (netProfitPct < 0) return { label: "Bleeding Out", color: "red" };
+  if (netProfitPct < 5) return { label: "Breaking Even", color: "amber" };
+  if (netProfitPct < 10) return { label: "Holding Your Own", color: "orange" };
+  if (netProfitPct < 15) return { label: "In The Black", color: "teal" };
+  return { label: "Printing Money", color: "green" };
 }
 
 export default function PnlPage() {
@@ -477,6 +489,204 @@ export default function PnlPage() {
               <span className="text-sm text-slate-400 tabular-nums">{formatPct(pnl.netProfitPct)}</span>
             </div>
           </div>
+        </div>
+
+        {/* NOI Scorecard */}
+        <div className="mt-4 bg-slate-900/60 rounded-2xl border border-slate-700 p-5">
+          {pnl.totalSales > 0 ? (
+            (() => {
+              const noiPct = pnl.netProfitPct;
+              const tier = getNoiTier(noiPct);
+              const tiers = [
+                { threshold: 0, label: "0" },
+                { threshold: 5, label: "5" },
+                { threshold: 10, label: "10" },
+                { threshold: 15, label: "15" },
+                { threshold: 20, label: "20+" },
+              ];
+              const clampedScore = Math.max(0, Math.min(20, noiPct));
+              const fillPct = (clampedScore / 20) * 100;
+              const barColor =
+                tier.color === "green"
+                  ? "bg-emerald-400"
+                  : tier.color === "teal"
+                    ? "bg-cyan-400"
+                    : tier.color === "orange"
+                      ? "bg-orange-400"
+                      : tier.color === "amber"
+                        ? "bg-amber-400"
+                        : "bg-red-400";
+              const nextTierThreshold =
+                noiPct < 0 ? 0 : noiPct < 5 ? 5 : noiPct < 10 ? 10 : noiPct < 15 ? 15 : null;
+              const nextTierLabel =
+                noiPct < 0
+                  ? "Breaking Even"
+                  : noiPct < 5
+                    ? "Holding Your Own"
+                    : noiPct < 10
+                      ? "In The Black"
+                      : "Printing Money";
+              const cogsReductionNeededPct =
+                nextTierThreshold != null ? Math.max(0, nextTierThreshold - noiPct) : 0;
+              const monthlyGapDollars =
+                nextTierThreshold != null ? (cogsReductionNeededPct / 100) * pnl.totalSales : 0;
+
+              return (
+                <>
+                  <div className="text-center">
+                    <p className="text-[10px] font-semibold tracking-[0.2em] text-slate-500 uppercase">
+                      NOI Score
+                    </p>
+                    <p className="mt-2 text-5xl sm:text-6xl font-black tabular-nums text-white">
+                      {formatPct(noiPct)}
+                    </p>
+                    <span
+                      className={cn(
+                        "inline-flex items-center mt-2 px-3 py-1.5 rounded-full text-xs font-semibold",
+                        tier.color === "green"
+                          ? "bg-emerald-500/20 text-emerald-300 border border-emerald-500/40"
+                          : tier.color === "teal"
+                            ? "bg-cyan-500/20 text-cyan-300 border border-cyan-500/40"
+                            : tier.color === "orange"
+                              ? "bg-orange-500/20 text-orange-300 border border-orange-500/40"
+                              : tier.color === "amber"
+                                ? "bg-amber-500/20 text-amber-300 border border-amber-500/40"
+                                : "bg-red-500/20 text-red-300 border border-red-500/40"
+                      )}
+                    >
+                      {tier.label}
+                    </span>
+                  </div>
+
+                  <div className="mt-5 max-w-xl mx-auto">
+                    <div className="h-3 w-full rounded-full bg-slate-800 overflow-hidden">
+                      <div
+                        className={cn("h-full rounded-full transition-[width] duration-700 ease-out", barColor)}
+                        style={{ width: `${fillPct}%` }}
+                      />
+                    </div>
+                    <div className="flex justify-between text-[10px] text-slate-500 mt-1.5">
+                      <span>0%</span>
+                      <span>5%</span>
+                      <span>10%</span>
+                      <span>15%</span>
+                      <span>20%+</span>
+                    </div>
+                  </div>
+
+                  {nextTierThreshold != null && (
+                    <p className="mt-3 text-xs text-slate-300 text-center">
+                      Reduce your COGS by{" "}
+                      <span className="font-semibold text-emerald-300">
+                        {formatPct(cogsReductionNeededPct)}
+                      </span>{" "}
+                      and you reach{" "}
+                      <span className="font-semibold text-emerald-300">{nextTierLabel}</span>{" "}
+                      — worth{" "}
+                      <span className="font-semibold text-emerald-300">
+                        {formatDollars(Math.round(monthlyGapDollars))}
+                      </span>
+                      /month.
+                    </p>
+                  )}
+                </>
+              );
+            })()
+          ) : (
+            <p className="text-xs text-slate-500 text-center">
+              NOI score will appear once revenue and COGS data are available for this period.
+            </p>
+          )}
+        </div>
+
+        {/* Industry Benchmarks for NOI */}
+        <div className="mt-4 bg-slate-900/40 rounded-2xl border border-slate-700 p-4 space-y-3">
+          <h3 className="text-sm font-semibold text-white flex items-center justify-between">
+            Industry Benchmarks
+          </h3>
+          <div className="space-y-2 text-xs">
+            <div className="flex items-center justify-between gap-2">
+              <div>
+                <p className="text-slate-200">Food + Labor (COGS)</p>
+                <p className="text-[11px] text-slate-500">Benchmark: 55–60%</p>
+              </div>
+              <div className="text-right">
+                <p
+                  className={cn(
+                    "tabular-nums text-sm",
+                    pnl.cogsPct <= 60 ? "text-emerald-400" : pnl.cogsPct <= 65 ? "text-amber-400" : "text-red-400"
+                  )}
+                >
+                  {formatPct(pnl.cogsPct)}
+                </p>
+                <p className="text-[10px] text-cyan-400 mt-0.5">
+                  Toast Restaurant Trends Report 2024
+                </p>
+              </div>
+            </div>
+            <div className="flex items-center justify-between gap-2">
+              <div>
+                <p className="text-slate-200">Fixed Expenses</p>
+                <p className="text-[11px] text-slate-500">Benchmark: 24–30%</p>
+              </div>
+              <div className="text-right">
+                <p
+                  className={cn(
+                    "tabular-nums text-sm",
+                    pnl.fixedPct <= 30 ? "text-emerald-400" : pnl.fixedPct <= 35 ? "text-amber-400" : "text-red-400"
+                  )}
+                >
+                  {formatPct(pnl.fixedPct)}
+                </p>
+                <p className="text-[10px] text-cyan-400 mt-0.5">
+                  National Restaurant Association 2024
+                </p>
+              </div>
+            </div>
+            <div className="flex items-center justify-between gap-2">
+              <div>
+                <p className="text-slate-200">Net Operating Income</p>
+                <p className="text-[11px] text-slate-500">Benchmark: 10–15%</p>
+              </div>
+              <div className="text-right">
+                <p
+                  className={cn(
+                    "tabular-nums text-sm",
+                    pnl.netProfitPct >= 10 && pnl.netProfitPct <= 15
+                      ? "text-emerald-400"
+                      : pnl.netProfitPct >= 5
+                        ? "text-amber-400"
+                        : "text-red-400"
+                  )}
+                >
+                  {formatPct(pnl.netProfitPct)}
+                </p>
+                <p className="text-[10px] text-cyan-400 mt-0.5">
+                  PMQ Pizza Magazine Industry Report
+                </p>
+              </div>
+            </div>
+          </div>
+          <details className="mt-2 text-xs text-slate-400">
+            <summary className="cursor-pointer text-slate-300 font-medium">
+              How is this calculated?
+            </summary>
+            <div className="mt-2 space-y-1 text-slate-400">
+              <p>
+                We start with your total revenue, subtract COGS (food, labor, and disposables), and
+                then subtract fixed expenses to get Net Operating Income (NOI).
+              </p>
+              <p>
+                In plain English: Revenue − COGS − Fixed Expenses = the money left to pay yourself,
+                reinvest, or save.
+              </p>
+              {pnl.totalFixed === 0 && (
+                <p className="text-[11px] text-slate-500">
+                  Fixed expenses not yet loaded — current NOI is using Revenue − COGS only.
+                </p>
+              )}
+            </div>
+          </details>
         </div>
       </div>
       </div>
