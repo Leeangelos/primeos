@@ -1,6 +1,8 @@
 "use client";
 
-import { useState, useMemo } from "react";
+export const dynamic = "force-dynamic";
+
+import { useState, useMemo, useEffect } from "react";
 import {
   Building2,
   TrendingUp,
@@ -24,6 +26,7 @@ import {
   type VendorCost,
 } from "@/src/lib/vendor-data";
 import { cn } from "@/lib/utils";
+import { createClient } from "@/lib/supabase";
 import { formatPct, formatDollars } from "@/src/lib/formatters";
 import { EducationInfoIcon } from "@/src/components/education/InfoIcon";
 import { DataDisclaimer } from "@/src/components/ui/DataDisclaimer";
@@ -33,6 +36,30 @@ import { COCKPIT_STORE_SLUGS, COCKPIT_TARGETS } from "@/lib/cockpit-config";
 const STORE_REVENUE: Record<string, number> = { kent: 44000, aurora: 52000, lindseys: 32000 };
 const MONTH_NAMES = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
 const STORE_NAMES: Record<string, string> = { kent: "LeeAngelo's Kent", aurora: "LeeAngelo's Aurora", lindseys: "Lindsey's" };
+
+const GL_FIXED_CATEGORIES = [
+  "Rent Expense",
+  "Electricity",
+  "Gas",
+  "Water & Sewer",
+  "Telephone/Internet/Cable",
+  "Business Insurance",
+  "Accounting",
+  "Linen and Uniforms",
+  "Trash",
+  "Cleaning",
+  "Security Expense",
+  "POS Software Expenses",
+  "Computer and Software Expenses",
+  "Payroll Fees",
+  "Bank Service Charges",
+  "Repairs & Maintenance",
+  "Equipment Rental",
+  "Workers Comp",
+  "Pest Control",
+  "Storage Rent",
+  "Dues & Subscriptions",
+] as const;
 
 /** CC processing per store: quoted rate and actual volume/fees for actual rate calculation. Actual rate = (monthly_fees / monthly_volume) * 100 */
 const CC_PROCESSING_BY_STORE: Record<string, { processorName: string; quotedRatePct: number; monthlyVolume: number; monthlyFees: number }> = {
@@ -96,6 +123,103 @@ export default function VendorTrackerPage() {
   const [quickErrorDetail, setQuickErrorDetail] = useState<string | null>(null);
   const [expandedInvoiceId, setExpandedInvoiceId] = useState<string | null>(null);
 
+  const [glMonthByCategory, setGlMonthByCategory] = useState<Record<string, number> | null>(null);
+  const [glAnnualByKey, setGlAnnualByKey] = useState<Record<string, number> | null>(null);
+  const [glLoading, setGlLoading] = useState(false);
+
+  useEffect(() => {
+    let cancelled = false;
+    async function loadGl() {
+      try {
+        setGlLoading(true);
+        const supabase = createClient();
+        const { data: storeRow } = await supabase
+          .from("stores")
+          .select("id")
+          .eq("slug", selectedStore)
+          .maybeSingle();
+        const storeId = storeRow?.id as string | undefined;
+        if (!storeId) {
+          if (!cancelled) {
+            setGlMonthByCategory(null);
+            setGlAnnualByKey(null);
+          }
+          return;
+        }
+
+        const monthStart = new Date(selectedYear, selectedMonth - 1, 1);
+        const monthEnd = new Date(selectedYear, selectedMonth, 0);
+        const monthStartStr = `${monthStart.getFullYear()}-${String(
+          monthStart.getMonth() + 1
+        ).padStart(2, "0")}-01`;
+        const monthEndStr = `${monthEnd.getFullYear()}-${String(
+          monthEnd.getMonth() + 1
+        ).padStart(2, "0")}-${String(monthEnd.getDate()).padStart(2, "0")}`;
+
+        const annualStartMonth = ANNUAL_MONTHS[0];
+        const annualEndMonth = ANNUAL_MONTHS[ANNUAL_MONTHS.length - 1];
+        const annualStartStr = `${annualStartMonth.year}-${String(
+          annualStartMonth.month
+        ).padStart(2, "0")}-01`;
+        const annualEndDate = new Date(annualEndMonth.year, annualEndMonth.month, 0);
+        const annualEndStr = `${annualEndDate.getFullYear()}-${String(
+          annualEndDate.getMonth() + 1
+        ).padStart(2, "0")}-${String(annualEndDate.getDate()).padStart(2, "0")}`;
+
+        const [monthRes, annualRes] = await Promise.all([
+          supabase
+            .from("gl_transactions")
+            .select("gl_category,debit,date")
+            .eq("store_id", storeId)
+            .gte("date", monthStartStr)
+            .lte("date", monthEndStr),
+          supabase
+            .from("gl_transactions")
+            .select("gl_category,debit,date")
+            .eq("store_id", storeId)
+            .gte("date", annualStartStr)
+            .lte("date", annualEndStr),
+        ]);
+
+        if (cancelled) return;
+
+        const monthAgg: Record<string, number> = {};
+        (monthRes.data ?? []).forEach((row: any) => {
+          const cat = (row.gl_category as string) || "Uncategorized";
+          const debit = Number(row.debit) || 0;
+          if (!debit) return;
+          monthAgg[cat] = (monthAgg[cat] ?? 0) + debit;
+        });
+
+        const annualAgg: Record<string, number> = {};
+        (annualRes.data ?? []).forEach((row: any) => {
+          const cat = (row.gl_category as string) || "Uncategorized";
+          const debit = Number(row.debit) || 0;
+          if (!debit) return;
+          const dateStr = String(row.date);
+          const [y, m] = dateStr.split("-").map((n: string) => Number(n));
+          if (!y || !m) return;
+          const key = `${y}-${m}-${cat}`;
+          annualAgg[key] = (annualAgg[key] ?? 0) + debit;
+        });
+
+        setGlMonthByCategory(Object.keys(monthAgg).length ? monthAgg : null);
+        setGlAnnualByKey(Object.keys(annualAgg).length ? annualAgg : null);
+      } catch {
+        if (!cancelled) {
+          setGlMonthByCategory(null);
+          setGlAnnualByKey(null);
+        }
+      } finally {
+        if (!cancelled) setGlLoading(false);
+      }
+    }
+    loadGl();
+    return () => {
+      cancelled = true;
+    };
+  }, [selectedStore, selectedMonth, selectedYear]);
+
   const storeVendors = useMemo(() => getVendorsByStore(selectedStore), [selectedStore]);
   const allCosts = useMemo(() => [...VENDOR_COSTS, ...addedEntries], [addedEntries]);
   const invoicesThisMonth = useMemo(() => {
@@ -151,11 +275,39 @@ export default function VendorTrackerPage() {
   }, [summary]);
   const unchangedCount = useMemo(() => summary.filter((v) => Math.abs(v.changePct) <= 1).length, [summary]);
 
+  const glMovers = useMemo(() => {
+    if (!glAnnualByKey) return [] as { vendorId: string; vendorName: string; category: string; amount: number; prevAmount: number; change: number; changePct: number; source: "gl" }[];
+    const prev = prevMonth(selectedMonth, selectedYear);
+    const movers: { vendorId: string; vendorName: string; category: string; amount: number; prevAmount: number; change: number; changePct: number; source: "gl" }[] = [];
+    for (const cat of GL_FIXED_CATEGORIES) {
+      const currKey = `${selectedYear}-${selectedMonth}-${cat}`;
+      const prevKey = `${prev.year}-${prev.month}-${cat}`;
+      const amount = glAnnualByKey[currKey] ?? 0;
+      const prevAmount = glAnnualByKey[prevKey] ?? 0;
+      if (amount === 0 && prevAmount === 0) continue;
+      const change = amount - prevAmount;
+      const changePct = prevAmount > 0 ? (change / prevAmount) * 100 : 0;
+      movers.push({
+        vendorId: `gl-${cat}`,
+        vendorName: cat,
+        category: cat,
+        amount,
+        prevAmount,
+        change,
+        changePct,
+        source: "gl",
+      });
+    }
+    return movers;
+  }, [glAnnualByKey, selectedMonth, selectedYear]);
+
   const topMovers = useMemo(() => {
-    return [...summary]
+    const manual = [...summary]
       .filter((v) => Math.abs(v.changePct) > 3)
-      .sort((a, b) => Math.abs(b.changePct) - Math.abs(a.changePct));
-  }, [summary]);
+      .map((v) => ({ ...v, source: "manual" as const }));
+    const glOnly = glMovers.filter((v) => Math.abs(v.changePct) > 3);
+    return [...manual, ...glOnly].sort((a, b) => Math.abs(b.changePct) - Math.abs(a.changePct));
+  }, [summary, glMovers]);
 
   const allVendorsSorted = useMemo(() => [...summary].sort((a, b) => b.amount - a.amount), [summary]);
 
@@ -681,7 +833,14 @@ export default function VendorTrackerPage() {
                       <TrendingDown className="w-4 h-4 text-emerald-400 shrink-0" />
                     )}
                     <div>
-                      <div className="text-sm font-medium text-white">{v.vendorName}</div>
+                      <div className="text-sm font-medium text-white flex items-center gap-1">
+                        {v.vendorName}
+                        {v.source === "gl" && (
+                          <span className="px-1.5 py-0.5 rounded text-[10px] bg-slate-700 text-slate-200 border border-slate-500">
+                            GL
+                          </span>
+                        )}
+                      </div>
                       <div className="text-xs text-slate-500">{v.category}</div>
                     </div>
                   </div>
@@ -713,7 +872,7 @@ export default function VendorTrackerPage() {
 
       {/* SECTION 4: ALL VENDORS VIEW */}
       {view === "all" && (
-        <div className="space-y-2">
+        <div className="space-y-3">
           {allVendorsSorted.map((v) => {
             const vendor = VENDORS.find((x) => x.id === v.vendorId);
             const costs = getCostsByVendorWithAdded(v.vendorId).slice(-12);
@@ -796,12 +955,45 @@ export default function VendorTrackerPage() {
               </div>
             );
           })}
+          <div className="mt-4">
+            <h4 className="text-xs text-slate-500 mb-1 flex items-center gap-2">
+              GL Spend by Category
+              {glLoading && <span className="text-[10px] text-slate-500">Loading…</span>}
+            </h4>
+            {!glMonthByCategory || Object.keys(glMonthByCategory).length === 0 ? (
+              <p className="text-xs text-slate-500">
+                No GL transactions for this store and month yet — fixed expenses will appear here once
+                GL data is connected.
+              </p>
+            ) : (
+              <div className="space-y-1">
+                {Object.entries(glMonthByCategory)
+                  .sort((a, b) => b[1] - a[1])
+                  .map(([cat, amount]) => (
+                    <div
+                      key={cat}
+                      className="flex items-center justify-between rounded-lg bg-slate-800 border border-slate-700 px-3 py-2 text-xs"
+                    >
+                      <div className="flex items-center gap-2">
+                        <span className="text-slate-200 font-medium">{cat}</span>
+                        <span className="px-1.5 py-0.5 rounded-full text-[10px] bg-slate-700 text-slate-200 border border-slate-500">
+                          GL
+                        </span>
+                      </div>
+                      <span className="text-slate-100 font-semibold tabular-nums">
+                        {formatDollars(amount)}
+                      </span>
+                    </div>
+                  ))}
+              </div>
+            )}
+          </div>
         </div>
       )}
 
       {/* SECTION 5: ANNUAL VIEW */}
       {view === "annual" && (
-        <div className="overflow-x-auto">
+        <div className="overflow-x-auto space-y-4">
           <div className="flex items-center gap-2 mb-3">
             <h3 className="text-sm font-semibold text-white">Annual Spend by Vendor</h3>
             <EducationInfoIcon metricKey="annual_spend" size="sm" />
@@ -895,6 +1087,70 @@ export default function VendorTrackerPage() {
               </tr>
             </tbody>
           </table>
+
+          <div className="mt-4">
+            <h3 className="text-sm font-semibold text-white mb-2">Fixed Expenses (GL, Monthly)</h3>
+            {!glAnnualByKey || Object.keys(glAnnualByKey).length === 0 ? (
+              <p className="text-xs text-slate-500">
+                No GL fixed-expense data for this store yet — once GL transactions are connected,
+                monthly fixed expenses will appear here automatically.
+              </p>
+            ) : (
+              <table className="w-full text-xs">
+                <thead>
+                  <tr className="border-b border-slate-700">
+                    <th className="text-left text-slate-500 py-2 pr-3 sticky left-0 bg-slate-900 min-w-[140px] z-10">
+                      Category
+                    </th>
+                    {ANNUAL_MONTHS.map((m) => (
+                      <th
+                        key={`${m.year}-${m.month}`}
+                        className="text-right text-slate-500 py-2 px-1 min-w-[60px]"
+                      >
+                        {m.short}
+                      </th>
+                    ))}
+                  </tr>
+                </thead>
+                <tbody>
+                  {GL_FIXED_CATEGORIES.map((cat) => (
+                    <tr key={cat} className="border-b border-slate-700/40">
+                      <td className="text-slate-300 py-2 pr-3 sticky left-0 bg-slate-900 z-10">
+                        {cat}
+                      </td>
+                      {ANNUAL_MONTHS.map((m, colIndex) => {
+                        const key = `${m.year}-${m.month}-${cat}`;
+                        const amount = glAnnualByKey[key] ?? 0;
+                        const prev = colIndex > 0 ? ANNUAL_MONTHS[colIndex - 1] : null;
+                        const prevKey = prev ? `${prev.year}-${prev.month}-${cat}` : null;
+                        const prevAmount = prevKey ? glAnnualByKey[prevKey] ?? 0 : 0;
+                        const changePct =
+                          prevAmount > 0 ? ((amount - prevAmount) / prevAmount) * 100 : 0;
+                        const cellClass =
+                          prevAmount === 0
+                            ? "text-white"
+                            : changePct <= -2
+                              ? "text-emerald-400 bg-emerald-600/5"
+                              : changePct > 5
+                                ? "text-red-400 bg-red-600/5"
+                                : changePct > 2
+                                  ? "text-amber-400 bg-amber-600/5"
+                                  : "text-white";
+                        return (
+                          <td
+                            key={`${m.year}-${m.month}`}
+                            className={`text-right py-2 px-1 tabular-nums ${cellClass}`}
+                          >
+                            {amount > 0 ? `$${(amount / 1000).toFixed(1)}k` : "—"}
+                          </td>
+                        );
+                      })}
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            )}
+          </div>
         </div>
       )}
 
