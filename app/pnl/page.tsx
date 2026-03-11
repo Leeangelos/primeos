@@ -156,6 +156,17 @@ export default function PnlPage() {
           }
           return;
         }
+        const [yearStr, monthStr] = monthKey.split("-");
+        const yr = Number(yearStr) || 0;
+        const mo = Number(monthStr) || 1;
+        const monthStart = new Date(yr, mo - 1, 1);
+        const monthEnd = new Date(yr, mo, 0);
+        const monthStartStr = `${monthStart.getFullYear()}-${String(
+          monthStart.getMonth() + 1
+        ).padStart(2, "0")}-01`;
+        const monthEndStr = `${monthEnd.getFullYear()}-${String(
+          monthEnd.getMonth() + 1
+        ).padStart(2, "0")}-${String(monthEnd.getDate()).padStart(2, "0")}`;
         const supabase = createClient();
         const { data: storeRow } = await supabase
           .from("stores")
@@ -169,9 +180,16 @@ export default function PnlPage() {
         }
         const { data: rows } = await supabase
           .from("gl_transactions")
-          .select("gl_category,debit,source_month,vendor_name")
+          .select("gl_category,debit,source_month,vendor_name,date")
           .eq("store_id", storeId)
-          .eq("source_month", monthKey);
+          .gte("date", monthStartStr)
+          .lte("date", monthEndStr);
+        console.log("GP P&L loadFixed", {
+          monthKey,
+          storeFilter,
+          storeId,
+          glRowCount: rows?.length ?? 0,
+        });
         const fixedCategories = new Set([
           "Rent Expense",
           "Electricity",
