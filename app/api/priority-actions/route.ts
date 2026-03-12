@@ -243,8 +243,9 @@ export async function GET(request: Request) {
           item.total_units > 0 ? item.total_revenue / item.total_units : 0;
         const peerPrice = peer.revenue / peer.units;
         if (ourPrice <= 0 || peerPrice <= 0) continue;
-        const gapPct = (peerPrice - ourPrice) / ourPrice;
+        let gapPct = (peerPrice - ourPrice) / peerPrice;
         if (gapPct <= 0.07) continue;
+        if (gapPct > 0.99) gapPct = 0.99;
         const gapPerUnit = peerPrice - ourPrice;
         const dollarImpact = gapPerUnit * item.total_units;
         priceGapActions.push({

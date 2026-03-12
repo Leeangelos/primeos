@@ -1061,7 +1061,7 @@ export default function HomePage() {
                   <div className={`absolute inset-y-2 left-0 w-1 rounded-full ${barClass}`} aria-hidden />
                   <div className="flex-1 min-w-0 ml-1">
                     <div className="flex items-center justify-between gap-2">
-                      <p className="text-sm font-semibold text-white truncate">{action.title}</p>
+                      <p className="text-sm font-semibold text-white">{action.title}</p>
                       {formattedImpact && (
                         <span className="text-xs font-semibold text-teal-300 tabular-nums shrink-0">
                           {formattedImpact}
