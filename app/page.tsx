@@ -525,10 +525,11 @@ export default function HomePage() {
       };
     }
     if (pillarSeed) {
+      const cogsPctSeed = pillarSeed.foodCostPct + pillarSeed.laborPct + 4;
       return {
         product: gradePillarProduct(pillarSeed.foodCostPct),
         people: gradePillarPeople(pillarSeed.laborPct),
-        performance: gradePillarPerformance(pillarSeed.primePct),
+        performance: gradePillarPerformance(cogsPctSeed),
       };
     }
     return { product: "C" as LetterGrade, people: "C" as LetterGrade, performance: "C" as LetterGrade };
