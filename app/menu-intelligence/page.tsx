@@ -275,7 +275,13 @@ export default function MenuIntelligencePage() {
     return map;
   }, [menuCatalog]);
 
-  const itemCount = menuCatalog.length;
+  const itemCount = useMemo(() => {
+    const seen = new Set<string>();
+    for (const i of menuCatalog) {
+      seen.add(`${(i.item_name ?? "").toLowerCase().trim()}|${(i.size ?? "").toLowerCase().trim()}`);
+    }
+    return seen.size;
+  }, [menuCatalog]);
   const categoryCount = menuCategories.length;
   const avgPrice =
     menuCatalog.length > 0
