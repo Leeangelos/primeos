@@ -615,6 +615,7 @@ function DailyPageContent() {
       status: gpStatus,
     },
   ];
+  const slphItem = scoreboardItems.find((i) => i.label === "SLPH");
 
   const [recentEntriesData, setRecentEntriesData] = useState<{ date: string; sales: number; food_cost_pct: number; labor_pct: number; transactions?: number }[]>([]);
   const [kitchenScore, setKitchenScore] = useState<{
@@ -959,67 +960,140 @@ function DailyPageContent() {
             </div>
           )}
         </div>
-        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-          {[scoreboardItems[1], scoreboardItems[3], scoreboardItems[2], scoreboardItems[4]].map(
-            ({ label, value, target, status, valueIsRollingFallback }) => {
-              const valueColor =
-                valueIsRollingFallback
-                  ? "text-muted"
-                  : status == null
-                    ? "text-white"
-                    : status === "on_track"
-                      ? "text-emerald-300"
-                      : status === "over"
-                        ? "text-red-300"
-                        : "text-amber-300";
-              return (
-                <div
-                  key={label}
-                  className={cn(
-                    KPI_SECONDARY_BASE,
-                    "border",
-                    status != null ? STATUS_STYLES[status] : STATUS_NEUTRAL
-                  )}
-                >
-                  <div className="text-[10px] font-medium uppercase tracking-widest text-muted/70 flex items-center justify-center gap-1.5">
-                    {label}
-                    <button
-                      type="button"
-                      onClick={() => setShowEducation(label === "Labor %" ? "labor" : label === "Food+Disposables %" ? "food" : label === "SLPH" ? "slph" : "gp")}
-                      className="inline-flex items-center justify-center min-h-[44px] min-w-[44px] rounded-full bg-muted/20 text-muted hover:bg-brand/20 hover:text-brand transition-colors text-xs font-bold"
-                      aria-label="Learn more"
-                    >
-                      i
-                    </button>
-                  </div>
+        {slphItem && (
+          <div className="grid grid-cols-2 sm:grid-cols-2 gap-3">
+            {[slphItem, {
+              label: "Avg Bump Time",
+              value: liveDayData?.avgBumpTime != null && liveDayData.avgBumpTime > 0 ? `${liveDayData.avgBumpTime.toFixed(1)} min` : "—",
+              target: "—",
+              status: null,
+              valueIsRollingFallback: false,
+            }].map(
+              ({ label, value, target, status, valueIsRollingFallback }) => {
+                const valueColor =
+                  valueIsRollingFallback
+                    ? "text-muted"
+                    : status == null
+                      ? "text-white"
+                      : status === "on_track"
+                        ? "text-emerald-300"
+                        : status === "over"
+                          ? "text-red-300"
+                          : "text-amber-300";
+                return (
                   <div
+                    key={label}
                     className={cn(
-                      "mt-2 sm:mt-3 text-3xl font-bold tabular-nums tracking-tight",
-                      valueColor
+                      KPI_SECONDARY_BASE,
+                      "border",
+                      status != null ? STATUS_STYLES[status] : STATUS_NEUTRAL
                     )}
                   >
-                    {value}
+                    <div className="text-[10px] font-medium uppercase tracking-widest text-muted/70 flex items-center justify-center gap-1.5">
+                      {label}
+                      <button
+                        type="button"
+                        onClick={() => setShowEducation(label === "Labor %" ? "labor" : label === "Food+Disposables %" ? "food" : label === "SLPH" ? "slph" : "gp")}
+                        className="inline-flex items-center justify-center min-h-[44px] min-w-[44px] rounded-full bg-muted/20 text-muted hover:bg-brand/20 hover:text-brand transition-colors text-xs font-bold"
+                        aria-label="Learn more"
+                      >
+                        i
+                      </button>
+                    </div>
+                    <div
+                      className={cn(
+                        "mt-2 sm:mt-3 text-3xl font-bold tabular-nums tracking-tight",
+                        valueColor
+                      )}
+                    >
+                      {value}
+                    </div>
+                    <div className="mt-1 text-[11px] text-muted/70">Benchmark: {target}</div>
+                    {valueIsRollingFallback && (
+                      <div className="text-xs text-muted/60 mt-1">7-day avg</div>
+                    )}
+                    {rolling && label === "Labor %" && rolling.laborPct != null && !valueIsRollingFallback && (
+                      <div className="text-xs text-muted/60 mt-1">7-day avg: {rolling.laborPct}%</div>
+                    )}
+                    {label === "Food+Disposables %" && displayFoodDispPct != null && (
+                      <div className="text-xs text-muted/60 mt-1">7-day rolling</div>
+                    )}
+                    {rolling && label === "SLPH" && rolling.slph != null && (
+                      <div className="text-xs text-muted/60 mt-1">7-day avg: {rolling.slph}</div>
+                    )}
+                    {rolling && label === "GROSS PROFIT %" && rolling.primePct != null && (
+                      <div className="text-xs text-muted/60 mt-1">7-day avg: {formatPct(100 - rolling.primePct)}</div>
+                    )}
                   </div>
-                  <div className="mt-1 text-[11px] text-muted/70">Benchmark: {target}</div>
-                  {valueIsRollingFallback && (
-                    <div className="text-xs text-muted/60 mt-1">7-day avg</div>
-                  )}
-                  {rolling && label === "Labor %" && rolling.laborPct != null && !valueIsRollingFallback && (
-                    <div className="text-xs text-muted/60 mt-1">7-day avg: {rolling.laborPct}%</div>
-                  )}
-                  {label === "Food+Disposables %" && displayFoodDispPct != null && (
-                    <div className="text-xs text-muted/60 mt-1">7-day rolling</div>
-                  )}
-                  {rolling && label === "SLPH" && rolling.slph != null && (
-                    <div className="text-xs text-muted/60 mt-1">7-day avg: {rolling.slph}</div>
-                  )}
-                  {rolling && label === "GROSS PROFIT %" && rolling.primePct != null && (
-                    <div className="text-xs text-muted/60 mt-1">7-day avg: {formatPct(100 - rolling.primePct)}</div>
-                  )}
-                </div>
-              );
-            }
-          )}
+                );
+              }
+            )}
+          </div>
+        )}
+
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+          {scoreboardItems
+            .filter((item) => item.label !== "SLPH")
+            .map(
+              ({ label, value, target, status, valueIsRollingFallback }) => {
+                const valueColor =
+                  valueIsRollingFallback
+                    ? "text-muted"
+                    : status == null
+                      ? "text-white"
+                      : status === "on_track"
+                        ? "text-emerald-300"
+                        : status === "over"
+                          ? "text-red-300"
+                          : "text-amber-300";
+                return (
+                  <div
+                    key={label}
+                    className={cn(
+                      KPI_SECONDARY_BASE,
+                      "border",
+                      status != null ? STATUS_STYLES[status] : STATUS_NEUTRAL
+                    )}
+                  >
+                    <div className="text-[10px] font-medium uppercase tracking-widest text-muted/70 flex items-center justify-center gap-1.5">
+                      {label}
+                      <button
+                        type="button"
+                        onClick={() => setShowEducation(label === "Labor %" ? "labor" : label === "Food+Disposables %" ? "food" : label === "SLPH" ? "slph" : "gp")}
+                        className="inline-flex items-center justify-center min-h-[44px] min-w-[44px] rounded-full bg-muted/20 text-muted hover:bg-brand/20 hover:text-brand transition-colors text-xs font-bold"
+                        aria-label="Learn more"
+                      >
+                        i
+                      </button>
+                    </div>
+                    <div
+                      className={cn(
+                        "mt-2 sm:mt-3 text-3xl font-bold tabular-nums tracking-tight",
+                        valueColor
+                      )}
+                    >
+                      {value}
+                    </div>
+                    <div className="mt-1 text-[11px] text-muted/70">Benchmark: {target}</div>
+                    {valueIsRollingFallback && (
+                      <div className="text-xs text-muted/60 mt-1">7-day avg</div>
+                    )}
+                    {rolling && label === "Labor %" && rolling.laborPct != null && !valueIsRollingFallback && (
+                      <div className="text-xs text-muted/60 mt-1">7-day avg: {rolling.laborPct}%</div>
+                    )}
+                    {label === "Food+Disposables %" && displayFoodDispPct != null && (
+                      <div className="text-xs text-muted/60 mt-1">7-day rolling</div>
+                    )}
+                    {rolling && label === "SLPH" && rolling.slph != null && (
+                      <div className="text-xs text-muted/60 mt-1">7-day avg: {rolling.slph}</div>
+                    )}
+                    {rolling && label === "GROSS PROFIT %" && rolling.primePct != null && (
+                      <div className="text-xs text-muted/60 mt-1">7-day avg: {formatPct(100 - rolling.primePct)}</div>
+                    )}
+                  </div>
+                );
+              }
+            )}
         </div>
       </div>
 
