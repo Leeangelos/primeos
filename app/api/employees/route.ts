@@ -4,21 +4,26 @@ import { getClientForRoute } from "@/lib/supabase";
 export async function GET(req: NextRequest) {
   const supabase = await getClientForRoute();
   const store = req.nextUrl.searchParams.get("store");
-  const status = req.nextUrl.searchParams.get("status") || "all";
+
+  console.log("employees route store param:", store);
 
   let query = supabase
     .from("employees")
     .select("*")
     .order("name", { ascending: true });
 
+  let storeId: string | null = null;
   if (store && store !== "all") {
-    const { data: storeData } = await supabase.from("stores").select("id").eq("slug", store).single();
-    if (storeData) query = query.eq("store_id", storeData.id);
+    const { data: storeData } = await supabase.from("stores").select("id").eq("slug", store).maybeSingle();
+    storeId = storeData?.id ?? null;
+    if (storeId) query = query.eq("store_id", storeId);
   }
-  if (status && status !== "all") query = query.eq("status", status);
+
+  console.log("employees route query: store_id=", storeId ?? "none");
 
   const { data, error } = await query;
   if (error) return NextResponse.json({ ok: false, error: error.message });
+  console.log("employees found:", data?.length);
   return NextResponse.json({ ok: true, employees: data ?? [] });
 }
 
