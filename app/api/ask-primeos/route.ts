@@ -1,13 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@supabase/supabase-js";
-import Anthropic from "@anthropic-ai/sdk";
 import { getKitchenGrade } from "@/lib/kitchen-score";
 
 export const dynamic = "force-dynamic";
-
-const anthropic = new Anthropic({
-  apiKey: process.env.ANTHROPIC_API_KEY,
-});
 
 export async function POST(req: NextRequest) {
   try {
@@ -187,28 +182,30 @@ export async function POST(req: NextRequest) {
 
     const systemPrompt = `You are PrimeOS, an operations advisor for ${storeName}, an independent pizza operation. Current data: Food Cost: ${foodCostDisplay}, Kitchen Score: ${gradeDisplay}, Labor: ${laborDisplay}, Sales MTD: ${salesDisplay}. The operator is currently on the ${pagePath} page. Answer specifically for this store and situation. Be direct, practical, and conversational. You are their business partner, not a generic chatbot. Keep responses under 150 words unless asked for detail.`;
 
-    let claudeResponse;
+    let reply = "";
     try {
-      claudeResponse = await anthropic.messages.create({
-        model: "claude-sonnet-4-20250514",
-        max_tokens: 1000,
-        system: systemPrompt,
-        messages: [
-          {
-            role: "user",
-            content: message,
-          },
-        ],
+      const response = await fetch("https://api.anthropic.com/v1/messages", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "x-api-key": process.env.ANTHROPIC_API_KEY ?? "",
+          "anthropic-version": "2023-06-01",
+        },
+        body: JSON.stringify({
+          model: "claude-sonnet-4-20250514",
+          max_tokens: 1000,
+          system: systemPrompt,
+          messages: [{ role: "user", content: message }],
+        }),
       });
+      const data = await response.json();
+      reply =
+        data.content?.[0]?.text ??
+        "I had trouble generating a response.";
     } catch (apiErr: any) {
       console.error("ask-primeos Anthropic error", apiErr);
       throw apiErr;
     }
-
-    const reply =
-      claudeResponse.content[0]?.type === "text"
-        ? claudeResponse.content[0].text
-        : "";
 
     return NextResponse.json({ reply });
   } catch (err: any) {
