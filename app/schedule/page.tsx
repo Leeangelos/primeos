@@ -112,7 +112,7 @@ export default function SchedulePage() {
   const [loading, setLoading] = useState(false);
   const [activeShift, setActiveShift] = useState<ActiveShift | null>(null);
   const [savingShift, setSavingShift] = useState(false);
-  const [sheetVisible, setSheetVisible] = useState(false);
+  const [popoverAnchor, setPopoverAnchor] = useState<{ left: number; top: number } | null>(null);
   const [generatedMessage, setGeneratedMessage] = useState<string | null>(null);
   const [generatingMessage, setGeneratingMessage] = useState(false);
 
@@ -244,7 +244,9 @@ export default function SchedulePage() {
     setWeekStart(startOfWeek(d));
   };
 
-  function openAddShift(employeeName: string, dateIso: string) {
+  function openAddShift(employeeName: string, dateIso: string, e: React.MouseEvent) {
+    const rect = (e.currentTarget as HTMLElement).getBoundingClientRect();
+    setPopoverAnchor({ left: rect.left, top: rect.bottom + 8 });
     setGeneratedMessage(null);
     setActiveShift({
       mode: "add",
@@ -255,10 +257,11 @@ export default function SchedulePage() {
       end_time: "18:00",
       notes: "",
     });
-    setSheetVisible(true);
   }
 
-  function openEditShift(shift: Shift) {
+  function openEditShift(shift: Shift, e: React.MouseEvent) {
+    const rect = (e.currentTarget as HTMLElement).getBoundingClientRect();
+    setPopoverAnchor({ left: rect.left, top: rect.bottom + 8 });
     setGeneratedMessage(null);
     setActiveShift({
       mode: "edit",
@@ -270,7 +273,6 @@ export default function SchedulePage() {
       end_time: shift.end_time,
       notes: shift.notes ?? "",
     });
-    setSheetVisible(true);
   }
 
   async function handleSaveShift() {
@@ -345,6 +347,7 @@ export default function SchedulePage() {
         }
       }
       setActiveShift(null);
+      setPopoverAnchor(null);
     } catch {
       // ignore
     } finally {
@@ -363,6 +366,7 @@ export default function SchedulePage() {
       if (data.ok) {
         setShifts((prev) => prev.filter((s) => s.id !== activeShift.id));
         setActiveShift(null);
+        setPopoverAnchor(null);
       }
     } catch {
       // ignore
@@ -547,7 +551,7 @@ export default function SchedulePage() {
                         >
                           <button
                             type="button"
-                            onClick={() => openAddShift(emp.name, d.iso)}
+                            onClick={(ev) => openAddShift(emp.name, d.iso, ev)}
                             className="w-full h-10 rounded-md border border-dashed border-slate-700/70 text-[10px] text-slate-500 hover:border-slate-500 hover:bg-slate-800/60"
                           >
                             +
@@ -571,7 +575,7 @@ export default function SchedulePage() {
                       >
                         <button
                           type="button"
-                          onClick={() => openEditShift(dayShift)}
+                          onClick={(ev) => openEditShift(dayShift, ev)}
                           className={cn(
                             "w-full h-10 rounded-md border px-2 py-1 text-left text-[10px] leading-tight",
                             colorClass
@@ -631,23 +635,33 @@ export default function SchedulePage() {
         </button>
       </div>
 
-      {/* Shift bottom sheet — fixed position, slides up from bottom */}
-      {activeShift && (
+      {/* Shift editor popover — fixed near tapped cell */}
+      {activeShift && popoverAnchor && (
         <>
           <button
             type="button"
-            className="fixed inset-0 z-40 bg-black/60"
-            onClick={() => !savingShift && setActiveShift(null)}
+            className="fixed inset-0 z-40 bg-black/40"
+            onClick={() => {
+              if (!savingShift) {
+                setActiveShift(null);
+                setPopoverAnchor(null);
+              }
+            }}
             aria-hidden
           />
           <div
-            className={cn(
-              "fixed bottom-0 left-0 right-0 z-50 max-h-[85vh] overflow-y-auto bg-slate-900 rounded-t-2xl border border-slate-700 shadow-2xl transform transition-transform duration-300 ease-out",
-              sheetVisible ? "translate-y-0" : "translate-y-full"
-            )}
+            className="fixed z-50 w-[280px] max-h-[80vh] overflow-y-auto bg-gray-900 rounded-xl shadow-xl p-4 border border-slate-700"
+            style={{
+              left: typeof window !== "undefined"
+                ? Math.max(8, Math.min(popoverAnchor.left, window.innerWidth - 280 - 8))
+                : popoverAnchor.left,
+              top: typeof window !== "undefined"
+                ? Math.max(8, Math.min(popoverAnchor.top, window.innerHeight - 400 - 8))
+                : popoverAnchor.top,
+            }}
+            onClick={(e) => e.stopPropagation()}
           >
-            <div className="w-full max-w-md mx-auto p-4 space-y-3">
-              <div className="w-10 h-1 rounded-full bg-slate-600 mx-auto mb-2" />
+            <div className="space-y-3">
               <div className="flex items-center justify-between">
                 <div>
                   <p className="text-sm font-semibold text-white">
@@ -664,7 +678,12 @@ export default function SchedulePage() {
                 </div>
                 <button
                   type="button"
-                  onClick={() => !savingShift && setActiveShift(null)}
+                  onClick={() => {
+                    if (!savingShift) {
+                      setActiveShift(null);
+                      setPopoverAnchor(null);
+                    }
+                  }}
                   className="text-slate-400 hover:text-slate-200 text-lg px-2"
                   aria-label="Close"
                 >
