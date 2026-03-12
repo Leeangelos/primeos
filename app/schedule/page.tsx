@@ -126,7 +126,7 @@ export default function SchedulePage() {
       setLoading(true);
       try {
         const [employeesRes, shiftsRes, laborRes] = await Promise.all([
-          fetch(`/api/employees?store=${encodeURIComponent(store)}&status=active`).then((r) => r.json()),
+          fetch(`/api/employees?store=${encodeURIComponent(store)}`).then((r) => r.json()),
           fetch(`/api/schedules?store=${encodeURIComponent(store)}&week=${weekStartISO}`).then((r) => r.json()),
           fetch(`/api/schedules/labor?store=${encodeURIComponent(store)}&week=${weekStartISO}`).then((r) => r.json()),
         ]);
