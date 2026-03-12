@@ -11,7 +11,7 @@ import { ThemeProvider } from "@/src/lib/theme-context";
 import { TierProvider } from "@/src/lib/tier-context";
 import { AuthProvider } from "@/src/lib/auth-context";
 import { AppRefreshHandler } from "@/src/components/layout/AppRefreshHandler";
-import { AskPrimeButton } from "@/src/components/layout/AskPrimeButton";
+import { AskPrimeOS } from "@/components/ask-primeos/AskPrimeOS";
 
 import type { Viewport, Metadata } from "next";
 
@@ -84,7 +84,7 @@ export default function RootLayout({
                     </footer>
 
                     <ConsentBanner />
-                    <AskPrimeButton />
+                    <AskPrimeOS />
                     <BottomNav />
                   </div>
                 </AuthGuard>
