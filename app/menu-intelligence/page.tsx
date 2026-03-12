@@ -157,6 +157,8 @@ export default function MenuIntelligencePage() {
   const [savingCost, setSavingCost] = useState(false);
   const [kitchenIqCategory, setKitchenIqCategory] = useState<string>("All");
   const [saveFlash, setSaveFlash] = useState(false);
+  const [kitchenIqSubView, setKitchenIqSubView] = useState<"list" | "matrix">("list");
+  const [kitchenIqMatrixOpen, setKitchenIqMatrixOpen] = useState<Set<string>>(new Set());
 
   const [selectedPricingGap, setSelectedPricingGap] = useState<PricingGapItem | null>(null);
   const [priceGapSheetMounted, setPriceGapSheetMounted] = useState(false);
@@ -833,6 +835,55 @@ if (d.catalog) setKitchenIqData({
           cat === "All" ? uncostedByRevenue.length : catalog.filter((i) => i.category === cat && (i.cost_to_make == null || i.cost_to_make <= 0)).length;
         const filteredCatalog = kitchenIqCategory === "All" ? catalog : catalog.filter((i) => i.category === kitchenIqCategory);
 
+        const withMonthlyProfit = costedItems.map((i) => {
+          const price = i.avg_unit_price || 0;
+          const cost = i.cost_to_make ?? 0;
+          const marginPct = price > 0 ? ((price - cost) / price) * 100 : 0;
+          const unitProfit = price - cost;
+          const monthlyProfit = unitProfit * (i.total_units || 0);
+          return { ...i, marginPct, unitProfit, monthlyProfit };
+        }).filter((i) => i.monthlyProfit >= 0);
+        const totalUnitsCosted = withMonthlyProfit.reduce((s, i) => s + i.total_units, 0);
+        const weightedSum = withMonthlyProfit.reduce((s, i) => s + i.marginPct * i.total_units, 0);
+        const blendedMarginPct = totalUnitsCosted > 0 ? weightedSum / totalUnitsCosted : 0;
+        const byMonthlyProfit = [...withMonthlyProfit].sort((a, b) => b.monthlyProfit - a.monthlyProfit);
+        const top3Profit = byMonthlyProfit.slice(0, 3);
+        const bottom3Profit = byMonthlyProfit.slice(-3).reverse();
+        const totalCostedProfit = withMonthlyProfit.reduce((s, i) => s + i.monthlyProfit, 0);
+        const top3ProfitSum = top3Profit.reduce((s, i) => s + i.monthlyProfit, 0);
+        const top3PctOfProfit = totalCostedProfit > 0 ? (top3ProfitSum / totalCostedProfit) * 100 : 0;
+        const topItem = top3Profit[0];
+        const oneMorePerShiftLine = topItem && topItem.marginPct > 60 && topItem.unitProfit > 0
+          ? `If your staff sells one more ${topItem.item_name} ${topItem.sizeDisplay} per shift — that's +${formatDollars(topItem.unitProfit * 30)} per month.`
+          : null;
+
+        let medianUnits = 0;
+        let stars: typeof withMonthlyProfit = [];
+        let plowhorses: typeof withMonthlyProfit = [];
+        let puzzles: typeof withMonthlyProfit = [];
+        let dogs: typeof withMonthlyProfit = [];
+        if (costedCount >= 5 && withMonthlyProfit.length >= 5) {
+          const units = withMonthlyProfit.map((i) => i.total_units).sort((a, b) => a - b);
+          medianUnits = units[Math.floor(units.length / 2)] ?? 0;
+          for (const item of withMonthlyProfit) {
+            const aboveMedian = item.total_units >= medianUnits;
+            const aboveBlended = item.marginPct >= blendedMarginPct;
+            if (aboveMedian && aboveBlended) stars.push(item);
+            else if (aboveMedian && !aboveBlended) plowhorses.push(item);
+            else if (!aboveMedian && aboveBlended) puzzles.push(item);
+            else dogs.push(item);
+          }
+        }
+        const top3DogsByRevenue = [...dogs].sort((a, b) => b.total_revenue - a.total_revenue).slice(0, 3);
+        const toggleMatrixQuadrant = (q: string) => {
+          setKitchenIqMatrixOpen((prev) => {
+            const next = new Set(prev);
+            if (next.has(q)) next.delete(q);
+            else next.add(q);
+            return next;
+          });
+        };
+
         const foodCostStatus = (pctVal: number) =>
           pctVal <= 32 ? "✅ Healthy" : pctVal <= 40 ? "⚠️ Watch" : "🔴 Investigate";
         const foodCostColor = (pctVal: number) => (pctVal <= 32 ? "text-emerald-400" : pctVal <= 40 ? "text-amber-400" : "text-red-400");
@@ -882,46 +933,13 @@ if (d.catalog) setKitchenIqData({
 
                 {/* Blended Margin — show after first cost */}
                 {costedCount >= 1 && (() => {
-                  const totalUnitsCosted = costedItems.reduce((s, i) => s + i.total_units, 0);
-                  const weightedSum = costedItems.reduce((s, i) => {
-                    const price = i.avg_unit_price || 0;
-                    const cost = i.cost_to_make ?? 0;
-                    const marginPct = price > 0 ? ((price - cost) / price) * 100 : 0;
-                    return s + marginPct * i.total_units;
-                  }, 0);
-                  const blendedMarginPct = totalUnitsCosted > 0 ? weightedSum / totalUnitsCosted : 0;
                   const blendedColor = blendedMarginPct >= 60 ? "text-emerald-400" : blendedMarginPct >= 45 ? "text-amber-400" : "text-red-400";
-                  const withMargin = costedItems
-                    .map((i) => {
-                      const price = i.avg_unit_price || 0;
-                      const cost = i.cost_to_make ?? 0;
-                      const marginPct = price > 0 ? ((price - cost) / price) * 100 : 0;
-                      return { ...i, marginPct };
-                    })
-                    .filter((i) => i.marginPct >= 0);
+                  const withMargin = withMonthlyProfit;
                   const mostProfitable = withMargin.length ? withMargin.reduce((a, b) => (a.marginPct >= b.marginPct ? a : b)) : null;
                   const leastProfitable = withMargin.length ? withMargin.reduce((a, b) => (a.marginPct <= b.marginPct ? a : b)) : null;
                   const subtitle = costedCount === 1
                     ? "Based on 1 item — cost more items for a complete picture."
                     : `Across ${costedCount} costed items representing ${formatDollars(costedRevenue)} in monthly revenue`;
-                  const withMonthlyProfit = costedItems.map((i) => {
-                    const price = i.avg_unit_price || 0;
-                    const cost = i.cost_to_make ?? 0;
-                    const marginPct = price > 0 ? ((price - cost) / price) * 100 : 0;
-                    const unitProfit = price - cost;
-                    const monthlyProfit = unitProfit * (i.total_units || 0);
-                    return { ...i, marginPct, unitProfit, monthlyProfit };
-                  }).filter((i) => i.monthlyProfit >= 0);
-                  const byMonthlyProfit = [...withMonthlyProfit].sort((a, b) => b.monthlyProfit - a.monthlyProfit);
-                  const top3Profit = byMonthlyProfit.slice(0, 3);
-                  const bottom3Profit = byMonthlyProfit.slice(-3).reverse();
-                  const totalCostedProfit = withMonthlyProfit.reduce((s, i) => s + i.monthlyProfit, 0);
-                  const top3ProfitSum = top3Profit.reduce((s, i) => s + i.monthlyProfit, 0);
-                  const top3PctOfProfit = totalCostedProfit > 0 ? (top3ProfitSum / totalCostedProfit) * 100 : 0;
-                  const topItem = top3Profit[0];
-                  const oneMorePerShiftLine = topItem && topItem.marginPct > 60 && topItem.unitProfit > 0
-                    ? `If your staff sells one more ${topItem.item_name} ${topItem.sizeDisplay} per shift — that's +${formatDollars(topItem.unitProfit * 30)} per month.`
-                    : null;
                   return (
                     <div className="bg-slate-800 rounded-xl border border-slate-700 p-4">
                       <p className="text-[10px] uppercase tracking-wide text-slate-500">Blended Margin</p>
@@ -965,6 +983,104 @@ if (d.catalog) setKitchenIqData({
                   );
                 })()}
 
+                {/* Menu Engineering — when 5+ costed */}
+                {costedCount >= 5 && (
+                  <div className="space-y-3">
+                    <h3 className="text-sm font-semibold text-white">Menu Engineering</h3>
+                    <div className="flex bg-slate-800 rounded-lg p-0.5 border border-slate-700">
+                      <button type="button" onClick={() => setKitchenIqSubView("list")} className={cn("flex-1 py-2 rounded-md text-xs font-medium", kitchenIqSubView === "list" ? "bg-slate-700 text-white" : "text-slate-400 hover:text-slate-300")}>Item List</button>
+                      <button type="button" onClick={() => setKitchenIqSubView("matrix")} className={cn("flex-1 py-2 rounded-md text-xs font-medium", kitchenIqSubView === "matrix" ? "bg-slate-700 text-white" : "text-slate-400 hover:text-slate-300")}>Matrix</button>
+                    </div>
+                  </div>
+                )}
+
+                {costedCount >= 5 && kitchenIqSubView === "matrix" && (
+                  <div className="space-y-3">
+                    <div className="grid gap-3 sm:grid-cols-2">
+                      <div className="rounded-xl border-2 border-emerald-600/50 bg-slate-800 overflow-hidden">
+                        <button type="button" onClick={() => toggleMatrixQuadrant("star")} className="w-full p-3 text-left flex items-center justify-between">
+                          <span className="text-sm font-semibold text-emerald-400">⭐ STAR</span>
+                          <span className="text-xs text-slate-400">{stars.length} items</span>
+                          <ChevronDown className={cn("w-4 h-4 text-slate-400 transition-transform", kitchenIqMatrixOpen.has("star") && "rotate-180")} />
+                        </button>
+                        <p className="text-xs text-slate-400 px-3 pb-2">High demand, high profit. Feature this item. Train staff to suggest it first.</p>
+                        {kitchenIqMatrixOpen.has("star") && (
+                          <div className="px-3 pb-3 space-y-2 border-t border-slate-700 pt-2">
+                            {stars.map((item) => (
+                              <div key={`${item.item_name}-${item.size}`} className="text-xs text-slate-300 flex flex-wrap gap-x-2">
+                                <span className="font-medium text-white">{item.item_name} {item.sizeDisplay}</span>
+                                <span>{item.marginPct.toFixed(0)}% margin | {item.total_units} sold | {formatDollars(item.monthlyProfit)} profit</span>
+                              </div>
+                            ))}
+                          </div>
+                        )}
+                      </div>
+                      <div className="rounded-xl border border-slate-600 bg-slate-800 overflow-hidden">
+                        <button type="button" onClick={() => toggleMatrixQuadrant("plowhorse")} className="w-full p-3 text-left flex items-center justify-between">
+                          <span className="text-sm font-semibold text-amber-400">🐄 PLOWHORSE</span>
+                          <span className="text-xs text-slate-400">{plowhorses.length} items</span>
+                          <ChevronDown className={cn("w-4 h-4 text-slate-400 transition-transform", kitchenIqMatrixOpen.has("plowhorse") && "rotate-180")} />
+                        </button>
+                        <p className="text-xs text-slate-400 px-3 pb-2">Customers love it but it&apos;s thin on profit. Consider raising price $1-2 or tightening portion size.</p>
+                        {kitchenIqMatrixOpen.has("plowhorse") && (
+                          <div className="px-3 pb-3 space-y-2 border-t border-slate-700 pt-2">
+                            {plowhorses.map((item) => (
+                              <div key={`${item.item_name}-${item.size}`} className="text-xs text-slate-300 flex flex-wrap gap-x-2">
+                                <span className="font-medium text-white">{item.item_name} {item.sizeDisplay}</span>
+                                <span>{item.marginPct.toFixed(0)}% margin | {item.total_units} sold | {formatDollars(item.monthlyProfit)} profit</span>
+                              </div>
+                            ))}
+                          </div>
+                        )}
+                      </div>
+                      <div className="rounded-xl border border-slate-600 bg-slate-800 overflow-hidden">
+                        <button type="button" onClick={() => toggleMatrixQuadrant("puzzle")} className="w-full p-3 text-left flex items-center justify-between">
+                          <span className="text-sm font-semibold text-cyan-400">🧩 PUZZLE</span>
+                          <span className="text-xs text-slate-400">{puzzles.length} items</span>
+                          <ChevronDown className={cn("w-4 h-4 text-slate-400 transition-transform", kitchenIqMatrixOpen.has("puzzle") && "rotate-180")} />
+                        </button>
+                        <p className="text-xs text-slate-400 px-3 pb-2">Good money when it sells but customers aren&apos;t ordering it enough. Bundle it or feature it on your menu board.</p>
+                        {kitchenIqMatrixOpen.has("puzzle") && (
+                          <div className="px-3 pb-3 space-y-2 border-t border-slate-700 pt-2">
+                            {puzzles.map((item) => (
+                              <div key={`${item.item_name}-${item.size}`} className="text-xs text-slate-300 flex flex-wrap gap-x-2">
+                                <span className="font-medium text-white">{item.item_name} {item.sizeDisplay}</span>
+                                <span>{item.marginPct.toFixed(0)}% margin | {item.total_units} sold | {formatDollars(item.monthlyProfit)} profit</span>
+                              </div>
+                            ))}
+                          </div>
+                        )}
+                      </div>
+                      <div className="rounded-xl border-2 border-red-600/50 bg-slate-800 overflow-hidden">
+                        <button type="button" onClick={() => toggleMatrixQuadrant("dog")} className="w-full p-3 text-left flex items-center justify-between">
+                          <span className="text-sm font-semibold text-red-400">💀 DOG</span>
+                          <span className="text-xs text-slate-400">{dogs.length} items</span>
+                          <ChevronDown className={cn("w-4 h-4 text-slate-400 transition-transform", kitchenIqMatrixOpen.has("dog") && "rotate-180")} />
+                        </button>
+                        <p className="text-xs text-slate-400 px-3 pb-2">Low demand, low profit. Every order costs you time and inventory. Consider removing or reworking entirely.</p>
+                        {dogs.length > 0 && (
+                          <>
+                            <p className="text-xs text-red-300/90 px-3 pb-1">You have {dogs.length} Dog{dogs.length !== 1 ? "s" : ""} on your menu costing you prep time and inventory every week.</p>
+                            <p className="text-xs text-slate-500 px-3 pb-2">Removing your bottom 3 Dogs saves an estimated {(0.5 * Math.min(3, dogs.length)).toFixed(1)} hours of prep per week.</p>
+                          </>
+                        )}
+                        {kitchenIqMatrixOpen.has("dog") && (
+                          <div className="px-3 pb-3 space-y-2 border-t border-slate-700 pt-2">
+                            {dogs.map((item) => (
+                              <div key={`${item.item_name}-${item.size}`} className="text-xs text-slate-300 flex flex-wrap gap-x-2">
+                                <span className="font-medium text-white">{item.item_name} {item.sizeDisplay}</span>
+                                <span>{item.marginPct.toFixed(0)}% margin | {item.total_units} sold | {formatDollars(item.monthlyProfit)} profit</span>
+                              </div>
+                            ))}
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                )}
+
+                {(costedCount < 5 || kitchenIqSubView === "list") && (
+                  <>
                 {/* Category filter */}
                 <div className="overflow-x-auto pb-1 -mx-1 no-scrollbar">
                   <div className="flex gap-2 min-w-max px-1">
@@ -991,17 +1107,33 @@ if (d.catalog) setKitchenIqData({
                   </div>
                 </div>
 
-                {/* Top opportunities banner — sticky */}
-                {top3Uncosted.length > 0 && (
-                  <div className="sticky top-0 z-10 bg-slate-900/95 backdrop-blur border-b border-slate-700 py-3 -mx-1 px-3 rounded-lg">
-                    <p className="text-xs text-slate-300 mb-2">Cost these 3 items to cover {top3Pct}% of your food cost story</p>
-                    <div className="flex flex-wrap gap-2">
-                      {top3Uncosted.map((i) => (
-                        <span key={`${i.item_name}|${i.size}|${i.category}`} className="px-2 py-1 rounded-full text-[11px] bg-amber-600/20 text-amber-300 border border-amber-600/40">
-                          {i.item_name} {i.sizeDisplay}
-                        </span>
-                      ))}
-                    </div>
+                {/* Opportunities banner — uncosted + items to review (Dogs) */}
+                {(top3Uncosted.length > 0 || top3DogsByRevenue.length > 0) && (
+                  <div className="sticky top-0 z-10 bg-slate-900/95 backdrop-blur border-b border-slate-700 py-3 -mx-1 px-3 rounded-lg space-y-3">
+                    {top3Uncosted.length > 0 && (
+                      <div>
+                        <p className="text-xs text-slate-300 mb-2">Cost these 3 items to cover {top3Pct}% of your food cost story</p>
+                        <div className="flex flex-wrap gap-2">
+                          {top3Uncosted.map((i) => (
+                            <span key={`${i.item_name}|${i.size}|${i.category}`} className="px-2 py-1 rounded-full text-[11px] bg-amber-600/20 text-amber-300 border border-amber-600/40">
+                              {i.item_name} {i.sizeDisplay}
+                            </span>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+                    {top3DogsByRevenue.length > 0 && (
+                      <div>
+                        <p className="text-xs text-amber-300/90 mb-2">⚠️ Items to review:</p>
+                        <div className="space-y-1.5">
+                          {top3DogsByRevenue.map((item) => (
+                            <p key={`dog-${item.item_name}-${item.size}`} className="text-[11px] text-slate-400">
+                              Remove {item.item_name} {item.sizeDisplay} — {item.total_units} sold/month at {item.marginPct.toFixed(0)}% margin = {formatDollars(item.monthlyProfit)} monthly profit. Is it worth the complexity?
+                            </p>
+                          ))}
+                        </div>
+                      </div>
+                    )}
                   </div>
                 )}
 
@@ -1059,6 +1191,8 @@ if (d.catalog) setKitchenIqData({
                     );
                   })}
                 </div>
+                  </>
+                )}
               </>
             )}
 
