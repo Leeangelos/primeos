@@ -21,12 +21,24 @@ export async function POST() {
 
     const storeMap = await getStoreMap(); // foodtec_store_name -> store_id
 
-    const target = new Date();
-    target.setDate(target.getDate() - 1);
-    const foodtecDay = formatFoodTecDate(target);
+    // Build last 90 days list (excluding today), same pattern as main sync
+    const daysToSync: Date[] = [];
+    for (let d = 1; d <= 90; d++) {
+      const t = new Date();
+      t.setDate(t.getDate() - d);
+      daysToSync.push(t);
+    }
 
-    const laborRows = await fetchFoodTecView("labor", foodtecDay);
-    console.log("labor row sample:", JSON.stringify(laborRows?.slice(0, 2)));
+    let allLaborRows: any[] = [];
+    for (const target of daysToSync) {
+      const foodtecDay = formatFoodTecDate(target);
+      const rows = await fetchFoodTecView("labor", foodtecDay);
+      if (rows && rows.length) {
+        allLaborRows = allLaborRows.concat(rows as any[]);
+      }
+    }
+
+    console.log("labor row sample:", JSON.stringify(allLaborRows?.slice(0, 2)));
 
     type EmpAgg = {
       name: string;
@@ -37,7 +49,7 @@ export async function POST() {
 
     const employeesByStore: Record<string, Record<string, EmpAgg>> = {};
 
-    (laborRows || []).forEach((row: any) => {
+    (allLaborRows || []).forEach((row: any) => {
       const storeName = (row.store as string) || "unknown";
       const storeId = storeMap[storeName];
       if (!storeId) return;
