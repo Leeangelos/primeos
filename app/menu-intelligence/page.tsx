@@ -69,6 +69,30 @@ const STORE_NAMES: Record<string, string> = {
   lindseys: "Lindsey's",
 };
 
+function normalizeSize(raw: string): string {
+  const s = (raw || "").trim();
+  const u = s.toUpperCase();
+  if (["LG", "LRG", "LARGE"].includes(u)) return "Large";
+  if (["SM", "SMALL"].includes(u) || u === "SM") return "Small";
+  if (["SHEET"].includes(u)) return "Sheet";
+  if (["MED", "MEDIUM"].includes(u)) return "Medium";
+  return s || "—";
+}
+
+function marginPctToTier(marginPct: number): { label: string; className: string } {
+  if (marginPct >= 60) return { label: "Strong", className: "border bg-emerald-600/20 text-emerald-400 border-emerald-600/40" };
+  if (marginPct >= 45) return { label: "Solid", className: "border bg-amber-600/20 text-amber-400 border-amber-600/40" };
+  if (marginPct >= 30) return { label: "Watch", className: "border bg-orange-600/20 text-orange-400 border-orange-600/40" };
+  return { label: "Review", className: "border bg-red-600/20 text-red-400 border-red-600/40" };
+}
+
+function marginLanguage(marginPct: number): string {
+  if (marginPct >= 60) return "💚 Money-maker. Train your team to suggest this item.";
+  if (marginPct >= 45) return "✅ Solid margin. Watch portion sizes — every extra ounce cuts into this.";
+  if (marginPct >= 30) return "⚠️ Thin margin. Consider a price increase or portion review.";
+  return "🔴 You're working hard for very little return. Price increase or recipe review needed.";
+}
+
 function StatCard({
   label,
   value,
@@ -147,16 +171,16 @@ export default function MenuIntelligencePage() {
   const [compareSheetMounted, setCompareSheetMounted] = useState(false);
 
   useEffect(() => {
-    if (view !== "kitchen-iq") return;
+    if (view !== "kitchen-iq" && view !== "menu") return;
     let cancelled = false;
-    setKitchenIqLoading(true);
+    if (view === "kitchen-iq") setKitchenIqLoading(true);
     fetch("/api/kitchen-iq")
       .then((r) => r.json())
       .then((d) => {
         if (!cancelled && d.catalog) setKitchenIqData({ catalog: d.catalog, actualHillcrestLast30: d.actualHillcrestLast30 ?? 0 });
       })
-      .catch(() => { if (!cancelled) setKitchenIqData(null); })
-      .finally(() => { if (!cancelled) setKitchenIqLoading(false); });
+      .catch(() => { if (!cancelled && view === "kitchen-iq") setKitchenIqData(null); })
+      .finally(() => { if (!cancelled && view === "kitchen-iq") setKitchenIqLoading(false); });
     return () => { cancelled = true; };
   }, [view]);
 
@@ -248,6 +272,17 @@ export default function MenuIntelligencePage() {
     }
     return map;
   }, [items]);
+
+  const menuCostLookup = useMemo(() => {
+    const catalog = kitchenIqData?.catalog ?? [];
+    const map = new Map<string, { cost_to_make: number; avg_unit_price: number }>();
+    for (const row of catalog) {
+      if (row.cost_to_make == null || row.cost_to_make <= 0) continue;
+      const key = `${(row.item_name || "").toLowerCase()}|${row.size}|${(row.category || "").toLowerCase()}`;
+      map.set(key, { cost_to_make: row.cost_to_make, avg_unit_price: row.avg_unit_price || 0 });
+    }
+    return map;
+  }, [kitchenIqData?.catalog]);
 
   const toggleCategory = (cat: string) => {
     setOpenCategories((prev) => {
@@ -432,14 +467,27 @@ export default function MenuIntelligencePage() {
                           )}
                         </div>
                         <div className="flex flex-wrap gap-2">
-                          {item.sizes.map((size) => (
-                            <span key={size.size_name} className="text-xs text-slate-400">
-                              {size.size_name}:{" "}
-                              <span className="text-emerald-400">
-                                ${size.price.toFixed(2)}
+                          {item.sizes.map((size) => {
+                            const key = `${item.item_name.toLowerCase()}|${normalizeSize(size.size_name)}|${item.category.toLowerCase()}`;
+                            const costRow = menuCostLookup.get(key);
+                            const marginPct = costRow && size.price > 0 ? ((size.price - costRow.cost_to_make) / size.price) * 100 : null;
+                            const tier = marginPct != null ? marginPctToTier(marginPct) : null;
+                            return (
+                              <span key={size.size_name} className="text-xs text-slate-400 flex items-center gap-1.5 flex-wrap">
+                                <span>
+                                  {size.size_name}:{" "}
+                                  <span className="text-emerald-400">
+                                    ${size.price.toFixed(2)}
+                                  </span>
+                                </span>
+                                {tier && marginPct != null && (
+                                  <span className={cn("px-1.5 py-0.5 rounded border text-[10px] font-medium", tier.className)}>
+                                    {tier.label} ({marginPct.toFixed(0)}%)
+                                  </span>
+                                )}
                               </span>
-                            </span>
-                          ))}
+                            );
+                          })}
                         </div>
                         <div className="flex flex-wrap gap-1 mt-2">
                           {item.ingredients_listed.map((ing) => (
@@ -828,6 +876,38 @@ export default function MenuIntelligencePage() {
                   <p className="text-[10px] text-slate-500 mt-0.5">+10 per item costed · +25 for top revenue items</p>
                 </div>
 
+                {/* Blended Margin — only when 5+ costed */}
+                {costedCount >= 5 && (() => {
+                  const totalUnitsCosted = costedItems.reduce((s, i) => s + i.total_units, 0);
+                  const weightedSum = costedItems.reduce((s, i) => {
+                    const price = i.avg_unit_price || 0;
+                    const cost = i.cost_to_make ?? 0;
+                    const marginPct = price > 0 ? ((price - cost) / price) * 100 : 0;
+                    return s + marginPct * i.total_units;
+                  }, 0);
+                  const blendedMarginPct = totalUnitsCosted > 0 ? weightedSum / totalUnitsCosted : 0;
+                  const blendedColor = blendedMarginPct >= 60 ? "text-emerald-400" : blendedMarginPct >= 45 ? "text-amber-400" : "text-red-400";
+                  const withMargin = costedItems
+                    .map((i) => {
+                      const price = i.avg_unit_price || 0;
+                      const cost = i.cost_to_make ?? 0;
+                      const marginPct = price > 0 ? ((price - cost) / price) * 100 : 0;
+                      return { ...i, marginPct };
+                    })
+                    .filter((i) => i.marginPct >= 0);
+                  const mostProfitable = withMargin.length ? withMargin.reduce((a, b) => (a.marginPct >= b.marginPct ? a : b)) : null;
+                  const leastProfitable = withMargin.length ? withMargin.reduce((a, b) => (a.marginPct <= b.marginPct ? a : b)) : null;
+                  return (
+                    <div className="bg-slate-800 rounded-xl border border-slate-700 p-4">
+                      <p className="text-[10px] uppercase tracking-wide text-slate-500">Blended Margin</p>
+                      <p className={cn("text-3xl font-bold tabular-nums mt-1", blendedColor)}>{blendedMarginPct.toFixed(1)}%</p>
+                      <p className="text-xs text-slate-400 mt-2">Across {costedCount} costed items representing {formatDollars(costedRevenue)} in monthly revenue</p>
+                      {mostProfitable && <p className="text-xs text-slate-400 mt-1">Your most profitable item: {mostProfitable.item_name} {mostProfitable.sizeDisplay} at {mostProfitable.marginPct.toFixed(1)}% margin</p>}
+                      {leastProfitable && mostProfitable?.item_name !== leastProfitable?.item_name && <p className="text-xs text-slate-400 mt-0.5">Your least profitable: {leastProfitable.item_name} {leastProfitable.sizeDisplay} at {leastProfitable.marginPct.toFixed(1)}% margin</p>}
+                    </div>
+                  );
+                })()}
+
                 {/* Category filter */}
                 <div className="overflow-x-auto pb-1 -mx-1 no-scrollbar">
                   <div className="flex gap-2 min-w-max px-1">
@@ -883,8 +963,11 @@ export default function MenuIntelligencePage() {
                   {filteredCatalog.map((item) => {
                     const rank = catalog.findIndex((i) => i.item_name === item.item_name && i.size === item.size && i.category === item.category) + 1 || 1;
                     const costed = item.cost_to_make != null && item.cost_to_make > 0;
-                    const foodCostPct = costed && item.avg_unit_price > 0 ? ((item.cost_to_make ?? 0) / item.avg_unit_price) * 100 : null;
-                    const profitPerItem = costed && item.avg_unit_price > 0 ? item.avg_unit_price - (item.cost_to_make ?? 0) : null;
+                    const price = item.avg_unit_price || 0;
+                    const cost = item.cost_to_make ?? 0;
+                    const profitPerItem = costed && price > 0 ? price - cost : null;
+                    const marginPct = costed && price > 0 ? ((price - cost) / price) * 100 : null;
+                    const marginTier = marginPct != null ? marginPctToTier(marginPct) : null;
                     const leftBarColor = costed ? "bg-emerald-500" : "bg-red-500/80";
                     return (
                       <button
@@ -899,10 +982,18 @@ export default function MenuIntelligencePage() {
                           <div className="min-w-0 flex-1">
                             <div className="font-medium text-white">{item.item_name} {item.sizeDisplay}</div>
                             <p className="text-xs text-cyan-400 mt-0.5">{formatDollars(item.total_revenue)} revenue</p>
-                            <div className="flex flex-wrap gap-2 mt-1 text-[11px] text-slate-500">
+                            {costed && (
+                              <p className="text-[11px] text-slate-400 mt-0.5">
+                                Sells for: ${price.toFixed(2)} | Costs: ${cost.toFixed(2)} | Profit: {profitPerItem != null ? formatDollars(profitPerItem) : "—"}
+                              </p>
+                            )}
+                            <div className="flex flex-wrap gap-2 mt-1 text-[11px] text-slate-500 items-center">
                               <span>{item.total_units} sold</span>
-                              {costed && foodCostPct != null && <span className="text-emerald-400">Food cost {foodCostPct.toFixed(1)}%</span>}
-                              {costed && profitPerItem != null && <span className="text-emerald-400">Margin {formatDollars(profitPerItem)}</span>}
+                              {marginTier && (
+                                <span className={cn("px-1.5 py-0.5 rounded border text-[10px] font-medium", marginTier.className)}>
+                                  {marginTier.label} ({marginPct?.toFixed(0)}%)
+                                </span>
+                              )}
                             </div>
                           </div>
                           {costed ? <span className="text-emerald-400 shrink-0">✓</span> : null}
@@ -972,6 +1063,10 @@ export default function MenuIntelligencePage() {
                         {profitPerItem != null && <p className="text-slate-300">Profit per item: {formatDollars(profitPerItem)}</p>}
                         {monthlyProfit != null && <p className="text-slate-300">Monthly profit at volume: {formatDollars(monthlyProfit)}</p>}
                         {annualProfit != null && <p className="text-emerald-400 font-medium">Annual profit: {formatDollars(annualProfit)}</p>}
+                        {valid && price > 0 && (() => {
+                          const marginPct = ((price - cost) / price) * 100;
+                          return <p className="text-slate-300 mt-2 pt-2 border-t border-slate-700">{marginLanguage(marginPct)}</p>;
+                        })()}
                       </div>
 
                       <button
