@@ -106,14 +106,12 @@ export function AskPrimeOS() {
         <>
           {/* Backdrop */}
           <div
-            className="fixed inset-0 z-49 bg-black/60"
+            className="fixed inset-0 z-40 bg-black/60"
             onClick={() => setOpen(false)}
           />
 
           {/* Bottom sheet */}
-          <div
-            className="fixed left-0 right-0 bottom-0 z-50 h-[55vh] bg-[#1a1a2e] rounded-t-2xl border-t border-slate-800 shadow-2xl flex flex-col"
-          >
+          <div className="fixed left-0 right-0 bottom-0 z-50 h-[55vh] bg-[#1a1a2e] rounded-t-2xl border-t border-slate-800 shadow-2xl flex flex-col">
             {/* Header */}
             <div className="flex items-center justify-between px-4 pt-3 pb-2 border-b border-slate-700 flex-shrink-0">
               <div className="flex items-center gap-2">
