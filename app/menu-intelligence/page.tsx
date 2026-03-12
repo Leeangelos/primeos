@@ -2,7 +2,7 @@
 
 import { useMemo, useState, useEffect, useCallback } from "react";
 import { createPortal } from "react-dom";
-import { ChevronDown, ChevronRight } from "lucide-react";
+import { ChevronDown, ChevronRight, Lock } from "lucide-react";
 import { cn } from "@/lib/utils";
 import type { MenuItem } from "@/src/lib/menu-data";
 import {
@@ -952,52 +952,86 @@ if (d.catalog) setKitchenIqData({
                       <p className="text-xs text-slate-400 mt-2">{subtitle}</p>
                       {mostProfitable && costedCount > 1 && <p className="text-xs text-slate-400 mt-1">Your most profitable item: {mostProfitable.item_name} {mostProfitable.sizeDisplay} at {mostProfitable.marginPct.toFixed(1)}% margin</p>}
                       {leastProfitable && mostProfitable?.item_name !== leastProfitable?.item_name && costedCount > 1 && <p className="text-xs text-slate-400 mt-0.5">Your least profitable: {leastProfitable.item_name} {leastProfitable.sizeDisplay} at {leastProfitable.marginPct.toFixed(1)}% margin</p>}
-                      {costedCount >= 3 && (
-                        <div className="mt-4 pt-4 border-t border-slate-700 animate-fade-in">
-                          <p className="text-sm font-semibold text-white mb-3">💰 Where your money is really made</p>
-                          <div className="space-y-2 mb-3">
-                            {top3Profit.map((item, idx) => (
-                              <div key={`top-${item.item_name}-${item.size}-${item.category}`} className="flex flex-wrap items-baseline gap-2 text-emerald-400">
-                                <span className="text-xs font-medium">#{idx + 1} {item.item_name} {item.sizeDisplay}</span>
-                                <span className="text-[11px] text-slate-400">
-                                  {item.marginPct.toFixed(0)}% margin | {item.total_units} sold | {formatDollars(item.monthlyProfit)} profit
-                                </span>
-                              </div>
-                            ))}
-                          </div>
-                          {byMonthlyProfit.length > 3 && (
-                            <div className="space-y-2 mb-3">
-                              {bottom3Profit.map((item, idx) => {
-                                const rank = byMonthlyProfit.length - idx;
-                                return (
-                                  <div key={`bot-${item.item_name}-${item.size}-${item.category}`} className="flex flex-wrap items-baseline gap-2 text-red-400/90">
-                                    <span className="text-xs font-medium">#{rank} {item.item_name} {item.sizeDisplay}</span>
-                                    <span className="text-[11px] text-slate-500">
-                                      {item.marginPct.toFixed(0)}% margin | {item.total_units} sold | {formatDollars(item.monthlyProfit)} profit
-                                    </span>
-                                  </div>
-                                );
-                              })}
-                            </div>
-                          )}
-                          <p className="text-xs text-slate-400">These top 3 items generate {top3PctOfProfit.toFixed(0)}% of your total costed profit. Train your team to suggest them.</p>
-                          {oneMorePerShiftLine && <p className="text-xs text-emerald-400/90 mt-1">{oneMorePerShiftLine}</p>}
-                        </div>
-                      )}
                     </div>
                   );
                 })()}
 
-                {/* Menu Engineering — when 5+ costed */}
-                {costedCount >= 5 && (
-                  <div className="space-y-3 animate-fade-in">
-                    <h3 className="text-sm font-semibold text-white">Menu Engineering</h3>
-                    <div className="flex bg-slate-800 rounded-lg p-0.5 border border-slate-700">
-                      <button type="button" onClick={() => setKitchenIqSubView("list")} className={cn("flex-1 py-2 rounded-md text-xs font-medium", kitchenIqSubView === "list" ? "bg-slate-700 text-white" : "text-slate-400 hover:text-slate-300")}>Item List</button>
-                      <button type="button" onClick={() => setKitchenIqSubView("matrix")} className={cn("flex-1 py-2 rounded-md text-xs font-medium", kitchenIqSubView === "matrix" ? "bg-slate-700 text-white" : "text-slate-400 hover:text-slate-300")}>Matrix</button>
-                    </div>
+                {/* Where your money is really made — always show, locked until 3 costed */}
+                <div className={cn("rounded-xl border border-slate-700 p-4 transition-all duration-300 ease-out", costedCount < 3 && "opacity-75 bg-slate-800/80")}>
+                  <div className="flex items-center gap-2 mb-2">
+                    <p className="text-sm font-semibold text-white">💰 Where your money is really made</p>
+                    {costedCount < 3 && <Lock className="w-4 h-4 text-slate-500 shrink-0" />}
                   </div>
-                )}
+                  {costedCount < 3 ? (
+                    <>
+                      <div className="h-2 rounded-full bg-slate-700 overflow-hidden">
+                        <div className="h-full bg-emerald-600 rounded-full transition-all duration-500 ease-out" style={{ width: `${Math.min(100, (costedCount / 3) * 100)}%` }} />
+                      </div>
+                      <p className="text-xs text-slate-400 mt-2">{costedCount} of 3 items needed</p>
+                      <p className="text-xs text-slate-500 mt-1">Cost 3 items to unlock your profit breakdown</p>
+                    </>
+                  ) : (
+                    <div className="animate-fade-in">
+                      <div className="space-y-2 mb-3">
+                        {top3Profit.map((item, idx) => (
+                          <div key={`top-${item.item_name}-${item.size}-${item.category}`} className="flex flex-wrap items-baseline gap-2 text-emerald-400">
+                            <span className="text-xs font-medium">#{idx + 1} {item.item_name} {item.sizeDisplay}</span>
+                            <span className="text-[11px] text-slate-400">
+                              {item.marginPct.toFixed(0)}% margin | {item.total_units} sold | {formatDollars(item.monthlyProfit)} profit
+                            </span>
+                          </div>
+                        ))}
+                      </div>
+                      {byMonthlyProfit.length > 3 && (
+                        <div className="space-y-2 mb-3">
+                          {bottom3Profit.map((item, idx) => {
+                            const rank = byMonthlyProfit.length - idx;
+                            return (
+                              <div key={`bot-${item.item_name}-${item.size}-${item.category}`} className="flex flex-wrap items-baseline gap-2 text-red-400/90">
+                                <span className="text-xs font-medium">#{rank} {item.item_name} {item.sizeDisplay}</span>
+                                <span className="text-[11px] text-slate-500">
+                                  {item.marginPct.toFixed(0)}% margin | {item.total_units} sold | {formatDollars(item.monthlyProfit)} profit
+                                </span>
+                              </div>
+                            );
+                          })}
+                        </div>
+                      )}
+                      <p className="text-xs text-slate-400">These top 3 items generate {top3PctOfProfit.toFixed(0)}% of your total costed profit. Train your team to suggest them.</p>
+                      {oneMorePerShiftLine && <p className="text-xs text-emerald-400/90 mt-1">{oneMorePerShiftLine}</p>}
+                    </div>
+                  )}
+                </div>
+
+                {/* Menu Engineering — always show, locked until 5 costed */}
+                <div className={cn("rounded-xl border border-slate-700 p-4 transition-all duration-300 ease-out", costedCount < 5 && "opacity-75 bg-slate-800/80")}>
+                  <div className="flex items-center gap-2 mb-2">
+                    <h3 className="text-sm font-semibold text-white">Menu Engineering</h3>
+                    {costedCount < 5 && <Lock className="w-4 h-4 text-slate-500 shrink-0" />}
+                  </div>
+                  {costedCount < 5 ? (
+                    <>
+                      <div className="h-2 rounded-full bg-slate-700 overflow-hidden">
+                        <div className="h-full bg-emerald-600 rounded-full transition-all duration-500 ease-out" style={{ width: `${Math.min(100, (costedCount / 5) * 100)}%` }} />
+                      </div>
+                      <p className="text-xs text-slate-400 mt-2">{costedCount} of 5 items needed</p>
+                      <p className="text-xs text-slate-500 mt-1">Cost 5 items to classify your menu and find your Dogs</p>
+                      <div className="grid grid-cols-2 gap-2 mt-3 opacity-60 blur-[1px] select-none">
+                        <div className="rounded-lg border border-slate-600 bg-slate-800/50 p-2 text-center text-xs text-emerald-400/80">⭐ Stars</div>
+                        <div className="rounded-lg border border-slate-600 bg-slate-800/50 p-2 text-center text-xs text-amber-400/80">🐄 Plowhorses</div>
+                        <div className="rounded-lg border border-slate-600 bg-slate-800/50 p-2 text-center text-xs text-cyan-400/80">🧩 Puzzles</div>
+                        <div className="rounded-lg border border-slate-600 bg-slate-800/50 p-2 text-center text-xs text-red-400/80">💀 Dogs</div>
+                      </div>
+                    </>
+                  ) : (
+                    <div className="space-y-3 animate-fade-in">
+                      <div className="flex bg-slate-800 rounded-lg p-0.5 border border-slate-700">
+                        <button type="button" onClick={() => setKitchenIqSubView("list")} className={cn("flex-1 py-2 rounded-md text-xs font-medium", kitchenIqSubView === "list" ? "bg-slate-700 text-white" : "text-slate-400 hover:text-slate-300")}>Item List</button>
+                        <button type="button" onClick={() => setKitchenIqSubView("matrix")} className={cn("flex-1 py-2 rounded-md text-xs font-medium", kitchenIqSubView === "matrix" ? "bg-slate-700 text-white" : "text-slate-400 hover:text-slate-300")}>Matrix</button>
+                      </div>
+                    </div>
+                  )}
+                </div>
 
                 {costedCount >= 5 && kitchenIqSubView === "matrix" && (
                   <div className="space-y-3">
@@ -1213,6 +1247,8 @@ if (d.catalog) setKitchenIqData({
               };
               const cost = parseFloat(costInput);
               const valid = !Number.isNaN(cost) && cost >= 0;
+              const validCost = (parseFloat(costInput) ?? 0) >= 0.01;
+              const costTooLow = costInput.trim() !== "" && (parseFloat(costInput) ?? 0) < 0.01;
               const price = item.avg_unit_price || 0;
               const foodCostPct = valid && price > 0 ? (cost / price) * 100 : null;
               const profitPerItem = valid && price > 0 ? price - cost : null;
@@ -1247,6 +1283,7 @@ if (d.catalog) setKitchenIqData({
                             Clear
                           </button>
                         </div>
+                        {costTooLow && <p className="text-xs text-red-400 mt-2">Enter a cost of at least $0.01</p>}
                       </div>
 
                       <label className="flex items-center gap-2 mt-4 cursor-pointer">
@@ -1267,10 +1304,10 @@ if (d.catalog) setKitchenIqData({
 
                       <button
                         type="button"
-                        disabled={savingCost || (parseFloat(costInput) ?? NaN) < 0}
+                        disabled={savingCost || !validCost}
                         onClick={async () => {
                           const c = parseFloat(costInput);
-                          if (Number.isNaN(c) || c < 0) return;
+                          if (Number.isNaN(c) || c < 0.01) return;
                           setSavingCost(true);
                           try {
                             const res = await fetch("/api/kitchen-iq", {
