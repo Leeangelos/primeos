@@ -159,6 +159,7 @@ export default function MenuIntelligencePage() {
   const [saveFlash, setSaveFlash] = useState(false);
   const [kitchenIqSubView, setKitchenIqSubView] = useState<"list" | "matrix">("list");
   const [kitchenIqMatrixOpen, setKitchenIqMatrixOpen] = useState<Set<string>>(new Set());
+  const [xpFlash, setXpFlash] = useState(false);
 
   const [selectedPricingGap, setSelectedPricingGap] = useState<PricingGapItem | null>(null);
   const [priceGapSheetMounted, setPriceGapSheetMounted] = useState(false);
@@ -916,7 +917,7 @@ if (d.catalog) setKitchenIqData({
                         strokeLinecap="round"
                         strokeDasharray={circumference}
                         strokeDashoffset={circumference - strokeDash}
-                        className="transition-all duration-700 ease-out"
+                        style={{ transition: "stroke-dashoffset 0.7s ease-out" }}
                       />
                     </svg>
                     <div className="absolute inset-0 flex flex-col items-center justify-center">
@@ -931,7 +932,7 @@ if (d.catalog) setKitchenIqData({
                 {/* XP */}
                 <div className="bg-slate-800/80 rounded-xl border border-slate-700 p-3 text-center transition-all duration-300 ease-out">
                   <p className="text-[10px] uppercase tracking-wide text-slate-500">XP earned</p>
-                  <p className="text-2xl font-bold text-amber-400 tabular-nums">{totalXp}</p>
+                  <p className={cn("text-2xl font-bold text-amber-400 tabular-nums transition-colors duration-200", xpFlash && "animate-pulse text-amber-300")}>{totalXp}</p>
                   <p className="text-[10px] text-slate-500 mt-0.5">+10 per item costed · +25 for top revenue items</p>
                 </div>
 
@@ -1280,6 +1281,8 @@ if (d.catalog) setKitchenIqData({
                             if (res.ok) {
                               setSaveFlash(true);
                               setTimeout(() => setSaveFlash(false), 600);
+                              setXpFlash(true);
+                              setTimeout(() => setXpFlash(false), 900);
                               setKitchenIqData((prev) => {
                                 if (!prev) return prev;
                                 const catalog = prev.catalog.map((i) =>
@@ -1290,7 +1293,6 @@ if (d.catalog) setKitchenIqData({
                                 return { ...prev, catalog };
                               });
                               setTimeout(() => setSelectedKitchenItem(null), 400);
-                              refetchKitchenIq();
                             }
                           } finally {
                             setSavingCost(false);
