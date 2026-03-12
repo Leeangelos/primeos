@@ -65,6 +65,11 @@ export async function POST() {
           return row;
         });
 
+        console.log(
+          "FoodTec employees raw:",
+          JSON.stringify(rows?.slice(0, 2))
+        );
+
         for (const row of rows) {
           const name = (row.name || row.employee || "").trim();
           if (!name) continue;
