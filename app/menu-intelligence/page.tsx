@@ -341,7 +341,7 @@ if (d.catalog) setKitchenIqData({
         <div>
           <h1 className="text-xl font-bold text-white">Menu Intelligence</h1>
           <p className="text-xs text-slate-400 mt-0.5">
-            Live menu data from your public websites
+            Live menu data from your FoodTec POS
           </p>
         </div>
         <EducationInfoIcon metricKey="menu_item_count" size="lg" />
@@ -474,39 +474,43 @@ if (d.catalog) setKitchenIqData({
                 </button>
                 {isOpen && (
                   <div className="px-3 pb-3 space-y-2">
-                    {catItems.map((item) => {
-                      const key = `${(item.item_name || "").toLowerCase()}|${item.size}|${(item.category || "").toLowerCase()}`;
-                      const costRow = menuCostLookup.get(key);
-                      const price = item.avg_unit_price || 0;
-                      const marginPct = costRow && price > 0 ? ((price - costRow.cost_to_make) / price) * 100 : null;
-                      const tier = marginPct != null ? marginPctToTier(marginPct) : null;
-                      return (
-                        <div
-                          key={`${item.item_name}|${item.size}|${item.category}`}
-                          className="bg-slate-800 rounded-xl border border-slate-700 p-3 mb-2"
-                        >
-                          <div className="flex items-center justify-between mb-1">
-                            <span className="text-sm font-medium text-white">
-                              {item.item_name}
-                            </span>
-                          </div>
-                          <div className="flex flex-wrap gap-2 items-center">
-                            <span className="text-xs text-slate-400">
-                              {item.sizeDisplay}:{" "}
-                              <span className="text-emerald-400">
-                                ${price.toFixed(2)}
-                              </span>
-                              <span className="text-slate-500 ml-1">avg (30d)</span>
-                            </span>
-                            {tier && marginPct != null && (
-                              <span className={cn("px-1.5 py-0.5 rounded border text-[10px] font-medium", tier.className)}>
-                                {tier.label} ({marginPct.toFixed(0)}%)
-                              </span>
-                            )}
+                    {(() => {
+                      const byItemName = new Map<string, KitchenIqItem[]>();
+                      for (const item of catItems) {
+                        const name = item.item_name ?? "Unknown";
+                        const list = byItemName.get(name) ?? [];
+                        list.push(item);
+                        byItemName.set(name, list);
+                      }
+                      return Array.from(byItemName.entries()).map(([itemName, sizes]) => (
+                        <div key={`${itemName}-${cat}`} className="bg-slate-800 rounded-xl border border-slate-700 p-3 mb-2">
+                          <div className="text-sm font-medium text-white mb-2">{itemName}</div>
+                          <div className="space-y-1.5 pl-0">
+                            {sizes.map((item) => {
+                              const key = `${(item.item_name || "").toLowerCase()}|${item.size}|${(item.category || "").toLowerCase()}`;
+                              const costRow = menuCostLookup.get(key);
+                              const price = item.avg_unit_price || 0;
+                              const marginPct = costRow && price > 0 ? ((price - costRow.cost_to_make) / price) * 100 : null;
+                              const tier = marginPct != null ? marginPctToTier(marginPct) : null;
+                              return (
+                                <div key={`${item.item_name}|${item.size}|${item.category}`} className="flex flex-wrap gap-2 items-center text-xs">
+                                  <span className="text-slate-400">
+                                    {item.sizeDisplay}:{" "}
+                                    <span className="text-emerald-400">${price.toFixed(2)}</span>
+                                    <span className="text-slate-500 ml-1">avg (30d)</span>
+                                  </span>
+                                  {tier && marginPct != null && (
+                                    <span className={cn("px-1.5 py-0.5 rounded border text-[10px] font-medium", tier.className)}>
+                                      {tier.label} ({marginPct.toFixed(0)}%)
+                                    </span>
+                                  )}
+                                </div>
+                              );
+                            })}
                           </div>
                         </div>
-                      );
-                    })}
+                      ));
+                    })()}
                   </div>
                 )}
               </div>
