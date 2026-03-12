@@ -245,7 +245,6 @@ export default function SchedulePage() {
   };
 
   function openAddShift(employeeName: string, dateIso: string) {
-    setSheetVisible(false);
     setGeneratedMessage(null);
     setActiveShift({
       mode: "add",
@@ -256,13 +255,10 @@ export default function SchedulePage() {
       end_time: "18:00",
       notes: "",
     });
-    requestAnimationFrame(() => {
-      requestAnimationFrame(() => setSheetVisible(true));
-    });
+    setSheetVisible(true);
   }
 
   function openEditShift(shift: Shift) {
-    setSheetVisible(false);
     setGeneratedMessage(null);
     setActiveShift({
       mode: "edit",
@@ -274,9 +270,7 @@ export default function SchedulePage() {
       end_time: shift.end_time,
       notes: shift.notes ?? "",
     });
-    requestAnimationFrame(() => {
-      requestAnimationFrame(() => setSheetVisible(true));
-    });
+    setSheetVisible(true);
   }
 
   async function handleSaveShift() {
@@ -770,7 +764,7 @@ export default function SchedulePage() {
                         method: "POST",
                         headers: { "Content-Type": "application/json" },
                         body: JSON.stringify({
-                          message: `Write a warm, specific, branded motivational message for an employee for their upcoming shift. Employee name: ${activeShift.employeeName}. Role: ${activeShift.role}. Day: ${dayLabel}. Time: ${activeShift.start_time} to ${activeShift.end_time}.${notePart} Keep it short, friendly, and suitable for a pizza store brand. No markdown.`,
+                          message: `Write a very short motivational shift message for an employee. Max 1-2 sentences, casual tone, one emoji at the end, no more than 25 words total. Example tone: "Friday night catering order at 5:15 — you got this! See you then 🍕". Employee: ${activeShift.employeeName}. Role: ${activeShift.role}. Day: ${dayLabel}. Time: ${activeShift.start_time} to ${activeShift.end_time}.${notePart} Reply with only the message, no other text or markdown.`,
                           store_slug: storeSlug,
                           page_path: "/schedule",
                         }),
