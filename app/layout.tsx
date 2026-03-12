@@ -85,12 +85,12 @@ export default function RootLayout({
                     </footer>
 
                     <ConsentBanner />
-                    <Suspense fallback={null}>
-                      <AskPrimeOS />
-                    </Suspense>
                     <BottomNav />
                   </div>
                 </AuthGuard>
+                <Suspense fallback={null}>
+                  <AskPrimeOS />
+                </Suspense>
               </AuthProvider>
             </TOSGate>
           </TierProvider>
