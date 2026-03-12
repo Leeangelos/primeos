@@ -1,7 +1,7 @@
 "use client";
 
-import { useMemo, useState } from "react";
-import { usePathname, useSearchParams } from "next/navigation";
+import { useEffect, useMemo, useState } from "react";
+import { usePathname } from "next/navigation";
 import { getSeasonalCharacter } from "@/components/ask-primeos/SeasonalConfig";
 
 type ChatMessage = {
@@ -11,18 +11,20 @@ type ChatMessage = {
 };
 
 export function AskPrimeOS() {
-  const searchParams = useSearchParams();
   const pathname = usePathname();
+  const [storeName, setStoreName] = useState<string>("your store");
 
-  const storeName = useMemo(() => {
-    const fromQuery = searchParams.get("store");
-    if (fromQuery && fromQuery.trim()) return fromQuery.trim();
-    if (pathname && pathname.includes("/")) {
-      // very light-weight pathname-based context only if clearly encoded
-      return pathname;
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    try {
+      const lastStore = window.localStorage.getItem("primeos-last-store");
+      if (lastStore && lastStore.trim()) {
+        setStoreName(lastStore.trim());
+      }
+    } catch {
+      // ignore localStorage errors
     }
-    return "your store";
-  }, [searchParams, pathname]);
+  }, []);
 
   const seasonal = useMemo(() => getSeasonalCharacter(new Date()), []);
 
@@ -163,7 +165,7 @@ export function AskPrimeOS() {
                   placeholder="Ask PrimeOS..."
                   autoComplete="off"
                   enterKeyHint="send"
-                  className="flex-1 rounded-full border border-slate-700 bg-slate-900/80 px-3 py-2 text-xs text-slate-100 placeholder:text-slate-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
+                  className="relative z-60 flex-1 rounded-full border border-slate-700 bg-slate-900/80 px-3 py-2 text-xs text-slate-100 placeholder:text-slate-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
                   onKeyDown={(e) => {
                     if (e.key === "Enter") {
                       e.preventDefault();
