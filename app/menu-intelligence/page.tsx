@@ -34,7 +34,6 @@ type KitchenIqItem = {
 type KitchenIqData = {
   catalog: KitchenIqItem[];
   actualHillcrestLast30: number;
-  globalXp?: number;
 };
 
 type PricingGapItem = {
@@ -180,7 +179,6 @@ export default function MenuIntelligencePage() {
         if (!cancelled && d.catalog) setKitchenIqData({
           catalog: d.catalog,
           actualHillcrestLast30: d.actualHillcrestLast30 ?? 0,
-          globalXp: d.globalXp,
         });
       })
       .catch(() => { if (!cancelled) setKitchenIqData(null); })
@@ -202,11 +200,10 @@ export default function MenuIntelligencePage() {
     fetch(`/api/kitchen-iq?store_id=${encodeURIComponent(storeId)}`)
       .then((r) => r.json())
       .then((d) => {
-        if (d.catalog) setKitchenIqData({
-          catalog: d.catalog,
-          actualHillcrestLast30: d.actualHillcrestLast30 ?? 0,
-          globalXp: d.globalXp,
-        });
+if (d.catalog) setKitchenIqData({
+        catalog: d.catalog,
+        actualHillcrestLast30: d.actualHillcrestLast30 ?? 0,
+      });
       })
       .catch(() => {});
   }, [storeId]);
@@ -829,7 +826,7 @@ export default function MenuIntelligencePage() {
         const highRevenueBonus = 25;
         const xpFromCosted = costedCount * xpPerItem;
         const xpFromHighRevenue = costedItems.filter((i) => top20Revenue.some((t) => t.item_name === i.item_name && t.size === i.size && t.category === i.category)).length * highRevenueBonus;
-        const totalXp = kitchenIqData?.globalXp ?? (xpFromCosted + xpFromHighRevenue);
+        const totalXp = xpFromCosted + xpFromHighRevenue;
 
         const categories = ["All", ...Array.from(new Set(catalog.map((i) => i.category)))].filter(Boolean);
         const uncostedCountByCategory = (cat: string) =>
@@ -907,6 +904,24 @@ export default function MenuIntelligencePage() {
                   const subtitle = costedCount === 1
                     ? "Based on 1 item — cost more items for a complete picture."
                     : `Across ${costedCount} costed items representing ${formatDollars(costedRevenue)} in monthly revenue`;
+                  const withMonthlyProfit = costedItems.map((i) => {
+                    const price = i.avg_unit_price || 0;
+                    const cost = i.cost_to_make ?? 0;
+                    const marginPct = price > 0 ? ((price - cost) / price) * 100 : 0;
+                    const unitProfit = price - cost;
+                    const monthlyProfit = unitProfit * (i.total_units || 0);
+                    return { ...i, marginPct, unitProfit, monthlyProfit };
+                  }).filter((i) => i.monthlyProfit >= 0);
+                  const byMonthlyProfit = [...withMonthlyProfit].sort((a, b) => b.monthlyProfit - a.monthlyProfit);
+                  const top3Profit = byMonthlyProfit.slice(0, 3);
+                  const bottom3Profit = byMonthlyProfit.slice(-3).reverse();
+                  const totalCostedProfit = withMonthlyProfit.reduce((s, i) => s + i.monthlyProfit, 0);
+                  const top3ProfitSum = top3Profit.reduce((s, i) => s + i.monthlyProfit, 0);
+                  const top3PctOfProfit = totalCostedProfit > 0 ? (top3ProfitSum / totalCostedProfit) * 100 : 0;
+                  const topItem = top3Profit[0];
+                  const oneMorePerShiftLine = topItem && topItem.marginPct > 60 && topItem.unitProfit > 0
+                    ? `If your staff sells one more ${topItem.item_name} ${topItem.sizeDisplay} per shift — that's +${formatDollars(topItem.unitProfit * 30)} per month.`
+                    : null;
                   return (
                     <div className="bg-slate-800 rounded-xl border border-slate-700 p-4">
                       <p className="text-[10px] uppercase tracking-wide text-slate-500">Blended Margin</p>
@@ -914,6 +929,38 @@ export default function MenuIntelligencePage() {
                       <p className="text-xs text-slate-400 mt-2">{subtitle}</p>
                       {mostProfitable && costedCount > 1 && <p className="text-xs text-slate-400 mt-1">Your most profitable item: {mostProfitable.item_name} {mostProfitable.sizeDisplay} at {mostProfitable.marginPct.toFixed(1)}% margin</p>}
                       {leastProfitable && mostProfitable?.item_name !== leastProfitable?.item_name && costedCount > 1 && <p className="text-xs text-slate-400 mt-0.5">Your least profitable: {leastProfitable.item_name} {leastProfitable.sizeDisplay} at {leastProfitable.marginPct.toFixed(1)}% margin</p>}
+                      {costedCount >= 3 && (
+                        <div className="mt-4 pt-4 border-t border-slate-700">
+                          <p className="text-sm font-semibold text-white mb-3">💰 Where your money is really made</p>
+                          <div className="space-y-2 mb-3">
+                            {top3Profit.map((item, idx) => (
+                              <div key={`top-${item.item_name}-${item.size}-${item.category}`} className="flex flex-wrap items-baseline gap-2 text-emerald-400">
+                                <span className="text-xs font-medium">#{idx + 1} {item.item_name} {item.sizeDisplay}</span>
+                                <span className="text-[11px] text-slate-400">
+                                  {item.marginPct.toFixed(0)}% margin | {item.total_units} sold | {formatDollars(item.monthlyProfit)} profit
+                                </span>
+                              </div>
+                            ))}
+                          </div>
+                          {byMonthlyProfit.length > 3 && (
+                            <div className="space-y-2 mb-3">
+                              {bottom3Profit.map((item, idx) => {
+                                const rank = byMonthlyProfit.length - idx;
+                                return (
+                                  <div key={`bot-${item.item_name}-${item.size}-${item.category}`} className="flex flex-wrap items-baseline gap-2 text-red-400/90">
+                                    <span className="text-xs font-medium">#{rank} {item.item_name} {item.sizeDisplay}</span>
+                                    <span className="text-[11px] text-slate-500">
+                                      {item.marginPct.toFixed(0)}% margin | {item.total_units} sold | {formatDollars(item.monthlyProfit)} profit
+                                    </span>
+                                  </div>
+                                );
+                              })}
+                            </div>
+                          )}
+                          <p className="text-xs text-slate-400">These top 3 items generate {top3PctOfProfit.toFixed(0)}% of your total costed profit. Train your team to suggest them.</p>
+                          {oneMorePerShiftLine && <p className="text-xs text-emerald-400/90 mt-1">{oneMorePerShiftLine}</p>}
+                        </div>
+                      )}
                     </div>
                   );
                 })()}
@@ -1090,7 +1137,7 @@ export default function MenuIntelligencePage() {
                             const res = await fetch("/api/kitchen-iq", {
                               method: "POST",
                               headers: { "Content-Type": "application/json" },
-                              body: JSON.stringify({ item_name: item.item_name, size: item.size, category: item.category, cost_to_make: c, includes_disposables: includesDisposables }),
+                              body: JSON.stringify({ store_id: storeId, item_name: item.item_name, size: item.size, category: item.category, cost_to_make: c, includes_disposables: includesDisposables }),
                             });
                             if (res.ok) {
                               setSaveFlash(true);
