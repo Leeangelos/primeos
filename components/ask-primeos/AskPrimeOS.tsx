@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { getSeasonalCharacter } from "@/components/ask-primeos/SeasonalConfig";
 
 type ChatMessage = {
@@ -17,6 +17,7 @@ export function AskPrimeOS() {
   const [storeSlug, setStoreSlug] = useState<string>("");
   const [pagePath, setPagePath] = useState<string>("/");
   const [keyboardOffset, setKeyboardOffset] = useState<number>(0);
+  const inputRef = useRef<HTMLInputElement | null>(null);
 
   const seasonal = useMemo(() => getSeasonalCharacter(new Date()), []);
 
@@ -187,17 +188,23 @@ export function AskPrimeOS() {
 
             <div className="px-4 pb-3 pt-2 border-t border-slate-800 bg-[#050816]">
               <div className="flex items-end gap-2">
-                <textarea
+                <input
+                  ref={inputRef}
+                  type="text"
                   value={input}
                   onChange={(e) => setInput(e.target.value)}
-                  rows={2}
                   placeholder="Ask PrimeOS..."
-                  className="flex-1 rounded-2xl border border-slate-700 bg-slate-900/80 px-3 py-2 text-xs text-slate-100 placeholder:text-slate-500 focus:outline-none focus:ring-1 focus:ring-blue-500 resize-none"
+                  autoComplete="off"
+                  enterKeyHint="send"
+                  className="flex-1 rounded-2xl border border-slate-700 bg-slate-900/80 px-3 py-2 text-xs text-slate-100 placeholder:text-slate-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
                   onKeyDown={(e) => {
-                    if (e.key === "Enter" && !e.shiftKey) {
+                    if (e.key === "Enter") {
                       e.preventDefault();
                       handleSend();
                     }
+                  }}
+                  onClick={() => {
+                    inputRef.current?.focus();
                   }}
                   onFocus={() => {
                     if (typeof window !== "undefined" && !window.visualViewport) {
