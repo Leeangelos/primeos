@@ -111,7 +111,7 @@ export default function FoodCostAnalysisPage() {
                 .from("me_invoices")
                 .select("invoice_date, total")
                 .eq("store_id", storeId)
-                .eq("vendor_name", "Hillcrest Foodservice"),
+                .in("category", ["food", "beverage"]),
               supabase
                 .from("foodtec_daily_sales")
                 .select("business_day, net_sales")
@@ -189,7 +189,7 @@ export default function FoodCostAnalysisPage() {
             .from("me_invoices")
             .select("invoice_date, total")
             .eq("store_id", storeId)
-            .eq("vendor_name", "Hillcrest Foodservice"),
+            .in("category", ["food", "beverage"]),
           supabase
             .from("foodtec_daily_sales")
             .select("business_day, net_sales")
