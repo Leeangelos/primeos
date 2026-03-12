@@ -17,6 +17,10 @@ export function AskPrimeOS() {
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [input, setInput] = useState("");
   const [sending, setSending] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
+  const [sheetHeight, setSheetHeight] = useState<number>(55);
+  const [dragStartY, setDragStartY] = useState<number | null>(null);
+  const [dragStartHeight, setDragStartHeight] = useState<number>(55);
 
   useEffect(() => {
     if (typeof window === "undefined") return;
@@ -56,6 +60,7 @@ export function AskPrimeOS() {
     setMessages((prev) => [...prev, userMsg]);
     setInput("");
     setSending(true);
+    setIsLoading(true);
 
     try {
       const res = await fetch("/api/ask-primeos", {
@@ -88,7 +93,28 @@ export function AskPrimeOS() {
       setMessages((prev) => [...prev, botMsg]);
     } finally {
       setSending(false);
+      setIsLoading(false);
     }
+  };
+
+  const handleDragStart = (e: React.TouchEvent<HTMLDivElement>) => {
+    const touch = e.touches[0];
+    setDragStartY(touch.clientY);
+    setDragStartHeight(sheetHeight);
+  };
+
+  const handleDragMove = (e: React.TouchEvent<HTMLDivElement>) => {
+    if (dragStartY == null) return;
+    const touch = e.touches[0];
+    const deltaY = dragStartY - touch.clientY; // drag up => positive
+    if (typeof window === "undefined") return;
+    const vhDelta = (deltaY / window.innerHeight) * 100;
+    const next = Math.min(85, Math.max(55, dragStartHeight + vhDelta));
+    setSheetHeight(next);
+  };
+
+  const handleDragEnd = () => {
+    setDragStartY(null);
   };
 
   return (
@@ -117,12 +143,18 @@ export function AskPrimeOS() {
           />
         )}
         <div
-          className={`fixed bottom-0 left-0 right-0 z-60 h-[55vh] bg-gray-900 rounded-t-2xl border-t border-slate-800 shadow-2xl flex flex-col transform transition-transform duration-300 ease-out ${
+          className={`fixed bottom-0 left-0 right-0 z-60 bg-gray-900 rounded-t-2xl border-t border-slate-800 shadow-2xl flex flex-col transform transition-transform duration-300 ease-out ${
             isOpen ? "translate-y-0" : "translate-y-full"
           }`}
+          style={{ height: `${sheetHeight}vh` }}
         >
           {/* Drag handle */}
-          <div className="w-12 h-1 bg-gray-600 rounded-full mx-auto mt-3 mb-2" />
+          <div
+            className="w-12 h-1 bg-gray-600 rounded-full mx-auto mt-3 mb-2"
+            onTouchStart={handleDragStart}
+            onTouchMove={handleDragMove}
+            onTouchEnd={handleDragEnd}
+          />
 
           {/* Header */}
           <div className="flex items-center justify-between px-4 pb-2 border-b border-slate-700 flex-shrink-0">
@@ -163,6 +195,22 @@ export function AskPrimeOS() {
                 {m.content}
               </div>
             ))}
+            {isLoading && (
+              <div className="flex items-center gap-2 text-xs text-slate-400">
+                <span aria-hidden="true">{seasonal.emoji}</span>
+                <div className="flex items-center gap-1">
+                  <span className="w-1.5 h-1.5 rounded-full bg-slate-400 animate-bounce" />
+                  <span
+                    className="w-1.5 h-1.5 rounded-full bg-slate-400 animate-bounce"
+                    style={{ animationDelay: "0.15s" }}
+                  />
+                  <span
+                    className="w-1.5 h-1.5 rounded-full bg-slate-400 animate-bounce"
+                    style={{ animationDelay: "0.3s" }}
+                  />
+                </div>
+              </div>
+            )}
           </div>
 
           {/* Input row */}
