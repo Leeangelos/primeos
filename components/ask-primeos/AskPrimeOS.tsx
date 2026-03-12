@@ -68,6 +68,7 @@ export function AskPrimeOS() {
         }),
       });
       const data = await res.json();
+      console.log("ask-primeos response:", data);
       const text =
         typeof data.reply === "string" && data.reply.trim()
           ? data.reply.trim()

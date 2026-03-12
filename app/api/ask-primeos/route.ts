@@ -207,6 +207,8 @@ export async function POST(req: NextRequest) {
       throw apiErr;
     }
 
+    console.log("ask-primeos reply:", reply);
+
     return NextResponse.json({ reply });
   } catch (err: any) {
     console.error("ask-primeos POST error", err);
