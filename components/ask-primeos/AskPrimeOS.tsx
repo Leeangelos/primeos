@@ -16,20 +16,31 @@ export function AskPrimeOS() {
   const [sending, setSending] = useState(false);
   const [storeSlug, setStoreSlug] = useState<string>("kent");
   const [pagePath, setPagePath] = useState<string>("/");
+  const [keyboardOffset, setKeyboardOffset] = useState<number>(0);
 
   const seasonal = useMemo(() => getSeasonalCharacter(new Date()), []);
 
   useEffect(() => {
-    if (typeof window !== "undefined") {
-      const params = new URLSearchParams(window.location.search);
-      const slug =
-        params.get("store") ??
-        params.get("store_id") ??
-        params.get("store_slug") ??
-        "kent";
-      setStoreSlug(slug);
-      setPagePath(window.location.pathname || "/");
-    }
+    if (typeof window === "undefined") return;
+    const params = new URLSearchParams(window.location.search);
+    const slug =
+      params.get("store") ??
+      params.get("store_id") ??
+      params.get("store_slug") ??
+      "kent";
+    setStoreSlug(slug);
+    setPagePath(window.location.pathname || "/");
+
+    const viewport = window.visualViewport;
+    if (!viewport) return;
+    const handleResize = () => {
+      const offset = Math.max(0, window.innerHeight - viewport.height);
+      setKeyboardOffset(offset);
+    };
+    viewport.addEventListener("resize", handleResize);
+    return () => {
+      viewport.removeEventListener("resize", handleResize);
+    };
   }, []);
 
   const handleSend = async () => {
@@ -98,14 +109,21 @@ export function AskPrimeOS() {
       </button>
 
       {open && (
-        <div className="fixed inset-0 z-50 flex flex-col justify-end">
+        <div className="fixed inset-x-0 bottom-0 top-0 z-50 flex flex-col justify-end pointer-events-none">
           <button
             type="button"
-            className="absolute inset-0 bg-black/50"
+            className="absolute inset-0 bg-black/50 pointer-events-auto"
             aria-label="Close Ask PrimeOS"
             onClick={() => setOpen(false)}
           />
-          <div className="relative bg-[#050816] border-t border-slate-800 rounded-t-3xl shadow-2xl max-h-[80vh] h-[80vh] w-full mx-auto flex flex-col">
+          <div
+            className="relative bg-[#050816] border-t border-slate-800 rounded-t-2xl shadow-2xl w-full mx-auto flex flex-col pointer-events-auto"
+            style={{
+              height: "50vh",
+              maxHeight: "50vh",
+              paddingBottom: keyboardOffset ? keyboardOffset : 0,
+            }}
+          >
             <div className="flex items-center justify-between px-4 pt-3 pb-2 border-b border-slate-800">
               <div className="flex items-center gap-2">
                 <span className="text-xl" aria-hidden="true">
@@ -163,6 +181,16 @@ export function AskPrimeOS() {
                     if (e.key === "Enter" && !e.shiftKey) {
                       e.preventDefault();
                       handleSend();
+                    }
+                  }}
+                  onFocus={() => {
+                    if (typeof window !== "undefined" && !window.visualViewport) {
+                      setKeyboardOffset(300);
+                    }
+                  }}
+                  onBlur={() => {
+                    if (typeof window !== "undefined" && !window.visualViewport) {
+                      setKeyboardOffset(0);
                     }
                   }}
                 />
