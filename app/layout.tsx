@@ -1,5 +1,6 @@
 import "./globals.css";
 import Link from "next/link";
+import { Suspense } from "react";
 import { AppNav } from "@/components/app-nav";
 import { BottomNav } from "@/src/components/layout/BottomNav";
 import { ConsentBanner } from "@/src/components/legal/ConsentBanner";
@@ -84,7 +85,9 @@ export default function RootLayout({
                     </footer>
 
                     <ConsentBanner />
-                    <AskPrimeOS />
+                    <Suspense fallback={null}>
+                      <AskPrimeOS />
+                    </Suspense>
                     <BottomNav />
                   </div>
                 </AuthGuard>
