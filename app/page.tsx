@@ -1103,19 +1103,44 @@ export default function HomePage() {
               const splhGreen = hasSplh && splh >= 80;
               const borderClass = splhRed ? "border-t-red-400" : splhAmber ? "border-t-amber-400" : splhGreen ? "border-t-emerald-400" : "border-t-slate-600";
               const textClass = splhRed ? "text-red-400" : splhAmber ? "text-amber-400" : splhGreen ? "text-emerald-400" : "text-white";
+              const avgBump = liveDailyData?.avgBumpTime ?? null;
+              const hasBump = avgBump != null && avgBump > 0;
+              const bumpRed = hasBump && avgBump > 20;
+              const bumpAmber = hasBump && avgBump >= 15 && avgBump <= 20;
+              const bumpGreen = hasBump && avgBump < 15;
+              const bumpBorderClass = bumpRed ? "border-t-red-400" : bumpAmber ? "border-t-amber-400" : bumpGreen ? "border-t-emerald-400" : "border-t-slate-600";
+              const bumpTextClass = bumpRed ? "text-red-400" : bumpAmber ? "text-amber-400" : bumpGreen ? "text-emerald-400" : "text-white";
               return (
-                <div className={`bg-slate-800 rounded-xl p-4 border-t-[3px] min-w-0 border border-zinc-800/50 shadow-sm transition-transform duration-200 sm:hover:scale-[1.01] ${borderClass}`}>
-                  <div className="flex items-center justify-between mb-1">
-                    <span className="text-xs text-slate-400 uppercase tracking-wide">SPLH (YESTERDAY)</span>
-                    <div className="flex items-center gap-1.5">
-                      {liveDailyData?.hasSalesData && liveDailyData?.hasLaborData && <span className="text-xs text-emerald-400">● POS</span>}
+                <>
+                  <div className={`bg-slate-800 rounded-xl p-4 border-t-[3px] min-w-0 border border-zinc-800/50 shadow-sm transition-transform duration-200 sm:hover:scale-[1.01] ${borderClass}`}>
+                    <div className="flex items-center justify-between mb-1">
+                      <span className="text-xs text-slate-400 uppercase tracking-wide">SPLH (YESTERDAY)</span>
+                      <div className="flex items-center gap-1.5">
+                        {liveDailyData?.hasSalesData && liveDailyData?.hasLaborData && <span className="text-xs text-emerald-400">● POS</span>}
+                      </div>
+                    </div>
+                    <div className={`text-2xl font-bold tabular-nums ${textClass}`}>
+                      {hasSplh ? `$${Math.round(splh).toLocaleString("en-US", { maximumFractionDigits: 0 })}` : "—"}
+                    </div>
+                    <div className="text-xs text-zinc-500">{hasSplh ? "Target: $80+" : "No data"}</div>
+                  </div>
+                  <div className={`bg-slate-800 rounded-xl p-4 border-t-[3px] min-w-0 border border-zinc-800/50 shadow-sm transition-transform duration-200 sm:hover:scale-[1.01] ${bumpBorderClass}`}>
+                    <div className="flex items-center justify-between mb-1">
+                      <span className="text-xs text-slate-400 uppercase tracking-wide">Avg Bump Time (YESTERDAY)</span>
+                      <div className="flex items-center gap-1.5">
+                        {liveDailyData?.hasSalesData && <span className="text-xs text-emerald-400">● POS</span>}
+                      </div>
+                    </div>
+                    <div className={`text-2xl font-bold tabular-nums ${bumpTextClass}`}>
+                      {hasBump ? `${avgBump.toFixed(0)} min` : "—"}
+                    </div>
+                    <div className="text-xs text-zinc-500">
+                      {hasBump
+                        ? `Dine-in ${((liveDailyData?.avgBumpTimeDineIn ?? 0)).toFixed(0)} · Pickup ${((liveDailyData?.avgBumpTimePickup ?? 0)).toFixed(0)} · Delivery ${((liveDailyData?.avgBumpTimeDelivery ?? 0)).toFixed(0)} min`
+                        : "No data"}
                     </div>
                   </div>
-                  <div className={`text-2xl font-bold tabular-nums ${textClass}`}>
-                    {hasSplh ? `$${Math.round(splh).toLocaleString("en-US", { maximumFractionDigits: 0 })}` : "—"}
-                  </div>
-                  <div className="text-xs text-zinc-500">{hasSplh ? "Target: $80+" : "No data"}</div>
-                </div>
+                </>
               );
             })()
           )}
@@ -1356,25 +1381,7 @@ export default function HomePage() {
         )}
       </div>
 
-      {!isOnboardingUser && liveDailyData?.hasSalesData && (liveDailyData.avgBumpTime > 0 || liveDailyData.ordersOnTime != null) && (
-        <div className="bg-zinc-900 rounded-xl border border-zinc-800/50 shadow-sm p-4 min-w-0">
-          <div className="flex items-center justify-between mb-1">
-            <span className="text-xs text-slate-400 uppercase tracking-wide">Bump time (yesterday)</span>
-            <span className="text-emerald-400 text-xs">● POS</span>
-          </div>
-          <div className={`text-2xl font-bold tabular-nums ${liveDailyData.avgBumpTime < 15 ? "text-emerald-400" : liveDailyData.avgBumpTime <= 20 ? "text-amber-400" : "text-red-400"}`}>
-            {liveDailyData.avgBumpTime?.toFixed(0) ?? "—"} min avg
-          </div>
-          <div className="flex flex-wrap gap-3 mt-2 text-xs text-slate-400">
-            <span>Dine-in: {(liveDailyData.avgBumpTimeDineIn ?? 0).toFixed(0)} min</span>
-            <span>Pickup: {(liveDailyData.avgBumpTimePickup ?? 0).toFixed(0)} min</span>
-            <span>Delivery: {(liveDailyData.avgBumpTimeDelivery ?? 0).toFixed(0)} min</span>
-          </div>
-          <div className="text-xs text-zinc-500 mt-1">
-            Promise: {(liveDailyData.ordersEarly ?? 0)} early, {(liveDailyData.ordersOnTime ?? 0)} on time, {(liveDailyData.ordersLate ?? 0)} late
-          </div>
-        </div>
-      )}
+      {/* Avg bump time now shown in KPI grid next to SPLH; standalone section removed */}
 
       <div className="bg-slate-800 rounded-xl p-4 border border-slate-700 min-w-0">
         <div className="flex items-center justify-between mb-2">
