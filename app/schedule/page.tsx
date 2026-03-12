@@ -36,6 +36,7 @@ type Shift = {
   end_time: string; // HH:MM
   hours: number;
   labor_cost: number;
+  notes?: string | null;
 };
 
 type LaborSummary = {
@@ -53,6 +54,7 @@ type ActiveShift =
       role: string;
       start_time: string;
       end_time: string;
+      notes: string;
     }
   | {
       mode: "edit";
@@ -62,6 +64,7 @@ type ActiveShift =
       role: string;
       start_time: string;
       end_time: string;
+      notes: string;
     };
 
 const ROLE_COLORS: Record<string, string> = {
@@ -109,6 +112,9 @@ export default function SchedulePage() {
   const [loading, setLoading] = useState(false);
   const [activeShift, setActiveShift] = useState<ActiveShift | null>(null);
   const [savingShift, setSavingShift] = useState(false);
+  const [sheetVisible, setSheetVisible] = useState(false);
+  const [generatedMessage, setGeneratedMessage] = useState<string | null>(null);
+  const [generatingMessage, setGeneratingMessage] = useState(false);
 
   const weekStartISO = useMemo(() => weekStart.toISOString().slice(0, 10), [weekStart]);
   const selectedStoreName = newUser ? getNewUserStoreName(session) : getStoreLabel(selectedStore);
@@ -153,6 +159,7 @@ export default function SchedulePage() {
               end_time: s.end_time,
               hours: Number(s.hours) || 0,
               labor_cost: Number(s.labor_cost) || 0,
+              notes: s.notes ?? null,
             }))
           );
         } else {
@@ -238,6 +245,8 @@ export default function SchedulePage() {
   };
 
   function openAddShift(employeeName: string, dateIso: string) {
+    setSheetVisible(false);
+    setGeneratedMessage(null);
     setActiveShift({
       mode: "add",
       employeeName,
@@ -245,10 +254,16 @@ export default function SchedulePage() {
       role: "cook",
       start_time: "10:00",
       end_time: "18:00",
+      notes: "",
+    });
+    requestAnimationFrame(() => {
+      requestAnimationFrame(() => setSheetVisible(true));
     });
   }
 
   function openEditShift(shift: Shift) {
+    setSheetVisible(false);
+    setGeneratedMessage(null);
     setActiveShift({
       mode: "edit",
       id: shift.id,
@@ -257,6 +272,10 @@ export default function SchedulePage() {
       role: shift.role ?? "team",
       start_time: shift.start_time,
       end_time: shift.end_time,
+      notes: shift.notes ?? "",
+    });
+    requestAnimationFrame(() => {
+      requestAnimationFrame(() => setSheetVisible(true));
     });
   }
 
@@ -276,6 +295,7 @@ export default function SchedulePage() {
             shift_date: activeShift.date,
             start_time: activeShift.start_time,
             end_time: activeShift.end_time,
+            notes: activeShift.notes?.trim() || null,
           }),
         });
         const data = await res.json();
@@ -291,6 +311,7 @@ export default function SchedulePage() {
               end_time: data.shift.end_time,
               hours: Number(data.shift.hours) || 0,
               labor_cost: Number(data.shift.labor_cost) || 0,
+              notes: data.shift.notes ?? null,
             },
           ]);
         }
@@ -305,6 +326,7 @@ export default function SchedulePage() {
             shift_date: activeShift.date,
             start_time: activeShift.start_time,
             end_time: activeShift.end_time,
+            notes: activeShift.notes?.trim() || null,
           }),
         });
         const data = await res.json();
@@ -321,6 +343,7 @@ export default function SchedulePage() {
                     end_time: data.shift.end_time,
                     hours: Number(data.shift.hours) || 0,
                     labor_cost: Number(data.shift.labor_cost) || 0,
+                    notes: data.shift.notes ?? null,
                   }
                 : s
             )
@@ -614,135 +637,214 @@ export default function SchedulePage() {
         </button>
       </div>
 
-      {/* Shift bottom sheet */}
+      {/* Shift bottom sheet — fixed position, slides up from bottom */}
       {activeShift && (
-        <div className="fixed inset-0 z-50 flex items-end justify-center">
+        <>
           <button
             type="button"
-            className="absolute inset-0 bg-black/60"
+            className="fixed inset-0 z-40 bg-black/60"
             onClick={() => !savingShift && setActiveShift(null)}
             aria-hidden
           />
-          <div className="relative w-full max-w-md mx-auto bg-slate-900 rounded-t-2xl border border-slate-700 shadow-2xl p-4 space-y-3">
-            <div className="w-10 h-1 rounded-full bg-slate-600 mx-auto mb-2" />
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm font-semibold text-white">
-                  {activeShift.mode === "add" ? "Add Shift" : "Edit Shift"}
-                </p>
-                <p className="text-[11px] text-slate-400">
-                  {activeShift.employeeName} ·{" "}
-                  {new Date(activeShift.date + "T12:00:00Z").toLocaleDateString("en-US", {
-                    weekday: "short",
-                    month: "short",
-                    day: "numeric",
-                  })}
-                </p>
-              </div>
-              <button
-                type="button"
-                onClick={() => !savingShift && setActiveShift(null)}
-                className="text-slate-400 hover:text-slate-200 text-lg px-2"
-                aria-label="Close"
-              >
-                ×
-              </button>
-            </div>
-
-            <div className="grid grid-cols-2 gap-3 text-xs">
-              <div>
-                <label className="block text-[10px] text-slate-400 mb-1">
-                  Start
-                </label>
-                <input
-                  type="time"
-                  value={activeShift.start_time}
-                  onChange={(e) =>
-                    setActiveShift((prev) =>
-                      prev
-                        ? { ...prev, start_time: e.target.value }
-                        : prev
-                    )
-                  }
-                  className="w-full rounded-md border border-slate-700 bg-slate-900 px-2 py-1 text-xs text-white focus:outline-none focus:ring-1 focus:ring-emerald-500"
-                />
-              </div>
-              <div>
-                <label className="block text-[10px] text-slate-400 mb-1">
-                  End
-                </label>
-                <input
-                  type="time"
-                  value={activeShift.end_time}
-                  onChange={(e) =>
-                    setActiveShift((prev) =>
-                      prev
-                        ? { ...prev, end_time: e.target.value }
-                        : prev
-                    )
-                  }
-                  className="w-full rounded-md border border-slate-700 bg-slate-900 px-2 py-1 text-xs text-white focus:outline-none focus:ring-1 focus:ring-emerald-500"
-                />
-              </div>
-            </div>
-
-            <div className="text-xs">
-              <label className="block text-[10px] text-slate-400 mb-1">
-                Role
-              </label>
-              <div className="flex gap-2 flex-wrap">
-                {ROLE_OPTIONS.map((r) => (
-                  <button
-                    key={r.value}
-                    type="button"
-                    onClick={() =>
-                      setActiveShift((prev) =>
-                        prev ? { ...prev, role: r.value } : prev
-                      )
-                    }
-                    className={cn(
-                      "px-3 py-1 rounded-full border text-[11px]",
-                      activeShift.role === r.value
-                        ? "bg-emerald-600/20 border-emerald-500 text-emerald-300"
-                        : "bg-slate-800 border-slate-700 text-slate-300"
-                    )}
-                  >
-                    {r.label}
-                  </button>
-                ))}
-              </div>
-            </div>
-
-            <div className="flex items-center justify-between gap-2 pt-2">
-              {activeShift.mode === "edit" ? (
+          <div
+            className={cn(
+              "fixed bottom-0 left-0 right-0 z-50 max-h-[85vh] overflow-y-auto bg-slate-900 rounded-t-2xl border border-slate-700 shadow-2xl transform transition-transform duration-300 ease-out",
+              sheetVisible ? "translate-y-0" : "translate-y-full"
+            )}
+          >
+            <div className="w-full max-w-md mx-auto p-4 space-y-3">
+              <div className="w-10 h-1 rounded-full bg-slate-600 mx-auto mb-2" />
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-sm font-semibold text-white">
+                    {activeShift.mode === "add" ? "Add Shift" : "Edit Shift"}
+                  </p>
+                  <p className="text-[11px] text-slate-400">
+                    {activeShift.employeeName} ·{" "}
+                    {new Date(activeShift.date + "T12:00:00Z").toLocaleDateString("en-US", {
+                      weekday: "short",
+                      month: "short",
+                      day: "numeric",
+                    })}
+                  </p>
+                </div>
                 <button
                   type="button"
-                  onClick={handleDeleteShift}
-                  disabled={savingShift}
-                  className="text-xs text-red-300 hover:text-red-200 underline"
+                  onClick={() => !savingShift && setActiveShift(null)}
+                  className="text-slate-400 hover:text-slate-200 text-lg px-2"
+                  aria-label="Close"
                 >
-                  Delete shift
+                  ×
                 </button>
-              ) : (
-                <span />
-              )}
-              <button
-                type="button"
-                onClick={handleSaveShift}
-                disabled={savingShift}
-                className="inline-flex items-center justify-center px-4 py-2 rounded-full bg-emerald-600 text-xs font-semibold text-white shadow-md shadow-emerald-900/40 hover:bg-emerald-500 disabled:opacity-50"
-              >
-                {savingShift
-                  ? activeShift.mode === "add"
-                    ? "Adding…"
-                    : "Saving…"
-                  : activeShift.mode === "add"
-                    ? "Add Shift"
-                    : "Save Changes"}
-              </button>
+              </div>
+
+              <div className="grid grid-cols-2 gap-3 text-xs">
+                <div>
+                  <label className="block text-[10px] text-slate-400 mb-1">Start</label>
+                  <input
+                    type="time"
+                    value={activeShift.start_time}
+                    onChange={(e) =>
+                      setActiveShift((prev) =>
+                        prev ? { ...prev, start_time: e.target.value } : prev
+                      )
+                    }
+                    className="w-full rounded-md border border-slate-700 bg-slate-900 px-2 py-1 text-xs text-white focus:outline-none focus:ring-1 focus:ring-emerald-500"
+                  />
+                </div>
+                <div>
+                  <label className="block text-[10px] text-slate-400 mb-1">End</label>
+                  <input
+                    type="time"
+                    value={activeShift.end_time}
+                    onChange={(e) =>
+                      setActiveShift((prev) =>
+                        prev ? { ...prev, end_time: e.target.value } : prev
+                      )
+                    }
+                    className="w-full rounded-md border border-slate-700 bg-slate-900 px-2 py-1 text-xs text-white focus:outline-none focus:ring-1 focus:ring-emerald-500"
+                  />
+                </div>
+              </div>
+
+              <div className="text-xs">
+                <label className="block text-[10px] text-slate-400 mb-1">Role</label>
+                <div className="flex gap-2 flex-wrap">
+                  {ROLE_OPTIONS.map((r) => (
+                    <button
+                      key={r.value}
+                      type="button"
+                      onClick={() =>
+                        setActiveShift((prev) =>
+                          prev ? { ...prev, role: r.value } : prev
+                        )
+                      }
+                      className={cn(
+                        "px-3 py-1 rounded-full border text-[11px]",
+                        activeShift.role === r.value
+                          ? "bg-emerald-600/20 border-emerald-500 text-emerald-300"
+                          : "bg-slate-800 border-slate-700 text-slate-300"
+                      )}
+                    >
+                      {r.label}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              <div className="text-xs">
+                <label className="block text-[10px] text-slate-400 mb-1">
+                  Shift note (optional)
+                </label>
+                <input
+                  type="text"
+                  value={activeShift.notes}
+                  onChange={(e) =>
+                    setActiveShift((prev) =>
+                      prev ? { ...prev, notes: e.target.value } : prev
+                    )
+                  }
+                  placeholder="e.g. Opening shift, cover register first hour"
+                  className="w-full rounded-md border border-slate-700 bg-slate-900 px-2 py-1.5 text-xs text-white placeholder:text-slate-500 focus:outline-none focus:ring-1 focus:ring-emerald-500"
+                />
+              </div>
+
+              <div className="text-xs space-y-2">
+                <button
+                  type="button"
+                  onClick={async () => {
+                    if (!activeShift || generatingMessage) return;
+                    setGeneratingMessage(true);
+                    setGeneratedMessage(null);
+                    try {
+                      const dayLabel = new Date(activeShift.date + "T12:00:00Z").toLocaleDateString("en-US", {
+                        weekday: "long",
+                        month: "short",
+                        day: "numeric",
+                      });
+                      const notePart = activeShift.notes?.trim()
+                        ? ` Manager note for them: ${activeShift.notes.trim()}.`
+                        : "";
+                      const storeSlug = selectedStore === "all" ? "kent" : selectedStore;
+                      const res = await fetch("/api/ask-primeos", {
+                        method: "POST",
+                        headers: { "Content-Type": "application/json" },
+                        body: JSON.stringify({
+                          message: `Write a warm, specific, branded motivational message for an employee for their upcoming shift. Employee name: ${activeShift.employeeName}. Role: ${activeShift.role}. Day: ${dayLabel}. Time: ${activeShift.start_time} to ${activeShift.end_time}.${notePart} Keep it short, friendly, and suitable for a pizza store brand. No markdown.`,
+                          store_slug: storeSlug,
+                          page_path: "/schedule",
+                        }),
+                      });
+                      const data = await res.json();
+                      if (data.reply) setGeneratedMessage(data.reply);
+                    } catch {
+                      setGeneratedMessage("Could not generate message. Try again.");
+                    } finally {
+                      setGeneratingMessage(false);
+                    }
+                  }}
+                  disabled={generatingMessage}
+                  className="inline-flex items-center justify-center px-3 py-2 rounded-lg bg-slate-700 text-xs font-medium text-slate-200 hover:bg-slate-600 disabled:opacity-50"
+                >
+                  {generatingMessage ? "Generating…" : "Generate message for employee"}
+                </button>
+                {generatedMessage && (
+                  <div className="space-y-1">
+                    <p className="text-[10px] text-slate-400">
+                      Message suggestion — tap to copy and send
+                    </p>
+                    <div className="flex gap-2">
+                      <textarea
+                        readOnly
+                        value={generatedMessage}
+                        rows={4}
+                        className="w-full rounded-md border border-slate-700 bg-slate-800 px-2 py-1.5 text-xs text-white resize-none focus:outline-none focus:ring-1 focus:ring-emerald-500"
+                      />
+                      <button
+                        type="button"
+                        onClick={() => {
+                          navigator.clipboard.writeText(generatedMessage);
+                        }}
+                        className="shrink-0 self-end px-3 py-1.5 rounded-md bg-emerald-600 text-xs font-medium text-white hover:bg-emerald-500"
+                      >
+                        Copy
+                      </button>
+                    </div>
+                  </div>
+                )}
+              </div>
+
+              <div className="flex items-center justify-between gap-2 pt-2">
+                {activeShift.mode === "edit" ? (
+                  <button
+                    type="button"
+                    onClick={handleDeleteShift}
+                    disabled={savingShift}
+                    className="text-xs text-red-300 hover:text-red-200 underline"
+                  >
+                    Delete shift
+                  </button>
+                ) : (
+                  <span />
+                )}
+                <button
+                  type="button"
+                  onClick={handleSaveShift}
+                  disabled={savingShift}
+                  className="inline-flex items-center justify-center px-4 py-2 rounded-full bg-emerald-600 text-xs font-semibold text-white shadow-md shadow-emerald-900/40 hover:bg-emerald-500 disabled:opacity-50"
+                >
+                  {savingShift
+                    ? activeShift.mode === "add"
+                      ? "Adding…"
+                      : "Saving…"
+                    : activeShift.mode === "add"
+                      ? "Add Shift"
+                      : "Save Changes"}
+                </button>
+              </div>
             </div>
           </div>
-        </div>
+        </>
       )}
     </div>
   );
