@@ -902,9 +902,9 @@ if (d.catalog) setKitchenIqData({
             ) : (
               <>
                 {/* Hero: circular progress ring */}
-                <div className="flex flex-col items-center py-4">
+                <div className="flex flex-col items-center py-4 transition-all duration-300 ease-out">
                   <div className="relative w-[140px] h-[140px]">
-                    <svg className="w-full h-full -rotate-90" viewBox="0 0 120 120">
+                    <svg className="w-full h-full -rotate-90 transition-all duration-500 ease-out" viewBox="0 0 120 120">
                       <circle cx="60" cy="60" r="54" fill="none" stroke="rgb(51 65 85)" strokeWidth="10" />
                       <circle
                         cx="60"
@@ -929,7 +929,7 @@ if (d.catalog) setKitchenIqData({
                 </div>
 
                 {/* XP */}
-                <div className="bg-slate-800/80 rounded-xl border border-slate-700 p-3 text-center">
+                <div className="bg-slate-800/80 rounded-xl border border-slate-700 p-3 text-center transition-all duration-300 ease-out">
                   <p className="text-[10px] uppercase tracking-wide text-slate-500">XP earned</p>
                   <p className="text-2xl font-bold text-amber-400 tabular-nums">{totalXp}</p>
                   <p className="text-[10px] text-slate-500 mt-0.5">+10 per item costed · +25 for top revenue items</p>
@@ -945,14 +945,14 @@ if (d.catalog) setKitchenIqData({
                     ? "Based on 1 item — cost more items for a complete picture."
                     : `Across ${costedCount} costed items representing ${formatDollars(costedRevenue)} in monthly revenue`;
                   return (
-                    <div className="bg-slate-800 rounded-xl border border-slate-700 p-4">
+                    <div className="bg-slate-800 rounded-xl border border-slate-700 p-4 transition-all duration-300 ease-out">
                       <p className="text-[10px] uppercase tracking-wide text-slate-500">Blended Margin</p>
                       <p className={cn("text-3xl font-bold tabular-nums mt-1", blendedColor)}>{blendedMarginPct.toFixed(1)}%</p>
                       <p className="text-xs text-slate-400 mt-2">{subtitle}</p>
                       {mostProfitable && costedCount > 1 && <p className="text-xs text-slate-400 mt-1">Your most profitable item: {mostProfitable.item_name} {mostProfitable.sizeDisplay} at {mostProfitable.marginPct.toFixed(1)}% margin</p>}
                       {leastProfitable && mostProfitable?.item_name !== leastProfitable?.item_name && costedCount > 1 && <p className="text-xs text-slate-400 mt-0.5">Your least profitable: {leastProfitable.item_name} {leastProfitable.sizeDisplay} at {leastProfitable.marginPct.toFixed(1)}% margin</p>}
                       {costedCount >= 3 && (
-                        <div className="mt-4 pt-4 border-t border-slate-700">
+                        <div className="mt-4 pt-4 border-t border-slate-700 animate-fade-in">
                           <p className="text-sm font-semibold text-white mb-3">💰 Where your money is really made</p>
                           <div className="space-y-2 mb-3">
                             {top3Profit.map((item, idx) => (
@@ -989,7 +989,7 @@ if (d.catalog) setKitchenIqData({
 
                 {/* Menu Engineering — when 5+ costed */}
                 {costedCount >= 5 && (
-                  <div className="space-y-3">
+                  <div className="space-y-3 animate-fade-in">
                     <h3 className="text-sm font-semibold text-white">Menu Engineering</h3>
                     <div className="flex bg-slate-800 rounded-lg p-0.5 border border-slate-700">
                       <button type="button" onClick={() => setKitchenIqSubView("list")} className={cn("flex-1 py-2 rounded-md text-xs font-medium", kitchenIqSubView === "list" ? "bg-slate-700 text-white" : "text-slate-400 hover:text-slate-300")}>Item List</button>
@@ -1280,8 +1280,17 @@ if (d.catalog) setKitchenIqData({
                             if (res.ok) {
                               setSaveFlash(true);
                               setTimeout(() => setSaveFlash(false), 600);
-                              refetchKitchenIq();
+                              setKitchenIqData((prev) => {
+                                if (!prev) return prev;
+                                const catalog = prev.catalog.map((i) =>
+                                  i.item_name === item.item_name && i.size === item.size && i.category === item.category
+                                    ? { ...i, cost_to_make: c, includes_disposables: includesDisposables }
+                                    : i
+                                );
+                                return { ...prev, catalog };
+                              });
                               setTimeout(() => setSelectedKitchenItem(null), 400);
+                              refetchKitchenIq();
                             }
                           } finally {
                             setSavingCost(false);
