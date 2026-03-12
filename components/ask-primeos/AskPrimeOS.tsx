@@ -14,7 +14,7 @@ export function AskPrimeOS() {
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [input, setInput] = useState("");
   const [sending, setSending] = useState(false);
-  const [storeSlug, setStoreSlug] = useState<string>("kent");
+  const [storeSlug, setStoreSlug] = useState<string>("");
   const [pagePath, setPagePath] = useState<string>("/");
   const [keyboardOffset, setKeyboardOffset] = useState<number>(0);
 
@@ -23,12 +23,28 @@ export function AskPrimeOS() {
   useEffect(() => {
     if (typeof window === "undefined") return;
     const params = new URLSearchParams(window.location.search);
-    const slug =
+    let slug =
       params.get("store") ??
       params.get("store_id") ??
       params.get("store_slug") ??
-      "kent";
-    setStoreSlug(slug);
+      null;
+
+    if (!slug) {
+      try {
+        const lsStore =
+          window.localStorage.getItem("selectedStore") ??
+          window.localStorage.getItem("store_slug");
+        if (lsStore && lsStore.trim()) {
+          slug = lsStore.trim();
+        }
+      } catch {
+        // ignore localStorage errors
+      }
+    }
+
+    if (slug) {
+      setStoreSlug(slug);
+    }
     setPagePath(window.location.pathname || "/");
 
     const viewport = window.visualViewport;
@@ -112,7 +128,7 @@ export function AskPrimeOS() {
         <div className="fixed inset-x-0 bottom-0 top-0 z-50 flex flex-col justify-end pointer-events-none">
           <button
             type="button"
-            className="absolute inset-0 bg-black/50 pointer-events-auto"
+            className="absolute inset-0 bg-black/60 pointer-events-auto"
             aria-label="Close Ask PrimeOS"
             onClick={() => setOpen(false)}
           />
