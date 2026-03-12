@@ -195,8 +195,8 @@ export async function GET(request: Request) {
         actions.push({
           action_type: "uncosted_item",
           action_key: `uncosted:${storeId}:${item.item_name}:${item.size}:${item.category}`,
-          title: `Cost ${item.item_name} ${item.sizeDisplay}`,
-          subtitle: `Uncosted high-volume item — ${item.total_units} sold in last 30 days`,
+          title: `Consider costing ${item.item_name} ${item.sizeDisplay}`,
+          subtitle: `High-volume item without a confirmed cost — ${item.total_units} sold in last 30 days`,
           dollar_impact: Math.round(dollarImpact),
           cta_label: "Open Kitchen IQ",
           cta_route: `/menu-intelligence?view=kitchen-iq&store=${encodeURIComponent(
@@ -250,8 +250,8 @@ export async function GET(request: Request) {
         priceGapActions.push({
           action_type: "price_gap",
           action_key: `pricegap:${storeId}:${item.item_name}:${item.size}:${item.category}`,
-          title: `Raise price on ${item.item_name} ${item.sizeDisplay}`,
-          subtitle: `Your price is ${(gapPct * 100).toFixed(
+          title: `Consider raising price on ${item.item_name} ${item.sizeDisplay}`,
+          subtitle: `Your price is currently ${(gapPct * 100).toFixed(
             1
           )}% below peer average`,
           dollar_impact: Math.round(dollarImpact),
@@ -285,10 +285,10 @@ export async function GET(request: Request) {
       dogActions.push({
         action_type: "dog_item",
         action_key: `dog:${storeId}:${item.item_name}:${item.size}:${item.category}`,
-        title: `Fix low-margin Dog: ${item.item_name} ${item.sizeDisplay}`,
+        title: `Consider adjusting low-margin Dog: ${item.item_name} ${item.sizeDisplay}`,
         subtitle: `${Math.round(unitsPerWeek)} sold/week at ${marginPct.toFixed(
           1
-        )}% margin`,
+        )}% margin — worth assessing portion or price`,
         dollar_impact: Math.round(dollarImpact),
         cta_label: "Review portion/price",
         cta_route: `/menu-intelligence?view=kitchen-iq&store=${encodeURIComponent(
