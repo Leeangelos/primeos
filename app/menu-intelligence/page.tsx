@@ -34,6 +34,7 @@ type KitchenIqItem = {
 type KitchenIqData = {
   catalog: KitchenIqItem[];
   actualHillcrestLast30: number;
+  globalXp?: number;
 };
 
 type PricingGapItem = {
@@ -57,7 +58,6 @@ const PRICING_GAPS: PricingGapItem[] = [
 ];
 
 const STORE_OPTIONS: { value: string; label: string }[] = [
-  { value: "all", label: "All Locations" },
   { value: "kent", label: "LeeAngelo's Kent" },
   { value: "aurora", label: "LeeAngelo's Aurora" },
   { value: "lindseys", label: "Lindsey's" },
@@ -145,7 +145,7 @@ export default function MenuIntelligencePage() {
   const { session, loading } = useAuth();
   const newUser = isNewUser(session);
   const newUserStoreName = getNewUserStoreName(session);
-  const [storeId, setStoreId] = useState("all");
+  const [storeId, setStoreId] = useState(STORE_OPTIONS[0]?.value ?? "kent");
   const [view, setView] = useState<"menu" | "compare" | "gaps" | "pricing-gaps" | "kitchen-iq">("menu");
   const [openCategories, setOpenCategories] = useState<Set<string>>(new Set());
 
@@ -173,16 +173,20 @@ export default function MenuIntelligencePage() {
   useEffect(() => {
     if (view !== "kitchen-iq" && view !== "menu") return;
     let cancelled = false;
-    if (view === "kitchen-iq") setKitchenIqLoading(true);
-    fetch("/api/kitchen-iq")
+    setKitchenIqLoading(true);
+    fetch(`/api/kitchen-iq?store_id=${encodeURIComponent(storeId)}`)
       .then((r) => r.json())
       .then((d) => {
-        if (!cancelled && d.catalog) setKitchenIqData({ catalog: d.catalog, actualHillcrestLast30: d.actualHillcrestLast30 ?? 0 });
+        if (!cancelled && d.catalog) setKitchenIqData({
+          catalog: d.catalog,
+          actualHillcrestLast30: d.actualHillcrestLast30 ?? 0,
+          globalXp: d.globalXp,
+        });
       })
-      .catch(() => { if (!cancelled && view === "kitchen-iq") setKitchenIqData(null); })
-      .finally(() => { if (!cancelled && view === "kitchen-iq") setKitchenIqLoading(false); });
+      .catch(() => { if (!cancelled) setKitchenIqData(null); })
+      .finally(() => { if (!cancelled) setKitchenIqLoading(false); });
     return () => { cancelled = true; };
-  }, [view]);
+  }, [view, storeId]);
 
   useEffect(() => {
     if (selectedKitchenItem) {
@@ -195,13 +199,17 @@ export default function MenuIntelligencePage() {
   }, [selectedKitchenItem]);
 
   const refetchKitchenIq = useCallback(() => {
-    fetch("/api/kitchen-iq")
+    fetch(`/api/kitchen-iq?store_id=${encodeURIComponent(storeId)}`)
       .then((r) => r.json())
       .then((d) => {
-        if (d.catalog) setKitchenIqData({ catalog: d.catalog, actualHillcrestLast30: d.actualHillcrestLast30 ?? 0 });
+        if (d.catalog) setKitchenIqData({
+          catalog: d.catalog,
+          actualHillcrestLast30: d.actualHillcrestLast30 ?? 0,
+          globalXp: d.globalXp,
+        });
       })
       .catch(() => {});
-  }, []);
+  }, [storeId]);
 
   useEffect(() => {
     if (!selectedKitchenItem) return;
@@ -252,17 +260,27 @@ export default function MenuIntelligencePage() {
   const gaps = useMemo(() => getMenuGaps(), []);
   const comparableWithGaps = useComparableWithGaps();
 
-  const itemCount = items.length;
-  const categoryCount = categories.length;
-  const allPrices = useMemo(
-    () => items.flatMap((i) => i.sizes.map((s) => s.price)),
-    [items]
+  const menuCatalog = kitchenIqData?.catalog ?? [];
+  const menuCategories = useMemo(
+    () => Array.from(new Set(menuCatalog.map((i) => i.category))).filter(Boolean).sort(),
+    [menuCatalog]
   );
-  const avgPrice =
-    allPrices.length > 0
-      ? allPrices.reduce((a, b) => a + b, 0) / allPrices.length
-      : 0;
+  const menuItemsByCategory = useMemo(() => {
+    const map = new Map<string, KitchenIqItem[]>();
+    for (const item of menuCatalog) {
+      const list = map.get(item.category) ?? [];
+      list.push(item);
+      map.set(item.category, list);
+    }
+    return map;
+  }, [menuCatalog]);
 
+  const itemCount = menuCatalog.length;
+  const categoryCount = menuCategories.length;
+  const avgPrice =
+    menuCatalog.length > 0
+      ? menuCatalog.reduce((a, i) => a + (i.avg_unit_price || 0), 0) / menuCatalog.length
+      : 0;
   const itemsByCategory = useMemo(() => {
     const map = new Map<string, MenuItem[]>();
     for (const item of items) {
@@ -324,16 +342,6 @@ export default function MenuIntelligencePage() {
         <EducationInfoIcon metricKey="menu_item_count" size="lg" />
       </div>
       <SmartQuestion page="menu" />
-      <div className="bg-blue-950/30 rounded-xl border border-blue-800/50 p-3">
-        <p className="text-xs text-blue-300">
-          Menu prices last synced from your public website on February 23, 2026.
-          When you update pricing in your POS, it pushes to your website
-          automatically. PrimeOS re-syncs periodically.
-        </p>
-        <p className="text-xs text-slate-500 mt-1">
-          Future: Connect your FoodTec API for real-time sync.
-        </p>
-      </div>
 
       <div className="flex flex-wrap gap-2">
         <label className="text-xs text-slate-500 shrink-0">Store:</label>
@@ -429,9 +437,19 @@ export default function MenuIntelligencePage() {
             <h3 className="text-sm font-semibold text-white">Menu</h3>
             <EducationInfoIcon metricKey="menu_item_margin" size="sm" />
           </div>
-          {categories.map((cat) => {
+          {menuCatalog.length === 0 && !kitchenIqLoading && (
+            <div className="bg-slate-800 rounded-xl border border-slate-700 p-6 text-center text-slate-400 text-sm">
+              No FoodTec menu data for this store in the last 30 days.
+            </div>
+          )}
+          {menuCatalog.length === 0 && kitchenIqLoading && (
+            <div className="bg-slate-800 rounded-xl border border-slate-700 p-6 text-center text-slate-400 text-sm">
+              Loading…
+            </div>
+          )}
+          {menuCategories.map((cat) => {
             const isOpen = openCategories.has(cat);
-            const catItems = itemsByCategory.get(cat) ?? [];
+            const catItems = menuItemsByCategory.get(cat) ?? [];
             return (
               <div
                 key={cat}
@@ -451,56 +469,39 @@ export default function MenuIntelligencePage() {
                 </button>
                 {isOpen && (
                   <div className="px-3 pb-3 space-y-2">
-                    {catItems.map((item) => (
-                      <div
-                        key={item.id}
-                        className="bg-slate-800 rounded-xl border border-slate-700 p-3 mb-2"
-                      >
-                        <div className="flex items-center justify-between mb-1">
-                          <span className="text-sm font-medium text-white">
-                            {item.item_name}
-                          </span>
-                          {storeId !== "all" && (
-                            <span className="text-[10px] text-slate-500 uppercase">
-                              {STORE_NAMES[item.store_id] ?? item.store_id}
+                    {catItems.map((item) => {
+                      const key = `${(item.item_name || "").toLowerCase()}|${item.size}|${(item.category || "").toLowerCase()}`;
+                      const costRow = menuCostLookup.get(key);
+                      const price = item.avg_unit_price || 0;
+                      const marginPct = costRow && price > 0 ? ((price - costRow.cost_to_make) / price) * 100 : null;
+                      const tier = marginPct != null ? marginPctToTier(marginPct) : null;
+                      return (
+                        <div
+                          key={`${item.item_name}|${item.size}|${item.category}`}
+                          className="bg-slate-800 rounded-xl border border-slate-700 p-3 mb-2"
+                        >
+                          <div className="flex items-center justify-between mb-1">
+                            <span className="text-sm font-medium text-white">
+                              {item.item_name}
                             </span>
-                          )}
-                        </div>
-                        <div className="flex flex-wrap gap-2">
-                          {item.sizes.map((size) => {
-                            const key = `${item.item_name.toLowerCase()}|${normalizeSize(size.size_name)}|${item.category.toLowerCase()}`;
-                            const costRow = menuCostLookup.get(key);
-                            const marginPct = costRow && size.price > 0 ? ((size.price - costRow.cost_to_make) / size.price) * 100 : null;
-                            const tier = marginPct != null ? marginPctToTier(marginPct) : null;
-                            return (
-                              <span key={size.size_name} className="text-xs text-slate-400 flex items-center gap-1.5 flex-wrap">
-                                <span>
-                                  {size.size_name}:{" "}
-                                  <span className="text-emerald-400">
-                                    ${size.price.toFixed(2)}
-                                  </span>
-                                </span>
-                                {tier && marginPct != null && (
-                                  <span className={cn("px-1.5 py-0.5 rounded border text-[10px] font-medium", tier.className)}>
-                                    {tier.label} ({marginPct.toFixed(0)}%)
-                                  </span>
-                                )}
+                          </div>
+                          <div className="flex flex-wrap gap-2 items-center">
+                            <span className="text-xs text-slate-400">
+                              {item.sizeDisplay}:{" "}
+                              <span className="text-emerald-400">
+                                ${price.toFixed(2)}
                               </span>
-                            );
-                          })}
-                        </div>
-                        <div className="flex flex-wrap gap-1 mt-2">
-                          {item.ingredients_listed.map((ing) => (
-                            <span
-                              key={ing}
-                              className="px-1.5 py-0.5 rounded text-[10px] bg-slate-700 text-slate-400"
-                            >
-                              {ing}
+                              <span className="text-slate-500 ml-1">avg (30d)</span>
                             </span>
-                          ))}
+                            {tier && marginPct != null && (
+                              <span className={cn("px-1.5 py-0.5 rounded border text-[10px] font-medium", tier.className)}>
+                                {tier.label} ({marginPct.toFixed(0)}%)
+                              </span>
+                            )}
+                          </div>
                         </div>
-                      </div>
-                    ))}
+                      );
+                    })}
                   </div>
                 )}
               </div>
@@ -822,7 +823,7 @@ export default function MenuIntelligencePage() {
         const highRevenueBonus = 25;
         const xpFromCosted = costedCount * xpPerItem;
         const xpFromHighRevenue = costedItems.filter((i) => top20Revenue.some((t) => t.item_name === i.item_name && t.size === i.size && t.category === i.category)).length * highRevenueBonus;
-        const totalXp = xpFromCosted + xpFromHighRevenue;
+        const totalXp = kitchenIqData?.globalXp ?? (xpFromCosted + xpFromHighRevenue);
 
         const categories = ["All", ...Array.from(new Set(catalog.map((i) => i.category)))].filter(Boolean);
         const uncostedCountByCategory = (cat: string) =>
@@ -876,8 +877,8 @@ export default function MenuIntelligencePage() {
                   <p className="text-[10px] text-slate-500 mt-0.5">+10 per item costed · +25 for top revenue items</p>
                 </div>
 
-                {/* Blended Margin — only when 5+ costed */}
-                {costedCount >= 5 && (() => {
+                {/* Blended Margin — show after first cost */}
+                {costedCount >= 1 && (() => {
                   const totalUnitsCosted = costedItems.reduce((s, i) => s + i.total_units, 0);
                   const weightedSum = costedItems.reduce((s, i) => {
                     const price = i.avg_unit_price || 0;
@@ -897,13 +898,16 @@ export default function MenuIntelligencePage() {
                     .filter((i) => i.marginPct >= 0);
                   const mostProfitable = withMargin.length ? withMargin.reduce((a, b) => (a.marginPct >= b.marginPct ? a : b)) : null;
                   const leastProfitable = withMargin.length ? withMargin.reduce((a, b) => (a.marginPct <= b.marginPct ? a : b)) : null;
+                  const subtitle = costedCount === 1
+                    ? "Based on 1 item — cost more items for a complete picture."
+                    : `Across ${costedCount} costed items representing ${formatDollars(costedRevenue)} in monthly revenue`;
                   return (
                     <div className="bg-slate-800 rounded-xl border border-slate-700 p-4">
                       <p className="text-[10px] uppercase tracking-wide text-slate-500">Blended Margin</p>
                       <p className={cn("text-3xl font-bold tabular-nums mt-1", blendedColor)}>{blendedMarginPct.toFixed(1)}%</p>
-                      <p className="text-xs text-slate-400 mt-2">Across {costedCount} costed items representing {formatDollars(costedRevenue)} in monthly revenue</p>
-                      {mostProfitable && <p className="text-xs text-slate-400 mt-1">Your most profitable item: {mostProfitable.item_name} {mostProfitable.sizeDisplay} at {mostProfitable.marginPct.toFixed(1)}% margin</p>}
-                      {leastProfitable && mostProfitable?.item_name !== leastProfitable?.item_name && <p className="text-xs text-slate-400 mt-0.5">Your least profitable: {leastProfitable.item_name} {leastProfitable.sizeDisplay} at {leastProfitable.marginPct.toFixed(1)}% margin</p>}
+                      <p className="text-xs text-slate-400 mt-2">{subtitle}</p>
+                      {mostProfitable && costedCount > 1 && <p className="text-xs text-slate-400 mt-1">Your most profitable item: {mostProfitable.item_name} {mostProfitable.sizeDisplay} at {mostProfitable.marginPct.toFixed(1)}% margin</p>}
+                      {leastProfitable && mostProfitable?.item_name !== leastProfitable?.item_name && costedCount > 1 && <p className="text-xs text-slate-400 mt-0.5">Your least profitable: {leastProfitable.item_name} {leastProfitable.sizeDisplay} at {leastProfitable.marginPct.toFixed(1)}% margin</p>}
                     </div>
                   );
                 })()}
