@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { useMemo, useState, useEffect, useCallback, useRef } from "react";
 import { createPortal } from "react-dom";
 import { BarChart3, Calendar, Check, ChevronDown, ChevronRight, ChevronUp, ClipboardList, MapPin, Sparkles, TriangleAlert, AlertTriangle, X } from "lucide-react";
@@ -83,6 +84,23 @@ type LiveDailyData = {
   uniqueEmployees: number;
   foodSpend: number;
   [key: string]: unknown;
+};
+
+type PriorityActionType =
+  | "uncosted_item"
+  | "price_gap"
+  | "dog_item"
+  | "food_cost_above_baseline"
+  | "labor_pct_above_target";
+
+type PriorityAction = {
+  action_type: PriorityActionType;
+  action_key: string;
+  title: string;
+  subtitle: string;
+  dollar_impact: number;
+  cta_label: string;
+  cta_route: string;
 };
 
 const KENT_DAILY_TARGET = 5200;
@@ -373,6 +391,7 @@ type OnboardingData = {
 
 export default function HomePage() {
   const { session } = useAuth();
+  const router = useRouter();
   const [selectedStore, setSelectedStore] = useState<StoreSlug>("kent");
   const [storeOpen, setStoreOpen] = useState(false);
   const [kpi, setKpi] = useState<KpiSnapshot | null>(null);
@@ -392,6 +411,9 @@ export default function HomePage() {
   const [showAllWins, setShowAllWins] = useState(false);
   const [expandedPillar, setExpandedPillar] = useState<PillarId | null>(null);
   const [operatorProfile, setOperatorProfile] = useState<Record<string, unknown>>({});
+  const [priorityActions, setPriorityActions] = useState<PriorityAction[]>([]);
+  const [priorityLoading, setPriorityLoading] = useState(false);
+  const [completedActions, setCompletedActions] = useState<Record<string, boolean>>({});
   const today = todayYYYYMMDD();
   const yesterday = yesterdayYYYYMMDD();
 
@@ -407,6 +429,36 @@ export default function HomePage() {
       .catch(() => {});
     return () => { cancelled = true; };
   }, [session?.access_token]);
+
+  useEffect(() => {
+    if (onboardingData != null) {
+      setPriorityActions([]);
+      return;
+    }
+    if (selectedStore === "all") {
+      setPriorityActions([]);
+      return;
+    }
+    const store = storeSlugForFetch(selectedStore);
+    let cancelled = false;
+    setPriorityLoading(true);
+    fetch(`/api/priority-actions?store_id=${encodeURIComponent(store)}`)
+      .then((res) => res.json())
+      .then((body) => {
+        if (cancelled) return;
+        const actions = Array.isArray(body.actions) ? (body.actions as PriorityAction[]) : [];
+        setPriorityActions(actions);
+      })
+      .catch(() => {
+        if (!cancelled) setPriorityActions([]);
+      })
+      .finally(() => {
+        if (!cancelled) setPriorityLoading(false);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [selectedStore, onboardingData]);
 
   useEffect(() => {
     const token = session?.access_token;
@@ -858,6 +910,43 @@ export default function HomePage() {
   const smartRemaining = SMART_QUESTIONS.length - smartAnsweredIds.length;
   const showSmartSection = isNewUser(session);
 
+  function impactColor(action: PriorityAction): string {
+    const v = Number(action.dollar_impact) || 0;
+    if (v >= 500) return "bg-red-500";
+    if (v >= 200) return "bg-amber-500";
+    return "bg-yellow-400";
+  }
+
+  async function handlePriorityActionClick(action: PriorityAction) {
+    const store = storeSlugForFetch(selectedStore);
+    const operatorId = session?.user?.id as string | undefined;
+    if (operatorId && !completedActions[action.action_key]) {
+      try {
+        await fetch("/api/priority-actions/complete", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            store_id: store,
+            action_type: action.action_type,
+            action_key: action.action_key,
+            operator_id: operatorId,
+          }),
+        });
+        setCompletedActions((prev) => ({
+          ...prev,
+          [action.action_key]: true,
+        }));
+      } catch {
+        // ignore logging errors
+      }
+    }
+    if (action.cta_route) {
+      router.push(action.cta_route);
+    }
+  }
+
   return (
     <div className="space-y-6 pb-28">
       {showSmartSection && (
@@ -949,6 +1038,67 @@ export default function HomePage() {
           </div>
         </div>
       </div>
+
+      {!isOnboardingUser && priorityActions.length > 0 && (
+        <div className="mb-2">
+          <div className="flex items-center gap-2 mb-3">
+            <span className="text-base">🎯</span>
+            <h2 className="text-sm font-bold text-white">Today&apos;s Focus</h2>
+          </div>
+          <div className="space-y-2">
+            {priorityActions.map((action) => {
+              const isDone = completedActions[action.action_key];
+              const barClass = impactColor(action);
+              const formattedImpact =
+                action.dollar_impact && Number.isFinite(action.dollar_impact)
+                  ? `+$${Math.round(action.dollar_impact).toLocaleString("en-US")}/mo`
+                  : "";
+              return (
+                <div
+                  key={action.action_key}
+                  className="relative rounded-xl border border-slate-700 bg-slate-800/70 p-3 pl-3.5 flex items-start gap-3 min-w-0"
+                >
+                  <div className={`absolute inset-y-2 left-0 w-1 rounded-full ${barClass}`} aria-hidden />
+                  <div className="flex-1 min-w-0 ml-1">
+                    <div className="flex items-center justify-between gap-2">
+                      <p className="text-sm font-semibold text-white truncate">{action.title}</p>
+                      {formattedImpact && (
+                        <span className="text-xs font-semibold text-teal-300 tabular-nums shrink-0">
+                          {formattedImpact}
+                        </span>
+                      )}
+                    </div>
+                    {action.subtitle && (
+                      <p className="text-xs text-slate-400 mt-1 line-clamp-2">{action.subtitle}</p>
+                    )}
+                  </div>
+                  <div className="flex-shrink-0">
+                    <button
+                      type="button"
+                      onClick={() => handlePriorityActionClick(action)}
+                      disabled={priorityLoading}
+                      className={`inline-flex items-center gap-1 px-3 py-1.5 rounded-full text-xs font-semibold transition-colors ${
+                        isDone
+                          ? "bg-emerald-600/20 text-emerald-300 border border-emerald-500/40"
+                          : "bg-blue-600 text-white border border-blue-500/60 hover:bg-blue-500"
+                      }`}
+                    >
+                      {isDone ? (
+                        <>
+                          <Check className="w-3 h-3" aria-hidden />
+                          <span>Done</span>
+                        </>
+                      ) : (
+                        <span>{action.cta_label || "Go"}</span>
+                      )}
+                    </button>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      )}
 
       {!isOnboardingUser && displayedWins.length > 0 && (
         <div className="mb-4">
