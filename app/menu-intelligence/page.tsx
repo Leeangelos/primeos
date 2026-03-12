@@ -2,7 +2,7 @@
 
 import { useMemo, useState, useEffect, useCallback } from "react";
 import { createPortal } from "react-dom";
-import { ChevronDown, ChevronRight, Lock } from "lucide-react";
+import { ChevronDown, ChevronRight, Lock, CheckCircle } from "lucide-react";
 import { cn } from "@/lib/utils";
 import type { MenuItem } from "@/src/lib/menu-data";
 import {
@@ -648,13 +648,32 @@ if (d.catalog) setKitchenIqData({
           if (abs <= 7) return "bg-amber-600/20 text-amber-400 border border-amber-700/30";
           return "bg-red-600/20 text-red-400 border border-red-700/30";
         };
+        const isClean = filtered.length === 0 || totalMonthlyGap < 50;
         return (
           <div className="space-y-3">
             <div className="flex items-center gap-2">
               <h3 className="text-sm font-semibold text-white">Menu Price vs Actual Charge</h3>
               <EducationInfoIcon metricKey="menu_gap_pct" />
             </div>
-            {filtered.length > 0 ? (
+            {isClean ? (
+              <div className="bg-emerald-900/30 rounded-xl border border-emerald-600/60 p-4 flex gap-3 items-start">
+                <div className="mt-0.5">
+                  <CheckCircle className="w-5 h-5 text-emerald-400" />
+                </div>
+                <div className="space-y-1">
+                  <p className="text-sm font-semibold text-emerald-300">✅ Clean Ringing</p>
+                  <p className="text-xs text-emerald-100/90">
+                    No significant price gaps detected at this location. Every item is being charged at or very near menu price.
+                  </p>
+                  <p className="text-xs text-emerald-100/80">
+                    This means no discount abuse, no manual overrides, and no coupon misuse detected in the last 30 days.
+                  </p>
+                  <p className="text-xs text-emerald-100/80">
+                    Keep it up — this discipline directly protects your margins.
+                  </p>
+                </div>
+              </div>
+            ) : (
               <>
                 <div className="bg-red-600/10 rounded-xl border border-red-700/30 p-3 mb-4">
                   <p className="text-xs text-red-300">
@@ -694,8 +713,6 @@ if (d.catalog) setKitchenIqData({
                   </button>
                 ))}
               </>
-            ) : (
-              <p className="text-xs text-slate-500">No items with a price gap &gt; 2% for this store.</p>
             )}
           </div>
         );
