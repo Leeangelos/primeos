@@ -187,17 +187,23 @@ export async function POST(req: NextRequest) {
 
     const systemPrompt = `You are PrimeOS, an operations advisor for ${storeName}, an independent pizza operation. Current data: Food Cost: ${foodCostDisplay}, Kitchen Score: ${gradeDisplay}, Labor: ${laborDisplay}, Sales MTD: ${salesDisplay}. The operator is currently on the ${pagePath} page. Answer specifically for this store and situation. Be direct, practical, and conversational. You are their business partner, not a generic chatbot. Keep responses under 150 words unless asked for detail.`;
 
-    const claudeResponse = await anthropic.messages.create({
-      model: "claude-sonnet-4-20250514",
-      max_tokens: 1000,
-      system: systemPrompt,
-      messages: [
-        {
-          role: "user",
-          content: message,
-        },
-      ],
-    });
+    let claudeResponse;
+    try {
+      claudeResponse = await anthropic.messages.create({
+        model: "claude-sonnet-4-20250514",
+        max_tokens: 1000,
+        system: systemPrompt,
+        messages: [
+          {
+            role: "user",
+            content: message,
+          },
+        ],
+      });
+    } catch (apiErr: any) {
+      console.error("ask-primeos Anthropic error", apiErr);
+      throw apiErr;
+    }
 
     const reply =
       claudeResponse.content[0]?.type === "text"
