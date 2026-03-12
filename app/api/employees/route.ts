@@ -1,6 +1,12 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getClientForRoute } from "@/lib/supabase";
 
+const STORE_SLUG_TO_ID: Record<string, string> = {
+  kent: "7cd4cb61-7e90-44f5-8739-5f19074262b8",
+  aurora: "906e5dfb-6199-4460-936d-fc1e783e4574",
+  lindseys: "3fb37b49-cfe7-4a9f-9940-a472b5def680",
+};
+
 export async function GET(req: NextRequest) {
   const supabase = await getClientForRoute();
   const store = req.nextUrl.searchParams.get("store");
@@ -14,8 +20,11 @@ export async function GET(req: NextRequest) {
 
   let storeId: string | null = null;
   if (store && store !== "all") {
-    const { data: storeData } = await supabase.from("stores").select("id").eq("slug", store).maybeSingle();
-    storeId = storeData?.id ?? null;
+    storeId = STORE_SLUG_TO_ID[store] ?? null;
+    if (storeId == null) {
+      const { data: storeData } = await supabase.from("stores").select("id").eq("slug", store).maybeSingle();
+      storeId = storeData?.id ?? null;
+    }
     if (storeId) query = query.eq("store_id", storeId);
   }
 
