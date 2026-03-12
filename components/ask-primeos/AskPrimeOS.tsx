@@ -10,6 +10,19 @@ type ChatMessage = {
   content: string;
 };
 
+function stripMarkdown(text: string): string {
+  let result = text;
+  // Bold **text**
+  result = result.replace(/\*\*(.+?)\*\*/g, "$1");
+  // Italic *text*
+  result = result.replace(/\*(.+?)\*/g, "$1");
+  // Headings #, ##, etc. at line start
+  result = result.replace(/^#{1,6}\s*/gm, "");
+  // Bullet points at line start: "- " → "• "
+  result = result.replace(/^\s*-\s+/gm, "• ");
+  return result;
+}
+
 export function AskPrimeOS() {
   const pathname = usePathname();
   const [storeName, setStoreName] = useState<string>("your store");
@@ -81,7 +94,7 @@ export function AskPrimeOS() {
       const botMsg: ChatMessage = {
         id: `bot-${Date.now()}`,
         role: "assistant",
-        content: text,
+        content: stripMarkdown(text),
       };
       setMessages((prev) => [...prev, botMsg]);
     } catch {
