@@ -39,11 +39,22 @@ type Shift = {
   notes?: string | null;
 };
 
+type Punch = {
+  employee_name: string;
+  shift_date: string;
+  actual_hours: number;
+  clock_in_time: string | null;
+  clock_out_time: string | null;
+};
+
 type LaborSummary = {
   totalHours: number;
+  totalActualHours: number;
+  varianceHours: number;
   totalLaborCost: number;
   totalProjectedSales: number;
   laborPct: number;
+  punches: Punch[];
 };
 
 type ActiveShift =
@@ -97,6 +108,11 @@ function startOfWeek(date: Date): Date {
   d.setDate(d.getDate() - diff);
   d.setHours(0, 0, 0, 0);
   return d;
+}
+
+function minutesFromMidnight(timeStr: string): number {
+  const [h, m] = timeStr.slice(0, 5).split(":").map(Number);
+  return (h ?? 0) * 60 + (m ?? 0);
 }
 
 export default function SchedulePage() {
@@ -168,9 +184,12 @@ export default function SchedulePage() {
         if (laborRes.ok && laborRes.labor) {
           setLabor({
             totalHours: laborRes.labor.totalHours ?? 0,
+            totalActualHours: laborRes.labor.totalActualHours ?? 0,
+            varianceHours: laborRes.labor.varianceHours ?? 0,
             totalLaborCost: laborRes.labor.totalLaborCost ?? 0,
             totalProjectedSales: laborRes.labor.totalProjectedSales ?? 0,
             laborPct: laborRes.labor.laborPct ?? 0,
+            punches: Array.isArray(laborRes.labor.punches) ? laborRes.labor.punches : [],
           });
         } else {
           setLabor(null);
@@ -543,7 +562,27 @@ export default function SchedulePage() {
                         s.employee_name === emp.name &&
                         s.shift_date === d.iso
                     );
+                    const punch = labor?.punches.find(
+                      (p) => p.employee_name === emp.name && p.shift_date === d.iso
+                    ) ?? null;
+
                     if (!dayShift) {
+                      if (punch) {
+                        return (
+                          <td
+                            key={d.iso}
+                            className="px-1 py-1 border-l border-slate-800"
+                          >
+                            <button
+                              type="button"
+                              onClick={(ev) => openAddShift(emp.name, d.iso, ev)}
+                              className="w-full h-10 rounded-md border border-slate-700/70 text-[10px] text-teal-400 hover:bg-slate-800/60"
+                            >
+                              {punch.actual_hours.toFixed(1)} hrs
+                            </button>
+                          </td>
+                        );
+                      }
                       return (
                         <td
                           key={d.iso}
@@ -559,6 +598,7 @@ export default function SchedulePage() {
                         </td>
                       );
                     }
+
                     const roleKey =
                       dayShift.role === "cook" || dayShift.role === "kitchen"
                         ? "kitchen"
@@ -568,6 +608,14 @@ export default function SchedulePage() {
                             ? "cashier"
                             : "default";
                     const colorClass = ROLE_COLORS[roleKey] ?? ROLE_COLORS.default;
+                    const scheduledStartMins = minutesFromMidnight(dayShift.start_time);
+                    const isLate =
+                      punch?.clock_in_time != null &&
+                      minutesFromMidnight(punch.clock_in_time) > scheduledStartMins + 5;
+                    const isShort =
+                      punch != null && punch.actual_hours < dayShift.hours - 0.08;
+                    const noPunch = !punch;
+
                     return (
                       <td
                         key={d.iso}
@@ -577,19 +625,43 @@ export default function SchedulePage() {
                           type="button"
                           onClick={(ev) => openEditShift(dayShift, ev)}
                           className={cn(
-                            "w-full h-10 rounded-md border px-2 py-1 text-left text-[10px] leading-tight",
+                            "w-full min-h-10 rounded-md border px-2 py-1 text-left text-[10px] leading-tight",
                             colorClass
                           )}
                         >
                           <div className="flex justify-between">
-                            <span>
+                            <span className="text-white">
                               {dayShift.start_time.slice(0, 5)}–{dayShift.end_time.slice(0, 5)}
                             </span>
                             <span className="capitalize">{dayShift.role}</span>
                           </div>
+                          {punch && (
+                            <div className="text-[9px] text-teal-400 mt-0.5">
+                              {punch.clock_in_time != null && punch.clock_out_time != null
+                                ? `${punch.clock_in_time}–${punch.clock_out_time}`
+                                : `${punch.actual_hours.toFixed(1)} hrs`}
+                            </div>
+                          )}
                           <div className="text-[9px] opacity-80">
                             {dayShift.hours.toFixed(1)} hrs · $
                             {dayShift.labor_cost.toFixed(0)}
+                          </div>
+                          <div className="flex flex-wrap gap-0.5 mt-0.5">
+                            {noPunch && (
+                              <span className="inline-flex px-1.5 py-0.5 rounded text-[8px] font-medium bg-slate-600/80 text-slate-300">
+                                No punch
+                              </span>
+                            )}
+                            {isLate && (
+                              <span className="inline-flex px-1.5 py-0.5 rounded text-[8px] font-medium bg-orange-500/30 text-orange-200">
+                                Late
+                              </span>
+                            )}
+                            {isShort && punch && (
+                              <span className="inline-flex px-1.5 py-0.5 rounded text-[8px] font-medium bg-red-500/30 text-red-200">
+                                Short
+                              </span>
+                            )}
                           </div>
                         </button>
                       </td>
@@ -611,6 +683,26 @@ export default function SchedulePage() {
             </span>{" "}
             hrs scheduled
           </div>
+          {labor != null && (
+            <>
+              <div>
+                <span className="font-semibold text-teal-300">
+                  {labor.totalActualHours.toFixed(1)}
+                </span>{" "}
+                hrs actual
+              </div>
+              <div>
+                <span className={cn(
+                  "font-semibold",
+                  (labor.varianceHours ?? 0) >= 0 ? "text-slate-200" : "text-amber-300"
+                )}>
+                  {(labor.varianceHours ?? 0) >= 0 ? "+" : ""}
+                  {(labor.varianceHours ?? 0).toFixed(1)}
+                </span>{" "}
+                hrs variance
+              </div>
+            </>
+          )}
           <div>
             <span className="font-semibold text-slate-200">
               ${totalScheduledCost.toLocaleString("en-US", { maximumFractionDigits: 0 })}

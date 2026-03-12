@@ -12,19 +12,65 @@ export async function GET(req: NextRequest) {
   endDate.setDate(endDate.getDate() + 6);
   const end = endDate.toISOString().slice(0, 10);
 
+  let storeId: string | null = null;
+  if (store !== "all") {
+    const { data: storeData } = await supabase.from("stores").select("id").eq("slug", store).single();
+    storeId = storeData?.id ?? null;
+  }
+
   let shiftQuery = supabase
     .from("schedules")
     .select("*")
     .gte("shift_date", weekOf)
     .lte("shift_date", end);
-
-  if (store !== "all") {
-    const { data: storeData } = await supabase.from("stores").select("id").eq("slug", store).single();
-    if (storeData) shiftQuery = shiftQuery.eq("store_id", storeData.id);
-  }
+  if (storeId) shiftQuery = shiftQuery.eq("store_id", storeId);
 
   const { data: shifts } = await shiftQuery;
-  if (!shifts) return NextResponse.json({ ok: true, labor: null });
+
+  // Actual punch data from FoodTec (per employee per day)
+  let punches: { employee_name: string; shift_date: string; actual_hours: number; clock_in_time: string | null; clock_out_time: string | null }[] = [];
+  let totalActualHours = 0;
+  if (storeId) {
+    const { data: punchRows } = await supabase
+      .from("foodtec_labor_punches")
+      .select("employee_name, business_day, regular_hours, overtime_hours, clock_in_time, clock_out_time")
+      .eq("store_id", storeId)
+      .gte("business_day", weekOf)
+      .lte("business_day", end);
+    if (punchRows?.length) {
+      punches = punchRows.map((p: any) => {
+        const reg = Number(p.regular_hours) || 0;
+        const ot = Number(p.overtime_hours) || 0;
+        const actual_hours = +(reg + ot).toFixed(2);
+        totalActualHours += actual_hours;
+        return {
+          employee_name: (p.employee_name ?? "").trim(),
+          shift_date: (p.business_day ?? "").toString().slice(0, 10),
+          actual_hours,
+          clock_in_time: p.clock_in_time != null ? String(p.clock_in_time).slice(0, 5) : null,
+          clock_out_time: p.clock_out_time != null ? String(p.clock_out_time).slice(0, 5) : null,
+        };
+      });
+    }
+  }
+
+  if (!shifts) {
+    return NextResponse.json({
+      ok: true,
+      labor: {
+        weekOf,
+        punches,
+        totalHours: 0,
+        totalActualHours: +totalActualHours.toFixed(1),
+        varianceHours: +totalActualHours.toFixed(1),
+        totalLaborCost: 0,
+        totalProjectedSales: 0,
+        laborPct: 0,
+        slph: 0,
+        daily: [],
+      },
+    });
+  }
 
   let salesQuery = supabase
     .from("daily_kpis")
@@ -92,12 +138,16 @@ export async function GET(req: NextRequest) {
   const targetLaborPct = 21;
   const targetLaborCost = totalProjectedSales * (targetLaborPct / 100);
   const overUnder = totalLaborCost - targetLaborCost;
+  const varianceHours = +(totalActualHours - totalHours).toFixed(1);
 
   return NextResponse.json({
     ok: true,
     labor: {
       weekOf,
       totalHours: +totalHours.toFixed(1),
+      totalActualHours: +totalActualHours.toFixed(1),
+      varianceHours,
+      punches,
       totalLaborCost: +totalLaborCost.toFixed(2),
       totalProjectedSales: Math.round(totalProjectedSales),
       laborPct: +weekLaborPct.toFixed(1),

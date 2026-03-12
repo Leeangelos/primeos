@@ -342,6 +342,31 @@ export async function GET(request: Request) {
         },
         { onConflict: "store_id,business_day" }
       );
+
+      // Per-employee punches for schedule grid (actual vs scheduled)
+      const byEmployee: Record<string, { regular: number; overtime: number }> = {};
+      storeShifts.forEach((s) => {
+        const name = (s.name as string) || "unknown";
+        if (!name.trim()) return;
+        const reg = pf(s.regularhours);
+        const ot = pf(s.overtimehours);
+        if (!byEmployee[name]) byEmployee[name] = { regular: 0, overtime: 0 };
+        byEmployee[name].regular += reg;
+        byEmployee[name].overtime += ot;
+      });
+      const punchRows = Object.entries(byEmployee).map(([employee_name, hrs]) => ({
+        store_id: storeId,
+        business_day: isoDay,
+        employee_name: employee_name.trim(),
+        regular_hours: hrs.regular,
+        overtime_hours: hrs.overtime,
+        synced_at: new Date().toISOString(),
+      }));
+      if (punchRows.length > 0) {
+        await supabase.from("foodtec_labor_punches").upsert(punchRows, {
+          onConflict: "store_id,business_day,employee_name",
+        });
+      }
     }
 
     // ========== SYNC PRODUCTS ==========
