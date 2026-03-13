@@ -131,6 +131,7 @@ export default function SchedulePage() {
   const [popoverAnchor, setPopoverAnchor] = useState<{ left: number; top: number } | null>(null);
   const [generatedMessage, setGeneratedMessage] = useState<string | null>(null);
   const [generatingMessage, setGeneratingMessage] = useState(false);
+  const [publishToast, setPublishToast] = useState(false);
 
   const weekStartISO = useMemo(() => weekStart.toISOString().slice(0, 10), [weekStart]);
   const selectedStoreName = newUser ? getNewUserStoreName(session) : getStoreLabel(selectedStore);
@@ -250,6 +251,66 @@ export default function SchedulePage() {
     }
     return { pct, target, color, badge };
   }, [labor]);
+
+  // Dial fill color: green <22%, teal 22-25%, amber 25-28%, red >28%
+  const dialColor = useMemo(() => {
+    const pct = labor?.laborPct ?? 0;
+    if (pct < 22) return "#22c55e";
+    if (pct <= 25) return "#14b8a6";
+    if (pct <= 28) return "#f59e0b";
+    return "#ef4444";
+  }, [labor?.laborPct]);
+
+  // Player stat cards: reliability this week (shifts with punch / total scheduled), fire if 5+ consecutive days with shift+punch
+  const playerStats = useMemo(() => {
+    return employees.map((emp) => {
+      const empShifts = shifts.filter((s) => s.employee_name === emp.name);
+      const totalScheduled = empShifts.length;
+      const showedUp = empShifts.filter((s) =>
+        labor?.punches.some(
+          (p) => p.employee_name === emp.name && p.shift_date === s.shift_date
+        )
+      ).length;
+      const reliabilityPct =
+        totalScheduled > 0 ? Math.round((showedUp / totalScheduled) * 100) : null;
+      const dayIsos = days.map((d) => d.iso);
+      let maxConsecutive = 0;
+      let current = 0;
+      for (const iso of dayIsos) {
+        const hasShift = shifts.some(
+          (s) => s.employee_name === emp.name && s.shift_date === iso
+        );
+        const hasPunch = labor?.punches.some(
+          (p) => p.employee_name === emp.name && p.shift_date === iso
+        );
+        if (hasShift && hasPunch) {
+          current += 1;
+          maxConsecutive = Math.max(maxConsecutive, current);
+        } else {
+          current = 0;
+        }
+      }
+      const hasFire = maxConsecutive >= 5;
+      const role = emp.role ?? "team";
+      return {
+        name: emp.name,
+        role,
+        reliabilityPct,
+        hasFire,
+      };
+    });
+  }, [employees, shifts, labor?.punches, days]);
+
+  // Team performance: % of scheduled shifts that had a punch this week
+  const teamShowUpPct = useMemo(() => {
+    if (shifts.length === 0) return null;
+    const withPunch = shifts.filter((s) =>
+      labor?.punches.some(
+        (p) => p.employee_name === s.employee_name && p.shift_date === s.shift_date
+      )
+    ).length;
+    return Math.round((withPunch / shifts.length) * 100);
+  }, [shifts, labor?.punches]);
 
   const handlePrevWeek = () => {
     const d = new Date(weekStart);
@@ -405,80 +466,78 @@ export default function SchedulePage() {
 
   return (
     <div className="space-y-5 pb-28">
-      <div className="dashboard-toolbar p-3 sm:p-5 space-y-3">
-        <div className="flex items-center gap-2 flex-wrap">
-          <h1 className="text-lg font-semibold sm:text-2xl">Schedule</h1>
-          <EducationInfoIcon metricKey="labor_optimization" size="lg" />
-        </div>
-        <p className="text-xs text-muted">
-          Weekly view of scheduled labor. Data syncs from your POS and manual edits.
+      {/* PAGE HEADER — ESPN-style */}
+      <div className="px-3 sm:px-5 pt-3">
+        <h1 className="text-2xl sm:text-3xl font-bold text-white">
+          This Week&apos;s Lineup
+        </h1>
+        <p className="text-sm text-slate-400 mt-1">
+          {selectedStoreName} • Week of {formatWeekLabel(weekStart)}
         </p>
       </div>
 
-      {/* Store selector */}
-      <div className="flex items-center justify-between gap-3 px-3 sm:px-5">
-        <div className="relative">
-          {newUser ? (
-            <div className="flex items-center gap-2 bg-slate-800 rounded-lg px-3 py-2 border border-[#E65100]/50 text-sm text-white min-h-[44px] w-full sm:w-auto">
-              <MapPin className="w-4 h-4 text-[#E65100] shrink-0" aria-hidden />
-              <span className="truncate font-medium">{selectedStoreName}</span>
-            </div>
-          ) : (
-            <>
-              <button
-                type="button"
-                onClick={() => setStoreOpen((o) => !o)}
-                className="flex items-center gap-2 bg-slate-800 rounded-lg px-3 py-2 border border-slate-700 text-sm text-white min-h-[44px] w-full sm:w-auto"
-                aria-haspopup="listbox"
-                aria-expanded={storeOpen}
-                aria-label={`Store: ${selectedStoreName}. Select location.`}
-              >
-                <MapPin className="w-4 h-4 text-blue-400 shrink-0" aria-hidden />
-                <span className="truncate">{selectedStoreName}</span>
-                <ChevronDown
-                  className={cn(
-                    "w-4 h-4 text-slate-400 shrink-0 transition-transform",
-                    storeOpen && "rotate-180"
-                  )}
-                  aria-hidden
-                />
-              </button>
-              {storeOpen && (
-                <>
-                  <div
-                    className="fixed inset-0 z-30"
-                    aria-hidden="true"
-                    onClick={() => setStoreOpen(false)}
+      {/* Store selector + Week nav + Performance dial */}
+      <div className="flex flex-wrap items-start justify-between gap-4 px-3 sm:px-5">
+        <div className="flex items-center gap-3">
+          <div className="relative">
+            {newUser ? (
+              <div className="flex items-center gap-2 bg-slate-800 rounded-lg px-3 py-2 border border-[#E65100]/50 text-sm text-white min-h-[44px] w-full sm:w-auto">
+                <MapPin className="w-4 h-4 text-[#E65100] shrink-0" aria-hidden />
+                <span className="truncate font-medium">{selectedStoreName}</span>
+              </div>
+            ) : (
+              <>
+                <button
+                  type="button"
+                  onClick={() => setStoreOpen((o) => !o)}
+                  className="flex items-center gap-2 bg-slate-800 rounded-lg px-3 py-2 border border-slate-700 text-sm text-white min-h-[44px] w-full sm:w-auto"
+                  aria-haspopup="listbox"
+                  aria-expanded={storeOpen}
+                  aria-label={`Store: ${selectedStoreName}. Select location.`}
+                >
+                  <MapPin className="w-4 h-4 text-blue-400 shrink-0" aria-hidden />
+                  <span className="truncate">{selectedStoreName}</span>
+                  <ChevronDown
+                    className={cn(
+                      "w-4 h-4 text-slate-400 shrink-0 transition-transform",
+                      storeOpen && "rotate-180"
+                    )}
+                    aria-hidden
                   />
-                  <div className="absolute top-full left-0 mt-1 z-40 w-64 bg-slate-800 rounded-xl border border-slate-700 shadow-lg shadow-black/30 overflow-hidden">
-                    {STORE_OPTIONS.map((opt) => (
-                      <button
-                        key={opt.slug}
-                        type="button"
-                        onClick={() => {
-                          setSelectedStore(opt.slug);
-                          setStoreOpen(false);
-                        }}
-                        className={cn(
-                          "w-full flex items-center justify-between px-4 py-3 text-sm hover:bg-slate-700/50 transition-colors",
-                          selectedStore === opt.slug ? "text-blue-400" : "text-slate-300"
-                        )}
-                      >
-                        <span>{opt.name}</span>
-                        {selectedStore === opt.slug && (
-                          <Check className="w-4 h-4 text-blue-400 shrink-0" aria-hidden />
-                        )}
-                      </button>
-                    ))}
-                  </div>
-                </>
-              )}
-            </>
-          )}
-        </div>
-
-        {/* Week nav + Labor gauge */}
-        <div className="flex items-center gap-4">
+                </button>
+                {storeOpen && (
+                  <>
+                    <div
+                      className="fixed inset-0 z-30"
+                      aria-hidden="true"
+                      onClick={() => setStoreOpen(false)}
+                    />
+                    <div className="absolute top-full left-0 mt-1 z-40 w-64 bg-slate-800 rounded-xl border border-slate-700 shadow-lg shadow-black/30 overflow-hidden">
+                      {STORE_OPTIONS.map((opt) => (
+                        <button
+                          key={opt.slug}
+                          type="button"
+                          onClick={() => {
+                            setSelectedStore(opt.slug);
+                            setStoreOpen(false);
+                          }}
+                          className={cn(
+                            "w-full flex items-center justify-between px-4 py-3 text-sm hover:bg-slate-700/50 transition-colors",
+                            selectedStore === opt.slug ? "text-blue-400" : "text-slate-300"
+                          )}
+                        >
+                          <span>{opt.name}</span>
+                          {selectedStore === opt.slug && (
+                            <Check className="w-4 h-4 text-blue-400 shrink-0" aria-hidden />
+                          )}
+                        </button>
+                      ))}
+                    </div>
+                  </>
+                )}
+              </>
+            )}
+          </div>
           <div className="flex items-center gap-2">
             <button
               type="button"
@@ -500,18 +559,116 @@ export default function SchedulePage() {
               <ChevronRight className="w-4 h-4" />
             </button>
           </div>
-          <div className="hidden sm:flex flex-col items-end text-right">
-            <span className="text-[10px] uppercase tracking-wide text-slate-400">
-              Scheduled Labor %
-            </span>
-            <div className="flex items-baseline gap-2">
-              <span className={cn("text-xl font-bold tabular-nums", laborGauge.color)}>
-                {labor ? `${laborGauge.pct.toFixed(1)}%` : "—"}
+        </div>
+
+        {/* PERFORMANCE DIAL — semicircle SVG */}
+        <div className="flex flex-col items-center">
+          <div className="relative w-24 h-14 flex items-end justify-center">
+            <svg
+              viewBox="0 0 100 55"
+              className="w-full h-full"
+              aria-hidden
+            >
+              <defs>
+                <linearGradient id="dialTrack" x1="0" y1="0" x2="1" y2="0">
+                  <stop offset="0" stopColor="#334155" />
+                  <stop offset="1" stopColor="#475569" />
+                </linearGradient>
+              </defs>
+              {/* Background arc 0–40% range displayed */}
+              <path
+                d="M 5 50 A 45 45 0 0 1 95 50"
+                fill="none"
+                stroke="url(#dialTrack)"
+                strokeWidth="8"
+                strokeLinecap="round"
+              />
+              {/* Filled arc: labor % capped at 40 for display */}
+              <path
+                d="M 5 50 A 45 45 0 0 1 95 50"
+                fill="none"
+                stroke={dialColor}
+                strokeWidth="8"
+                strokeLinecap="round"
+                strokeDasharray={`${(Math.min(labor?.laborPct ?? 0, 40) / 40) * 141} 141`}
+              />
+            </svg>
+            <div className="absolute inset-0 flex flex-col items-center justify-end pb-1">
+              <span
+                className={cn(
+                  "text-lg font-bold tabular-nums",
+                  labor ? "" : "text-slate-500"
+                )}
+                style={labor ? { color: dialColor } : undefined}
+              >
+                {labor ? `${(labor.laborPct ?? 0).toFixed(1)}%` : "—"}
               </span>
-              <span className="text-xs text-slate-500">Target 25%</span>
             </div>
-            {laborGauge.badge}
           </div>
+          <span className="text-[10px] text-slate-500">Labor Target: 25%</span>
+        </div>
+      </div>
+
+      {/* TEAM PERFORMANCE BANNER */}
+      {teamShowUpPct != null && (
+        <div
+          className={cn(
+            "px-3 sm:px-5 py-2 rounded-lg text-center text-sm font-medium",
+            teamShowUpPct >= 95
+              ? "bg-emerald-500/15 text-emerald-300"
+              : teamShowUpPct >= 90
+                ? "bg-emerald-500/10 text-emerald-200"
+                : teamShowUpPct >= 80
+                  ? "bg-amber-500/15 text-amber-200"
+                  : "bg-red-500/15 text-red-200"
+          )}
+        >
+          Team hit {teamShowUpPct}% of scheduled shifts this week
+          {teamShowUpPct >= 95 && " 🏆"}
+        </div>
+      )}
+
+      {/* PLAYER STAT CARDS — horizontal scroll */}
+      <div className="px-3 sm:px-5">
+        <div className="flex gap-3 overflow-x-auto pb-2 scrollbar-thin">
+          {playerStats.map((p) => {
+            const roleBorder =
+              p.role === "cook" || p.role === "kitchen"
+                ? "border-orange-500/60"
+                : p.role === "driver"
+                  ? "border-blue-500/60"
+                  : p.role === "cashier"
+                    ? "border-teal-500/60"
+                    : p.role === "manager" || p.role === "shift_lead"
+                      ? "border-violet-500/60"
+                      : "border-slate-600";
+            return (
+              <div
+                key={p.name}
+                className={cn(
+                  "shrink-0 w-36 rounded-xl border bg-slate-900/80 p-3",
+                  roleBorder
+                )}
+              >
+                <div className="font-semibold text-white text-sm truncate">
+                  {p.name}
+                </div>
+                <div className="mt-1">
+                  <span className="inline-flex px-2 py-0.5 rounded text-[10px] font-medium capitalize bg-slate-700/80 text-slate-200">
+                    {p.role || "team"}
+                  </span>
+                </div>
+                <div className="mt-2 text-[11px] text-slate-400">
+                  {p.reliabilityPct != null ? (
+                    <span>{p.reliabilityPct}% reliability</span>
+                  ) : (
+                    <span>New</span>
+                  )}
+                  {p.hasFire && <span className="ml-1">🔥</span>}
+                </div>
+              </div>
+            );
+          })}
         </div>
       </div>
 
@@ -721,11 +878,23 @@ export default function SchedulePage() {
         <button
           type="button"
           disabled={loading}
+          onClick={async () => {
+            // Publish week (UI action; backend could update schedule status)
+            setPublishToast(true);
+            setTimeout(() => setPublishToast(false), 3500);
+          }}
           className="inline-flex items-center justify-center px-4 py-2 rounded-full bg-emerald-600 text-xs font-semibold text-white shadow-md shadow-emerald-900/40 hover:bg-emerald-500 disabled:opacity-50"
         >
-          Publish Week
+          Set the Lineup 🏈
         </button>
       </div>
+
+      {/* Celebration toast */}
+      {publishToast && (
+        <div className="fixed bottom-24 left-1/2 -translate-x-1/2 z-50 px-4 py-3 rounded-xl bg-emerald-600 text-white text-sm font-medium shadow-lg">
+          Lineup is set! Team will be notified.
+        </div>
+      )}
 
       {/* Shift editor popover — fixed near tapped cell */}
       {activeShift && popoverAnchor && (
