@@ -178,11 +178,13 @@ export async function POST() {
           updates.full_name = fullName;
           updates.foodtec_id = emp.foodtecId || null;
           updates.is_salaried = isSalaried;
-          const { error } = await supabase
+          console.log("updating employee:", emp.name, "with:", { firstname: emp.firstname, lastname: emp.lastname, full_name: fullName });
+          const { error: updateError } = await supabase
             .from("employees")
             .update(updates)
             .eq("id", existing.id);
-          if (!error) updated += 1;
+          console.log("update result:", JSON.stringify(updateError));
+          if (!updateError) updated += 1;
         }
       }
 
