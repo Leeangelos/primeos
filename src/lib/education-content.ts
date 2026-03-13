@@ -1423,4 +1423,47 @@ export const EDUCATION_CONTENT: Record<string, EducationEntry> = {
       "Ensure both MarginEdge and FoodTec are synced for the most accurate food cost view.",
     ],
   },
+
+  people_churn: {
+    title: "Employee Churn Rate",
+    whatItMeans:
+      "Turnover % measures how often employees leave and need replacing. At 150% industry average, a 14-person team replaces 21 people per year — that's $37,800 in replacement costs annually at $1,800 per hire.",
+    whenRedPlaybook: [
+      "Consider recognizing one team member by name this week for something specific they did",
+      "Consider publishing the schedule 2 weeks in advance — unpredictable hours are the #1 driver of voluntary turnover",
+      "Consider asking your longest-tenured employee what keeps them here and replicate those conditions",
+      "Consider a 90-day check-in with every new hire — most exits happen in the first 90 days",
+    ],
+  },
+  people_cost_of_churn: {
+    title: "Cost of Churn",
+    whatItMeans:
+      "The real dollar cost of employees leaving — job posting, interviews, onboarding, and 30-45 days of lost productivity while a new hire ramps up. Industry average: $1,800 per replacement hire.",
+    whenRedPlaybook: [
+      "Consider a 90-day retention bonus for hourly staff — even $50 meaningfully reduces early exits",
+      "Consider peer recognition — employees who feel seen stay significantly longer",
+      "Consider consistent shift scheduling — predictability is your lowest-cost retention tool",
+      "Consider tracking your actual cost per hire to see your real number vs industry average",
+    ],
+  },
+  people_ltv: {
+    title: "Employee Lifetime Value",
+    whatItMeans:
+      "LTV is the total wage investment in an employee over their tenure. A server who stays 2 years is worth far more than two servers who each stay 6 months — you only pay training cost once.",
+    whenRedPlaybook: [
+      "Consider identifying your top 3 LTV employees and recognizing them this week",
+      "Consider what keeps your longest-tenured staff and replicate those conditions for newer hires",
+      "Consider tracking tenure by role — if drivers churn faster than kitchen staff, that's a scheduling or pay rate issue",
+    ],
+  },
+  people_retention_roi: {
+    title: "Retention ROI",
+    whatItMeans:
+      "If PrimeOS helps retain 3 employees this year you save $5,400 in replacement costs — 4.5x your monthly subscription cost. Most operators optimize food cost and ignore the human layer entirely.",
+    whenRedPlaybook: [
+      "Consider using the recognition board weekly — 5 minutes of recognition saves $1,800 in replacement cost",
+      "Consider publishing schedules 2 weeks out — predictability reduces turnover by up to 20%",
+      "Consider a 90-day check-in conversation with every new hire before they decide to leave quietly",
+    ],
+  },
 };

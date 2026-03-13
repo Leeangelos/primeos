@@ -3,6 +3,7 @@
 import { useMemo, useState, useCallback, useEffect } from "react";
 import { cn } from "@/lib/utils";
 import { COCKPIT_STORE_SLUGS, COCKPIT_TARGETS, type CockpitStoreSlug } from "@/lib/cockpit-config";
+import { EducationInfoIcon } from "@/src/components/education/InfoIcon";
 import { useAuth } from "@/src/lib/auth-context";
 import { isNewUser, getNewUserStoreName } from "@/src/lib/user-scope";
 
@@ -20,6 +21,8 @@ type Employee = {
 
 const COST_PER_HIRE = 1800;
 const AVG_WEEKLY_HOURS = 30;
+const FALLBACK_PAY_RATE = 12;
+const FALLBACK_WEEKS_TENURE = 12;
 const NINETY_DAYS_MS = 90 * 24 * 60 * 60 * 1000;
 const PRIMEOS_MONTHLY = 99;
 
@@ -105,9 +108,9 @@ export default function PeoplePage() {
   const ltvData = useMemo(() => {
     const active = employees.filter((e) => (e.status ?? "active") === "active");
     const withLtv = active.map((e) => {
-      const rate = Number(e.pay_rate) || 0;
+      const rate = Number(e.pay_rate) || FALLBACK_PAY_RATE;
       const hire = e.hire_date ?? "";
-      const weeks = weeksBetween(hire, now);
+      const weeks = hire ? weeksBetween(hire, now) : FALLBACK_WEEKS_TENURE;
       const ltv = rate * AVG_WEEKLY_HOURS * weeks;
       return { ...e, ltv, weeks, tenureMonths: tenureMonths(e.hire_date ?? null, null) };
     }).filter((e) => e.ltv >= 0);
@@ -222,7 +225,7 @@ export default function PeoplePage() {
       {/* CHURN METRICS CARD */}
       <div className="px-3 sm:px-5">
         <div className="rounded-xl border border-slate-700 bg-slate-800/50 p-4">
-          <h2 className="text-sm font-semibold text-slate-200 mb-3">Churn metrics</h2>
+          <h2 className="text-sm font-semibold text-slate-200 mb-3 inline-flex items-center gap-1.5">Churn metrics <EducationInfoIcon metricKey="people_churn" size="sm" /></h2>
           {employeesLoading ? (
             <p className="text-sm text-slate-500">Loading…</p>
           ) : (
@@ -250,7 +253,7 @@ export default function PeoplePage() {
       {/* COST OF CHURN CARD */}
       <div className="px-3 sm:px-5">
         <div className="rounded-xl border border-slate-700 bg-slate-800/50 p-4">
-          <h2 className="text-sm font-semibold text-slate-200 mb-3">Cost of churn</h2>
+          <h2 className="text-sm font-semibold text-slate-200 mb-3 inline-flex items-center gap-1.5">Cost of churn <EducationInfoIcon metricKey="people_cost_of_churn" size="sm" /></h2>
           <div className="space-y-2">
             <p className="text-xs text-slate-400">
               Estimated annual replacement cost: <span className={cn("font-bold", costColor)}>${Math.round(costOfChurn.annualCost).toLocaleString("en-US")}/yr</span>
@@ -268,7 +271,7 @@ export default function PeoplePage() {
       {/* EMPLOYEE LTV CARD */}
       <div className="px-3 sm:px-5">
         <div className="rounded-xl border border-slate-700 bg-slate-800/50 p-4">
-          <h2 className="text-sm font-semibold text-slate-200 mb-3">Employee LTV</h2>
+          <h2 className="text-sm font-semibold text-slate-200 mb-3 inline-flex items-center gap-1.5">Employee LTV <EducationInfoIcon metricKey="people_ltv" size="sm" /></h2>
           <p className="text-xs text-slate-500 mb-3">LTV = pay rate × 30 hrs/wk × weeks retained. Avg weekly hours: 30 (industry avg).</p>
           {ltvData.top3.length > 0 ? (
             <>
@@ -318,8 +321,10 @@ export default function PeoplePage() {
                 <tbody>
                   {rosterSorted.map((e) => {
                     const isActive = (e.status ?? "active") === "active";
-                    const rate = Number(e.pay_rate) || 0;
-                    const weeks = weeksBetween(e.hire_date ?? "", isActive ? now : new Date((e.exit_date ?? e.hire_date ?? "") + "T12:00:00Z"));
+                    const rate = Number(e.pay_rate) || FALLBACK_PAY_RATE;
+                    const hire = e.hire_date ?? "";
+                    const endDate = isActive ? now : new Date((e.exit_date ?? e.hire_date ?? "") + "T12:00:00Z");
+                    const weeks = hire ? weeksBetween(hire, endDate) : FALLBACK_WEEKS_TENURE;
                     const ltv = rate * AVG_WEEKLY_HOURS * weeks;
                     const tenure = tenureMonths(e.hire_date ?? null, e.exit_date ?? null);
                     return (
@@ -387,7 +392,7 @@ export default function PeoplePage() {
       <div className="px-3 sm:px-5">
         <div className="rounded-xl border border-teal-500/30 bg-teal-500/10 p-4">
           <p className="text-sm text-teal-200">
-            If PrimeOS retains 3 employees this year at {storeName}: <span className="font-bold text-white">${retentionRoi.saved.toLocaleString("en-US")} saved</span>. At $99/month that&apos;s <span className="font-bold text-white">{retentionRoi.roi.toFixed(1)}x ROI</span> on your subscription.
+            If PrimeOS retains 3 employees this year at {storeName}: <span className="font-bold text-white">${retentionRoi.saved.toLocaleString("en-US")} saved</span>. At $99/month that&apos;s <span className="font-bold text-white">{retentionRoi.roi.toFixed(1)}x ROI</span> on your subscription. <EducationInfoIcon metricKey="people_retention_roi" size="sm" />
           </p>
         </div>
       </div>
