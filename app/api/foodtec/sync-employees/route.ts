@@ -164,21 +164,20 @@ export async function POST() {
           if (avgRate != null && avgRate !== existing.pay_rate) {
             updates.pay_rate = avgRate;
           }
-          if (emp.firstname !== undefined && emp.firstname !== existing.firstname) updates.firstname = emp.firstname || null;
-          if (emp.lastname !== undefined && emp.lastname !== existing.lastname) updates.lastname = emp.lastname || null;
           if (emp.punchin !== undefined && emp.punchin !== existing.punchin) updates.punchin = emp.punchin || null;
           if (emp.punchout !== undefined && emp.punchout !== existing.punchout) updates.punchout = emp.punchout || null;
           if (emp.salaried !== undefined && emp.salaried !== existing.salaried) updates.salaried = emp.salaried || null;
-          if (fullName !== null && fullName !== existing.full_name) updates.full_name = fullName;
-          if (emp.foodtecId !== undefined && emp.foodtecId !== existing.foodtec_id) updates.foodtec_id = emp.foodtecId || null;
-          if (isSalaried !== existing.is_salaried) updates.is_salaried = isSalaried;
-          if (Object.keys(updates).length > 0) {
-            const { error } = await supabase
-              .from("employees")
-              .update(updates)
-              .eq("id", existing.id);
-            if (!error) updated += 1;
-          }
+          // Always write these on every sync (force update even when currently null)
+          updates.firstname = emp.firstname || null;
+          updates.lastname = emp.lastname || null;
+          updates.full_name = fullName;
+          updates.foodtec_id = emp.foodtecId || null;
+          updates.is_salaried = isSalaried;
+          const { error } = await supabase
+            .from("employees")
+            .update(updates)
+            .eq("id", existing.id);
+          if (!error) updated += 1;
         }
       }
 
