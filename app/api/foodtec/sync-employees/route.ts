@@ -45,6 +45,12 @@ export async function POST() {
       storeId: string;
       roles: Record<string, number>;
       rates: number[];
+      firstname?: string;
+      lastname?: string;
+      punchin?: string;
+      punchout?: string;
+      salaried?: string;
+      foodtecId?: string;
     };
 
     const employeesByStore: Record<string, Record<string, EmpAgg>> = {};
@@ -54,7 +60,12 @@ export async function POST() {
       const storeId = storeMap[storeName];
       if (!storeId) return;
 
+      const firstname = (row.firstname as string)?.trim() || "";
+      const lastname = (row.lastname as string)?.trim() || "";
+      const fullNameFromParts =
+        firstname && lastname ? `${firstname} ${lastname}`.trim() : "";
       const nameRaw =
+        fullNameFromParts ||
         (row.name as string) ||
         (row.employee as string) ||
         (row.employee_name as string) ||
@@ -78,6 +89,12 @@ export async function POST() {
           storeId,
           roles: {},
           rates: [],
+          firstname: firstname || undefined,
+          lastname: lastname || undefined,
+          punchin: (row.punchin as string)?.trim() || undefined,
+          punchout: (row.punchout as string)?.trim() || undefined,
+          salaried: (row.salaried as string)?.trim() || undefined,
+          foodtecId: (row.id as string)?.trim() || undefined,
         };
       }
       const agg = employeesByStore[storeId][name];
@@ -110,9 +127,15 @@ export async function POST() {
             ? emp.rates.reduce((a, b) => a + b, 0) / emp.rates.length
             : null;
 
+        const fullName =
+          emp.firstname && emp.lastname
+            ? `${emp.firstname} ${emp.lastname}`.trim()
+            : null;
+        const isSalaried = (emp.salaried ?? "").toLowerCase() === "y";
+
         const { data: existing } = await supabase
           .from("employees")
-          .select("id, role, pay_rate")
+          .select("id, role, pay_rate, firstname, lastname, punchin, punchout, salaried, full_name, foodtec_id, is_salaried")
           .eq("store_id", storeId)
           .eq("name", emp.name)
           .maybeSingle();
@@ -125,6 +148,14 @@ export async function POST() {
             pay_rate: avgRate,
             status: "active",
             source: "foodtec",
+            firstname: emp.firstname || null,
+            lastname: emp.lastname || null,
+            punchin: emp.punchin || null,
+            punchout: emp.punchout || null,
+            salaried: emp.salaried || null,
+            full_name: fullName,
+            foodtec_id: emp.foodtecId || null,
+            is_salaried: isSalaried,
           });
           if (!error) seeded += 1;
         } else {
@@ -133,6 +164,14 @@ export async function POST() {
           if (avgRate != null && avgRate !== existing.pay_rate) {
             updates.pay_rate = avgRate;
           }
+          if (emp.firstname !== undefined && emp.firstname !== existing.firstname) updates.firstname = emp.firstname || null;
+          if (emp.lastname !== undefined && emp.lastname !== existing.lastname) updates.lastname = emp.lastname || null;
+          if (emp.punchin !== undefined && emp.punchin !== existing.punchin) updates.punchin = emp.punchin || null;
+          if (emp.punchout !== undefined && emp.punchout !== existing.punchout) updates.punchout = emp.punchout || null;
+          if (emp.salaried !== undefined && emp.salaried !== existing.salaried) updates.salaried = emp.salaried || null;
+          if (fullName !== null && fullName !== existing.full_name) updates.full_name = fullName;
+          if (emp.foodtecId !== undefined && emp.foodtecId !== existing.foodtec_id) updates.foodtec_id = emp.foodtecId || null;
+          if (isSalaried !== existing.is_salaried) updates.is_salaried = isSalaried;
           if (Object.keys(updates).length > 0) {
             const { error } = await supabase
               .from("employees")
