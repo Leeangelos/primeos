@@ -24,6 +24,7 @@ function getStoreLabel(slug: StoreSlug): string {
 type Employee = {
   id: number;
   name: string;
+  full_name?: string | null;
   role: string;
 };
 
@@ -159,6 +160,7 @@ export default function SchedulePage() {
             employeesRes.employees.map((e: any) => ({
               id: e.id,
               name: e.name,
+              full_name: e.full_name ?? null,
               role: e.role ?? "team",
             }))
           );
@@ -293,7 +295,7 @@ export default function SchedulePage() {
       const hasFire = maxConsecutive >= 5;
       const role = emp.role ?? "team";
       return {
-        name: emp.name,
+        name: emp.full_name ?? emp.name,
         role,
         reliabilityPct,
         hasFire,
@@ -720,7 +722,7 @@ export default function SchedulePage() {
               {employees.map((emp) => (
                 <tr key={emp.id} className="border-t border-slate-800">
                   <td className="px-3 py-2 text-slate-100 whitespace-nowrap">
-                    <div className="font-semibold">{emp.name}</div>
+                    <div className="font-semibold">{emp.full_name ?? emp.name}</div>
                     <div className="text-[10px] text-slate-500 capitalize">
                       {emp.role || "team"}
                     </div>

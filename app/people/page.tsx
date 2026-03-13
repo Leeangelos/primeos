@@ -12,6 +12,7 @@ type TeamEnergy = "low" | "medium" | "high" | null;
 type Employee = {
   id: number | string;
   name: string;
+  full_name?: string | null;
   role?: string | null;
   pay_rate?: number | null;
   status?: string | null;
@@ -279,7 +280,7 @@ export default function PeoplePage() {
               <ul className="space-y-2 mb-4">
                 {ltvData.top3.map((e) => (
                   <li key={e.id} className="flex items-center justify-between text-sm">
-                    <span className="text-white font-medium">{e.name}</span>
+                    <span className="text-white font-medium">{e.full_name ?? e.name}</span>
                     <span className="text-slate-400 capitalize">{e.role ?? "team"}</span>
                     <span className="text-slate-400">{formatTenure(e.tenureMonths)}</span>
                     <span className="font-semibold text-emerald-400">${Math.round(e.ltv).toLocaleString("en-US")}</span>
@@ -329,7 +330,7 @@ export default function PeoplePage() {
                     const tenure = tenureMonths(e.hire_date ?? null, e.exit_date ?? null);
                     return (
                       <tr key={e.id} className="border-t border-slate-700/50">
-                        <td className="px-3 py-2 text-white font-medium">{e.name}</td>
+                        <td className="px-3 py-2 text-white font-medium">{e.full_name ?? e.name}</td>
                         <td className="px-3 py-2">
                           <span className="inline-flex px-2 py-0.5 rounded capitalize bg-slate-700 text-slate-200">{e.role ?? "team"}</span>
                         </td>
