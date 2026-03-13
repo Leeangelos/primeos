@@ -146,7 +146,7 @@ export async function POST(request: NextRequest) {
 
     const { data: store, error: storeError } = await supabase
       .from("stores")
-      .select("id")
+      .select("id, name")
       .eq("slug", storeSlug)
       .maybeSingle();
 
@@ -192,6 +192,31 @@ export async function POST(request: NextRequest) {
         { ok: false, error: upsertError.message },
         { status: 500 }
       );
+    }
+
+    // Food cost alert: if > 32%, trigger SMS to Angelo and Greg
+    const netSales = Number(entry?.net_sales) || 0;
+    const foodDollars = Number(entry?.food_dollars) || 0;
+    if (netSales > 0) {
+      const foodCostPct = (foodDollars / netSales) * 100;
+      if (foodCostPct > 32) {
+        const origin =
+          request.nextUrl?.origin ||
+          (process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : "http://localhost:3000");
+        try {
+          await fetch(`${origin}/api/alerts/food-cost`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              store_slug: storeSlug,
+              food_cost_pct: foodCostPct,
+              store_name: (store as { id: string; name?: string }).name || storeSlug,
+            }),
+          });
+        } catch (alertErr) {
+          console.error("[daily-kpi] food-cost alert call failed", alertErr);
+        }
+      }
     }
 
     return NextResponse.json({ ok: true, entry });
