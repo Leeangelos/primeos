@@ -54,8 +54,13 @@ export async function POST() {
     };
 
     const employeesByStore: Record<string, Record<string, EmpAgg>> = {};
+    let firstRowLogged = false;
 
     (allLaborRows || []).forEach((row: any) => {
+      if (!firstRowLogged) {
+        console.log("raw agg row:", JSON.stringify({ keys: Object.keys(row), firstname: row.firstname, lastname: row.lastname, id: row.id, salaried: row.salaried }));
+        firstRowLogged = true;
+      }
       const storeName = (row.store as string) || "unknown";
       const storeId = storeMap[storeName];
       if (!storeId) return;
