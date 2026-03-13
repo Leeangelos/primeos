@@ -337,6 +337,9 @@ export default function SchedulePage() {
       end_time: "18:00",
       notes: "",
     });
+    if (typeof window !== "undefined") {
+      window.dispatchEvent(new Event("primeos:popover-open"));
+    }
   }
 
   function openEditShift(shift: Shift, e: React.MouseEvent) {
@@ -353,6 +356,9 @@ export default function SchedulePage() {
       end_time: shift.end_time,
       notes: shift.notes ?? "",
     });
+    if (typeof window !== "undefined") {
+      window.dispatchEvent(new Event("primeos:popover-open"));
+    }
   }
 
   async function handleSaveShift() {
@@ -428,6 +434,9 @@ export default function SchedulePage() {
       }
       setActiveShift(null);
       setPopoverAnchor(null);
+      if (typeof window !== "undefined") {
+        window.dispatchEvent(new Event("primeos:popover-close"));
+      }
     } catch {
       // ignore
     } finally {
@@ -447,6 +456,9 @@ export default function SchedulePage() {
         setShifts((prev) => prev.filter((s) => s.id !== activeShift.id));
         setActiveShift(null);
         setPopoverAnchor(null);
+        if (typeof window !== "undefined") {
+          window.dispatchEvent(new Event("primeos:popover-close"));
+        }
       }
     } catch {
       // ignore
@@ -906,6 +918,9 @@ export default function SchedulePage() {
               if (!savingShift) {
                 setActiveShift(null);
                 setPopoverAnchor(null);
+                if (typeof window !== "undefined") {
+                  window.dispatchEvent(new Event("primeos:popover-close"));
+                }
               }
             }}
             aria-hidden
@@ -943,6 +958,9 @@ export default function SchedulePage() {
                     if (!savingShift) {
                       setActiveShift(null);
                       setPopoverAnchor(null);
+                      if (typeof window !== "undefined") {
+                        window.dispatchEvent(new Event("primeos:popover-close"));
+                      }
                     }
                   }}
                   className="text-slate-400 hover:text-slate-200 text-lg px-2"

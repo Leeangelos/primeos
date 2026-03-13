@@ -34,6 +34,18 @@ export function AskPrimeOS() {
   const [sheetHeight, setSheetHeight] = useState<number>(55);
   const [dragStartY, setDragStartY] = useState<number | null>(null);
   const [dragStartHeight, setDragStartHeight] = useState<number>(55);
+  const [popoverOpen, setPopoverOpen] = useState(false);
+
+  useEffect(() => {
+    const onOpen = () => setPopoverOpen(true);
+    const onClose = () => setPopoverOpen(false);
+    window.addEventListener("primeos:popover-open", onOpen);
+    window.addEventListener("primeos:popover-close", onClose);
+    return () => {
+      window.removeEventListener("primeos:popover-open", onOpen);
+      window.removeEventListener("primeos:popover-close", onClose);
+    };
+  }, []);
 
   useEffect(() => {
     if (typeof window === "undefined") return;
@@ -132,20 +144,22 @@ export function AskPrimeOS() {
 
   return (
     <>
-      {/* Floating button */}
-      <button
-        type="button"
-        onClick={() => setIsOpen(true)}
-        className="fixed bottom-32 right-6 z-60 flex items-center gap-2 rounded-full bg-slate-900/90 border border-slate-700 px-3.5 py-2 shadow-lg shadow-black/40 hover:bg-slate-800 transition-colors min-h-[44px]"
-        aria-label={seasonal.label}
-      >
-        <span className="text-lg" aria-hidden="true">
-          {seasonal.emoji}
-        </span>
-        <span className="text-xs font-semibold text-slate-100 whitespace-nowrap">
-          {seasonal.label}
-        </span>
-      </button>
+      {/* Floating button — hidden when a page popover (e.g. shift editor) is open */}
+      {!popoverOpen && (
+        <button
+          type="button"
+          onClick={() => setIsOpen(true)}
+          className="fixed bottom-32 right-6 z-60 flex items-center gap-2 rounded-full bg-slate-900/90 border border-slate-700 px-3.5 py-2 shadow-lg shadow-black/40 hover:bg-slate-800 transition-colors min-h-[44px]"
+          aria-label={seasonal.label}
+        >
+          <span className="text-lg" aria-hidden="true">
+            {seasonal.emoji}
+          </span>
+          <span className="text-xs font-semibold text-slate-100 whitespace-nowrap">
+            {seasonal.label}
+          </span>
+        </button>
+      )}
 
       {/* Bottom sheet + backdrop */}
       <>
